@@ -1,14 +1,7 @@
-# Bundled Skills
+# Skills
 
-This directory contains skills that ship with the `bubseek` distribution.
+This directory is reserved for skill-source examples and downstream packaging experiments.
 
-## Conventions
+For this repository itself, builtin skills are shipped directly from `bub_skills/` and do not require a separate sync step.
 
-- Each skill lives in its own directory.
-- Each skill directory must contain a `SKILL.md` file.
-- Local bundled skills are locked by directory content hash and copied into `.agents/skills/` during `bubseek sync`.
-
-## Scope
-
-Use this directory for skills that are owned, reviewed, and released together with `bubseek`.
-Remote skills should be declared in `bubseek.toml` and resolved through `bubseek.lock`.
+If you are building a downstream distribution and want to vendor remote skills at build time, use `pdm-build-bub` from your own `pyproject.toml`.

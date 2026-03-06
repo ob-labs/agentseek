@@ -1,63 +1,41 @@
 # Architecture
 
-This page describes the design boundaries, command model, locking semantics, and cache behavior of bubseek.
+This page explains what bubseek is responsible for, and what it deliberately leaves to Bub and normal Python tooling.
 
-## Design boundaries
+## What bubseek does
 
-- **No fork of Bub** — Bub’s core and runtime are unchanged. bubseek is a wrapper distribution.
-- **Reuse Bub’s interface** — Commands like `chat`, `run`, `message` are forwarded to Bub.
-- **Distribution only in bubseek** — Responsibility for manifest, lockfile, and syncing contrib/skills stays in bubseek:
-  - `init` — Initialize or update the manifest (and optionally lock).
-  - `lock` — Generate the lockfile from the current config.
-  - `sync` — Apply the lockfile (install contrib, copy skills).
+- provides the `bubseek` executable as a thin wrapper over `bub`
+- forwards `.env` values to the Bub subprocess
+- ships a small set of builtin skills with the package
+- pins a practical default Bub runtime version
 
-## Command model
+## What bubseek does not do
 
-The CLI surface is kept small:
+- it does not fork Bub
+- it does not define a separate manifest format
+- it does not define a separate lockfile format
+- it does not define a custom contrib installation workflow
 
-| Command         | Purpose |
-|-----------------|--------|
-| `bubseek init`  | Create or update `bubseek.toml`; optional `--with-lock` to run lock after. |
-| `bubseek lock`  | Resolve sources and write `bubseek.lock`. |
-| `bubseek sync`  | Install contrib and sync skills from the lock into a workspace. |
-| `bubseek <any>` | Any other subcommand is forwarded to Bub. |
+## Responsibility split
 
-So all of `bubseek chat`, `bubseek run ...`, `bubseek hooks`, etc. are executed by Bub.
+### Bub
 
-## Locking model
+Bub remains the runtime, command surface, and extension host.
 
-- **Single lockfile** — `bubseek lock` produces one `bubseek.lock` for the whole distribution.
-- **Contrib and remote skills** — Locked to a resolved git commit and a source hash.
-- **Local bub / contrib / skills** — Locked by content hash (package or directory).
-- **Sync guard** — `bubseek sync` checks that the lock matches the current `bubseek.toml` (e.g. config checksum) before installing.
+### bubseek
 
-The lockfile records both the pinned `source` and an explicit `resolved_commit` for remote git entries to support auditing and review.
+bubseek is the distribution layer: packaging, wrapper behavior, and builtin defaults.
 
-## Sync semantics
+### Python packaging
 
-`bubseek sync` reads the lockfile and:
+Python packaging handles dependency resolution, lockfiles, and installation. Contrib packages stay in that model instead of going through a bubseek-specific workflow.
 
-1. **Bub + contrib** — Installs locked Bub and contrib packages into the current environment (e.g. via `uv pip install` with locked paths or cached git sources).
-2. **Local skills** — Copies from the distribution tree into `<workspace>/.agents/skills/<name>/`.
-3. **Remote skills** — Ensures the repo is available (clone or cache), then copies the resolved tree into the workspace skills directory.
+## Why this split matters
 
-Flags:
+From a user perspective, the benefit is simple: there is less to learn.
 
-- `--no-contrib` — Skip contrib installation.
-- `--no-skills` — Skip skill sync.
-- `--overwrite-skills` — Overwrite existing skill directories in the workspace.
+- run `bubseek` the same way you would run `bub`
+- add contrib the same way you add any Python dependency
+- use builtin skills without an extra sync step
 
-## Cache
-
-Remote git sources are reused across contrib installation and remote skill sync:
-
-- **Default cache root:** `~/.cache/bubseek`
-- **Override:** set `BUBSEEK_CACHE_DIR` to a custom path
-
-Shared repos and refs are stored once and reused, so repeated syncs and multiple entries pointing at the same repo/ref avoid duplicate clones.
-
-## Known limitations
-
-- Sync does not yet enforce strict verification of lock hashes for all operations; it uses the lock’s source/path to perform installs and copies.
-- Remote skills require Git and network access to the repo.
-- Concurrency and cache eviction are not yet optimized; correctness and clarity are prioritized.
+That keeps the distribution practical without introducing a second package-management system around Bub.

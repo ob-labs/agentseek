@@ -16,11 +16,8 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "bub @ git+https://github.com/bubbuild/bub.git@frost/bub-framework",
+    "bub==0.3.0a1",
     "python-dotenv>=1.0.0",
-    "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
-    "typer>=0.9.0",
 ]
 
 [project.urls]
@@ -52,10 +49,7 @@ build-backend = "pdm.backend"
 [tool.pdm.build]
 includes = [
     "src/bubseek",
-    "skills",
-    "contrib",
-    "bubseek.toml",
-    "bubseek.lock",
+    "bub_skills",
 ]
 
 # Lock file is always resolved against PyPI. For faster install during dev, use:

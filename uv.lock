@@ -103,8 +103,8 @@ wheels = [
 
 [[package]]
 name = "bub"
-version = "0.3.0"
-source = { git = "https://github.com/bubbuild/bub.git?rev=frost%2Fbub-framework#f62883574723c49186e0f4181605f1fdb2594ec5" }
+version = "0.3.0a1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "any-llm-sdk", extra = ["anthropic"] },
     { name = "loguru" },
@@ -119,6 +119,10 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/41/d3/58aa6a2de465f8b3a65f9a0ac6b2c521cefb428a9d8efa491f1c32b0b37d/bub-0.3.0a1.tar.gz", hash = "sha256:293c2a6553446d9217dcb9d976b9fdab15ac75eb5d043f241da21d7a36efc332", size = 64427, upload-time = "2026-03-06T09:05:32.984Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/d3/8c609754c14c23360decdcaecae2e24b257927c2fd153c789483d9c58c84/bub-0.3.0a1-py3-none-any.whl", hash = "sha256:6358e827453737ed45a474e77b068791d6883eaa1622343896fb5b71efc661a7", size = 74645, upload-time = "2026-03-06T09:05:31.865Z" },
+]
 
 [[package]]
 name = "bubseek"
@@ -126,10 +130,7 @@ version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "bub" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
     { name = "python-dotenv" },
-    { name = "typer" },
 ]
 
 [package.dev-dependencies]
@@ -146,11 +147,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bub", git = "https://github.com/bubbuild/bub.git?rev=frost%2Fbub-framework" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "bub", specifier = "==0.3.0a1" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "typer", specifier = ">=0.9.0" },
 ]
 
 [package.metadata.requires-dev]

@@ -1,15 +1,15 @@
-# bubseek contrib
+# Contrib
 
-This directory is reserved for distribution-level contrib notes and related assets.
+This directory documents contrib-related examples for `bubseek`.
 
-Contrib declarations live in:
+`bubseek` does not install contrib from this directory. Contrib packages remain standard Python packages and should be added through normal dependency management in `pyproject.toml`.
 
-- `../bubseek.toml`
+Typical example:
 
-Resolved contrib lock entries live in:
-
-- `../bubseek.lock`
-
-Reference repository:
-
-- `https://github.com/bubbuild/bub-contrib`
+```toml
+[project]
+dependencies = [
+    "bub==0.3.0a1",
+    "bub-codex @ git+https://github.com/bubbuild/bub-contrib.git@main#subdirectory=packages/bub-codex",
+]
+```

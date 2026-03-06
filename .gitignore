@@ -211,4 +211,4 @@ marimo/_lsp/
 __marimo__/
 
 # Bub
-.agents/
+bub_skills/

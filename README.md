@@ -6,7 +6,7 @@
 
 **Enterprise-oriented distribution of [Bub](https://github.com/bubbuild/bub)** for agent-driven insight workflows in cloud-edge environments.
 
-bubseek turns fragmented data across operational systems, repositories, and agent runtime traces into **explainable, actionable, and shareable insights** without heavy ETL. It keeps the Bub runtime and extension model while adding distribution tooling: declarative config, lockfiles, and sync for contrib packages and skills.
+bubseek turns fragmented data across operational systems, repositories, and agent runtime traces into **explainable, actionable, and shareable insights** without heavy ETL. It keeps the Bub runtime and extension model while packaging a practical default distribution for real deployments.
 
 ## Features
 
@@ -14,100 +14,58 @@ bubseek turns fragmented data across operational systems, repositories, and agen
 - **Explainability first** — Conclusions are returned together with agent reasoning context.
 - **Cloud-edge ready** — Supports distributed deployment and local execution boundaries.
 - **Agent observability** — Treats agent behavior as governed, inspectable runtime data.
-- **Bub-compatible** — Forwards all non-bubseek commands to Bub; no fork of the core runtime.
+- **Bub-compatible** — Forwards Bub commands directly; no fork of the core runtime.
 
-## Installation
+## Quick start
 
 Requires [uv](https://docs.astral.sh/uv/) (recommended) or pip, and Python 3.12+.
-
-From the project root:
 
 ```bash
 git clone https://github.com/psiace/bubseek.git
 cd bubseek
 uv sync
+uv run bubseek --help
+uv run bubseek chat
 ```
 
-Or install from PyPI (when published):
+If your runtime reads credentials from `.env`, bubseek forwards them to the Bub subprocess:
+
+```dotenv
+bub_api_key=sk-or-v1-...
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+```
+
+## Add contrib
+
+Contrib packages remain standard Python packages. Add them as normal dependencies:
+
+```toml
+[project]
+dependencies = [
+    "bub==0.3.0a1",
+    "bub-codex @ git+https://github.com/bubbuild/bub-contrib.git@main#subdirectory=packages/bub-codex",
+]
+```
+
+Then sync your environment:
 
 ```bash
-uv add bubseek
+uv sync
 ```
-
-## Quick start
-
-1. **Initialize** a manifest and lockfile (or use the existing `bubseek.toml`):
-
-   ```bash
-   uv run bubseek init --with-lock
-   ```
-
-2. **Regenerate the lockfile** after editing `bubseek.toml`:
-
-   ```bash
-   uv run bubseek lock
-   ```
-
-3. **Sync** locked contrib packages and skills into a workspace:
-
-   ```bash
-   uv run bubseek sync --workspace .
-   ```
-
-4. **Run Bub** via bubseek (all other commands are forwarded to Bub):
-
-   ```bash
-   uv run bubseek chat
-   uv run bubseek run ",help"
-   ```
-
-   If your Bub runtime or model plugin expects API credentials, put them in `.env`.
-   `bubseek` forwards `.env` values to the `bub` subprocess as-is.
-
-   ```dotenv
-   bub_api_key=sk-or-v1-...
-   OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-   ```
-
-## Commands
-
-| Command        | Description                                      |
-|----------------|--------------------------------------------------|
-| `bubseek init` | Create or update `bubseek.toml` (optional lock). |
-| `bubseek lock` | Generate or update `bubseek.lock` from config. |
-| `bubseek sync` | Install Bub/contrib and sync skills from the lock. |
-| `bubseek *` | Any other subcommand is passed through to Bub. |
-
-## Repository layout
-
-```
-bubseek/
-├── bubseek.toml      # Distribution manifest (bub, contrib, skills)
-├── bubseek.lock      # Generated lockfile (commit this)
-├── src/bubseek/      # Package source
-├── skills/           # Bundled skills
-├── contrib/          # Contrib metadata and notes
-├── docs/             # Documentation
-└── tests/
-```
-
-See [Configuration](https://psiace.github.io/bubseek/configuration/) for the full `bubseek.toml` reference.
 
 ## Documentation
 
-- [Getting started](https://psiace.github.io/bubseek/getting-started/) — Install, init, lock, sync.
-- [Configuration](https://psiace.github.io/bubseek/configuration/) — `bubseek.toml` and locking.
-- [Architecture](https://psiace.github.io/bubseek/architecture/) — Design and sync semantics.
-- [API reference](https://psiace.github.io/bubseek/api-reference/) — Python API.
-- [Development](https://psiace.github.io/bubseek/development/) — Tests, linting, contributing.
+User documentation lives at:
+
+https://psiace.github.io/bubseek/
 
 ## Development
 
 ```bash
-make install   # Create venv and install pre-commit
-make check     # Lint and type-check
-make test      # Run pytest
-make docs      # Serve MkDocs locally
+make install
+make check
+make test
+make docs
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.

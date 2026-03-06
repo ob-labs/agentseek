@@ -1,18 +1,23 @@
 # bubseek
 
-**bubseek** is an enterprise-oriented distribution of [Bub](https://github.com/bubbuild/bub) for agent-driven insight workflows in cloud-edge environments.
+bubseek is a Bub distribution aimed at users who want a practical default package, not a separate lifecycle to manage.
 
-It turns fragmented data across operational systems, repositories, and agent runtime traces into **explainable, actionable, and shareable insights** without heavy ETL. The runtime stays Bub; bubseek adds distribution tooling: a declarative manifest (`bubseek.toml`), a lockfile (`bubseek.lock`), and commands to sync **contrib** packages and **skills** into your workspace.
+The main user path is simple:
 
-## Documentation
+1. Install `bubseek`
+2. Run Bub through `bubseek`
+3. Add contrib through normal Python dependencies
+4. Keep using Bub as usual
 
-| Section | Description |
-|--------|--------------|
-| [Getting started](getting-started.md) | Install, initialize config, lock, sync, and run Bub. |
-| [Configuration](configuration.md) | `bubseek.toml` reference: project, bub, contrib, skills. |
-| [Architecture](architecture.md) | Design boundaries, command model, locking and cache. |
-| [Development](development.md) | Running tests, linting, and contributing. |
-| [API reference](api-reference.md) | Python modules and public API. |
+## Start here
+
+| Section | What it answers |
+| --- | --- |
+| [Getting started](getting-started.md) | How do I install and run bubseek? |
+| [Configuration](configuration.md) | How do I pin Bub, add contrib, and package skills? |
+| [Architecture](architecture.md) | What does bubseek do, and what does it leave to Bub and Python packaging? |
+| [Development](development.md) | How do I test, build, and work on this repo? |
+| [API reference](api-reference.md) | What Python surface does bubseek expose? |
 
 ## Quick links
 
