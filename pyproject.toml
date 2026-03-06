@@ -15,11 +15,20 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+dependencies = [
+    "bub @ git+https://github.com/bubbuild/bub.git@frost/bub-framework",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "typer>=0.9.0",
+]
 
 [project.urls]
 Homepage = "https://psiace.github.io/bubseek/"
 Repository = "https://github.com/psiace/bubseek"
 Documentation = "https://psiace.github.io/bubseek/"
+
+[project.scripts]
+bubseek = "bubseek.__main__:main"
 
 [dependency-groups]
 dev = [
@@ -36,8 +45,17 @@ dev = [
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.build]
+includes = [
+    "src/bubseek",
+    "skills",
+    "contrib",
+    "bubseek.toml",
+    "bubseek.lock",
+]
 
 # Lock file is always resolved against PyPI. For faster install during dev, use:
 #   UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv sync

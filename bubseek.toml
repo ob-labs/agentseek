@@ -1,0 +1,17 @@
+[project]
+name = "bubseek"
+version = "0.0.1"
+
+[bub]
+repo = "https://github.com/bubbuild/bub"
+ref = "frost/bub-framework"
+
+[[contrib]]
+name = "bub-schedule"
+repo = "https://github.com/bubbuild/bub-contrib"
+path = "packages/bub-schedule"
+ref = "main"
+
+[[skills]]
+name = "bubseek-bootstrap"
+path = "skills/bubseek-bootstrap"

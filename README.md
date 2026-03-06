@@ -1,74 +1,109 @@
 # bubseek
 
-[![Release](https://img.shields.io/github/v/release/psiace/bubseek)](https://img.shields.io/github/v/release/psiace/bubseek)
-[![Build status](https://img.shields.io/github/actions/workflow/status/psiace/bubseek/main.yml?branch=main)](https://github.com/psiace/bubseek/actions/workflows/main.yml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/psiace/bubseek/branch/main/graph/badge.svg)](https://codecov.io/gh/psiace/bubseek)
-[![Commit activity](https://img.shields.io/github/commit-activity/m/psiace/bubseek)](https://img.shields.io/github/commit-activity/m/psiace/bubseek)
-[![License](https://img.shields.io/github/license/psiace/bubseek)](https://img.shields.io/github/license/psiace/bubseek)
+[![PyPI version](https://img.shields.io/pypi/v/bubseek.svg)](https://pypi.org/project/bubseek/)
+[![License](https://img.shields.io/github/license/psiace/bubseek.svg)](LICENSE)
+[![CI](https://github.com/psiace/bubseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/psiace/bubseek/actions/workflows/main.yml?query=branch%3Amain)
 
-Intelligent Perception and Explainable Analytics in Collaboration ｜ Bub & seekdb Inside
+**Enterprise-oriented distribution of [Bub](https://github.com/bubbuild/bub)** for agent-driven insight workflows in cloud-edge environments.
 
-- **Github repository**: <https://github.com/psiace/bubseek/>
-- **Documentation** <https://psiace.github.io/bubseek/>
+bubseek turns fragmented data across operational systems, repositories, and agent runtime traces into **explainable, actionable, and shareable insights** without heavy ETL. It keeps the Bub runtime and extension model while adding distribution tooling: declarative config, lockfiles, and sync for contrib packages and skills.
 
-## Getting started with your project
+## Features
 
-### 1. Create a New Repository
+- **Lightweight and on-demand** — Trigger analysis when needed instead of maintaining large offline pipelines.
+- **Explainability first** — Conclusions are returned together with agent reasoning context.
+- **Cloud-edge ready** — Supports distributed deployment and local execution boundaries.
+- **Agent observability** — Treats agent behavior as governed, inspectable runtime data.
+- **Bub-compatible** — Forwards all non-bubseek commands to Bub; no fork of the core runtime.
 
-First, create a repository on GitHub with the same name as this project, and then run the following commands:
+## Installation
 
-```bash
-git init -b main
-git add .
-git commit -m "init commit"
-git remote add origin git@github.com:psiace/bubseek.git
-git push -u origin main
-```
+Requires [uv](https://docs.astral.sh/uv/) (recommended) or pip, and Python 3.12+.
 
-### 2. Set Up Your Development Environment
-
-Then, install the environment and the pre-commit hooks with
+From the project root:
 
 ```bash
-make install
+git clone https://github.com/psiace/bubseek.git
+cd bubseek
+uv sync
 ```
 
-This will also generate your `uv.lock` file
-
-### 3. Run the pre-commit hooks
-
-Initially, the CI/CD pipeline might be failing due to formatting issues. To resolve those run:
+Or install from PyPI (when published):
 
 ```bash
-uv run pre-commit run -a
+uv add bubseek
 ```
 
-### 4. Commit the changes
+## Quick start
 
-Lastly, commit the changes made by the two steps above to your repository.
+1. **Initialize** a manifest and lockfile (or use the existing `bubseek.toml`):
+
+   ```bash
+   uv run bubseek init --with-lock
+   ```
+
+2. **Regenerate the lockfile** after editing `bubseek.toml`:
+
+   ```bash
+   uv run bubseek lock
+   ```
+
+3. **Sync** locked contrib packages and skills into a workspace:
+
+   ```bash
+   uv run bubseek sync --workspace .
+   ```
+
+4. **Run Bub** via bubseek (all other commands are forwarded to Bub):
+
+   ```bash
+   uv run bubseek chat
+   uv run bubseek run ",help"
+   ```
+
+## Commands
+
+| Command        | Description                                      |
+|----------------|--------------------------------------------------|
+| `bubseek init` | Create or update `bubseek.toml` (optional lock). |
+| `bubseek lock`  | Generate or update `bubseek.lock` from config.    |
+| `bubseek sync`  | Install contrib and sync skills from the lock.   |
+| `bubseek *`     | Any other subcommand is passed through to Bub.   |
+
+## Repository layout
+
+```
+bubseek/
+├── bubseek.toml      # Distribution manifest (bub, contrib, skills)
+├── bubseek.lock      # Generated lockfile (commit this)
+├── src/bubseek/      # Package source
+├── skills/           # Bundled skills
+├── contrib/          # Contrib metadata and notes
+├── docs/             # Documentation
+└── tests/
+```
+
+See [Configuration](https://psiace.github.io/bubseek/configuration/) for the full `bubseek.toml` reference.
+
+## Documentation
+
+- [Getting started](https://psiace.github.io/bubseek/getting-started/) — Install, init, lock, sync.
+- [Configuration](https://psiace.github.io/bubseek/configuration/) — `bubseek.toml` and locking.
+- [Architecture](https://psiace.github.io/bubseek/architecture/) — Design and sync semantics.
+- [API reference](https://psiace.github.io/bubseek/api-reference/) — Python API.
+- [Development](https://psiace.github.io/bubseek/development/) — Tests, linting, contributing.
+
+## Development
 
 ```bash
-git add .
-git commit -m 'Fix formatting issues'
-git push origin main
+make install   # Create venv and install pre-commit
+make check     # Lint and type-check
+make test      # Run pytest
+make docs      # Serve MkDocs locally
 ```
 
-You are now ready to start development on your project!
-The CI/CD pipeline will be triggered when you open a pull request, merge to main, or when you create a new release.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
-To finalize the set-up for publishing to PyPI, see [here](https://fpgmaas.github.io/cookiecutter-uv/features/publishing/#set-up-for-pypi).
-For activating the automatic documentation with MkDocs, see [here](https://fpgmaas.github.io/cookiecutter-uv/features/mkdocs/#enabling-the-documentation-on-github).
-To enable the code coverage reports, see [here](https://fpgmaas.github.io/cookiecutter-uv/features/codecov/).
+## License
 
-## Releasing a new version
-
-- Create an API Token on [PyPI](https://pypi.org/).
-- Add the API Token to your projects secrets with the name `PYPI_TOKEN` by visiting [this page](https://github.com/psiace/bubseek/settings/secrets/actions/new).
-- Create a [new release](https://github.com/psiace/bubseek/releases/new) on Github.
-- Create a new tag in the form `*.*.*`.
-
-For more details, see [here](https://fpgmaas.github.io/cookiecutter-uv/features/cicd/#how-to-trigger-a-release).
-
----
-
-Repository initiated with [fpgmaas/cookiecutter-uv](https://github.com/fpgmaas/cookiecutter-uv).
+[Apache-2.0](LICENSE).

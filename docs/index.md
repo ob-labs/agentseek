@@ -1,8 +1,21 @@
 # bubseek
 
-[![Release](https://img.shields.io/github/v/release/psiace/bubseek)](https://img.shields.io/github/v/release/psiace/bubseek)
-[![Build status](https://img.shields.io/github/actions/workflow/status/psiace/bubseek/main.yml?branch=main)](https://github.com/psiace/bubseek/actions/workflows/main.yml?query=branch%3Amain)
-[![Commit activity](https://img.shields.io/github/commit-activity/m/psiace/bubseek)](https://img.shields.io/github/commit-activity/m/psiace/bubseek)
-[![License](https://img.shields.io/github/license/psiace/bubseek)](https://img.shields.io/github/license/psiace/bubseek)
+**bubseek** is an enterprise-oriented distribution of [Bub](https://github.com/bubbuild/bub) for agent-driven insight workflows in cloud-edge environments.
 
-Intelligent Perception and Explainable Analytics in Collaboration ｜ Bub & seekdb Inside
+It turns fragmented data across operational systems, repositories, and agent runtime traces into **explainable, actionable, and shareable insights** without heavy ETL. The runtime stays Bub; bubseek adds distribution tooling: a declarative manifest (`bubseek.toml`), a lockfile (`bubseek.lock`), and commands to sync **contrib** packages and **skills** into your workspace.
+
+## Documentation
+
+| Section | Description |
+|--------|--------------|
+| [Getting started](getting-started.md) | Install, initialize config, lock, sync, and run Bub. |
+| [Configuration](configuration.md) | `bubseek.toml` reference: project, bub, contrib, skills. |
+| [Architecture](architecture.md) | Design boundaries, command model, locking and cache. |
+| [Development](development.md) | Running tests, linting, and contributing. |
+| [API reference](api-reference.md) | Python modules and public API. |
+
+## Quick links
+
+- [Repository](https://github.com/psiace/bubseek)
+- [PyPI](https://pypi.org/project/bubseek/)
+- [Bub](https://github.com/bubbuild/bub)

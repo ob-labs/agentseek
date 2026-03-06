@@ -5,11 +5,15 @@ site_description: Intelligent Perception and Explainable Analytics in Collaborat
 site_author: Chojan Shang
 edit_uri: edit/main/docs/
 repo_name: psiace/bubseek
-copyright: Maintained by <a href="https://psiace.com">psiace</a>.
+copyright: Maintained by <a href="https://github.com/psiace">psiace</a>.
 
 nav:
   - Home: index.md
-  - Modules: modules.md
+  - Getting started: getting-started.md
+  - Configuration: configuration.md
+  - Architecture: architecture.md
+  - Development: development.md
+  - API reference: api-reference.md
 plugins:
   - search
   - mkdocstrings:
