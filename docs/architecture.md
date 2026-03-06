@@ -37,7 +37,7 @@ The lockfile records both the pinned `source` and an explicit `resolved_commit` 
 
 `bubseek sync` reads the lockfile and:
 
-1. **Contrib** — Installs locked contrib packages into the current environment (e.g. via `uv pip install` with locked git sources).
+1. **Bub + contrib** — Installs locked Bub and contrib packages into the current environment (e.g. via `uv pip install` with locked paths or cached git sources).
 2. **Local skills** — Copies from the distribution tree into `<workspace>/.agents/skills/<name>/`.
 3. **Remote skills** — Ensures the repo is available (clone or cache), then copies the resolved tree into the workspace skills directory.
 

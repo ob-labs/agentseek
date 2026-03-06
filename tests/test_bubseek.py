@@ -6,6 +6,7 @@ import tomllib
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from typer.testing import CliRunner
@@ -34,7 +35,8 @@ def test_bubseek_pyproject_depends_on_bub() -> None:
     dependencies = data["project"]["dependencies"]
 
     assert isinstance(dependencies, list)
-    assert any(item.startswith("bub>=") for item in dependencies)
+    assert any(item.startswith("bub @ git+https://github.com/bubbuild/bub.git@") for item in dependencies)
+    assert "python-dotenv>=1.0.0" in dependencies
     assert "pydantic>=2.0.0" in dependencies
     assert "pydantic-settings>=2.0.0" in dependencies
     assert "typer>=0.9.0" in dependencies
@@ -46,10 +48,11 @@ def test_bubseek_config_loader_returns_default_packages() -> None:
         skills = bubseek.bundled_skill_names()
         config = bubseek.load_config(BUBSEEK_ROOT / "bubseek.toml")
 
-    assert packages == ["bub-codex", "bub-schedule"]
+    assert packages == ["bub-schedule"]
     assert skills == ["bubseek-bootstrap"]
     assert config["project"]["name"] == "bubseek"
-    assert config["bub"]["path"] == "../.."
+    assert config["bub"]["repo"] == "https://github.com/bubbuild/bub"
+    assert config["bub"]["ref"] == "frost/bub-framework"
 
 
 def test_bubseek_bundled_skill_has_valid_frontmatter() -> None:
@@ -87,33 +90,31 @@ def test_bubseek_can_generate_lock_from_config(tmp_path: Path, monkeypatch: pyte
     (runtime_bub / "README.md").write_text("demo", encoding="utf-8")
     config_path = tmp_path / "bubseek.toml"
     config_path.write_text(
-        "\n".join(
-            [
-                "[project]",
-                'name = "demo"',
-                'version = "0.0.1"',
-                "",
-                "[bub]",
-                'path = "runtime/bub"',
-                "",
-                "[[contrib]]",
-                'name = "bub-codex"',
-                'repo = "https://github.com/bubbuild/bub-contrib"',
-                'path = "packages/bub-codex"',
-                'ref = "main"',
-                "",
-                "[[skills]]",
-                'name = "demo-skill"',
-                'path = "skills/demo-skill"',
-                "",
-                "[[skills]]",
-                'name = "remote-skill"',
-                'repo = "https://github.com/example/skill-repo"',
-                'path = "skills/remote-skill"',
-                'ref = "v1.2.3"',
-                "",
-            ]
-        ),
+        "\n".join([
+            "[project]",
+            'name = "demo"',
+            'version = "0.0.1"',
+            "",
+            "[bub]",
+            'path = "runtime/bub"',
+            "",
+            "[[contrib]]",
+            'name = "bub-codex"',
+            'repo = "https://github.com/bubbuild/bub-contrib"',
+            'path = "packages/bub-codex"',
+            'ref = "main"',
+            "",
+            "[[skills]]",
+            'name = "demo-skill"',
+            'path = "skills/demo-skill"',
+            "",
+            "[[skills]]",
+            'name = "remote-skill"',
+            'repo = "https://github.com/example/skill-repo"',
+            'path = "skills/remote-skill"',
+            'ref = "v1.2.3"',
+            "",
+        ]),
         encoding="utf-8",
     )
 
@@ -176,6 +177,61 @@ def test_bubseek_wrapper_forwards_non_management_commands(monkeypatch: pytest.Mo
     assert observed["args"] == ["chat", "--help"]
 
 
+def test_bubseek_wrapper_forwards_help_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    with imported_bubseek_modules("bubseek.__main__") as [main_mod]:
+        observed: dict[str, object] = {}
+
+        def _forward(args: list[str]) -> int:
+            observed["args"] = args
+            return 0
+
+        monkeypatch.setattr(
+            main_mod,
+            "_default_dependencies",
+            lambda: main_mod.BubseekCliDependencies(
+                generate_config=main_mod.generate_config,
+                generate_lock=main_mod.generate_lock,
+                sync_from_lock=main_mod.sync_from_lock,
+                forward_command=_forward,
+                echo=lambda message: None,
+            ),
+        )
+        result = main_mod.main(["help"])
+
+    assert result == 0
+    assert observed["args"] == ["help"]
+
+
+def test_bubseek_wrapper_forwards_dotenv_values(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join([
+            "bub_api_key=demo-key",
+            "openrouter_base_url=https://openrouter.ai/api/v1",
+        ]),
+        encoding="utf-8",
+    )
+
+    with imported_bubseek_modules("bubseek.__main__") as [main_mod]:
+        observed: dict[str, object] = {}
+
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(main_mod.shutil, "which", lambda _name: "/usr/bin/bub")
+
+        def _capture_run(command: list[str], *, check: bool, env: dict[str, str]) -> SimpleNamespace:
+            observed["command"] = command
+            observed["env"] = env
+            return SimpleNamespace(returncode=0)
+
+        monkeypatch.setattr(main_mod.subprocess, "run", _capture_run)
+        result = main_mod._forward_to_bub(["chat"])
+
+    assert result == 0
+    assert observed["command"] == ["/usr/bin/bub", "chat"]
+    assert observed["env"]["bub_api_key"] == "demo-key"
+    assert observed["env"]["openrouter_base_url"] == "https://openrouter.ai/api/v1"
+
+
 def test_bubseek_wrapper_help_mentions_core_management_commands() -> None:
     runner = CliRunner()
     with imported_bubseek_modules("bubseek.__main__") as [main_mod]:
@@ -202,21 +258,19 @@ def test_bubseek_sync_installs_local_skill_from_lock(tmp_path: Path) -> None:
     with imported_bubseek_modules("bubseek.config", "bubseek.sync") as [config_mod, sync_mod]:
         lock_path = dist_root / "bubseek.lock"
         lock_path.write_text(
-            "\n".join(
-                [
-                    "[meta]",
-                    "lock_version = 1",
-                    'config_file = "bubseek.toml"',
-                    f'config_sha256 = "{config_mod.sha256_file(config_path)}"',
-                    "",
-                    "[[skills]]",
-                    'name = "demo-skill"',
-                    'kind = "local"',
-                    'path = "skills/demo-skill"',
-                    f'sha256 = "{config_mod.sha256_dir(skill_dir)}"',
-                    "",
-                ]
-            ),
+            "\n".join([
+                "[meta]",
+                "lock_version = 1",
+                'config_file = "bubseek.toml"',
+                f'config_sha256 = "{config_mod.sha256_file(config_path)}"',
+                "",
+                "[[skills]]",
+                'name = "demo-skill"',
+                'kind = "local"',
+                'path = "skills/demo-skill"',
+                f'sha256 = "{config_mod.sha256_dir(skill_dir)}"',
+                "",
+            ]),
             encoding="utf-8",
         )
         result = sync_mod.sync_from_lock(
@@ -250,21 +304,19 @@ def test_bubseek_sync_rejects_local_skill_checksum_mismatch(tmp_path: Path) -> N
     lock_path = dist_root / "bubseek.lock"
     with imported_bubseek_modules("bubseek.config", "bubseek.sync") as [config_mod, sync_mod]:
         lock_path.write_text(
-            "\n".join(
-                [
-                    "[meta]",
-                    "lock_version = 1",
-                    'config_file = "bubseek.toml"',
-                    f'config_sha256 = "{config_mod.sha256_file(config_path)}"',
-                    "",
-                    "[[skills]]",
-                    'name = "demo-skill"',
-                    'kind = "local"',
-                    'path = "skills/demo-skill"',
-                    'sha256 = "bad-checksum"',
-                    "",
-                ]
-            ),
+            "\n".join([
+                "[meta]",
+                "lock_version = 1",
+                'config_file = "bubseek.toml"',
+                f'config_sha256 = "{config_mod.sha256_file(config_path)}"',
+                "",
+                "[[skills]]",
+                'name = "demo-skill"',
+                'kind = "local"',
+                'path = "skills/demo-skill"',
+                'sha256 = "bad-checksum"',
+                "",
+            ]),
             encoding="utf-8",
         )
         with pytest.raises(ValueError, match="local skill checksum mismatch"):
@@ -284,15 +336,13 @@ def test_bubseek_sync_rejects_lock_config_checksum_mismatch(tmp_path: Path) -> N
     config_path.write_text("[project]\nname='demo'\nversion='0.0.1'\n", encoding="utf-8")
     lock_path = dist_root / "bubseek.lock"
     lock_path.write_text(
-        "\n".join(
-            [
-                "[meta]",
-                "lock_version = 1",
-                'config_file = "bubseek.toml"',
-                'config_sha256 = "bad-checksum"',
-                "",
-            ]
-        ),
+        "\n".join([
+            "[meta]",
+            "lock_version = 1",
+            'config_file = "bubseek.toml"',
+            'config_sha256 = "bad-checksum"',
+            "",
+        ]),
         encoding="utf-8",
     )
 
@@ -320,7 +370,7 @@ def test_bubseek_sync_installs_bub_before_contrib(tmp_path: Path, monkeypatch: p
     (runtime_bub / "pyproject.toml").write_text("[project]\nname='bub'\nversion='0.3.0'\n", encoding="utf-8")
     (runtime_bub / "README.md").write_text("demo", encoding="utf-8")
 
-    contrib_source = f'git+https://github.com/example/contrib.git@{"a" * 40}#subdirectory=packages/bub-codex'
+    contrib_source = f"git+https://github.com/example/contrib.git@{'a' * 40}#subdirectory=packages/bub-codex"
     cache_root = tmp_path / "cache"
     checkout_dir = cache_root / "git" / "checkout"
     package_dir = checkout_dir / "packages" / "bub-codex"
@@ -330,32 +380,32 @@ def test_bubseek_sync_installs_bub_before_contrib(tmp_path: Path, monkeypatch: p
     lock_path = dist_root / "bubseek.lock"
     with imported_bubseek_modules("bubseek.config", "bubseek.sync") as [config_mod, sync_mod]:
         lock_path.write_text(
-            "\n".join(
-                [
-                    "[meta]",
-                    "lock_version = 1",
-                    'config_file = "bubseek.toml"',
-                    f'config_sha256 = "{config_mod.sha256_file(config_path)}"',
-                    "",
-                    "[bub]",
-                    'kind = "local"',
-                    f'path = "{runtime_bub.relative_to(dist_root).as_posix()}"',
-                    f'sha256 = "{config_mod.sha256_package_dir(runtime_bub)}"',
-                    "",
-                    "[[contrib]]",
-                    'name = "bub-codex"',
-                    'kind = "remote"',
-                    f'source = "{contrib_source}"',
-                    f'sha256 = "{config_mod.sha256_text(contrib_source)}"',
-                    f'resolved_commit = "{"a" * 40}"',
-                    "",
-                ]
-            ),
+            "\n".join([
+                "[meta]",
+                "lock_version = 1",
+                'config_file = "bubseek.toml"',
+                f'config_sha256 = "{config_mod.sha256_file(config_path)}"',
+                "",
+                "[bub]",
+                'kind = "local"',
+                f'path = "{runtime_bub.relative_to(dist_root).as_posix()}"',
+                f'sha256 = "{config_mod.sha256_package_dir(runtime_bub)}"',
+                "",
+                "[[contrib]]",
+                'name = "bub-codex"',
+                'kind = "remote"',
+                f'source = "{contrib_source}"',
+                f'sha256 = "{config_mod.sha256_text(contrib_source)}"',
+                f'resolved_commit = "{"a" * 40}"',
+                "",
+            ]),
             encoding="utf-8",
         )
 
         monkeypatch.setenv(sync_mod.CACHE_DIR_ENV, str(cache_root))
-        monkeypatch.setattr(sync_mod, "_resolve_cached_source_target", lambda source, source_kind: package_dir.resolve())
+        monkeypatch.setattr(
+            sync_mod, "_resolve_cached_source_target", lambda source, source_kind: package_dir.resolve()
+        )
 
         observed: dict[str, object] = {}
 
@@ -386,22 +436,20 @@ def test_bubseek_sync_installs_bub_before_contrib(tmp_path: Path, monkeypatch: p
 def test_remote_lock_rejects_mismatched_resolved_commit(tmp_path: Path) -> None:
     lock_path = tmp_path / "bubseek.lock"
     lock_path.write_text(
-        "\n".join(
-            [
-                "[meta]",
-                "lock_version = 1",
-                'config_file = "bubseek.toml"',
-                'config_sha256 = "dummy"',
-                "",
-                "[[contrib]]",
-                'name = "bub-codex"',
-                'kind = "remote"',
-                f'source = "git+https://github.com/example/contrib.git@{"a" * 40}#subdirectory=packages/bub-codex"',
-                'sha256 = "dummy"',
-                f'resolved_commit = "{"b" * 40}"',
-                "",
-            ]
-        ),
+        "\n".join([
+            "[meta]",
+            "lock_version = 1",
+            'config_file = "bubseek.toml"',
+            'config_sha256 = "dummy"',
+            "",
+            "[[contrib]]",
+            'name = "bub-codex"',
+            'kind = "remote"',
+            f'source = "git+https://github.com/example/contrib.git@{"a" * 40}#subdirectory=packages/bub-codex"',
+            'sha256 = "dummy"',
+            f'resolved_commit = "{"b" * 40}"',
+            "",
+        ]),
         encoding="utf-8",
     )
 
@@ -428,7 +476,9 @@ def test_remote_skill_dir_uses_cache_without_recloning(tmp_path: Path, monkeypat
         skill_dir = checkout_dir / "skills" / "remote-skill"
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text("---\nname: remote-skill\ndescription: demo\n---\nBody\n", encoding="utf-8")
-        (checkout_dir / sync_mod.CACHE_KEY_FILE).write_text(sync_mod._cache_marker(repo=repo, ref=ref), encoding="utf-8")
+        (checkout_dir / sync_mod.CACHE_KEY_FILE).write_text(
+            sync_mod._cache_marker(repo=repo, ref=ref), encoding="utf-8"
+        )
 
         def _fail_clone(**kwargs: object) -> None:
             raise AssertionError("cache reuse should not clone again")
@@ -454,7 +504,9 @@ def test_install_contrib_entries_uses_shared_checkout_cache(tmp_path: Path, monk
         package_dir = checkout_dir / "packages" / "bub-codex"
         package_dir.mkdir(parents=True)
         (package_dir / "pyproject.toml").write_text("[project]\nname='bub-codex'\nversion='0.0.1'\n", encoding="utf-8")
-        (checkout_dir / sync_mod.CACHE_KEY_FILE).write_text(sync_mod._cache_marker(repo=repo, ref=ref), encoding="utf-8")
+        (checkout_dir / sync_mod.CACHE_KEY_FILE).write_text(
+            sync_mod._cache_marker(repo=repo, ref=ref), encoding="utf-8"
+        )
 
         observed: dict[str, object] = {}
 
@@ -490,21 +542,19 @@ def test_local_contrib_uses_same_install_flow_as_bub(tmp_path: Path, monkeypatch
     with imported_bubseek_modules("bubseek.config", "bubseek.sync") as [config_mod, sync_mod]:
         lock_path = dist_root / "bubseek.lock"
         lock_path.write_text(
-            "\n".join(
-                [
-                    "[meta]",
-                    "lock_version = 1",
-                    'config_file = "bubseek.toml"',
-                    f'config_sha256 = "{config_mod.sha256_file(config_path)}"',
-                    "",
-                    "[[contrib]]",
-                    'name = "bub-local"',
-                    'kind = "local"',
-                    'path = "vendor/bub-local"',
-                    f'sha256 = "{config_mod.sha256_package_dir(local_contrib)}"',
-                    "",
-                ]
-            ),
+            "\n".join([
+                "[meta]",
+                "lock_version = 1",
+                'config_file = "bubseek.toml"',
+                f'config_sha256 = "{config_mod.sha256_file(config_path)}"',
+                "",
+                "[[contrib]]",
+                'name = "bub-local"',
+                'kind = "local"',
+                'path = "vendor/bub-local"',
+                f'sha256 = "{config_mod.sha256_package_dir(local_contrib)}"',
+                "",
+            ]),
             encoding="utf-8",
         )
 

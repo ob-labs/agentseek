@@ -17,6 +17,7 @@ classifiers = [
 ]
 dependencies = [
     "bub @ git+https://github.com/bubbuild/bub.git@frost/bub-framework",
+    "python-dotenv>=1.0.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "typer>=0.9.0",

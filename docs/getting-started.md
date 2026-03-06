@@ -92,6 +92,14 @@ uv run bubseek run ",help"
 uv run bubseek run "Summarize this repo"
 ```
 
+If your model or plugin reads credentials from environment variables, put them in `.env` in the workspace or current
+directory. `bubseek` forwards those values to the `bub` subprocess as-is.
+
+```dotenv
+bub_api_key=sk-or-v1-...
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+```
+
 Bub runtime behavior (models, API keys, comma commands, etc.) is unchanged; see [Bub](https://github.com/bubbuild/bub) for details.
 
 ## Next steps

@@ -3,6 +3,7 @@
 # ruff: noqa: B008
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -11,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import typer
+from dotenv import dotenv_values
 from typer.main import get_command
 
 from bubseek.config import generate_config, generate_lock
@@ -21,7 +23,7 @@ GenerateLock = Callable[..., Path]
 SyncFromLock = Callable[..., SyncResult]
 ForwardCommand = Callable[[list[str]], int]
 Echo = Callable[[str], None]
-MANAGEMENT_COMMANDS = {"init", "lock", "sync", "help", "-h", "--help"}
+MANAGEMENT_COMMANDS = {"init", "lock", "sync", "-h", "--help"}
 
 
 @dataclass(frozen=True)
@@ -149,8 +151,22 @@ def _forward_to_bub(args: list[str]) -> int:
     executable = shutil.which("bub")
     if executable is None:
         raise FileNotFoundError("command not found: bub")
-    completed = subprocess.run([executable, *args], check=False)
+    completed = subprocess.run(
+        [executable, *args],
+        check=False,
+        env=_forward_environment(),
+    )
     return int(completed.returncode)
+
+
+def _forward_environment() -> dict[str, str]:
+    env = dict(os.environ)
+    env.update({
+        key: value
+        for key, value in dotenv_values(Path.cwd() / ".env").items()
+        if isinstance(key, str) and isinstance(value, str)
+    })
+    return env
 
 
 app = create_cli_app()

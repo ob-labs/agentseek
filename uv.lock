@@ -128,6 +128,7 @@ dependencies = [
     { name = "bub" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "python-dotenv" },
     { name = "typer" },
 ]
 
@@ -148,6 +149,7 @@ requires-dist = [
     { name = "bub", git = "https://github.com/bubbuild/bub.git?rev=frost%2Fbub-framework" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "typer", specifier = ">=0.9.0" },
 ]
 

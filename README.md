@@ -61,14 +61,22 @@ uv add bubseek
    uv run bubseek run ",help"
    ```
 
+   If your Bub runtime or model plugin expects API credentials, put them in `.env`.
+   `bubseek` forwards `.env` values to the `bub` subprocess as-is.
+
+   ```dotenv
+   bub_api_key=sk-or-v1-...
+   OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+   ```
+
 ## Commands
 
 | Command        | Description                                      |
 |----------------|--------------------------------------------------|
 | `bubseek init` | Create or update `bubseek.toml` (optional lock). |
-| `bubseek lock`  | Generate or update `bubseek.lock` from config.    |
-| `bubseek sync`  | Install contrib and sync skills from the lock.   |
-| `bubseek *`     | Any other subcommand is passed through to Bub.   |
+| `bubseek lock` | Generate or update `bubseek.lock` from config. |
+| `bubseek sync` | Install Bub/contrib and sync skills from the lock. |
+| `bubseek *` | Any other subcommand is passed through to Bub. |
 
 ## Repository layout
 
