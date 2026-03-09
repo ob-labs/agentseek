@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import importlib
-
-import pytest
 import sys
 import tomllib
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
+from types import ModuleType
 
+import pytest
 from bub.skills import _read_skill
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

@@ -35,13 +35,14 @@ def _database_exists(host: str, port: int, user: str, password: str, database: s
             charset="utf8mb4",
         )
         conn.close()
-        return True
     except pymysql.err.OperationalError as e:
         if e.args[0] == 1049:  # Unknown database
             return False
         raise
     except Exception:
         raise
+    else:
+        return True
 
 
 def _create_database(host: str, port: int, user: str, password: str, database: str) -> bool:
@@ -58,9 +59,10 @@ def _create_database(host: str, port: int, user: str, password: str, database: s
         with conn.cursor() as cur:
             cur.execute(f"CREATE DATABASE IF NOT EXISTS `{database}` DEFAULT CHARACTER SET utf8mb4")
         conn.close()
-        return True
     except Exception:
         return False
+    else:
+        return True
 
 
 def ensure_database() -> None:
@@ -82,10 +84,9 @@ def ensure_database() -> None:
     hint = _CREATE_DB_HINT.format(host=host, port=port, user=user, database=database).strip()
     interactive = __import__("sys").stdin.isatty()
 
-    if interactive:
-        if not typer.confirm(f"Database {database!r} does not exist. Create it?", default=False):
-            typer.echo(hint, err=True)
-            raise typer.Exit(1)
+    if interactive and not typer.confirm(f"Database {database!r} does not exist. Create it?", default=False):
+        typer.echo(hint, err=True)
+        raise typer.Exit(1)
 
     if _create_database(host, port, user, password, database):
         typer.echo(f"Database {database!r} created at {host}:{port}", err=True)
@@ -114,7 +115,7 @@ def _run_bub(args: list[str]) -> None:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), "bub")
     env = forward_environment()
     try:
-        os.execve(executable, [executable, *(args or ["--help"])], env)
+        os.execve(executable, [executable, *(args or ["--help"])], env)  # noqa: S606
     except OSError as e:
         sys.exit(e.errno if e.errno else 1)
 
@@ -128,9 +129,9 @@ app = typer.Typer(
 @app.callback()
 def main(
     args: Annotated[
-        list[str],
+        list[str] | None,
         typer.Argument(help="Arguments to forward to bub (e.g. chat, gateway, --help)"),
-    ] = [],
+    ] = None,
 ) -> None:
     """Run bub with bubseek environment and startup checks."""
     ensure_database()

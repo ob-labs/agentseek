@@ -48,7 +48,7 @@ class DatabaseSettings(BaseSettings):
                 password = parsed.password
             if parsed.path and parsed.path.strip("/"):
                 database = parsed.path.strip("/")
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return host, port, user, password, database
 

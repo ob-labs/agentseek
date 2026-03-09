@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pymysql
-
 import pyobvector  # noqa: F401
 from bub import hookimpl
 from pyobvector.schema.dialect import OceanBaseDialect as _OceanBaseDialect
