@@ -26,13 +26,21 @@ def imported_bubseek_modules(*module_names: str) -> Iterator[list[ModuleType]]:
                 sys.modules.pop(module_name, None)
 
 
-def test_pyproject_pins_bub_and_keeps_runtime_deps_minimal() -> None:
+def test_pyproject_pins_bub_and_bundled_plugins() -> None:
     data = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
-    assert data["project"]["dependencies"] == [
-        "bub==0.3.0a1",
-        "python-dotenv>=1.0.0",
-    ]
+    deps = data["project"]["dependencies"]
+    assert "bub" in deps
+    assert "python-dotenv>=1.0.0" in deps
+    assert any("bub-feishu" in d for d in deps)
+    assert any("bub-web-search" in d for d in deps)
+    assert any("bub-tapestore-sqlalchemy" in d for d in deps)
+
+    sources = data.get("tool", {}).get("uv", {}).get("sources", {})
+    assert "bub" in sources
+    assert sources["bub"].get("git") == "https://github.com/bubbuild/bub.git"
+    assert "bub-feishu" in sources
+    assert sources["bub-feishu"].get("git") == "https://github.com/bubbuild/bub-contrib.git"
     assert data["build-system"]["requires"] == ["pdm-backend"]
 
 

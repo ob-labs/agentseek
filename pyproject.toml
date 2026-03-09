@@ -16,8 +16,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "bub==0.3.0a1",
+    "bub",
     "python-dotenv>=1.0.0",
+    "bub-feishu",
+    "bub-web-search",
+    "bub-tapestore-sqlalchemy",
 ]
 
 [project.urls]
@@ -56,6 +59,12 @@ includes = [
 #   UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple uv sync
 [tool.uv]
 index-url = "https://pypi.org/simple"
+
+[tool.uv.sources]
+bub = { git = "https://github.com/bubbuild/bub.git" }
+bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", subdirectory = "packages/bub-feishu" }
+bub-web-search = { git = "https://github.com/bubbuild/bub-contrib.git", subdirectory = "packages/bub-web-search" }
+bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", subdirectory = "packages/bub-tapestore-sqlalchemy" }
 
 [tool.ty.environment]
 python = "./.venv"
