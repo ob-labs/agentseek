@@ -34,12 +34,27 @@ If you do not want them installed by default, put them under `optional-dependenc
 
 ## Runtime credentials
 
-bubseek forwards `.env` values to the Bub subprocess. A typical setup looks like this:
+bubseek forwards `.env` values to the Bub subprocess. Bub reads `BUB_*` variables (see [Bub deployment](https://github.com/bubbuild/bub/blob/main/docs/deployment.md)).
+
+**Minimal OpenRouter setup:**
 
 ```dotenv
-bub_api_key=sk-or-v1-...
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+BUB_MODEL=openrouter:qwen/qwen3-coder-next
+BUB_API_KEY=sk-or-v1-...
+BUB_API_BASE=https://openrouter.ai/api/v1
 ```
+
+**Common variables:**
+
+| Variable | Description |
+| --- | --- |
+| `BUB_MODEL` | Model ID (default: `openrouter:qwen/qwen3-coder-next`) |
+| `BUB_API_KEY` | Provider API key |
+| `BUB_API_BASE` | Provider base URL (e.g. OpenRouter) |
+| `BUB_HOME` | Data directory (default: `~/.bub`) |
+| `BUB_TELEGRAM_TOKEN` | Required for Telegram channel |
+| `BUB_TELEGRAM_ALLOW_USERS` | Comma-separated user allowlist |
+| `BUB_TELEGRAM_ALLOW_CHATS` | Comma-separated chat allowlist |
 
 ## Builtin skills
 

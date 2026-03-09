@@ -31,8 +31,9 @@ uv run bubseek chat
 If your runtime reads credentials from `.env`, bubseek forwards them to the Bub subprocess:
 
 ```dotenv
-bub_api_key=sk-or-v1-...
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+BUB_MODEL=openrouter:qwen/qwen3-coder-next
+BUB_API_KEY=sk-or-v1-...
+BUB_API_BASE=https://openrouter.ai/api/v1
 ```
 
 ## Add contrib

@@ -96,8 +96,8 @@ def test_wrapper_forwards_dotenv_values(monkeypatch, tmp_path: Path) -> None:
     env_file = tmp_path / ".env"
     env_file.write_text(
         "\n".join([
-            "bub_api_key=demo-key",
-            "openrouter_base_url=https://openrouter.ai/api/v1",
+            "BUB_API_KEY=demo-key",
+            "BUB_API_BASE=https://openrouter.ai/api/v1",
         ]),
         encoding="utf-8",
     )
@@ -121,5 +121,5 @@ def test_wrapper_forwards_dotenv_values(monkeypatch, tmp_path: Path) -> None:
     assert result == 0
     assert observed_command == ["/usr/bin/bub", "chat"]
     assert observed_env is not None
-    assert observed_env["bub_api_key"] == "demo-key"
-    assert observed_env["openrouter_base_url"] == "https://openrouter.ai/api/v1"
+    assert observed_env["BUB_API_KEY"] == "demo-key"
+    assert observed_env["BUB_API_BASE"] == "https://openrouter.ai/api/v1"
