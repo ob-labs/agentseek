@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib
+
+import pytest
 import sys
 import tomllib
 from collections.abc import Iterator
@@ -31,7 +33,6 @@ def test_pyproject_pins_bub_and_bundled_plugins() -> None:
 
     deps = data["project"]["dependencies"]
     assert any("bub" in d for d in deps)
-    assert "python-dotenv>=1.0.0" in deps
     assert any("bub-feishu" in d for d in deps)
     assert any("bub-web-search" in d for d in deps)
     assert any("bub-tapestore-sqlalchemy" in d for d in deps)
@@ -60,41 +61,43 @@ def test_bundled_skill_has_valid_frontmatter() -> None:
 
 
 def test_main_forwards_explicit_args(monkeypatch) -> None:
-    with imported_bubseek_modules("bubseek.__main__") as [main_mod]:
+    with imported_bubseek_modules("bubseek.__main__", "bubseek.cli") as [main_mod, cli_mod]:
         observed_command: list[str] | None = None
         observed_env: dict[str, str] | None = None
 
-        monkeypatch.setattr(main_mod.shutil, "which", lambda _name: "/usr/bin/bub")
+        monkeypatch.setattr(cli_mod.shutil, "which", lambda _name: "/usr/bin/bub")
 
-        def _capture_run(command: list[str], *, check: bool, env: dict[str, str]) -> SimpleNamespace:
+        def _capture_execve(path: str, argv: list[str], env: dict[str, str]) -> None:
             nonlocal observed_command, observed_env
-            observed_command = command
+            observed_command = argv
             observed_env = env
-            return SimpleNamespace(returncode=0)
+            raise SystemExit(0)
 
-        monkeypatch.setattr(main_mod.subprocess, "run", _capture_run)
-        result = main_mod.main(["chat", "--help"])
+        monkeypatch.setattr(cli_mod.os, "execve", _capture_execve)
+        with pytest.raises(SystemExit) as exc_info:
+            main_mod.main(["chat", "--help"])
+        assert exc_info.value.code == 0
 
-    assert result == 0
     assert observed_command == ["/usr/bin/bub", "chat", "--help"]
     assert observed_env is not None
 
 
 def test_main_defaults_to_help(monkeypatch) -> None:
-    with imported_bubseek_modules("bubseek.__main__") as [main_mod]:
+    with imported_bubseek_modules("bubseek.__main__", "bubseek.cli") as [main_mod, cli_mod]:
         observed_command: list[str] | None = None
 
-        monkeypatch.setattr(main_mod.shutil, "which", lambda _name: "/usr/bin/bub")
+        monkeypatch.setattr(cli_mod.shutil, "which", lambda _name: "/usr/bin/bub")
 
-        def _capture_run(command: list[str], *, check: bool, env: dict[str, str]) -> SimpleNamespace:
+        def _capture_execve(path: str, argv: list[str], env: dict[str, str]) -> None:
             nonlocal observed_command
-            observed_command = command
-            return SimpleNamespace(returncode=0)
+            observed_command = argv
+            raise SystemExit(0)
 
-        monkeypatch.setattr(main_mod.subprocess, "run", _capture_run)
-        result = main_mod.main([])
+        monkeypatch.setattr(cli_mod.os, "execve", _capture_execve)
+        with pytest.raises(SystemExit) as exc_info:
+            main_mod.main([])
+        assert exc_info.value.code == 0
 
-    assert result == 0
     assert observed_command == ["/usr/bin/bub", "--help"]
 
 
@@ -108,23 +111,24 @@ def test_wrapper_forwards_dotenv_values(monkeypatch, tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    with imported_bubseek_modules("bubseek.__main__") as [main_mod]:
+    with imported_bubseek_modules("bubseek.__main__", "bubseek.cli") as [main_mod, cli_mod]:
         observed_command: list[str] | None = None
         observed_env: dict[str, str] | None = None
 
         monkeypatch.chdir(tmp_path)
-        monkeypatch.setattr(main_mod.shutil, "which", lambda _name: "/usr/bin/bub")
+        monkeypatch.setattr(cli_mod.shutil, "which", lambda _name: "/usr/bin/bub")
 
-        def _capture_run(command: list[str], *, check: bool, env: dict[str, str]) -> SimpleNamespace:
+        def _capture_execve(path: str, argv: list[str], env: dict[str, str]) -> None:
             nonlocal observed_command, observed_env
-            observed_command = command
+            observed_command = argv
             observed_env = env
-            return SimpleNamespace(returncode=0)
+            raise SystemExit(0)
 
-        monkeypatch.setattr(main_mod.subprocess, "run", _capture_run)
-        result = main_mod.main(["chat"])
+        monkeypatch.setattr(cli_mod.os, "execve", _capture_execve)
+        with pytest.raises(SystemExit) as exc_info:
+            main_mod.main(["chat"])
+        assert exc_info.value.code == 0
 
-    assert result == 0
     assert observed_command == ["/usr/bin/bub", "chat"]
     assert observed_env is not None
     assert observed_env["BUB_API_KEY"] == "demo-key"
