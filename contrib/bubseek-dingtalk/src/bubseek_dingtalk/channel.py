@@ -64,7 +64,7 @@ def _parse_allow_users(value: str) -> set[str]:
 class DingTalkCallbackHandler(CallbackHandler):
     """DingTalk Stream callback handler; forwards messages to Bub."""
 
-    def __init__(self, channel: "DingTalkChannel") -> None:
+    def __init__(self, channel: DingTalkChannel) -> None:
         super().__init__()
         self.channel = channel
 
@@ -88,10 +88,7 @@ class DingTalkCallbackHandler(CallbackHandler):
             sender_id = chatbot_msg.sender_staff_id or chatbot_msg.sender_id or ""
             sender_name = chatbot_msg.sender_nick or "Unknown"
             conversation_type = message.data.get("conversationType")
-            conversation_id = (
-                message.data.get("conversationId")
-                or message.data.get("openConversationId")
-            )
+            conversation_id = message.data.get("conversationId") or message.data.get("openConversationId")
 
             logger.info(
                 "DingTalk inbound from {} ({}): {}",
@@ -112,11 +109,11 @@ class DingTalkCallbackHandler(CallbackHandler):
             self.channel._background_tasks.add(task)
             task.add_done_callback(self.channel._background_tasks.discard)
 
-            return AckMessage.STATUS_OK, "OK"
-
         except Exception as e:
             logger.error("DingTalk process error: {}", e)
             return AckMessage.STATUS_OK, "Error"
+        else:
+            return AckMessage.STATUS_OK, "OK"
 
 
 class DingTalkChannel(Channel):
@@ -218,14 +215,13 @@ class DingTalkChannel(Channel):
             self._access_token = res_data.get("accessToken")
             expire_in = int(res_data.get("expireIn", 7200))
             self._token_expiry = time.time() + expire_in - 60
-            return self._access_token
         except Exception as e:
             logger.error("DingTalk token error: {}", e)
             return None
+        else:
+            return self._access_token
 
-    async def _send_message(
-        self, token: str, chat_id: str, msg_key: str, msg_param: dict[str, Any]
-    ) -> bool:
+    async def _send_message(self, token: str, chat_id: str, msg_key: str, msg_param: dict[str, Any]) -> bool:
         """Send message via DingTalk Robot API."""
         if not self._http:
             return False
@@ -259,10 +255,11 @@ class DingTalkChannel(Channel):
             if errcode not in (None, 0):
                 logger.error("DingTalk send errcode={} body={}", errcode, body[:300])
                 return False
-            return True
         except Exception as e:
             logger.error("DingTalk send error: {}", e)
             return False
+        else:
+            return True
 
     async def send(self, message: ChannelMessage) -> None:
         """Send message to DingTalk."""
