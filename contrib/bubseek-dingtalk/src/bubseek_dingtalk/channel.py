@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import json
-import time
 from typing import Any
 
 from bub.channels import Channel
@@ -32,10 +30,6 @@ except ImportError:
     AckMessage = None  # type: ignore[assignment,misc]
     ChatbotMessage = None  # type: ignore[assignment,misc]
 
-try:
-    import httpx
-except ImportError:
-    httpx = None  # type: ignore[assignment]
 
 
 class DingTalkConfig(BaseSettings):
@@ -126,9 +120,6 @@ class DingTalkChannel(Channel):
         self._config = DingTalkConfig()
         self._allow_users = _parse_allow_users(self._config.allow_users)
         self._client: Any = None
-        self._http: Any = None
-        self._access_token: str | None = None
-        self._token_expiry: float = 0
         self._background_tasks: set[asyncio.Task] = set()
         self._main_loop: asyncio.AbstractEventLoop | None = None
         self._stop_event: asyncio.Event | None = None
@@ -147,15 +138,11 @@ class DingTalkChannel(Channel):
         if not DINGTALK_AVAILABLE:
             logger.error("dingtalk-stream not installed. Run: pip install dingtalk-stream")
             return
-        if not httpx:
-            logger.error("httpx not installed")
-            return
         if not self._config.client_id or not self._config.client_secret:
             logger.error("DingTalk client_id/client_secret not configured")
             return
 
         self._main_loop = asyncio.get_running_loop()
-        self._http = httpx.AsyncClient()
 
         credential = Credential(self._config.client_id, self._config.client_secret)
         self._client = DingTalkStreamClient(credential)
@@ -189,83 +176,18 @@ class DingTalkChannel(Channel):
             with contextlib.suppress(asyncio.CancelledError):
                 await self._stream_task
             self._stream_task = None
-        if self._http:
-            await self._http.aclose()
-            self._http = None
         self._client = None
         logger.info("DingTalk channel stopped")
 
-    async def _get_access_token(self) -> str | None:
-        """Get or refresh access token."""
-        if self._access_token and time.time() < self._token_expiry:
-            return self._access_token
-
-        url = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
-        data = {
-            "appKey": self._config.client_id,
-            "appSecret": self._config.client_secret,
-        }
-
-        if not self._http:
-            return None
-        try:
-            resp = await self._http.post(url, json=data)
-            resp.raise_for_status()
-            res_data = resp.json()
-            self._access_token = res_data.get("accessToken")
-            expire_in = int(res_data.get("expireIn", 7200))
-            self._token_expiry = time.time() + expire_in - 60
-        except Exception as e:
-            logger.error("DingTalk token error: {}", e)
-            return None
-        else:
-            return self._access_token
-
-    async def _send_message(self, token: str, chat_id: str, msg_key: str, msg_param: dict[str, Any]) -> bool:
-        """Send message via DingTalk Robot API."""
-        if not self._http:
-            return False
-
-        headers = {"x-acs-dingtalk-access-token": token}
-        if chat_id.startswith("group:"):
-            url = "https://api.dingtalk.com/v1.0/robot/groupMessages/send"
-            payload = {
-                "robotCode": self._config.client_id,
-                "openConversationId": chat_id[6:],
-                "msgKey": msg_key,
-                "msgParam": json.dumps(msg_param, ensure_ascii=False),
-            }
-        else:
-            url = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
-            payload = {
-                "robotCode": self._config.client_id,
-                "userIds": [chat_id],
-                "msgKey": msg_key,
-                "msgParam": json.dumps(msg_param, ensure_ascii=False),
-            }
-
-        try:
-            resp = await self._http.post(url, json=payload, headers=headers)
-            body = resp.text
-            if resp.status_code != 200:
-                logger.error("DingTalk send failed status={} body={}", resp.status_code, body[:300])
-                return False
-            result = resp.json() if "application/json" in (resp.headers.get("content-type") or "") else {}
-            errcode = result.get("errcode")
-            if errcode not in (None, 0):
-                logger.error("DingTalk send errcode={} body={}", errcode, body[:300])
-                return False
-        except Exception as e:
-            logger.error("DingTalk send error: {}", e)
-            return False
-        else:
-            return True
-
     async def send(self, message: ChannelMessage) -> None:
-        """Send message to DingTalk."""
-        token = await self._get_access_token()
-        if not token:
-            return
+        """Send message to DingTalk via skill."""
+        content = (message.content or "").strip()
+        logger.info(
+            "DingTalk send: called session_id={} chat_id={} content_len={}",
+            message.session_id,
+            message.chat_id,
+            len(content),
+        )
 
         chat_id = message.chat_id or ""
         if not chat_id and message.session_id:
@@ -274,16 +196,26 @@ class DingTalkChannel(Channel):
             logger.warning("DingTalk send: no chat_id session_id={}", message.session_id)
             return
 
-        content = (message.content or "").strip()
-        if content:
-            ok = await self._send_message(
-                token,
+        if not content:
+            logger.warning("DingTalk send: skipping empty content session_id={}", message.session_id)
+            return
+
+        logger.info("DingTalk send: sending chat_id={} content_len={}", chat_id, len(content))
+        try:
+            from bub_skills.dingtalk.send import send_message
+
+            await asyncio.to_thread(
+                send_message,
+                self._config.client_id,
+                self._config.client_secret,
                 chat_id,
-                "sampleMarkdown",
-                {"text": content, "title": "Bub Reply"},
+                content,
+                title="Bub Reply",
+                verify=False,
             )
-            if not ok:
-                logger.error("DingTalk send failed for chat_id={}", chat_id)
+            logger.info("DingTalk send: success chat_id={}", chat_id)
+        except Exception as e:
+            logger.error("DingTalk send failed for chat_id={} error={}", chat_id, e)
 
     async def _on_message(
         self,
