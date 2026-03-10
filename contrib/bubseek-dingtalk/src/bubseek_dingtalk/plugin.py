@@ -5,7 +5,6 @@ from bub.channels import Channel
 from bub.types import MessageHandler
 
 from . import ssl_patch  # noqa: F401 - apply websockets SSL patch before dingtalk_stream
-
 from .channel import DingTalkChannel
 
 

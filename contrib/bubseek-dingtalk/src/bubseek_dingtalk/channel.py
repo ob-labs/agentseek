@@ -31,7 +31,6 @@ except ImportError:
     ChatbotMessage = None  # type: ignore[assignment,misc]
 
 
-
 class DingTalkConfig(BaseSettings):
     """DingTalk channel config."""
 

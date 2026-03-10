@@ -10,8 +10,6 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-import pytest
-
 from bub.channels.message import ChannelMessage
 from bub.framework import BubFramework
 
@@ -86,6 +84,7 @@ def _run_simulation() -> None:
     """Run simulation from CLI for manual verification."""
     try:
         from dotenv import load_dotenv
+
         load_dotenv()
     except ImportError:
         pass
@@ -106,7 +105,9 @@ def _run_simulation() -> None:
     class CaptureRouter:
         async def dispatch(self, message) -> bool:
             outbounds.append(message)
-            print(f"[2] Dispatch: channel={message.channel} chat_id={message.chat_id} content_len={len(message.content or '')}")
+            print(
+                f"[2] Dispatch: channel={message.channel} chat_id={message.chat_id} content_len={len(message.content or '')}"
+            )
             return True
 
     framework.bind_outbound_router(CaptureRouter())
@@ -114,7 +115,7 @@ def _run_simulation() -> None:
         result = asyncio.run(framework.process_inbound(inbound))
         print(f"[3] Result: session_id={result.session_id} outbounds={len(result.outbounds)}")
         for i, o in enumerate(outbounds):
-            print(f"    outbound[{i}]: content={repr((o.content or '')[:100])}")
+            print(f"    outbound[{i}]: content={(o.content or '')[:100]!r}")
     finally:
         framework.bind_outbound_router(None)
 
@@ -148,7 +149,7 @@ def test_channel_manager_on_receive_to_process_inbound() -> None:
         assert msg.session_id == "dingtalk:204818006723348842"
         assert msg.content == "test"
 
-        result = await framework.process_inbound(msg)
+        await framework.process_inbound(msg)
         framework.bind_outbound_router(None)
 
         assert len(outbounds) >= 1

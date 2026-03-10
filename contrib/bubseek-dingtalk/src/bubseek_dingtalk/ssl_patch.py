@@ -25,7 +25,7 @@ def _ws_patched(uri, *args, **kwargs):
     return _ws_orig(uri, *args, **kwargs)
 
 
-websockets.connect = _ws_patched
+websockets.connect = _ws_patched  # type: ignore[invalid-assignment]
 
 # --- requests (HTTPS, used by dingtalk_stream open_connection and bub_skills send) ---
 _req_orig = requests.Session.request
@@ -37,4 +37,4 @@ def _req_patched(self, method, url, **kwargs):
     return _req_orig(self, method, url, **kwargs)
 
 
-requests.Session.request = _req_patched
+requests.Session.request = _req_patched  # type: ignore[invalid-assignment]
