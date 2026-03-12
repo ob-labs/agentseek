@@ -213,6 +213,7 @@ __marimo__/
 # Bub
 references/
 .agents/
+.bub/
 # Runtime-generated marimo notebooks
 insights/dashboard.py
 insights/index.py

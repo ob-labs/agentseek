@@ -46,6 +46,37 @@ class OceanBaseDialect(_OceanBaseDialect):
 registry.register("mysql.oceanbase", "bubseek.oceanbase", "OceanBaseDialect")
 
 
+def _patch_tape_store_validate_schema() -> None:
+    """Tolerate duplicate index (MySQL 1061) in bub_tapestore_sqlalchemy.
+
+    OceanBase/SeekDB may already have indexes (e.g. idx_tape_entries_anchor_name_key).
+    When the store calls index.create(..., checkfirst=True), some drivers still raise
+    1061. We catch and ignore so startup/shutdown does not fail.
+    """
+    try:
+        from bub_tapestore_sqlalchemy import store as _store
+    except ImportError:
+        return
+    _orig = _store.SQLAlchemyTapeStore._validate_schema
+
+    def _validate_schema_tolerant(self: object) -> None:
+        try:
+            _orig(self)
+        except Exception as e:  # noqa: BLE001
+            _orig_e = getattr(e, "orig", e)
+            if getattr(_orig_e, "args", (None,))[0] == 1061:
+                return
+            if "Duplicate key name" in str(e):
+                return
+            raise
+
+    _store.SQLAlchemyTapeStore._validate_schema = _validate_schema_tolerant  # type: ignore[method-assign]
+
+
+# Run patch at import so it is in place before any plugin creates the store.
+_patch_tape_store_validate_schema()
+
+
 def register(framework: object) -> object:
     """Bub plugin entry point. Registers dialect only."""
     return _OceanBaseDialectPlugin()
