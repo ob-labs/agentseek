@@ -57,12 +57,13 @@ def _patch_tape_store_validate_schema() -> None:
         from bub_tapestore_sqlalchemy import store as _store
     except ImportError:
         return
-    _orig = _store.SQLAlchemyTapeStore._validate_schema
+    _Store = _store.SQLAlchemyTapeStore
+    _orig = _Store._validate_schema
 
-    def _validate_schema_tolerant(self: object) -> None:
+    def _validate_schema_tolerant(self: _Store) -> None:
         try:
             _orig(self)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             _orig_e = getattr(e, "orig", e)
             if getattr(_orig_e, "args", (None,))[0] == 1061:
                 return

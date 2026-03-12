@@ -101,6 +101,9 @@ members = [
 python = "./.venv"
 python-version = "3.12"
 
+[tool.ty.src]
+exclude = ["references"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests", "contrib/bubseek-schedule/src/tests", "contrib/bubseek-dingtalk/tests", "contrib/bubseek-marimo/tests"]
 

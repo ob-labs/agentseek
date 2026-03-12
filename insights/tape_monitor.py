@@ -14,6 +14,7 @@ app = mo.App(width="full")
 
 @app.cell
 def _():
+    import contextlib
     import json
     from datetime import UTC, datetime
 
@@ -23,20 +24,20 @@ def _():
 
     try:
         from bubseek.config import BubSeekSettings
+
         tapestore_url = BubSeekSettings().db.resolved_tapestore_url
         if "oceanbase" in tapestore_url:
-            import bubseek.oceanbase  # noqa: F401  # register mysql+oceanbase dialect
+            import bubseek.oceanbase  # register mysql+oceanbase dialect
     except Exception:
         import os
+
         tapestore_url = os.environ.get(
             "BUB_TAPESTORE_SQLALCHEMY_URL",
             f"sqlite+pysqlite:///{os.path.expanduser('~/.bub/tapes.db')}",
         )
         if "oceanbase" in str(tapestore_url):
-            try:
+            with contextlib.suppress(ImportError):
                 import bubseek.oceanbase  # noqa: F401
-            except ImportError:
-                pass
 
     refresh_interval_seconds = 300
     return (
@@ -63,7 +64,7 @@ def _(mo, refresh_interval_seconds):
 
 
 @app.cell
-def _(
+def _(  # noqa: C901
     UTC,
     create_engine,
     datetime,
@@ -88,37 +89,57 @@ def _(
 
     def load_tapes(engine, schema_type):
         if schema_type == "seekdb":
-            rows = engine.connect().execute(
-                text(
-                    "SELECT tape_name, COUNT(*) as cnt FROM bub_tape_entries "
-                    "WHERE tape_name NOT LIKE '%::archived::%' "
-                    "GROUP BY tape_name ORDER BY tape_name"
+            rows = (
+                engine
+                .connect()
+                .execute(
+                    text(
+                        "SELECT tape_name, COUNT(*) as cnt FROM bub_tape_entries "
+                        "WHERE tape_name NOT LIKE '%::archived::%' "
+                        "GROUP BY tape_name ORDER BY tape_name"
+                    )
                 )
-            ).fetchall()
+                .fetchall()
+            )
             return pd.DataFrame([{"tape_name": r[0], "entry_count": r[1]} for r in rows])
         if schema_type == "sqlite":
-            rows = engine.connect().execute(
-                text(
-                    "SELECT t.name, COUNT(e.entry_id) as cnt FROM tapes t "
-                    "LEFT JOIN tape_entries e ON t.id = e.tape_id "
-                    "GROUP BY t.id ORDER BY t.name"
+            rows = (
+                engine
+                .connect()
+                .execute(
+                    text(
+                        "SELECT t.name, COUNT(e.entry_id) as cnt FROM tapes t "
+                        "LEFT JOIN tape_entries e ON t.id = e.tape_id "
+                        "GROUP BY t.id ORDER BY t.name"
+                    )
                 )
-            ).fetchall()
+                .fetchall()
+            )
             return pd.DataFrame([{"tape_name": r[0], "entry_count": r[1]} for r in rows])
         return pd.DataFrame()
 
     def load_kind_stats(engine, schema_type):
         if schema_type == "seekdb":
-            rows = engine.connect().execute(
-                text(
-                    "SELECT kind, COUNT(*) as count FROM bub_tape_entries "
-                    "WHERE tape_name NOT LIKE '%::archived::%' GROUP BY kind ORDER BY count DESC"
+            rows = (
+                engine
+                .connect()
+                .execute(
+                    text(
+                        "SELECT kind, COUNT(*) as count FROM bub_tape_entries "
+                        "WHERE tape_name NOT LIKE '%::archived::%' GROUP BY kind ORDER BY count DESC"
+                    )
                 )
-            ).fetchall()
+                .fetchall()
+            )
         elif schema_type == "sqlite":
-            rows = engine.connect().execute(
-                text("SELECT e.kind, COUNT(*) as count FROM tape_entries e GROUP BY e.kind ORDER BY count DESC")
-            ).fetchall()
+            rows = (
+                engine
+                .connect()
+                .execute(
+                    text("SELECT e.kind, COUNT(*) as count FROM tape_entries e GROUP BY e.kind ORDER BY count DESC")
+                )
+                .fetchall()
+            )
         else:
             rows = []
         return pd.DataFrame([{"kind": r[0], "count": r[1]} for r in rows])
@@ -131,28 +152,38 @@ def _(
             return str(c)[:100] + "..." if len(str(c)) > 100 else str(c)
 
         if schema_type == "seekdb":
-            r = engine.connect().execute(
-                text(
-                    """
+            r = (
+                engine
+                .connect()
+                .execute(
+                    text(
+                        """
                     SELECT tape_name, entry_id, kind, created_at, payload_json
                     FROM bub_tape_entries
                     WHERE tape_name NOT LIKE '%::archived::%'
                     ORDER BY created_at DESC LIMIT :limit
                     """
-                ),
-                {"limit": limit},
-            ).fetchall()
+                    ),
+                    {"limit": limit},
+                )
+                .fetchall()
+            )
         elif schema_type == "sqlite":
-            r = engine.connect().execute(
-                text(
-                    """
+            r = (
+                engine
+                .connect()
+                .execute(
+                    text(
+                        """
                     SELECT t.name, e.entry_id, e.kind, e.created_at, e.payload
                     FROM tape_entries e JOIN tapes t ON e.tape_id = t.id
                     ORDER BY e.created_at DESC LIMIT :limit
                     """
-                ),
-                {"limit": limit},
-            ).fetchall()
+                    ),
+                    {"limit": limit},
+                )
+                .fetchall()
+            )
         else:
             r = []
         out = []
@@ -174,23 +205,31 @@ def _(
     def load_created_at_series(engine, schema_type, limit=5000):
         """Load recent created_at for time-series aggregation in pandas."""
         if schema_type == "seekdb":
-            rows = engine.connect().execute(
-                text(
-                    """
+            rows = (
+                engine
+                .connect()
+                .execute(
+                    text(
+                        """
                     SELECT created_at FROM bub_tape_entries
                     WHERE tape_name NOT LIKE '%::archived::%'
                     ORDER BY created_at DESC LIMIT :limit
                     """
-                ),
-                {"limit": limit},
-            ).fetchall()
+                    ),
+                    {"limit": limit},
+                )
+                .fetchall()
+            )
         elif schema_type == "sqlite":
-            rows = engine.connect().execute(
-                text(
-                    "SELECT e.created_at FROM tape_entries e ORDER BY e.created_at DESC LIMIT :limit"
-                ),
-                {"limit": limit},
-            ).fetchall()
+            rows = (
+                engine
+                .connect()
+                .execute(
+                    text("SELECT e.created_at FROM tape_entries e ORDER BY e.created_at DESC LIMIT :limit"),
+                    {"limit": limit},
+                )
+                .fetchall()
+            )
         else:
             return pd.DataFrame(columns=["date", "count"])
         if not rows:
@@ -214,10 +253,15 @@ def _(
     except Exception as e:
         tapes_df = pd.DataFrame([{"tape_name": f"Error: {e}", "entry_count": 0}])
         kind_stats = pd.DataFrame([{"kind": "error", "count": 0}])
-        recent_df = pd.DataFrame([{
-            "tape": "Error", "entry_id": 0, "kind": "error",
-            "created_at": str(datetime.now(UTC))[:19], "content_preview": str(e),
-        }])
+        recent_df = pd.DataFrame([
+            {
+                "tape": "Error",
+                "entry_id": 0,
+                "kind": "error",
+                "created_at": str(datetime.now(UTC))[:19],
+                "content_preview": str(e),
+            }
+        ])
         daily_df = pd.DataFrame(columns=["date", "count"])
         schema_type = "unknown"
 
@@ -239,9 +283,7 @@ def _(
 def _(kind_stats, mo, schema_type, tapes_df):
     total_tapes = len(tapes_df)
     total_entries = int(tapes_df["entry_count"].sum()) if not tapes_df.empty else 0
-    kpi = mo.md(
-        f"**Tapes:** {total_tapes} · **Entries:** {total_entries} · **Store:** {schema_type}"
-    )
+    kpi = mo.md(f"**Tapes:** {total_tapes} · **Entries:** {total_entries} · **Store:** {schema_type}")
     return (kpi, total_entries, total_tapes)
 
 
@@ -258,16 +300,19 @@ def _(kind_stats, mo):
             _label = str(_row["kind"])[:20]
             _bars.append(
                 f'<text x="8" y="{_y}" font-size="12" fill="#334155">{_label}</text>'
-                f'<rect x="120" y="{_y-12}" rx="4" width="{_w}" height="18" fill="#2563eb"/>'
+                f'<rect x="120" y="{_y - 12}" rx="4" width="{_w}" height="18" fill="#2563eb"/>'
                 f'<text x="{128 + _w}" y="{_y}" font-size="11" fill="#64748b">{_row["count"]}</text>'
             )
             _y += 28
         _h = _y + 10
         _svg = f'<svg width="360" height="{_h}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#f8fafc"/>{chr(10).join(_bars)}</svg>'
-        kind_chart = mo.vstack([
-            mo.md("#### Entries by kind"),
-            mo.Html(_svg),
-        ], gap=0.5)
+        kind_chart = mo.vstack(
+            [
+                mo.md("#### Entries by kind"),
+                mo.Html(_svg),
+            ],
+            gap=0.5,
+        )
     return (kind_chart,)
 
 
@@ -285,16 +330,19 @@ def _(mo, tapes_df):
             _label = (_row["tape_name"] or "")[:22]
             _bars.append(
                 f'<text x="8" y="{_y}" font-size="11" fill="#334155">{_label}</text>'
-                f'<rect x="140" y="{_y-12}" rx="4" width="{_w}" height="18" fill="#059669"/>'
+                f'<rect x="140" y="{_y - 12}" rx="4" width="{_w}" height="18" fill="#059669"/>'
                 f'<text x="{150 + _w}" y="{_y}" font-size="11" fill="#64748b">{int(_row["entry_count"])}</text>'
             )
             _y += 28
         _h = _y + 10
         _svg = f'<svg width="380" height="{_h}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#f8fafc"/>{chr(10).join(_bars)}</svg>'
-        tape_chart = mo.vstack([
-            mo.md("#### Entries per tape (top 12)"),
-            mo.Html(_svg),
-        ], gap=0.5)
+        tape_chart = mo.vstack(
+            [
+                mo.md("#### Entries per tape (top 12)"),
+                mo.Html(_svg),
+            ],
+            gap=0.5,
+        )
     return (tape_chart,)
 
 
@@ -310,9 +358,7 @@ def _(daily_df, mo, pd):
         for _i, (_, _row) in enumerate(_df.iterrows()):
             _h = int((_row["count"] / _max_c) * 120)
             _x = _x0 + _i * (_w_bar + 4)
-            _bars.append(
-                f'<rect x="{_x}" y="{_y0 + 120 - _h}" width="{_w_bar}" height="{_h}" fill="#7c3aed" rx="2"/>'
-            )
+            _bars.append(f'<rect x="{_x}" y="{_y0 + 120 - _h}" width="{_w_bar}" height="{_h}" fill="#7c3aed" rx="2"/>')
         _labels = []
         for _i, (_, _row) in enumerate(_df.iterrows()):
             if _i % 5 == 0:
@@ -322,10 +368,13 @@ def _(daily_df, mo, pd):
         _width = _x0 + len(_df) * (_w_bar + 4) + 20
         _height = 165
         _svg = f'<svg width="{_width}" height="{_height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#f8fafc"/>{chr(10).join(_bars)}{chr(10).join(_labels)}</svg>'
-        time_chart = mo.vstack([
-            mo.md("#### Entries over time (last 21 days)"),
-            mo.Html(_svg),
-        ], gap=0.5)
+        time_chart = mo.vstack(
+            [
+                mo.md("#### Entries over time (last 21 days)"),
+                mo.Html(_svg),
+            ],
+            gap=0.5,
+        )
     return (time_chart,)
 
 
@@ -334,10 +383,13 @@ def _(mo, recent_df):
     if recent_df.empty:
         entries_block = mo.md("### No recent entries.")
     else:
-        entries_block = mo.vstack([
-            mo.md("### Recent entries (last 100)"),
-            mo.ui.table(recent_df, page_size=20, pagination=True),
-        ], gap=0.5)
+        entries_block = mo.vstack(
+            [
+                mo.md("### Recent entries (last 100)"),
+                mo.ui.table(recent_df, page_size=20, pagination=True),
+            ],
+            gap=0.5,
+        )
     return (entries_block,)
 
 
@@ -351,15 +403,18 @@ def _(
     tape_chart,
     time_chart,
 ):
-    page = mo.vstack([
-        mo.md("# 📼 Bub Tape Monitor"),
-        mo.md("*SeekDB / SQLite tapestore. Auto-refresh every 5 min or click to refresh.*"),
-        refresh,
-        kpi,
-        mo.hstack([kind_chart, tape_chart, time_chart], widths=[1, 1, 1], gap=1.0),
-        entries_block,
-    ], gap=1.0)
-    page
+    page = mo.vstack(
+        [
+            mo.md("# 📼 Bub Tape Monitor"),
+            mo.md("*SeekDB / SQLite tapestore. Auto-refresh every 5 min or click to refresh.*"),
+            refresh,
+            kpi,
+            mo.hstack([kind_chart, tape_chart, time_chart], widths=[1, 1, 1], gap=1.0),
+            entries_block,
+        ],
+        gap=1.0,
+    )
+    page  # noqa: B018  # last expression for marimo display
     return (page,)
 
 

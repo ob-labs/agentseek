@@ -172,7 +172,7 @@ def test_wrapper_forwards_workspace_to_plugins(monkeypatch, tmp_path: Path) -> N
 def test_database_settings_default_to_sqlite(monkeypatch, tmp_path: Path) -> None:
     with imported_bubseek_modules("bubseek.config") as [config_mod]:
         monkeypatch.setenv("BUB_HOME", str(tmp_path / "runtime-home"))
-        monkeypatch.delenv("BUB_TAPESTORE_SQLALCHEMY_URL", raising=False)
+        monkeypatch.setenv("BUB_TAPESTORE_SQLALCHEMY_URL", "")  # override .env so default is used
 
         settings = config_mod.DatabaseSettings()
 

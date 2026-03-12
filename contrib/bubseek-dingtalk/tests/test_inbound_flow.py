@@ -46,8 +46,10 @@ def test_dingtalk_inbound_message_format() -> None:
     assert inbound.context_str  # Used by build_prompt
 
 
-def test_dingtalk_inbound_reaches_agent(tmp_path: Path) -> None:
+def test_dingtalk_inbound_reaches_agent(tmp_path: Path, monkeypatch) -> None:
     """Verify DingTalk inbound flows through process_inbound to dispatch (requires LLM)."""
+    monkeypatch.setenv("BUB_HOME", str(tmp_path))
+    monkeypatch.setenv("BUB_TAPESTORE_SQLALCHEMY_URL", "")  # use SQLite so test does not need MySQL
 
     async def _run() -> None:
         framework = BubFramework()
