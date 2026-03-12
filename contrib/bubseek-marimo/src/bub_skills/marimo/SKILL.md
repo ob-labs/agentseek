@@ -67,11 +67,14 @@ if __name__ == "__main__":
 ### Key Conventions
 
 - **Cell structure**: `@app.cell` decorator; function inputs/outputs = cell dependencies
-- **First cell must pass `mo`**: In the first cell, `import marimo as mo` and include `mo` in the return (e.g. `return (data, mo)`). Later cells that use `mo.md()`, `mo.ui.*` etc. must receive `mo` from a previous cell's return — module-level `mo` is not available inside cells.
-- **Display**: The last expression in a cell is what gets rendered. For UI cells, assign to a variable, put that variable as the last expression, then `return (variable,)` so other cells can depend on it.
+- **First cell must pass `mo`**: In the first cell, `import marimo as mo` and include `mo` in the return (e.g. `return (data, mo)`). Later cells that use `mo.md()`, `mo.ui.*` etc. must receive `mo` from a previous cell's return — module-level `mo` is not available inside cells
+- **Display**: The last expression in a cell is what gets rendered. For UI cells, assign to a variable, put that variable as the last expression, then `return (variable,)` so other cells can depend on it. To avoid duplicate output, use a **single final layout cell** that assembles the whole page and is the only cell that displays (other cells only return, no trailing display expression)
+- **Variable names**: Must be unique across all cells (no multiple-definitions). Use an underscore prefix for cell-local names (e.g. `_bars`, `_svg`, `_row`)
+- **No mid-cell return**: Do not use `return` for early exit inside a cell; use conditionals and a single `return (...)` at the end
 - **Reactivity**: Variables between cells define reactivity; avoid mutating across cells
-- **PEP 723**: Add `# /// script` block with dependencies at top
+- **PEP 723**: Add `# /// script` block with dependencies at top (include `pyobvector` when using `mysql+oceanbase` / SeekDB)
 - **Scanner compatibility**: notebooks opened from a marimo directory must contain the literal markers `import marimo` and `marimo.App`
+- **Directory mode**: Use `marimo run <directory> --watch` so newly generated notebooks in the folder are visible without restarting
 - **Run**: `uv run marimo run <notebook.py>` for interactive; `uv run <notebook.py>` for script mode
 
 ### Index (Native marimo)
@@ -106,3 +109,9 @@ Always follow **marimo-notebook** for structure. Add **anywidget** when you need
 ## Channel Dashboard
 
 Native marimo app (not iframe). Chat + index in one view, with all runtime notebooks generated into `<workspace>/insights`.
+
+## References
+
+| Document | Description |
+| --- | --- |
+| [Marimo conventions (bubseek)](references/marimo-conventions.md) | Cell isolation, display vs return, variable naming, single-page layout, no mid-cell return, directory `--watch`, embedded data, scanner compatibility — detailed rules and checklist for authoring and generated notebooks |
