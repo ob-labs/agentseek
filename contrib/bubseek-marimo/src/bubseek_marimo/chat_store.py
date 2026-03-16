@@ -73,7 +73,12 @@ class MarimoChatStore:
         self._lock = threading.RLock()
 
     def _ensure_initialized(self) -> None:
-        if self._engine is not None and self._session_factory is not None and self._sessions is not None and self._events is not None:
+        if (
+            self._engine is not None
+            and self._session_factory is not None
+            and self._sessions is not None
+            and self._events is not None
+        ):
             return
 
         metadata = MetaData()
@@ -118,7 +123,8 @@ class MarimoChatStore:
 
             if row:
                 session.execute(
-                    sessions.update()
+                    sessions
+                    .update()
                     .where(sessions.c.session_id == session_id)
                     .values(
                         status="running",
@@ -238,7 +244,9 @@ class MarimoChatStore:
                 return None
             return self._row_to_snapshot(row)
 
-    def list_events(self, session_id: str, after_event_id: int = 0, limit: int = 200) -> tuple[SessionSnapshot | None, list[ChatEvent]]:
+    def list_events(
+        self, session_id: str, after_event_id: int = 0, limit: int = 200
+    ) -> tuple[SessionSnapshot | None, list[ChatEvent]]:
         events = self._events_or_raise()
         with self._lock, self._session_factory_or_raise()() as session:
             snapshot = self._snapshot_locked(session, session_id)
@@ -257,7 +265,9 @@ class MarimoChatStore:
             return None
         return snapshot.active_turn_id
 
-    def _update_session_status(self, session_id: str, *, status: str, turn_id: str | None, error: str | None) -> SessionSnapshot:
+    def _update_session_status(
+        self, session_id: str, *, status: str, turn_id: str | None, error: str | None
+    ) -> SessionSnapshot:
         sessions = self._sessions_or_raise()
         with self._lock, self._session_factory_or_raise()() as session:
             now = _utcnow()
@@ -270,9 +280,7 @@ class MarimoChatStore:
                 values["active_turn_id"] = turn_id
             elif turn_id is not None:
                 values["active_turn_id"] = None
-            session.execute(
-                sessions.update().where(sessions.c.session_id == session_id).values(**values)
-            )
+            session.execute(sessions.update().where(sessions.c.session_id == session_id).values(**values))
             session.commit()
             snapshot = self._snapshot_locked(session, session_id)
             if snapshot is None:
@@ -319,9 +327,7 @@ class MarimoChatStore:
         )
         event_id = int(result.inserted_primary_key[0])
         session.execute(
-            sessions.update()
-            .where(sessions.c.session_id == session_id)
-            .values(last_event_id=event_id, updated_at=now)
+            sessions.update().where(sessions.c.session_id == session_id).values(last_event_id=event_id, updated_at=now)
         )
         return ChatEvent(
             event_id=event_id,
