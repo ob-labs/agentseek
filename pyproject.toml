@@ -62,17 +62,14 @@ dev = [
 ]
 
 [build-system]
-requires = ["pdm-backend", "pdm-build-bub>=0.1.0a2"]
+requires = ["pdm-backend", "pdm-build-skills>=0.1.0a3"]
 build-backend = "pdm.backend"
 
 [tool.pdm.build]
 includes = [
     "src/bubseek",
-    "src/bub_skills",
+    "src/skills",
 ]
-
-# Build-time: vendor remote skills into bub_skills/ (merged with src/bub_skills)
-[tool.bub]
 skills = [
     { git = "https://github.com/PsiACE/skills.git", subpath = "skills", include = ["friendly-python", "piglet"] },
 ]

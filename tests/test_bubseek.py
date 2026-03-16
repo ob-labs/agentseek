@@ -50,7 +50,7 @@ def test_pyproject_pins_bub_and_bundled_plugins() -> None:
     assert sources["bub-feishu"].get("git") == "https://github.com/bubbuild/bub-contrib.git"
     requires = data["build-system"]["requires"]
     assert "pdm-backend" in requires
-    assert any("pdm-build-bub" in r for r in requires)
+    assert any("pdm-build-skills" in r for r in requires)
 
 
 def test_pyproject_includes_builtin_skills_in_wheel() -> None:
@@ -58,12 +58,20 @@ def test_pyproject_includes_builtin_skills_in_wheel() -> None:
 
     assert data["tool"]["pdm"]["build"]["includes"] == [
         "src/bubseek",
-        "src/bub_skills",
+        "src/skills",
+    ]
+    skills = data["tool"]["pdm"]["build"]["skills"]
+    assert skills == [
+        {
+            "git": "https://github.com/PsiACE/skills.git",
+            "subpath": "skills",
+            "include": ["friendly-python", "piglet"],
+        }
     ]
 
 
 def test_bundled_skills_have_valid_frontmatter() -> None:
-    skill_root = REPO_ROOT / "src" / "bub_skills"
+    skill_root = REPO_ROOT / "src" / "skills"
     skill_names = []
 
     for skill_dir in sorted(path for path in skill_root.iterdir() if path.is_dir()):

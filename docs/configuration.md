@@ -80,9 +80,9 @@ When `BUB_TAPESTORE_SQLALCHEMY_URL` is unset, bubseek builds a SeekDB/OceanBase 
 
 ## Builtin skills
 
-Builtin skill source files live in `src/bub_skills/`. They are packaged into `bub_skills/` in the wheel, which Bub already knows how to discover. Users do not need to run a separate sync command for them.
+Builtin skill source files live in `src/skills/`. They are packaged into `skills/` in the wheel, which Bub already knows how to discover. Users do not need to run a separate sync command for them.
 
-bubseek also vendors `friendly-python` and `piglet` from [PsiACE/skills](https://github.com/PsiACE/skills) at build time via `pdm-build-bub`; these are merged into the wheel under `bub_skills/`.
+bubseek also vendors `friendly-python` and `piglet` from [PsiACE/skills](https://github.com/PsiACE/skills) at build time via `pdm-build-skills`; these are merged into the wheel under `skills/`.
 
 The optional `bubseek[marimo]` extra provides:
 - **MarimoChannel** — inbound WebSocket for gateway; chat dashboard at `http://0.0.0.0:2718/`
@@ -97,14 +97,14 @@ Run `bubseek gateway --enable-channel marimo` to enable the marimo dashboard.
 
 Most users can skip this section.
 
-If you are building your own downstream Bub distribution and want to vendor remote skill repositories at build time, use `pdm-build-bub`:
+If you are building your own downstream Bub distribution and want to vendor remote skill repositories at build time, use `pdm-build-skills`:
 
 ```toml
 [build-system]
-requires = ["pdm-backend", "pdm-build-bub>=0.1.0a1"]
+requires = ["pdm-backend", "pdm-build-skills>=0.1.0a3"]
 build-backend = "pdm.backend"
 
-[tool.bub]
+[tool.pdm.build]
 skills = [
     { git = "PsiACE/skills", subpath = "skills", include = ["friendly-python", "piglet"] },
     { git = "https://github.com/example/skills.git", ref = "v1.2.3", subpath = "skills/review" },

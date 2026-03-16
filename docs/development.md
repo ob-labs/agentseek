@@ -42,8 +42,8 @@ uv run pytest tests
 make build
 ```
 
-The wheel includes builtin skills from `bub_skills/`.
-The source files for those builtin skills live in `src/bub_skills/`.
+The wheel includes builtin skills from `skills/`.
+The source files for those builtin skills live in `src/skills/`.
 
 ## Docs
 
