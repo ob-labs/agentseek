@@ -11,7 +11,7 @@ Use this skill when refactoring a Bub-based Python distribution such as `bubseek
 
 - Keep one clear bootstrap entry point for the distribution.
 - Preserve production capabilities such as SeekDB or OceanBase support.
-- Use SQLite only as a local or test-friendly default when no remote store is configured.
+- Use SeekDB or OceanBase as the required tape store backend.
 - Generate runtime insight notebooks from one canonical source instead of committing duplicates.
 - Keep `make check` and `make test` green after each refactor slice.
 
@@ -27,7 +27,7 @@ Use this skill when refactoring a Bub-based Python distribution such as `bubseek
 
 1. Map the current entry points, environment variables, and runtime side effects.
 2. Move bootstrap logic into one module with a small public surface.
-3. Normalize configuration so default SQLite behavior and explicit SeekDB or OceanBase URLs are both clear.
+3. Normalize configuration around explicit SeekDB or OceanBase URLs only.
 4. Centralize notebook templates or generated assets in one package module.
 5. Delete repository copies of generated artifacts and ignore regenerated runtime files.
 6. Expand tests around the public entry point and configuration resolution.

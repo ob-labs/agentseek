@@ -80,6 +80,23 @@ def _should_ensure_database(args: list[str]) -> bool:
     return not any(arg in {"--help", "-h", "help", "--version"} for arg in args)
 
 
+def _resolve_bub_executable() -> str | None:
+    executable = shutil.which("bub")
+    if executable is not None:
+        return executable
+
+    candidates = [
+        Path(sys.argv[0]).with_name("bub"),
+        Path(sys.executable).with_name("bub"),
+        Path(sys.prefix) / "bin" / "bub",
+        Path(sys.base_prefix) / "bin" / "bub",
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
 @dataclass(slots=True)
 class BubSeekBootstrap:
     """Bootstrap runtime state for a single bubseek invocation."""
@@ -139,7 +156,7 @@ class BubSeekBootstrap:
         if _should_ensure_database(args):
             self.ensure_database()
 
-        executable = shutil.which("bub")
+        executable = _resolve_bub_executable()
         if executable is None:
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), "bub")
 

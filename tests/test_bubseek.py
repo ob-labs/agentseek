@@ -80,6 +80,7 @@ def test_main_forwards_explicit_args(monkeypatch) -> None:
         observed_command: list[str] | None = None
         observed_env: dict[str, str] | None = None
 
+        monkeypatch.setattr(bootstrap_mod.BubSeekBootstrap, "ensure_database", lambda self: None)
         monkeypatch.setattr(bootstrap_mod.shutil, "which", lambda _name: "/usr/bin/bub")
 
         def _capture_execve(path: str, argv: list[str], env: dict[str, str]) -> None:
@@ -101,6 +102,7 @@ def test_main_defaults_to_help(monkeypatch) -> None:
     with imported_bubseek_modules("bubseek.__main__", "bubseek.bootstrap") as [main_mod, bootstrap_mod]:
         observed_command: list[str] | None = None
 
+        monkeypatch.setattr(bootstrap_mod.BubSeekBootstrap, "ensure_database", lambda self: None)
         monkeypatch.setattr(bootstrap_mod.shutil, "which", lambda _name: "/usr/bin/bub")
 
         def _capture_execve(path: str, argv: list[str], env: dict[str, str]) -> None:
@@ -131,6 +133,7 @@ def test_wrapper_forwards_dotenv_values(monkeypatch, tmp_path: Path) -> None:
         observed_env: dict[str, str] | None = None
 
         monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(bootstrap_mod.BubSeekBootstrap, "ensure_database", lambda self: None)
         monkeypatch.setattr(bootstrap_mod.shutil, "which", lambda _name: "/usr/bin/bub")
 
         def _capture_execve(path: str, argv: list[str], env: dict[str, str]) -> None:
@@ -148,7 +151,7 @@ def test_wrapper_forwards_dotenv_values(monkeypatch, tmp_path: Path) -> None:
     assert observed_env is not None
     assert observed_env["BUB_API_KEY"] == "demo-key"
     assert observed_env["BUB_API_BASE"] == "https://openrouter.ai/api/v1"
-    assert observed_env["BUB_TAPESTORE_SQLALCHEMY_URL"].startswith("sqlite+pysqlite:///")
+    assert observed_env["BUB_TAPESTORE_SQLALCHEMY_URL"].startswith("mysql+oceanbase://")
 
 
 def test_wrapper_forwards_workspace_to_plugins(monkeypatch, tmp_path: Path) -> None:
@@ -157,6 +160,7 @@ def test_wrapper_forwards_workspace_to_plugins(monkeypatch, tmp_path: Path) -> N
         workspace = tmp_path / "workspace"
         workspace.mkdir()
 
+        monkeypatch.setattr(bootstrap_mod.BubSeekBootstrap, "ensure_database", lambda self: None)
         monkeypatch.setattr(bootstrap_mod.shutil, "which", lambda _name: "/usr/bin/bub")
 
         def _capture_execve(path: str, argv: list[str], env: dict[str, str]) -> None:
@@ -172,16 +176,21 @@ def test_wrapper_forwards_workspace_to_plugins(monkeypatch, tmp_path: Path) -> N
     assert observed_env["BUB_WORKSPACE_PATH"] == str(workspace.resolve())
 
 
-def test_database_settings_default_to_sqlite(monkeypatch, tmp_path: Path) -> None:
+def test_database_settings_default_to_oceanbase(monkeypatch, tmp_path: Path) -> None:
     with imported_bubseek_modules("bubseek.config") as [config_mod]:
         monkeypatch.setenv("BUB_HOME", str(tmp_path / "runtime-home"))
         monkeypatch.setenv("BUB_TAPESTORE_SQLALCHEMY_URL", "")  # override .env so default is used
 
         settings = config_mod.DatabaseSettings()
 
-    assert settings.backend_name == "sqlite"
-    assert settings.mysql_connection_params() is None
-    assert settings.resolved_tapestore_url.endswith("/runtime-home/tapes.db")
+    assert settings.backend_name == "mysql"
+    assert settings.mysql_connection_params() == (
+        "127.0.0.1",
+        2881,
+        "root",
+        "",
+        "bub",
+    )
 
 
 def test_database_settings_extract_mysql_params(monkeypatch) -> None:

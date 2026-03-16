@@ -53,7 +53,7 @@ def env_with_workspace_dotenv(workspace: Path | str) -> dict[str, str]:
 
 
 class DatabaseSettings(BaseSettings):
-    """Database connection settings for tape store (OceanBase/SeekDB or SQLite)."""
+    """Database connection settings for tape store (OceanBase/SeekDB only)."""
 
     model_config = _SETTINGS_CONFIG
 
@@ -67,11 +67,19 @@ class DatabaseSettings(BaseSettings):
 
     @property
     def resolved_tapestore_url(self) -> str:
-        """Return the explicit tape store URL or Bub's default SQLite path."""
+        """Return the explicit tape store URL or build one from OCEANBASE_* settings."""
         if self.tapestore_sqlalchemy_url.strip():
             return self.tapestore_sqlalchemy_url.strip()
-        database_path = (self.bub_home.expanduser() / "tapes.db").resolve()
-        return str(URL.create("sqlite+pysqlite", database=str(database_path)))
+        return str(
+            URL.create(
+                "mysql+oceanbase",
+                username=self.oceanbase_user,
+                password=self.oceanbase_password,
+                host=self.oceanbase_host,
+                port=self.oceanbase_port,
+                database=self.oceanbase_database,
+            ).render_as_string(hide_password=False)
+        )
 
     @property
     def backend_name(self) -> str:
@@ -139,7 +147,7 @@ def resolve_tapestore_url(
     - If workspace is given: use workspace/.env (BubSeekSettings).
     - Else if BUB_WORKSPACE_PATH is set: use that workspace.
     - Else walk discover_from (or cwd) and parents for first .env, use that directory as workspace.
-    - Else use default (BubSeekSettings.from_workspace(None) → env or ~/.bub/tapes.db).
+    - Else use default (BubSeekSettings.from_workspace(None) → env or OCEANBASE_*).
     """
     if workspace is not None:
         return BubSeekSettings.from_workspace(workspace).db.resolved_tapestore_url

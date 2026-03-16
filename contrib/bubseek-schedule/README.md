@@ -6,7 +6,7 @@ Scheduling plugin for bubseek with OceanBase/SeekDB job store.
 
 - Bub plugin entry point: `schedule`
 - A scheduler channel backed by APScheduler
-- OceanBase/SeekDB job store (pyobvector dialect) or SQLite fallback
+- OceanBase/SeekDB job store (pyobvector dialect)
 - Built-in tools:
   - `schedule.add`
   - `schedule.remove`
@@ -36,7 +36,6 @@ dependencies = [
 - Scheduler starts when the plugin channel starts.
 - Jobs are persisted to:
   - **OceanBase/SeekDB**: When `BUB_TAPESTORE_SQLALCHEMY_URL` uses `mysql+oceanbase`, jobs go to the same database (table `apscheduler_jobs`).
-  - **SQLite fallback**: `<BUB_HOME>/schedule_jobs.db` when no MySQL URL is configured.
 
 ## Provided Tools
 

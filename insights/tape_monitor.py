@@ -2,7 +2,7 @@
 # requires-python = ">=3.12"
 # dependencies = ["marimo", "pandas", "pyobvector", "sqlalchemy", "pymysql", "python-dotenv"]
 # ///
-"""Tape Monitor — Bub tapestore (SeekDB/SQLite) dashboard with KPIs and charts.
+"""Tape Monitor — Bub tapestore (SeekDB/OceanBase) dashboard with KPIs and charts.
 
 Tapestore URL: single source bubseek.config.resolve_tapestore_url. When opened via channel,
 URL is written to insights/.tapestore-url so kernel reads it; otherwise notebook calls resolve_tapestore_url.
@@ -62,7 +62,7 @@ def _():
     import pandas as pd
     from sqlalchemy import create_engine, inspect, text
 
-    _default_sqlite = f"sqlite+pysqlite:///{os.path.expanduser('~/.bub/tapes.db')}"
+    _default_seekdb = "mysql+oceanbase://root:@127.0.0.1:2881/bub"
     tapestore_url = None
     try:
         tapestore_url = _read_tapestore_url_file()
@@ -81,17 +81,14 @@ def _():
                             discover = Path(__file__).resolve().parent
                 tapestore_url = resolve_tapestore_url(workspace=None, discover_from=discover)
             except Exception:
-                tapestore_url = (os.environ.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip() or _default_sqlite
+                tapestore_url = (os.environ.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip() or _default_seekdb
         if not tapestore_url:
-            tapestore_url = _default_sqlite
+            tapestore_url = _default_seekdb
     except Exception:
-        tapestore_url = _default_sqlite
+        tapestore_url = _default_seekdb
     if "oceanbase" in tapestore_url or "mysql" in tapestore_url:
-        try:
-            import bubseek.oceanbase  # register mysql+oceanbase dialect
-        except Exception:
-            with contextlib.suppress(ImportError):
-                import bubseek.oceanbase  # noqa: F401
+        with contextlib.suppress(ImportError):
+            import bubseek.oceanbase  # noqa: F401
 
     refresh_interval_seconds = 300
     return (
@@ -135,11 +132,11 @@ def _(  # noqa: C901
     def get_schema_type(engine):
         inspector = inspect(engine)
         tables = inspector.get_table_names()
-        if "bub_tape_entries" in tables:
+        if "tapes" in tables and "tape_entries" in tables:
             return "seekdb"
-        if "tape_entries" in tables:
-            return "sqlite"
         return "unknown"
+
+    archived_like = "%::archived::%"
 
     def load_tapes(engine, schema_type):
         if schema_type == "seekdb":
@@ -148,24 +145,16 @@ def _(  # noqa: C901
                 .connect()
                 .execute(
                     text(
-                        "SELECT tape_name, COUNT(*) as cnt FROM bub_tape_entries "
-                        "WHERE tape_name NOT LIKE '%::archived::%' "
-                        "GROUP BY tape_name ORDER BY tape_name"
-                    )
-                )
-                .fetchall()
-            )
-            return pd.DataFrame([{"tape_name": r[0], "entry_count": r[1]} for r in rows])
-        if schema_type == "sqlite":
-            rows = (
-                engine
-                .connect()
-                .execute(
-                    text(
-                        "SELECT t.name, COUNT(e.entry_id) as cnt FROM tapes t "
-                        "LEFT JOIN tape_entries e ON t.id = e.tape_id "
-                        "GROUP BY t.id ORDER BY t.name"
-                    )
+                        """
+                        SELECT t.name, COUNT(e.entry_id) as cnt
+                        FROM tapes t
+                        LEFT JOIN tape_entries e ON t.id = e.tape_id
+                        WHERE t.name NOT LIKE :archived_like
+                        GROUP BY t.id, t.name
+                        ORDER BY t.name
+                        """
+                    ),
+                    {"archived_like": archived_like},
                 )
                 .fetchall()
             )
@@ -179,18 +168,16 @@ def _(  # noqa: C901
                 .connect()
                 .execute(
                     text(
-                        "SELECT kind, COUNT(*) as count FROM bub_tape_entries "
-                        "WHERE tape_name NOT LIKE '%::archived::%' GROUP BY kind ORDER BY count DESC"
-                    )
-                )
-                .fetchall()
-            )
-        elif schema_type == "sqlite":
-            rows = (
-                engine
-                .connect()
-                .execute(
-                    text("SELECT e.kind, COUNT(*) as count FROM tape_entries e GROUP BY e.kind ORDER BY count DESC")
+                        """
+                        SELECT e.kind, COUNT(*) as count
+                        FROM tape_entries e
+                        JOIN tapes t ON e.tape_id = t.id
+                        WHERE t.name NOT LIKE :archived_like
+                        GROUP BY e.kind
+                        ORDER BY count DESC
+                        """
+                    ),
+                    {"archived_like": archived_like},
                 )
                 .fetchall()
             )
@@ -212,29 +199,14 @@ def _(  # noqa: C901
                 .execute(
                     text(
                         """
-                    SELECT tape_name, entry_id, kind, created_at, payload_json
-                    FROM bub_tape_entries
-                    WHERE tape_name NOT LIKE '%::archived::%'
-                    ORDER BY created_at DESC LIMIT :limit
-                    """
-                    ),
-                    {"limit": limit},
-                )
-                .fetchall()
-            )
-        elif schema_type == "sqlite":
-            r = (
-                engine
-                .connect()
-                .execute(
-                    text(
-                        """
                     SELECT t.name, e.entry_id, e.kind, e.created_at, e.payload
-                    FROM tape_entries e JOIN tapes t ON e.tape_id = t.id
+                    FROM tape_entries e
+                    JOIN tapes t ON e.tape_id = t.id
+                    WHERE t.name NOT LIKE :archived_like
                     ORDER BY e.created_at DESC LIMIT :limit
                     """
                     ),
-                    {"limit": limit},
+                    {"archived_like": archived_like, "limit": limit},
                 )
                 .fetchall()
             )
@@ -265,22 +237,14 @@ def _(  # noqa: C901
                 .execute(
                     text(
                         """
-                    SELECT created_at FROM bub_tape_entries
-                    WHERE tape_name NOT LIKE '%::archived::%'
-                    ORDER BY created_at DESC LIMIT :limit
+                    SELECT e.created_at
+                    FROM tape_entries e
+                    JOIN tapes t ON e.tape_id = t.id
+                    WHERE t.name NOT LIKE :archived_like
+                    ORDER BY e.created_at DESC LIMIT :limit
                     """
                     ),
-                    {"limit": limit},
-                )
-                .fetchall()
-            )
-        elif schema_type == "sqlite":
-            rows = (
-                engine
-                .connect()
-                .execute(
-                    text("SELECT e.created_at FROM tape_entries e ORDER BY e.created_at DESC LIMIT :limit"),
-                    {"limit": limit},
+                    {"archived_like": archived_like, "limit": limit},
                 )
                 .fetchall()
             )
@@ -460,7 +424,7 @@ def _(
     page = mo.vstack(
         [
             mo.md("# 📼 Bub Tape Monitor"),
-            mo.md("*SeekDB / SQLite tapestore. Auto-refresh every 5 min or click to refresh.*"),
+            mo.md("*SeekDB / OceanBase tapestore. Auto-refresh every 5 min or click to refresh.*"),
             refresh,
             kpi,
             mo.hstack([kind_chart, tape_chart, time_chart], widths=[1, 1, 1], gap=1.0),

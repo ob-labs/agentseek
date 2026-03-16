@@ -40,7 +40,7 @@ BUB_API_KEY=sk-or-v1-...
 BUB_API_BASE=https://openrouter.ai/api/v1
 ```
 
-If you do not configure a tape store URL, bubseek follows Bub's SQLite default under `BUB_HOME/tapes.db`. For production SeekDB or OceanBase deployments, set `BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://...` or the `OCEANBASE_*` variables before running `bubseek`.
+Configure SeekDB or OceanBase before running `bubseek`, for example with `BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://...` or the `OCEANBASE_*` variables.
 
 ## Add contrib
 

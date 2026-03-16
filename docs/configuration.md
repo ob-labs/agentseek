@@ -76,7 +76,7 @@ BUB_API_BASE=https://openrouter.ai/api/v1
 | `BUB_MARIMO_WORKSPACE` | Workspace for insights (default: `BUB_WORKSPACE_PATH` or `.`) |
 | `BUB_TAPESTORE_SQLALCHEMY_URL` | SQLAlchemy tape store URL (bundled) |
 
-When `BUB_TAPESTORE_SQLALCHEMY_URL` is unset, bubseek resolves the same default SQLite path as Bub's SQLAlchemy tape store plugin. This is the recommended local and test setup. SeekDB and OceanBase remain supported through explicit `mysql+oceanbase://...` URLs or the `OCEANBASE_*` variables.
+When `BUB_TAPESTORE_SQLALCHEMY_URL` is unset, bubseek builds a SeekDB/OceanBase URL from the `OCEANBASE_*` variables. Set either the full `mysql+oceanbase://...` URL or the `OCEANBASE_*` fields before running.
 
 ## Builtin skills
 

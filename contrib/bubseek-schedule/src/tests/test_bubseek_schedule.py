@@ -1,19 +1,26 @@
 """Tests for bubseek-schedule (OceanBaseJobStore)."""
 
 import os
-import tempfile
 from datetime import datetime, timedelta
-from pathlib import Path
 
-os.environ.pop("BUB_TAPESTORE_SQLALCHEMY_URL", None)
+import pytest
 
 
-def test_jobstore_in_memory():
-    """Test jobstore with in-memory SQLite via APScheduler."""
+def _seekdb_url() -> str:
+    url = (os.environ.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
+    if not url:
+        pytest.skip("BUB_TAPESTORE_SQLALCHEMY_URL is required for schedule tests")
+    if "mysql" not in url and "oceanbase" not in url:
+        pytest.skip("schedule tests require a SeekDB/OceanBase URL")
+    return url
+
+
+def test_jobstore_roundtrip():
+    """Test jobstore roundtrip via APScheduler on SeekDB/OceanBase."""
     from apscheduler.schedulers.background import BackgroundScheduler
     from bubseek_schedule.jobstore import OceanBaseJobStore
 
-    store = OceanBaseJobStore(url="sqlite:///:memory:")
+    store = OceanBaseJobStore(url=_seekdb_url(), tablename="apscheduler_jobs_test_roundtrip")
     scheduler = BackgroundScheduler(jobstores={"default": store})
     scheduler.start()
 
@@ -28,48 +35,12 @@ def test_jobstore_in_memory():
     scheduler.shutdown()
 
 
-def test_jobstore_tapestore_sqlite_same_db():
-    """Test jobstore uses tapestore SQLite - same DB, same file, multiple tables."""
-    with tempfile.TemporaryDirectory() as tmp:
-        db_path = Path(tmp) / "bub.db"
-        url = f"sqlite+pysqlite:///{db_path}"
-
-        # Simulate tapestore having a table
-        from sqlalchemy import Column, MetaData, String, Table, create_engine, text
-
-        engine = create_engine(url)
-        metadata = MetaData()
-        Table("tapestore_dummy", metadata, Column("id", String(50), primary_key=True))
-        metadata.create_all(engine)
-
-        # Jobstore uses same URL - should add apscheduler_jobs table
-        from apscheduler.schedulers.background import BackgroundScheduler
-        from bubseek_schedule.jobstore import OceanBaseJobStore
-
-        store = OceanBaseJobStore(url=url)
-        scheduler = BackgroundScheduler(jobstores={"default": store})
-        scheduler.start()
-
-        run_date = datetime.now() + timedelta(hours=1)  # Future so scheduler won't run/remove before shutdown
-        scheduler.add_job("bubseek_schedule.jobs:_noop", "date", run_date=run_date, id="test-2")
-        assert store.lookup_job("test-2") is not None
-
-        # Verify both tables exist in same DB
-        with engine.connect() as conn:
-            tables = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")).fetchall()
-        table_names = [t[0] for t in tables]
-        assert "apscheduler_jobs" in table_names
-        assert "tapestore_dummy" in table_names
-
-        scheduler.shutdown()
-
-
 def test_jobstore_get_due_jobs():
     """Test get_due_jobs and get_next_run_time."""
     from apscheduler.schedulers.background import BackgroundScheduler
     from bubseek_schedule.jobstore import OceanBaseJobStore
 
-    store = OceanBaseJobStore(url="sqlite:///:memory:")
+    store = OceanBaseJobStore(url=_seekdb_url(), tablename="apscheduler_jobs_test_due")
     scheduler = BackgroundScheduler(jobstores={"default": store})
     scheduler.start()
 

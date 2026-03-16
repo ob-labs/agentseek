@@ -19,18 +19,8 @@ from bubseek.config import BubSeekSettings
 
 
 def _get_jobstore_url() -> str:
-    """Get SQLAlchemy URL for job store. Uses tapestore DB (MySQL or SQLite) when configured."""
-    settings = BubSeekSettings()
-    url = settings.db.tapestore_sqlalchemy_url or ""
-    if url:
-        # Same DB as tapestore - one DB, multiple tables (tapestore + apscheduler_jobs)
-        return url
-    # Fallback: no tapestore configured, use standalone SQLite under BUB_HOME
-    from bub.builtin.settings import AgentSettings
-
-    home = AgentSettings().home
-    job_db = home / "schedule_jobs.db"
-    return f"sqlite+pysqlite:///{job_db}"
+    """Get SQLAlchemy URL for job store from the configured SeekDB/OceanBase tapestore."""
+    return BubSeekSettings().db.resolved_tapestore_url
 
 
 def _normalize_url(url: str) -> str:
@@ -42,11 +32,11 @@ def _normalize_url(url: str) -> str:
 
 class OceanBaseJobStore(BaseJobStore):
     """
-    A SQL-based job store for APScheduler using OceanBase/SeekDB (pyobvector) or SQLite.
+    A SQL-based job store for APScheduler using OceanBase/SeekDB (pyobvector).
 
     Jobs are serialized with pickle and stored in a database table. Uses the same
-    database as BUB_TAPESTORE_SQLALCHEMY_URL when configured (MySQL or SQLite) -
-    one DB, multiple tables (tapestore + apscheduler_jobs).
+    database as BUB_TAPESTORE_SQLALCHEMY_URL - one DB, multiple tables
+    (tapestore + apscheduler_jobs).
     """
 
     def __init__(self, url: str | None = None, tablename: str = "apscheduler_jobs"):

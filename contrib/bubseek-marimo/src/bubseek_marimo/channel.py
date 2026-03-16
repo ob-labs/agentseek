@@ -111,12 +111,16 @@ class MarimoChannel(Channel):
         """Tapestore URL from single source: bubseek.config.resolve_tapestore_url(workspace)."""
         if resolve_tapestore_url is not None:
             return resolve_tapestore_url(self._workspace_dir())
-        # Fallback when bubseek not installed
         env = env_with_workspace_dotenv(self._workspace_dir()) if env_with_workspace_dotenv else self._marimo_env()
         url = (env.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
         if url:
             return url
-        return f"sqlite+pysqlite:///{Path.home().expanduser() / '.bub' / 'tapes.db'}"
+        host = (env.get("OCEANBASE_HOST") or "127.0.0.1").strip()
+        port = int((env.get("OCEANBASE_PORT") or "2881").strip())
+        user = (env.get("OCEANBASE_USER") or "root").strip()
+        password = env.get("OCEANBASE_PASSWORD") or ""
+        database = (env.get("OCEANBASE_DATABASE") or "bub").strip()
+        return f"mysql+oceanbase://{user}:{password}@{host}:{port}/{database}"
 
     def _ensure_seed_notebooks(self) -> None:
         insights_dir = self._insights_dir()
@@ -128,7 +132,7 @@ class MarimoChannel(Channel):
             workspace,
             env_path,
             env_path.is_file(),
-            "seekdb" if url and ("mysql" in url or "oceanbase" in url) else "sqlite",
+            "seekdb",
         )
         ensure_seed_notebooks(insights_dir)
         _write_tapestore_url_into(insights_dir, url)
@@ -243,7 +247,7 @@ class MarimoChannel(Channel):
         workspace = self._workspace_dir()
         env_path = workspace / ".env"
         url = self._tapestore_url()
-        store = "seekdb" if url and ("mysql" in url or "oceanbase" in url) else "sqlite"
+        store = "seekdb"
         return web.json_response({
             "workspace": str(workspace),
             "env_path": str(env_path),

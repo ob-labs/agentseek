@@ -6,7 +6,7 @@ This page explains what bubseek is responsible for, and what it deliberately lea
 
 - provides the `bubseek` executable as a single bootstrap entry point over `bub`
 - forwards `.env` values to the Bub subprocess
-- normalizes the default tape store to local SQLite while preserving explicit SeekDB/OceanBase support
+- standardizes tape storage on SeekDB/OceanBase
 - ships a small set of builtin skills with the package
 - pins a practical default Bub runtime version
 
