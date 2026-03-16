@@ -80,10 +80,10 @@ def _should_ensure_database(args: list[str]) -> bool:
     return not any(arg in {"--help", "-h", "help", "--version"} for arg in args)
 
 
-def _resolve_bub_executable() -> str | None:
+def _resolve_bub_command() -> list[str] | None:
     executable = shutil.which("bub")
     if executable is not None:
-        return executable
+        return [executable]
 
     candidates = [
         Path(sys.argv[0]).with_name("bub"),
@@ -93,8 +93,9 @@ def _resolve_bub_executable() -> str | None:
     ]
     for candidate in candidates:
         if candidate.is_file():
-            return str(candidate)
-    return None
+            return [str(candidate)]
+
+    return [sys.executable, "-m", "bub.builtin.cli"]
 
 
 @dataclass(slots=True)
@@ -156,12 +157,13 @@ class BubSeekBootstrap:
         if _should_ensure_database(args):
             self.ensure_database()
 
-        executable = _resolve_bub_executable()
-        if executable is None:
+        command_prefix = _resolve_bub_command()
+        if command_prefix is None:
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), "bub")
 
         env = self.forwarded_environment(args)
-        command = [executable, *(args or ["--help"])]
+        executable = command_prefix[0]
+        command = [*command_prefix, *(args or ["--help"])]
         try:
             os.execve(executable, command, env)  # noqa: S606
         except OSError as exc:

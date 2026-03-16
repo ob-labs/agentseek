@@ -120,14 +120,6 @@ def test_workspace_resolution_falls_back_to_cwd(monkeypatch, tmp_path) -> None:
     assert channel._insights_dir() == tmp_path.resolve() / "insights"
 
 
-def test_example_template_contains_scanner_markers() -> None:
-    from bubseek_marimo.notebooks import get_seed_notebook_content
-
-    content = get_seed_notebook_content("example_visualization.py")
-    assert "import marimo" in content
-    assert "marimo.App" in content
-
-
 @pytest.fixture(scope="module")
 def gateway_process():
     """Start gateway with marimo channel, yield process, cleanup on teardown."""
@@ -187,7 +179,7 @@ def test_gallery_loads(gateway_process) -> None:
 def test_dashboard_loads(gateway_process) -> None:
     """Dashboard page loads without internal error."""
     _status, body = _assert_notebook_loads("dashboard.py")
-    assert "marimo-filename" in body or "dashboard" in body.lower()
+    assert "marimo-filename" in body or "async agent control room" in body.lower()
 
 
 def test_index_loads(gateway_process) -> None:
@@ -195,15 +187,8 @@ def test_index_loads(gateway_process) -> None:
     _assert_notebook_loads("index.py")
 
 
-def test_example_notebook_loads(gateway_process) -> None:
-    """Starter example notebook loads from the canonical insights directory."""
-    example_path = REPO_ROOT / "insights" / "example_visualization.py"
-    assert example_path.exists(), f"Expected generated example at {example_path}"
-    _assert_notebook_loads("example_visualization.py")
-
-
 def test_chat_api_roundtrip(gateway_process) -> None:
-    """Native marimo chat endpoint returns agent responses."""
+    """Submit a turn, then poll persisted events until assistant output arrives."""
     if not AIOHTTP_AVAILABLE:
         pytest.skip("aiohttp not installed")
 
@@ -211,17 +196,82 @@ def test_chat_api_roundtrip(gateway_process) -> None:
         async with ClientSession() as session:
             try:
                 async with session.post(
-                    f"http://127.0.0.1:{PORT}/api/chat",
+                    f"http://127.0.0.1:{PORT}/api/chat/submit",
                     json={"content": "hello"},
-                    timeout=30,
+                    timeout=10,
                 ) as resp:
                     assert resp.status == 200, await resp.text()
-                    data = await resp.json()
+                    submit_data = await resp.json()
             except (ClientConnectorError, ClientError) as e:
-                pytest.fail(f"Chat API request failed: {e}")
+                pytest.fail(f"Chat submit failed: {e}")
 
-        assert data.get("session_id")
-        messages = [m.get("content", "") for m in data.get("messages", []) if m.get("content")]
-        assert messages, f"No response from agent. Payload: {data}"
+            session_id = submit_data.get("session_id")
+            first_event = submit_data.get("event", {})
+            assert session_id
+            after_event_id = int(first_event.get("event_id", 0))
+
+            events = []
+            for _ in range(40):
+                async with session.get(
+                    f"http://127.0.0.1:{PORT}/api/chat/events",
+                    params={"session_id": session_id, "after": after_event_id},
+                    timeout=10,
+                ) as resp:
+                    assert resp.status == 200, await resp.text()
+                    poll_data = await resp.json()
+                events.extend(poll_data.get("events", []))
+                if any(event.get("role") == "assistant" and event.get("content") for event in events):
+                    break
+                await asyncio.sleep(0.25)
+
+        messages = [
+            event.get("content", "") for event in events if event.get("role") == "assistant" and event.get("content")
+        ]
+        assert messages, f"No assistant events returned. Events: {events}"
+
+    asyncio.run(_run())
+
+
+def test_webhook_injection_roundtrip(gateway_process) -> None:
+    """Webhook writes assistant events into the persisted session transcript."""
+    if not AIOHTTP_AVAILABLE:
+        pytest.skip("aiohttp not installed")
+
+    async def _run() -> None:
+        async with ClientSession() as session:
+            async with session.post(
+                f"http://127.0.0.1:{PORT}/api/chat/submit",
+                json={"content": "create session"},
+                timeout=10,
+            ) as resp:
+                assert resp.status == 200, await resp.text()
+                submit_data = await resp.json()
+
+            session_id = submit_data["session_id"]
+            turn_id = submit_data["turn_id"]
+            after_event_id = int(submit_data["event"]["event_id"])
+
+            async with session.post(
+                f"http://127.0.0.1:{PORT}/api/chat/webhook",
+                json={
+                    "session_id": session_id,
+                    "turn_id": turn_id,
+                    "role": "assistant",
+                    "kind": "message",
+                    "content": "webhook injected response",
+                },
+                timeout=10,
+            ) as resp:
+                assert resp.status == 200, await resp.text()
+
+            async with session.get(
+                f"http://127.0.0.1:{PORT}/api/chat/events",
+                params={"session_id": session_id, "after": after_event_id},
+                timeout=10,
+            ) as resp:
+                assert resp.status == 200, await resp.text()
+                poll_data = await resp.json()
+
+        assert any(event.get("content") == "webhook injected response" for event in poll_data.get("events", []))
 
     asyncio.run(_run())

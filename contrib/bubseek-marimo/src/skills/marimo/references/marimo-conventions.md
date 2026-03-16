@@ -26,6 +26,7 @@ Summary of marimo notebook patterns and pitfalls from bubseek usage. Use these w
 - Marimo requires **variable names to be unique across all cells** (no “multiple-definitions”).
 - Use an **underscore prefix** for names that are only used inside one cell (e.g. `_bars`, `_svg`, `_row`, `_counts`). That keeps them local in intent and avoids clashes with similarly named locals in other cells.
 - Especially in chart logic (SVG building, loops), prefer `_bars`, `_y`, `_max_c`, `_row`, etc.
+- In stateful dashboards, common temporaries like `session`, `events`, `result`, `response`, `body`, `item`, `event` are easy to repeat across cells. Prefer `_session`, `_events`, `_result`, `_response`, `_body`, `_item`, `_event` inside cells unless the name is intentionally returned for downstream dependency wiring.
 
 ---
 
@@ -33,6 +34,18 @@ Summary of marimo notebook patterns and pitfalls from bubseek usage. Use these w
 
 - Do **not** use `return` in the middle of a cell for control flow (e.g. “if empty then return early”). Marimo compiles cells as functions; a bare `return` in the middle can be reported as `'return' outside function` or break the cell’s single return contract.
 - **Pattern**: Use conditionals to assign to a variable, then a single `return (...)` at the end of the cell.
+
+Example:
+
+```python
+@app.cell
+def _(items, mo):
+    if items:
+        panel = mo.md("Items loaded")
+    else:
+        panel = mo.md("No items yet")
+    return (panel,)
+```
 
 ---
 
@@ -63,12 +76,26 @@ Summary of marimo notebook patterns and pitfalls from bubseek usage. Use these w
 
 ---
 
+## 9. Validate the notebook before handing it back
+
+- Do not assume a notebook is valid just because the Python source looks plausible.
+- Minimum validation:
+  - `uv run <notebook.py>` to catch compile / graph errors
+  - `uvx marimo check <notebook.py>` when available
+- This is how you catch real marimo failures such as:
+  - duplicate variable definitions across cells
+  - invalid cell control flow
+  - broken dependency wiring between cells
+
+---
+
 ## Quick checklist for generated notebooks
 
 - [ ] First cell returns `(..., mo)` (and imports `mo` inside that cell if needed).
 - [ ] Cells that use `mo` have `mo` in their function parameters (from a previous return).
 - [ ] No duplicate variable names across cells; use `_` prefix for cell-local names.
 - [ ] No early `return` in the middle of a cell; single return at end.
+- [ ] Notebook passes `uv run <notebook.py>` or `uvx marimo check <notebook.py>`.
 - [ ] Final cell builds the whole page and is the only cell that “displays” (last expression).
 - [ ] Data either fully embedded in the first cell or read via bubseek config/env; script block lists all deps (including `pyobvector` for OceanBase if needed).
 - [ ] File contains `import marimo` and `marimo.App` (or `mo.App`) for gallery scanner.

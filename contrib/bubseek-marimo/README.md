@@ -5,7 +5,7 @@ Marimo channel for Bub — native marimo dashboard with chat and insights index.
 ## What It Provides
 
 - **Marimo dashboard** — native marimo app: chat with Bub + insights index
-- **Chat** — native marimo form widgets posting to `/api/chat`
+- **Chat** — native marimo cells submit turns to `/api/chat/submit` and sync transcript events from `/api/chat/events`
 - **Insights output** — notebooks are generated into the canonical runtime directory: `<workspace>/insights`
 - **marimo skill** — output insights as `.py` notebooks; combine with marimo-team skills
 
@@ -23,12 +23,12 @@ pip install bubseek[marimo]
 bubseek gateway --enable-channel marimo
 ```
 
-Open `http://localhost:2718/` — marimo gallery. Click **dashboard** for chat + index. Chat uses native marimo form widgets and posts to `/api/chat`.
+Open `http://localhost:2718/` — marimo gallery. Click **dashboard** for chat + index. The dashboard queues turns asynchronously and refreshes transcript events from the channel backend.
 
 ## Insight Output
 
 - Canonical runtime location: `<workspace>/insights/*.py`
-- `dashboard.py`, `index.py`, and `example_visualization.py` are generated starter notebooks, not hand-maintained repository assets
+- `dashboard.py` and `index.py` are generated starter notebooks, not hand-maintained repository assets
 - `workspace` resolution order: `BUB_MARIMO_WORKSPACE` -> `BUB_WORKSPACE_PATH` -> current working directory
 - Packaged plugin installs still write generated notebooks into the active workspace, never into the installed package directory
 - Format: single `.py` with `@app.cell`, PEP 723

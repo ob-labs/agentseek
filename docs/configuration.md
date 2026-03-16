@@ -89,7 +89,7 @@ The optional `bubseek[marimo]` extra provides:
 - **marimo skill** — output data insights as marimo `.py` notebooks; index of charts in `{workspace}/insights/`
 - References [marimo-team/skills](https://github.com/marimo-team/skills) marimo-notebook conventions
 
-The dashboard, index, and starter visualization are generated into `{workspace}/insights/` at runtime from one canonical template source. They should not be hand-edited inside the repository.
+The dashboard and index are generated into `{workspace}/insights/` at runtime from one canonical template source. They should not be hand-edited inside the repository.
 
 Run `bubseek gateway --enable-channel marimo` to enable the marimo dashboard.
 

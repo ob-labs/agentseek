@@ -7,7 +7,7 @@ from pathlib import Path
 NOTEBOOK_NAMES = frozenset({"dashboard.py", "index.py"})
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
-SEED_NOTEBOOK_FILES = ("dashboard.py", "index.py", "example_visualization.py")
+SEED_NOTEBOOK_FILES = ("dashboard.py", "index.py")
 
 
 def get_seed_notebook_content(name: str) -> str:
