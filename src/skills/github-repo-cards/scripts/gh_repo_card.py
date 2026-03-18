@@ -8,6 +8,7 @@
 Usage:
     uv run gh_repo_card.py <org>/<repo> [--top-n 5] [--analysis "text"] [--output card.svg]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,12 +22,18 @@ import textwrap
 import time
 import urllib.request
 from pathlib import Path
-
+from typing import cast
 
 # ── Data fetching via gh CLI ─────────────────────────────────────────────────
 
+
 def _gh(*args: str) -> str:
-    result = subprocess.run(["gh", *args], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        ["gh", *args],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     return result.stdout.strip()
 
 
@@ -44,7 +51,7 @@ def _gh_stats_json(endpoint: str, retries: int = 4) -> dict | list:
         raw = _gh_json("api", endpoint, "--cache", "0s")
         if isinstance(raw, list):
             return raw
-        delay = 2 ** attempt
+        delay = 2**attempt
         print(f"   ⏳ stats computing, retry in {delay}s …", file=sys.stderr)
         time.sleep(delay)
     return raw
@@ -52,10 +59,15 @@ def _gh_stats_json(endpoint: str, retries: int = 4) -> dict | list:
 
 def fetch_repo_info(nwo: str) -> dict:
     """Fetch basic repo metadata."""
-    return _gh_json(
-        "repo", "view", nwo,
-        "--json", "name,owner,description,stargazerCount,forkCount,"
-                  "primaryLanguage,licenseInfo,updatedAt,url,homepageUrl",
+    return cast(
+        dict,
+        _gh_json(
+            "repo",
+            "view",
+            nwo,
+            "--json",
+            "name,owner,description,stargazerCount,forkCount,primaryLanguage,licenseInfo,updatedAt,url,homepageUrl",
+        ),
     )
 
 
@@ -75,9 +87,12 @@ def fetch_stargazer_counts(nwo: str) -> list[int]:
     """
     try:
         raw = _gh(
-            "api", f"repos/{nwo}/stargazers?per_page=100",
-            "-H", "Accept: application/vnd.github.star+json",
-            "--cache", "1h",
+            "api",
+            f"repos/{nwo}/stargazers?per_page=100",
+            "-H",
+            "Accept: application/vnd.github.star+json",
+            "--cache",
+            "1h",
         )
         if not raw:
             return []
@@ -137,17 +152,33 @@ def fetch_top_contributors(nwo: str, n: int = 5) -> list[dict]:
 # ── SVG rendering ────────────────────────────────────────────────────────────
 
 _LANG_COLORS: dict[str, str] = {
-    "Python": "#3572A5", "JavaScript": "#f1e05a", "TypeScript": "#3178c6",
-    "Go": "#00ADD8", "Rust": "#dea584", "Java": "#b07219", "C": "#555555",
-    "C++": "#f34b7d", "C#": "#178600", "Ruby": "#701516", "PHP": "#4F5D95",
-    "Swift": "#F05138", "Kotlin": "#A97BFF", "Scala": "#c22d40",
-    "Shell": "#89e051", "Lua": "#000080", "Dart": "#00B4AB",
-    "Elixir": "#6e4a7e", "Haskell": "#5e5086", "Zig": "#ec915c",
-    "Nix": "#7e7eff", "Vue": "#41b883", "Svelte": "#ff3e00",
+    "Python": "#3572A5",
+    "JavaScript": "#f1e05a",
+    "TypeScript": "#3178c6",
+    "Go": "#00ADD8",
+    "Rust": "#dea584",
+    "Java": "#b07219",
+    "C": "#555555",
+    "C++": "#f34b7d",
+    "C#": "#178600",
+    "Ruby": "#701516",
+    "PHP": "#4F5D95",
+    "Swift": "#F05138",
+    "Kotlin": "#A97BFF",
+    "Scala": "#c22d40",
+    "Shell": "#89e051",
+    "Lua": "#000080",
+    "Dart": "#00B4AB",
+    "Elixir": "#6e4a7e",
+    "Haskell": "#5e5086",
+    "Zig": "#ec915c",
+    "Nix": "#7e7eff",
+    "Vue": "#41b883",
+    "Svelte": "#ff3e00",
 }
 
 
-def _sparkline_path(values: list[int | float], x: float, y: float, w: float, h: float) -> str:
+def _sparkline_path(values: list[int], x: float, y: float, w: float, h: float) -> str:
     """Build an SVG <path> d-attribute for a sparkline area chart."""
     if not values:
         return ""
@@ -172,7 +203,7 @@ def _wrap(text: str, width: int = 70) -> list[str]:
     return textwrap.wrap(text, width=width) if text else []
 
 
-def render_repo_svg(
+def render_repo_svg(  # noqa: C901
     info: dict,
     commits: list[int],
     stars: list[int],
@@ -213,10 +244,17 @@ def render_repo_svg(
     footer_h = 24
 
     card_h = (
-        pad + header_h + desc_h + stats_h + sparkline_h
-        + contrib_header_h + contrib_h
-        + analysis_header_h + analysis_h
-        + footer_h + pad
+        pad
+        + header_h
+        + desc_h
+        + stats_h
+        + sparkline_h
+        + contrib_header_h
+        + contrib_h
+        + analysis_header_h
+        + analysis_h
+        + footer_h
+        + pad
     )
 
     parts: list[str] = []
@@ -291,7 +329,7 @@ def render_repo_svg(
             parts.append(
                 f'  <text x="{pad}" y="{cy + 14 + i * 20}" '
                 f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="14" fill="#8b949e">'
-                f'{_esc(line)}</text>\n'
+                f"{_esc(line)}</text>\n"
             )
         cy += len(desc_lines) * 20 + 12
 
@@ -325,7 +363,7 @@ def render_repo_svg(
                 f'  <text x="{pad}" y="{cy + spark_label_h}" '
                 f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="11" '
                 f'font-weight="600" fill="#58a6ff" text-transform="uppercase" letter-spacing="1">'
-                f'COMMIT ACTIVITY (52 w)</text>\n'
+                f"COMMIT ACTIVITY (52 w)</text>\n"
             )
             path_d = _sparkline_path(commits, pad, cy + spark_label_h + spark_pad_top, chart_w, spark_area_h)
             if path_d:
@@ -338,7 +376,7 @@ def render_repo_svg(
                 f'  <text x="{sx}" y="{cy + spark_label_h}" '
                 f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="11" '
                 f'font-weight="600" fill="#f0883e" text-transform="uppercase" letter-spacing="1">'
-                f'STAR ACTIVITY</text>\n'
+                f"STAR ACTIVITY</text>\n"
             )
             path_d = _sparkline_path(stars, sx, cy + spark_label_h + spark_pad_top, chart_w, spark_area_h)
             if path_d:
@@ -352,7 +390,7 @@ def render_repo_svg(
             f'  <text x="{pad}" y="{cy + 14}" '
             f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="12" '
             f'font-weight="600" fill="#c9d1d9" letter-spacing="0.5">'
-            f'TOP CONTRIBUTORS</text>\n'
+            f"TOP CONTRIBUTORS</text>\n"
         )
         cy += contrib_header_h
         per_row = 4
@@ -379,10 +417,10 @@ def render_repo_svg(
                 )
             parts.append(
                 f'  <g transform="translate({cx_},{cy_})">\n'
-                f'{avatar_el}\n'
+                f"{avatar_el}\n"
                 f'    <text x="40" y="14" font-family="\'Segoe UI\',system-ui,sans-serif" font-size="13" font-weight="600" fill="#c9d1d9">{login}</text>\n'
                 f'    <text x="40" y="30" font-family="\'Segoe UI\',system-ui,sans-serif" font-size="11" fill="#8b949e">{contribs:,} commits</text>\n'
-                f'  </g>\n'
+                f"  </g>\n"
             )
         cy += contrib_h
 
@@ -392,7 +430,7 @@ def render_repo_svg(
             f'  <text x="{pad}" y="{cy + 14}" '
             f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="12" '
             f'font-weight="600" fill="#c9d1d9" letter-spacing="0.5">'
-            f'ANALYSIS</text>\n'
+            f"ANALYSIS</text>\n"
         )
         cy += analysis_header_h
         # background box
@@ -405,7 +443,7 @@ def render_repo_svg(
             parts.append(
                 f'  <text x="{pad + 12}" y="{cy + 18 + i * 20}" '
                 f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="13" fill="#8b949e">'
-                f'{_esc(line)}</text>\n'
+                f"{_esc(line)}</text>\n"
             )
         cy += analysis_h
 
@@ -414,7 +452,7 @@ def render_repo_svg(
     parts.append(
         f'  <text x="{pad}" y="{cy + 12}" '
         f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="10" fill="#484f58">'
-        f'{_esc(url)}</text>\n'
+        f"{_esc(url)}</text>\n"
     )
 
     parts.append("</svg>")
@@ -422,6 +460,7 @@ def render_repo_svg(
 
 
 # ── SVG → PNG conversion ────────────────────────────────────────────────────
+
 
 def svg_to_png(svg_path: Path) -> Path:
     png_path = svg_path.with_suffix(".png")
@@ -444,6 +483,7 @@ def svg_to_png(svg_path: Path) -> Path:
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a GitHub repo card (SVG + PNG)")

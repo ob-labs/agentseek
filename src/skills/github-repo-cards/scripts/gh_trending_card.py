@@ -3,11 +3,12 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""Generate a beautiful GitHub-trending–style SVG/PNG card.
+"""Generate a beautiful GitHub-trending-style SVG/PNG card.
 
 Usage:
     uv run gh_trending_card.py [--language python] [--since daily] [--limit 10] [--output trending.svg]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,15 +17,20 @@ import json
 import shutil
 import subprocess
 import sys
-import textwrap
 import time
+from datetime import UTC
 from pathlib import Path
-
 
 # ── Data fetching ────────────────────────────────────────────────────────────
 
+
 def _gh_json(*args: str) -> dict | list:
-    result = subprocess.run(["gh", *args], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        ["gh", *args],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     return json.loads(result.stdout.strip())
 
 
@@ -34,7 +40,7 @@ def _gh_stats_json(endpoint: str, retries: int = 4) -> dict | list:
         raw = _gh_json("api", endpoint, "--cache", "0s")
         if isinstance(raw, list):
             return raw
-        delay = 2 ** attempt
+        delay = 2**attempt
         print(f"   ⏳ {endpoint.split('/')[-1]} computing, retry in {delay}s …", file=sys.stderr)
         time.sleep(delay)
     return raw
@@ -46,10 +52,10 @@ def fetch_trending(language: str = "", since: str = "daily", limit: int = 10) ->
     GitHub has no public trending API, so we search for repos created/updated
     recently, sorted by stars.
     """
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     window = {"daily": 1, "weekly": 7, "monthly": 30}.get(since, 1)
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=window)).strftime("%Y-%m-%d")
+    cutoff = (datetime.now(UTC) - timedelta(days=window)).strftime("%Y-%m-%d")
 
     q_parts = [f"pushed:>={cutoff}", "stars:>=10"]
     if language:
@@ -57,8 +63,10 @@ def fetch_trending(language: str = "", since: str = "daily", limit: int = 10) ->
     query = "+".join(q_parts)
 
     raw = _gh_json(
-        "api", f"search/repositories?q={query}&sort=stars&order=desc&per_page={limit}",
-        "--cache", "1h",
+        "api",
+        f"search/repositories?q={query}&sort=stars&order=desc&per_page={limit}",
+        "--cache",
+        "1h",
     )
     items = raw.get("items", []) if isinstance(raw, dict) else []
     results = []
@@ -89,14 +97,32 @@ def _fetch_weekly_commits(nwo: str) -> list[int]:
 # ── SVG constants ────────────────────────────────────────────────────────────
 
 _LANG_COLORS: dict[str, str] = {
-    "Python": "#3572A5", "JavaScript": "#f1e05a", "TypeScript": "#3178c6",
-    "Go": "#00ADD8", "Rust": "#dea584", "Java": "#b07219", "C": "#555555",
-    "C++": "#f34b7d", "C#": "#178600", "Ruby": "#701516", "PHP": "#4F5D95",
-    "Swift": "#F05138", "Kotlin": "#A97BFF", "Scala": "#c22d40",
-    "Shell": "#89e051", "Lua": "#000080", "Dart": "#00B4AB",
-    "Elixir": "#6e4a7e", "Haskell": "#5e5086", "Zig": "#ec915c",
-    "Nix": "#7e7eff", "Vue": "#41b883", "Svelte": "#ff3e00",
-    "Jupyter Notebook": "#DA5B0B", "HTML": "#e34c26", "CSS": "#563d7c",
+    "Python": "#3572A5",
+    "JavaScript": "#f1e05a",
+    "TypeScript": "#3178c6",
+    "Go": "#00ADD8",
+    "Rust": "#dea584",
+    "Java": "#b07219",
+    "C": "#555555",
+    "C++": "#f34b7d",
+    "C#": "#178600",
+    "Ruby": "#701516",
+    "PHP": "#4F5D95",
+    "Swift": "#F05138",
+    "Kotlin": "#A97BFF",
+    "Scala": "#c22d40",
+    "Shell": "#89e051",
+    "Lua": "#000080",
+    "Dart": "#00B4AB",
+    "Elixir": "#6e4a7e",
+    "Haskell": "#5e5086",
+    "Zig": "#ec915c",
+    "Nix": "#7e7eff",
+    "Vue": "#41b883",
+    "Svelte": "#ff3e00",
+    "Jupyter Notebook": "#DA5B0B",
+    "HTML": "#e34c26",
+    "CSS": "#563d7c",
 }
 
 
@@ -137,10 +163,10 @@ def _format_count(n: int) -> str:
 
 # ── SVG rendering ────────────────────────────────────────────────────────────
 
+
 def render_trending_svg(repos: list[dict], title: str = "Trending Repositories") -> str:
     card_w = 820
     pad = 28
-    content_w = card_w - pad * 2
     row_h = 96
     header_h = 56
     card_h = pad + header_h + len(repos) * row_h + pad
@@ -189,8 +215,7 @@ def render_trending_svg(repos: list[dict], title: str = "Trending Repositories")
         # Separator line (not for first row)
         if idx > 0:
             parts.append(
-                f'  <line x1="{pad}" y1="{ry}" x2="{card_w - pad}" y2="{ry}" '
-                f'stroke="#21262d" stroke-width="1"/>\n'
+                f'  <line x1="{pad}" y1="{ry}" x2="{card_w - pad}" y2="{ry}" stroke="#21262d" stroke-width="1"/>\n'
             )
 
         # Rank badge
@@ -199,7 +224,7 @@ def render_trending_svg(repos: list[dict], title: str = "Trending Repositories")
             f'    <rect width="28" height="28" rx="8" fill="#1f2937"/>\n'
             f'    <text x="14" y="19" text-anchor="middle" font-family="\'Segoe UI\',system-ui,sans-serif" '
             f'font-size="13" font-weight="700" fill="#58a6ff">{idx + 1}</text>\n'
-            f'  </g>\n'
+            f"  </g>\n"
         )
 
         # Repo name
@@ -207,7 +232,7 @@ def render_trending_svg(repos: list[dict], title: str = "Trending Repositories")
         parts.append(
             f'  <text x="{name_x}" y="{ry + 26}" '
             f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="15" font-weight="600" fill="#58a6ff">'
-            f'{_esc(full_name)}</text>\n'
+            f"{_esc(full_name)}</text>\n"
         )
 
         # Description (truncated single line)
@@ -215,7 +240,7 @@ def render_trending_svg(repos: list[dict], title: str = "Trending Repositories")
         parts.append(
             f'  <text x="{name_x}" y="{ry + 46}" '
             f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="12" fill="#8b949e">'
-            f'{_esc(desc_text)}</text>\n'
+            f"{_esc(desc_text)}</text>\n"
         )
 
         # Bottom meta row: language · stars · forks
@@ -226,7 +251,7 @@ def render_trending_svg(repos: list[dict], title: str = "Trending Repositories")
                 f'  <circle cx="{mx + 5}" cy="{meta_y}" r="5" fill="{lang_color}"/>\n'
                 f'  <text x="{mx + 14}" y="{meta_y + 4}" '
                 f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="11" fill="#8b949e">'
-                f'{_esc(lang)}</text>\n'
+                f"{_esc(lang)}</text>\n"
             )
             mx += 14 + len(lang) * 6.5 + 16
 
@@ -234,10 +259,10 @@ def render_trending_svg(repos: list[dict], title: str = "Trending Repositories")
         parts.append(
             f'  <svg x="{mx}" y="{meta_y - 7}" width="14" height="14" viewBox="0 0 16 16" fill="#e3b341">'
             f'<path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>'
-            f'</svg>\n'
+            f"</svg>\n"
             f'  <text x="{mx + 18}" y="{meta_y + 4}" '
             f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="11" fill="#c9d1d9">'
-            f'{_format_count(stars)}</text>\n'
+            f"{_format_count(stars)}</text>\n"
         )
         mx += 18 + len(_format_count(stars)) * 7 + 16
 
@@ -245,10 +270,10 @@ def render_trending_svg(repos: list[dict], title: str = "Trending Repositories")
         parts.append(
             f'  <svg x="{mx}" y="{meta_y - 7}" width="14" height="14" viewBox="0 0 16 16" fill="#8b949e">'
             f'<path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 2.122a2.25 2.25 0 10-1.5 0v.878A2.25 2.25 0 005.75 8.5h1.5v2.128a2.251 2.251 0 101.5 0V8.5h1.5a2.25 2.25 0 002.25-2.25v-.878a2.25 2.25 0 10-1.5 0v.878a.75.75 0 01-.75.75h-4.5A.75.75 0 015 6.25v-.878zm3.75 7.378a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm3-8.75a.75.75 0 100-1.5.75.75 0 000 1.5z"/>'
-            f'</svg>\n'
+            f"</svg>\n"
             f'  <text x="{mx + 18}" y="{meta_y + 4}" '
             f'font-family="\'Segoe UI\',system-ui,sans-serif" font-size="11" fill="#c9d1d9">'
-            f'{_format_count(forks)}</text>\n'
+            f"{_format_count(forks)}</text>\n"
         )
 
         # Mini commit bar chart on the right (or placeholder)
@@ -281,6 +306,7 @@ def render_trending_svg(repos: list[dict], title: str = "Trending Repositories")
 
 # ── SVG → PNG ────────────────────────────────────────────────────────────────
 
+
 def svg_to_png(svg_path: Path) -> Path:
     png_path = svg_path.with_suffix(".png")
     rsvg = shutil.which("rsvg-convert")
@@ -303,11 +329,13 @@ def svg_to_png(svg_path: Path) -> Path:
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a GitHub trending card (SVG + PNG)")
     parser.add_argument("--language", default="", help="Filter by language (e.g. python, rust)")
-    parser.add_argument("--since", default="daily", choices=["daily", "weekly", "monthly"],
-                        help="Trending window (default: daily)")
+    parser.add_argument(
+        "--since", default="daily", choices=["daily", "weekly", "monthly"], help="Trending window (default: daily)"
+    )
     parser.add_argument("--limit", type=int, default=10, help="Number of repos (default: 10)")
     parser.add_argument("--output", default=None, help="Output SVG path (default: trending.svg)")
     args = parser.parse_args()

@@ -156,6 +156,7 @@ ignore = [
 "contrib/*/src/tests/*" = ["S101"]
 "contrib/*/tests/*" = ["S101"]
 "contrib/*/src/**/*.py" = ["TRY003"]
+"src/skills/github-repo-cards/scripts/*.py" = ["S603", "S607"]
 
 [tool.ruff.format]
 preview = true
