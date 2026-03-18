@@ -82,7 +82,10 @@ When `BUB_TAPESTORE_SQLALCHEMY_URL` is unset, bubseek builds a SeekDB/OceanBase 
 
 Builtin skill source files live in `src/skills/`. They are packaged into `skills/` in the wheel, which Bub already knows how to discover. Users do not need to run a separate sync command for them.
 
-bubseek also vendors `friendly-python` and `piglet` from [PsiACE/skills](https://github.com/PsiACE/skills) at build time via `pdm-build-skills`; these are merged into the wheel under `skills/`.
+bubseek also vendors skills at build time via `pdm-build-skills`; these are merged into the wheel under `skills/`:
+
+- `friendly-python` and `piglet` from [PsiACE/skills](https://github.com/PsiACE/skills)
+- `plugin-creator` from [bub-contrib/.agents/skills/plugin-creator](https://github.com/bubbuild/bub-contrib/tree/main/.agents/skills/plugin-creator)
 
 The optional `bubseek[marimo]` extra provides:
 - **MarimoChannel** — inbound WebSocket for gateway; chat dashboard at `http://0.0.0.0:2718/`

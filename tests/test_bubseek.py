@@ -66,7 +66,12 @@ def test_pyproject_includes_builtin_skills_in_wheel() -> None:
             "git": "https://github.com/PsiACE/skills.git",
             "subpath": "skills",
             "include": ["friendly-python", "piglet"],
-        }
+        },
+        {
+            "git": "https://github.com/bubbuild/bub-contrib.git",
+            "subpath": ".agents/skills",
+            "include": ["plugin-creator"],
+        },
     ]
 
 
