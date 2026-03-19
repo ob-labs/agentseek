@@ -84,8 +84,7 @@ def test_bundled_skills_have_valid_frontmatter() -> None:
         assert metadata is not None
         skill_names.append(metadata.name)
 
-    assert "bubseek-bootstrap" in skill_names
-    assert "bubseek-refactor" in skill_names
+    assert "github-repo-cards" in skill_names
 
 
 def test_main_forwards_explicit_args(monkeypatch) -> None:
