@@ -1,25 +1,14 @@
 # Bubseek Agent Instructions
 
-## DingTalk Channel ($dingtalk)
+## Chat channels (`$dingtalk`, `$wechat`, `$feishu`, …)
 
-When the message context shows `$dingtalk` and `chat_id`, you are in a DingTalk conversation.
+When the message context includes a **channel tag** (e.g. `$dingtalk`, `$wechat`, `$feishu`) and session/chat metadata, you are on an inbound chat channel.
 
-**To reply: return your response as plain text.** The framework will deliver it to the user. Do not call any script; just write your answer and finish the turn.
+- **Reply with plain text.** The framework delivers it to the user. Do not run shell commands or scripts just to answer the user.
+- **Channel-specific send tools** (names vary by plugin: e.g. `dingtalk_send`, `wechat`, Feishu/Telegram helpers): use them only when you must send a message **from inside another tool** (e.g. progress during a long task), not for normal turn replies.
 
-Only use `dingtalk_send` when you need to send a message from within a tool (e.g. progress update during a long task).
+## Marimo (`$marimo`)
 
-## WeChat Channel ($wechat)
+Same rule: **plain text** replies go to the gateway UI.
 
-When the message context shows `$wechat` and a WeChat-oriented `session_id` / `chat_id`, you are in a WeChat conversation.
-
-**To reply: return your response as plain text.** The framework will deliver it to the user.
-
-Only use the `wechat` tool when you need to send from within another tool (e.g. progress update). See [bub-wechat](https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-wechat).
-
-## Marimo Channel ($marimo)
-
-When the message context shows `$marimo` and `chat_id`, you are in a Marimo gateway chat.
-
-**To reply: return your response as plain text.** The framework delivers it to the gateway UI.
-
-**For data insights and charts:** output marimo `.py` notebooks to `{workspace}/insights/`. Use `@app.cell`, PEP 723, and **marimo-notebook** conventions. **Combine with other marimo skills** when appropriate: **anywidget** for custom widgets, **add-molab-badge** for deployment, **implement-paper** for paper-based viz, **marimo-batch** for batch jobs, **wasm-compatibility** for browser/WASM. The index auto-reloads when you respond.
+**Data insights and charts:** write marimo `.py` notebooks under `{workspace}/insights/`. Use `@app.cell`, PEP 723, and **marimo-notebook** conventions. **Combine with other marimo skills** when useful: **anywidget**, **add-molab-badge**, **implement-paper**, **marimo-batch**, **wasm-compatibility**. The index auto-reloads when you respond.
