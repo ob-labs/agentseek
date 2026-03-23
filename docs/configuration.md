@@ -37,10 +37,11 @@ If you do not want them installed by default, put them under `optional-dependenc
 feishu = ["bub-feishu"]
 dingtalk = ["bub-dingtalk"]
 wechat = ["bub-wechat"]
+discord = ["bub-discord"]
 marimo = ["bubseek-marimo"]
 ```
 
-Install with: `uv sync --extra feishu` or `pip install bubseek[feishu]` (Feishu); `uv sync --extra dingtalk` or `pip install bubseek[dingtalk]` (DingTalk); `uv sync --extra wechat` or `pip install bubseek[wechat]` ([WeChat](https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-wechat)); `uv sync --extra marimo` or `pip install bubseek[marimo]` (Marimo channel with bundled notebook skills).
+Install with: `uv sync --extra feishu` / `pip install bubseek[feishu]` (Feishu); `uv sync --extra dingtalk` / `pip install bubseek[dingtalk]` (DingTalk); `uv sync --extra wechat` / `pip install bubseek[wechat]` ([WeChat](https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-wechat)); `uv sync --extra discord` / `pip install bubseek[discord]` ([Discord](https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-discord)); `uv sync --extra marimo` / `pip install bubseek[marimo]` (Marimo channel with bundled notebook skills).
 
 ## Runtime credentials
 
@@ -73,6 +74,9 @@ BUB_API_BASE=https://openrouter.ai/api/v1
 | `BUB_DINGTALK_CLIENT_SECRET` | AppSecret for DingTalk channel |
 | `BUB_DINGTALK_ALLOW_USERS` | Comma-separated staff_ids, or `*` for all |
 | WeChat token file | After `bub login wechat`, credentials live under `~/.bub/wechat_token.json` (optional extra: `bubseek[wechat]`); see [bub-wechat](https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-wechat) |
+| `BUB_DISCORD_TOKEN` | Discord bot token (optional extra: `bubseek[discord]`); see [bub-discord](https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-discord) |
+| `BUB_DISCORD_ALLOW_USERS` | Optional comma-separated allowlist (user id / username / global name) |
+| `BUB_DISCORD_ALLOW_CHANNELS` | Optional comma-separated channel id allowlist |
 | `BUB_MARIMO_HOST` | Marimo channel bind host (default: `127.0.0.1`) |
 | `BUB_MARIMO_PORT` | Marimo channel bind port (default: `2718`) |
 | `BUB_MARIMO_WORKSPACE` | Workspace for insights (default: `BUB_WORKSPACE_PATH` or `.`) |

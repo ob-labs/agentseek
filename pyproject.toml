@@ -31,6 +31,7 @@ dependencies = [
 feishu = ["bub-feishu"]
 dingtalk = ["bub-dingtalk"]
 wechat = ["bub-wechat"]
+discord = ["bub-discord"]
 marimo = ["bubseek-marimo"]
 
 [project.urls]
@@ -52,6 +53,7 @@ dev = [
 
     "bub-dingtalk",
     "bub-wechat",
+    "bub-discord",
     "bubseek-marimo",
 
     "pandas",
@@ -83,11 +85,12 @@ skills = [
 index-url = "https://pypi.org/simple"
 
 [tool.uv.sources]
-# bub-contrib: branch=main so optional packages (e.g. bub-wechat) exist at resolve time; uv.lock pins the exact commit.
+# bub-contrib: branch=main so optional packages (e.g. bub-wechat, bub-discord) exist at resolve time; uv.lock pins the exact commit.
 bub = { git = "https://github.com/bubbuild/bub.git" }
 bub-dingtalk = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-dingtalk" }
 bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-feishu" }
 bub-wechat = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-wechat" }
+bub-discord = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-discord" }
 bub-web-search = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-web-search" }
 bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-tapestore-sqlalchemy" }
 bubseek-schedule = { workspace = true }

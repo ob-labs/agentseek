@@ -40,6 +40,8 @@ def test_pyproject_pins_bub_and_bundled_plugins() -> None:
     assert "bub-dingtalk" in optional["dingtalk"]
     assert "wechat" in optional
     assert "bub-wechat" in optional["wechat"]
+    assert "discord" in optional
+    assert "bub-discord" in optional["discord"]
     assert any("bub-tapestore-sqlalchemy" in d for d in deps)
 
     sources = data.get("tool", {}).get("uv", {}).get("sources", {})
@@ -53,6 +55,9 @@ def test_pyproject_pins_bub_and_bundled_plugins() -> None:
     assert "bub-wechat" in sources
     assert sources["bub-wechat"].get("git") == "https://github.com/bubbuild/bub-contrib.git"
     assert sources["bub-wechat"].get("subdirectory") == "packages/bub-wechat"
+    assert "bub-discord" in sources
+    assert sources["bub-discord"].get("git") == "https://github.com/bubbuild/bub-contrib.git"
+    assert sources["bub-discord"].get("subdirectory") == "packages/bub-discord"
     requires = data["build-system"]["requires"]
     assert "pdm-backend" in requires
     assert any("pdm-build-skills" in r for r in requires)
