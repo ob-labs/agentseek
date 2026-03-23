@@ -33,12 +33,24 @@ dependencies = [
 
 ## Runtime Behavior
 
-- Scheduler starts when the plugin channel starts.
+- The plugin uses **APScheduler `BackgroundScheduler`** (see also upstream [bub-schedule](https://github.com/bubbuild/bub-contrib) JSON store pattern: persistence must not depend on a specific channel being enabled).
+- **`load_state` starts the scheduler** on the first inbound message. That way `bub chat` (CLI-only: only the `cli` channel is enabled) still persists jobs to SeekDB. Previously, `AsyncIOScheduler` was only started by the `schedule` channel, so CLI chat left jobs in memory-only `_pending_jobs` and **nothing was written to `apscheduler_jobs`**.
+- The channel name is `schedule`. Enabling it in `bub gateway` is optional for persistence; it still starts/stops the scheduler cleanly when you use gateway with that channel.
 - Jobs are persisted to:
-  - **OceanBase/SeekDB**: When `BUB_TAPESTORE_SQLALCHEMY_URL` uses `mysql+oceanbase`, jobs go to the same database (table `apscheduler_jobs`).
+  - **OceanBase/SeekDB**: Same URL as the tape store (`BUB_TAPESTORE_SQLALCHEMY_URL` / `OCEANBASE_*`), table `apscheduler_jobs`.
 
 ## Provided Tools
 
 - `schedule.add`: Add a scheduled job with cron, interval, or one-shot.
 - `schedule.remove`: Remove a scheduled job by ID.
 - `schedule.list`: List all scheduled jobs.
+
+## Debug: job in chat but not in Marimo kanban / DB
+
+The gateway resolves the job store URL from `BUB_TAPESTORE_SQLALCHEMY_URL` or workspace `.env` (`OCEANBASE_*`). Marimo must use the **same** URL. If `insights/schedule_kanban.py` pointed at the default `127.0.0.1:2881/bub` while your `.env` uses another host/db, the table will look empty.
+
+From the bubseek repo root:
+
+```bash
+uv run python scripts/query_apscheduler_jobs.py --job-id <id>
+```

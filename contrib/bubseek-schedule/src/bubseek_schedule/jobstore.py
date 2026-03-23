@@ -15,12 +15,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import sessionmaker as sessionmaker_type
 
 import bubseek.oceanbase  # noqa: F401 - register mysql+oceanbase dialect
-from bubseek.config import BubSeekSettings
 
 
 def _get_jobstore_url() -> str:
-    """Get SQLAlchemy URL for job store from the configured SeekDB/OceanBase tapestore."""
-    return BubSeekSettings().db.resolved_tapestore_url
+    """Resolve tapestore URL (workspace .env, BUB_WORKSPACE_PATH, cwd) like the rest of bubseek."""
+    from bubseek.config import resolve_tapestore_url
+
+    return resolve_tapestore_url()
 
 
 def _normalize_url(url: str) -> str:
@@ -41,17 +42,22 @@ class OceanBaseJobStore(BaseJobStore):
 
     def __init__(self, url: str | None = None, tablename: str = "apscheduler_jobs"):
         super().__init__()
-        self._url = _normalize_url(url or _get_jobstore_url())
+        self._url_explicit = url
         self._tablename = tablename
         self._engine: Engine | None = None
         self._session_factory: sessionmaker_type | None = None
         self._table: Table | None = None
         self._lock = threading.RLock()
 
+    def _connection_url(self) -> str:
+        if self._url_explicit is not None:
+            return _normalize_url(self._url_explicit)
+        return _normalize_url(_get_jobstore_url())
+
     def _ensure_initialized(self) -> None:
         if self._engine is not None and self._session_factory is not None and self._table is not None:
             return
-        self._engine = create_engine(self._url, pool_pre_ping=True)
+        self._engine = create_engine(self._connection_url(), pool_pre_ping=True)
         self._session_factory = sessionmaker(bind=self._engine, expire_on_commit=False)
         self._init_table()
 
