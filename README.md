@@ -10,7 +10,7 @@ A Bub distribution for data-driven insight workflows, powered by [OceanBase seek
 
 bubseek packages [Bub](https://github.com/bubbuild/bub) with ready-to-use components for rapid data consumption. It's an attempt to explore a different approach to enterprise data needs: instead of scheduling BI tickets, tell the agent what you want and get insights back.
 
-**Multi-channel entry** — Feishu, DingTalk, WeChat, Discord, Telegram, and a built-in marimo web interface at http://127.0.0.1:2718. Configure env vars and enable via gateway.
+**Multi-channel entry** — Feishu, DingTalk, WeChat, Discord, Telegram, and a built-in marimo web interface. Configure env vars and enable via gateway.
 
 **Lightweight data consumption** — marimo notebooks for dashboards, github-repo-cards for generating shareable repo cards, schedule tasks with cron support. Add insights to `insights/` and the agent can work with them dynamically.
 
