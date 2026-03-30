@@ -16,6 +16,5 @@ bubseek is an attempt to explore a different approach to enterprise data needs: 
 ## Quick links
 
 - [Repository](https://github.com/ob-labs/bubseek)
-- [PyPI](https://pypi.org/project/bubseek/)
 - [Bub](https://github.com/bubbuild/bub)
 - [OceanBase/seekdb](https://github.com/oceanbase/seekdb)
