@@ -418,7 +418,12 @@
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#channels" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -427,13 +432,69 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Channels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#feishu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feishu
+      
+    </span>
+  </a>
+  
 </li>
         
           <li class="md-nav__item">
-  <a href="#other" class="md-nav__link">
+  <a href="#dingtalk" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other
+        DingTalk
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discord
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#telegram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Telegram
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wechat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WeChat
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marimo-web-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marimo (web dashboard)
       
     </span>
   </a>
@@ -442,6 +503,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other settings
+      
+    </span>
+  </a>
   
 </li>
       
@@ -611,7 +683,12 @@
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#channels" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -620,13 +697,69 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Channels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#feishu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feishu
+      
+    </span>
+  </a>
+  
 </li>
         
           <li class="md-nav__item">
-  <a href="#other" class="md-nav__link">
+  <a href="#dingtalk" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other
+        DingTalk
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discord
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#telegram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Telegram
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wechat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WeChat
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marimo-web-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marimo (web dashboard)
       
     </span>
   </a>
@@ -635,6 +768,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other settings
+      
+    </span>
+  </a>
   
 </li>
       
@@ -696,49 +840,60 @@
 <p>bubseek explores a different approach: instead of scheduling BI tickets, tell the agent what you want and get insights back. All agent interactions are stored as tapes in seekdb, creating a feedback loop where the agent can analyze its own footprint.</p>
 <h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <h3 id="model-required">Model (required)<a class="headerlink" href="#model-required" title="Permanent link">&para;</a></h3>
-<pre><code class="language-dotenv">BUB_MODEL=openrouter:qwen/qwen3-coder-next
-BUB_API_KEY=sk-or-v1-...
-BUB_API_BASE=https://openrouter.ai/api/v1
-</code></pre>
+<p>See <a href="../getting-started/">Getting started</a> for model configuration.</p>
 <h3 id="database-required-for-tape-storage">Database (required for tape storage)<a class="headerlink" href="#database-required-for-tape-storage" title="Permanent link">&para;</a></h3>
-<pre><code class="language-dotenv">BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://user:pass@host:port/database
+<p>See <a href="../getting-started/">Getting started</a> for database configuration.</p>
+<h2 id="channels">Channels<a class="headerlink" href="#channels" title="Permanent link">&para;</a></h2>
+<h3 id="feishu">Feishu<a class="headerlink" href="#feishu" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Visit <a href="https://open.feishu.cn/app">https://open.feishu.cn/app</a> → Create or select app</li>
+<li>Go to "Credentials &amp; Basic Info" → Get App ID and App Secret</li>
+<li>Configure event subscriptions and permissions as needed</li>
+</ol>
+<pre><code class="language-bash">export BUB_FEISHU_APP_ID=cli_xxx
+export BUB_FEISHU_APP_SECRET=xxx
+uv run bub gateway --enable-channel feishu
 </code></pre>
-<h3 id="channels">Channels<a class="headerlink" href="#channels" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Channel</th>
-<th>Environment Variables</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Feishu</td>
-<td><code>BUB_FEISHU_APP_ID</code>, <code>BUB_FEISHU_APP_SECRET</code></td>
-</tr>
-<tr>
-<td>DingTalk</td>
-<td><code>BUB_DINGTALK_CLIENT_ID</code>, <code>BUB_DINGTALK_CLIENT_SECRET</code></td>
-</tr>
-<tr>
-<td>Discord</td>
-<td><code>BUB_DISCORD_TOKEN</code></td>
-</tr>
-<tr>
-<td>Telegram</td>
-<td><code>BUB_TELEGRAM_TOKEN</code> (built-in via bub)</td>
-</tr>
-<tr>
-<td>WeChat</td>
-<td>Run <code>uv run bub login wechat</code> first</td>
-</tr>
-<tr>
-<td>Marimo</td>
-<td><code>BUB_MARIMO_HOST</code>, <code>BUB_MARIMO_PORT</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="other">Other<a class="headerlink" href="#other" title="Permanent link">&para;</a></h3>
+<h3 id="dingtalk">DingTalk<a class="headerlink" href="#dingtalk" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Visit <a href="https://open-dev.dingtalk.com/">https://open-dev.dingtalk.com/</a> → Create or select app</li>
+<li>Go to app details → Get Client ID and Client Secret</li>
+</ol>
+<pre><code class="language-bash">export BUB_DINGTALK_CLIENT_ID=xxx
+export BUB_DINGTALK_CLIENT_SECRET=xxx
+uv run bub gateway --enable-channel dingtalk
+</code></pre>
+<h3 id="discord">Discord<a class="headerlink" href="#discord" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Visit <a href="https://discord.com/developers/applications">https://discord.com/developers/applications</a> → New Application</li>
+<li>Go to "Bot" → Add Bot</li>
+<li>Click "Reset Token" to get bot token</li>
+<li>Enable "Message Content Intent" in Bot settings</li>
+</ol>
+<pre><code class="language-bash">export BUB_DISCORD_TOKEN=your-bot-token
+uv run bub gateway --enable-channel discord
+</code></pre>
+<h3 id="telegram">Telegram<a class="headerlink" href="#telegram" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Open Telegram, search @BotFather</li>
+<li>Send <code>/newbot</code> and follow instructions</li>
+<li>BotFather returns the token</li>
+</ol>
+<pre><code class="language-bash">export BUB_TELEGRAM_TOKEN=your-bot-token
+uv run bub gateway --enable-channel telegram
+</code></pre>
+<h3 id="wechat">WeChat<a class="headerlink" href="#wechat" title="Permanent link">&para;</a></h3>
+<p>Interactive login required:</p>
+<pre><code class="language-bash">uv run bub login wechat    # Scan QR code with WeChat app
+uv run bub gateway --enable-channel wechat
+</code></pre>
+<h3 id="marimo-web-dashboard">Marimo (web dashboard)<a class="headerlink" href="#marimo-web-dashboard" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">export BUB_MARIMO_HOST=127.0.0.1  # optional
+export BUB_MARIMO_PORT=2718       # optional
+uv run bub gateway --enable-channel marimo
+</code></pre>
+<p>Visit http://127.0.0.1:2718 after enabling.</p>
+<h2 id="other-settings">Other settings<a class="headerlink" href="#other-settings" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
