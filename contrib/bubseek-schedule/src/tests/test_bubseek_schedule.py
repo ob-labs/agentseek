@@ -1,6 +1,7 @@
 """Tests for bubseek-schedule (OceanBaseJobStore)."""
 
 import os
+import uuid
 from datetime import datetime, timedelta
 
 import pytest
@@ -15,6 +16,10 @@ def _seekdb_url() -> str:
     return url
 
 
+def _test_table_name(prefix: str) -> str:
+    return f"{prefix}_{uuid.uuid4().hex[:8]}"
+
+
 def test_jobstore_roundtrip():
     """Test jobstore roundtrip via APScheduler on seekdb/OceanBase."""
     from apscheduler.schedulers.background import BackgroundScheduler
@@ -22,11 +27,13 @@ def test_jobstore_roundtrip():
     url = _seekdb_url()
     from bubseek_schedule.jobstore import OceanBaseJobStore
 
-    store = OceanBaseJobStore(url=url, tablename="apscheduler_jobs_test_roundtrip")
+    store = OceanBaseJobStore(url=url, tablename=_test_table_name("apscheduler_jobs_test_roundtrip"))
     scheduler = BackgroundScheduler(jobstores={"default": store})
     scheduler.start()
 
-    scheduler.add_job("bubseek_schedule.jobs:_noop", "date", run_date=datetime.now(), id="test-1")
+    scheduler.add_job(
+        "bubseek_schedule.jobs:_noop", "date", run_date=datetime.now() + timedelta(minutes=1), id="test-1"
+    )
     assert store.lookup_job("test-1") is not None
     jobs = store.get_all_jobs()
     assert len(jobs) == 1
@@ -44,7 +51,7 @@ def test_jobstore_get_due_jobs():
     url = _seekdb_url()
     from bubseek_schedule.jobstore import OceanBaseJobStore
 
-    store = OceanBaseJobStore(url=url, tablename="apscheduler_jobs_test_due")
+    store = OceanBaseJobStore(url=url, tablename=_test_table_name("apscheduler_jobs_test_due"))
     scheduler = BackgroundScheduler(jobstores={"default": store})
     scheduler.start()
 

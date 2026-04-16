@@ -9,16 +9,7 @@ import socket
 import subprocess
 import uuid
 from pathlib import Path
-
-try:
-    from bubseek.config import discover_project_root, env_with_workspace_dotenv, resolve_tapestore_url
-except ImportError:
-    discover_project_root = None  # type: ignore[assignment]
-    env_with_workspace_dotenv = None  # type: ignore[assignment]
-    resolve_tapestore_url = None  # type: ignore[assignment]  # bubseek not installed
-
-if env_with_workspace_dotenv is None:
-    from dotenv import dotenv_values
+from typing import TYPE_CHECKING, Any
 
 from bub.channels.base import Channel
 from bub.channels.message import ChannelMessage
@@ -29,6 +20,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from bubseek_marimo.chat_store import MarimoChatStore, TurnConflictError
 from bubseek_marimo.notebooks import ensure_seed_notebooks
 
+if TYPE_CHECKING:
+    from aiohttp import web as web_types
+
 
 def _discover_project_root_fallback(start: Path) -> Path | None:
     """Walk up from start for a directory containing .env (used when bubseek not installed)."""
@@ -38,15 +32,82 @@ def _discover_project_root_fallback(start: Path) -> Path | None:
     return None
 
 
-try:
-    from aiohttp import ClientSession, web
-    from aiohttp.client_exceptions import ClientConnectorError
+def discover_project_root(start: Path | str | None = None) -> Path | None:
+    """Use bubseek.config when available, otherwise fall back to local discovery."""
+    if start is None:
+        start = Path.cwd()
+    start = Path(start)
+    try:
+        from bubseek.config import discover_project_root as _discover_project_root
+    except ImportError:
+        return _discover_project_root_fallback(start)
+    else:
+        return _discover_project_root(start)
 
-    AIOHTTP_AVAILABLE = True
-except ImportError:
-    AIOHTTP_AVAILABLE = False
-    ClientSession = None  # type: ignore[misc, assignment]
-    ClientConnectorError = OSError  # type: ignore[assignment]
+
+def env_with_workspace_dotenv(workspace: Path | str) -> dict[str, str]:
+    """Load environment variables from workspace/.env with a local fallback."""
+    workspace = Path(workspace)
+    try:
+        from bubseek.config import env_with_workspace_dotenv as _env_with_workspace_dotenv
+    except ImportError:
+        from dotenv import dotenv_values
+
+        env = dict(os.environ)
+        env_file = workspace / ".env"
+        if env_file.is_file():
+            for key, value in dotenv_values(env_file).items():
+                if isinstance(key, str) and isinstance(value, str):
+                    env[key] = value
+        return env
+    else:
+        return _env_with_workspace_dotenv(workspace)
+
+
+def resolve_tapestore_url(workspace: Path | str | None = None, discover_from: Path | str | None = None) -> str:
+    """Resolve the tape store URL using bubseek helpers when they are installed."""
+    if workspace is not None:
+        workspace = Path(workspace)
+    try:
+        from bubseek.config import resolve_tapestore_url as _resolve_tapestore_url
+    except ImportError:
+        if workspace is not None:
+            url = (env_with_workspace_dotenv(workspace).get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
+        else:
+            start = Path(discover_from).resolve() if discover_from else Path.cwd().resolve()
+            for d in [start, *start.parents]:
+                if (d / ".env").is_file():
+                    url = (env_with_workspace_dotenv(d).get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
+                    break
+            else:
+                url = (os.environ.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
+    else:
+        url = _resolve_tapestore_url(workspace, discover_from)
+
+    if url:
+        return url
+    raise RuntimeError("BUB_TAPESTORE_SQLALCHEMY_URL is required for the marimo channel")
+
+
+def _load_web() -> Any:
+    """Load aiohttp.web or raise a clear runtime error."""
+    try:
+        from aiohttp import web
+    except ImportError as exc:
+        raise RuntimeError("aiohttp not installed. Run: pip install aiohttp") from exc
+    else:
+        return web
+
+
+def _load_proxy_http() -> tuple[Any, Any, type[OSError]]:
+    """Load aiohttp components used by HTTP and WebSocket proxying."""
+    try:
+        from aiohttp import ClientSession, web
+        from aiohttp.client_exceptions import ClientConnectorError
+    except ImportError as exc:
+        raise RuntimeError("aiohttp not installed. Run: pip install aiohttp") from exc
+    else:
+        return ClientSession, web, ClientConnectorError
 
 
 class MarimoConfig(BaseSettings):
@@ -76,9 +137,9 @@ class MarimoChannel(Channel):
     def __init__(self, on_receive: MessageHandler) -> None:
         self._on_receive = on_receive
         self._config = MarimoConfig()
-        self._app: web.Application | None = None
-        self._runner: web.AppRunner | None = None
-        self._site: web.TCPSite | None = None
+        self._app: web_types.Application | None = None
+        self._runner: web_types.AppRunner | None = None
+        self._site: web_types.TCPSite | None = None
         self._stop_event: asyncio.Event | None = None
         self._marimo_proc: subprocess.Popen | None = None
         self._background_tasks: set[asyncio.Task[None]] = set()
@@ -92,9 +153,8 @@ class MarimoChannel(Channel):
         if workspace:
             return Path(workspace).resolve()
 
-        discover = discover_project_root or _discover_project_root_fallback
         for start in (Path.cwd(), Path(__file__).resolve().parent):
-            root = discover(start)
+            root = discover_project_root(start)
             if root is not None:
                 return root
         return Path.cwd().resolve()
@@ -103,14 +163,7 @@ class MarimoChannel(Channel):
         return self._workspace_dir() / "insights"
 
     def _tapestore_url(self) -> str:
-        if resolve_tapestore_url is not None:
-            url = resolve_tapestore_url(self._workspace_dir())
-        else:
-            env = env_with_workspace_dotenv(self._workspace_dir()) if env_with_workspace_dotenv else self._marimo_env()
-            url = (env.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
-        if url:
-            return url
-        raise RuntimeError("BUB_TAPESTORE_SQLALCHEMY_URL is required for the marimo channel")
+        return resolve_tapestore_url(self._workspace_dir())
 
     def _ensure_seed_notebooks(self) -> None:
         insights_dir = self._insights_dir()
@@ -126,15 +179,7 @@ class MarimoChannel(Channel):
 
     def _marimo_env(self) -> dict[str, str]:
         workspace = self._workspace_dir()
-        if env_with_workspace_dotenv is not None:
-            env = env_with_workspace_dotenv(workspace)
-        else:
-            env = dict(os.environ)
-            env_file = workspace / ".env"
-            if env_file.is_file():
-                for key, value in dotenv_values(env_file).items():
-                    if isinstance(key, str) and isinstance(value, str):
-                        env[key] = value
+        env = env_with_workspace_dotenv(workspace)
         env["BUB_WORKSPACE_PATH"] = str(workspace)
         env["BUB_MARIMO_PORT"] = str(self._config.port)
         return env
@@ -194,7 +239,9 @@ class MarimoChannel(Channel):
 
     async def start(self, stop_event: asyncio.Event) -> None:
         self._stop_event = stop_event
-        if not AIOHTTP_AVAILABLE:
+        try:
+            web = _load_web()
+        except RuntimeError:
             logger.error("aiohttp not installed. Run: pip install aiohttp")
             return
 
@@ -240,7 +287,8 @@ class MarimoChannel(Channel):
         await asyncio.to_thread(self._store.shutdown)
         logger.info("Marimo channel stopped")
 
-    async def _handle_marimo_proxy(self, request: web.Request) -> web.StreamResponse:
+    async def _handle_marimo_proxy(self, request: web_types.Request) -> web_types.StreamResponse:
+        ClientSession, web, ClientConnectorError = _load_proxy_http()
         if not self._marimo_proc:
             return web.Response(text="Marimo not running.", status=503)
         if request.headers.get("Upgrade", "").lower() == "websocket":
@@ -306,7 +354,8 @@ class MarimoChannel(Channel):
             logger.exception("Marimo turn failed session_id={} turn_id={}", session_id, turn_id)
             await asyncio.to_thread(self._store.mark_failed, session_id, turn_id, str(exc))
 
-    async def _handle_chat_submit(self, request: web.Request) -> web.Response:
+    async def _handle_chat_submit(self, request: web_types.Request) -> web_types.Response:
+        web = _load_web()
         try:
             data = await request.json()
         except Exception:
@@ -334,7 +383,8 @@ class MarimoChannel(Channel):
             "event": event.as_dict(),
         })
 
-    async def _handle_chat_events(self, request: web.Request) -> web.Response:
+    async def _handle_chat_events(self, request: web_types.Request) -> web_types.Response:
+        web = _load_web()
         session_id = str(request.query.get("session_id", "")).strip()
         if not session_id:
             return web.json_response({"detail": "Missing session_id"}, status=400)
@@ -352,7 +402,8 @@ class MarimoChannel(Channel):
             "events": [event.as_dict() for event in events],
         })
 
-    async def _handle_chat_session(self, request: web.Request) -> web.Response:
+    async def _handle_chat_session(self, request: web_types.Request) -> web_types.Response:
+        web = _load_web()
         session_id = str(request.query.get("session_id", "")).strip()
         if not session_id:
             return web.json_response({"detail": "Missing session_id"}, status=400)
@@ -361,7 +412,8 @@ class MarimoChannel(Channel):
             return web.json_response({"detail": "Unknown session_id"}, status=404)
         return web.json_response({"session": snapshot.as_dict()})
 
-    async def _handle_chat_webhook(self, request: web.Request) -> web.Response:
+    async def _handle_chat_webhook(self, request: web_types.Request) -> web_types.Response:
+        web = _load_web()
         try:
             data = await request.json()
         except Exception:
@@ -392,7 +444,8 @@ class MarimoChannel(Channel):
             "event": event.as_dict() if event else None,
         })
 
-    async def _proxy_websocket(self, request: web.Request) -> web.WebSocketResponse:
+    async def _proxy_websocket(self, request: web_types.Request) -> web_types.WebSocketResponse:
+        ClientSession, web, ClientConnectorError = _load_proxy_http()
         path = request.match_info.get("path", "") or ""
         ws_url = f"ws://127.0.0.1:{self._config.marimo_port}/{path}"
         if request.query_string:
@@ -443,7 +496,8 @@ class MarimoChannel(Channel):
         await local_ws.close(code=1013, message=f"Marimo backend is not ready: {last_error}".encode())
         return local_ws
 
-    async def _relay_remote_messages(self, remote_ws, local_ws: web.WebSocketResponse) -> None:
+    async def _relay_remote_messages(self, remote_ws, local_ws: web_types.WebSocketResponse) -> None:
+        web = _load_web()
         async for message in remote_ws:
             if message.type == web.WSMsgType.TEXT:
                 await local_ws.send_str(message.data)
@@ -453,7 +507,8 @@ class MarimoChannel(Channel):
                 await local_ws.close()
                 break
 
-    async def _relay_client_messages(self, local_ws: web.WebSocketResponse, remote_ws) -> None:
+    async def _relay_client_messages(self, local_ws: web_types.WebSocketResponse, remote_ws) -> None:
+        web = _load_web()
         async for message in local_ws:
             if message.type == web.WSMsgType.TEXT:
                 await remote_ws.send_str(message.data)

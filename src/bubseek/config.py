@@ -53,17 +53,22 @@ def _workspace_env_file() -> Path | None:
     return path
 
 
-def env_with_workspace_dotenv(workspace: Path | str) -> dict[str, str]:
-    """Merge os.environ with workspace/.env for subprocess env (bub, marimo). Uses python-dotenv like pydantic-settings."""
+def _env_values(env_file: Path | None) -> dict[str, str]:
+    """Merge os.environ with an optional .env file using pydantic-settings compatible precedence."""
     from dotenv import dotenv_values
 
     env = dict(os.environ)
-    path = Path(workspace).resolve() / ".env"
-    if path.is_file():
-        for key, value in dotenv_values(path).items():
-            if isinstance(key, str) and isinstance(value, str):
-                env[key] = value
+    if env_file is None:
+        return env
+    for key, value in dotenv_values(env_file).items():
+        if isinstance(key, str) and isinstance(value, str):
+            env[key] = value
     return env
+
+
+def env_with_workspace_dotenv(workspace: Path | str) -> dict[str, str]:
+    """Merge os.environ with workspace/.env for subprocess env (bub, marimo). Uses python-dotenv like pydantic-settings."""
+    return _env_values(Path(workspace).resolve() / ".env")
 
 
 class DatabaseSettings(BaseSettings):
@@ -112,20 +117,20 @@ class BubSeekSettings(BaseSettings):
 
     @classmethod
     def from_workspace(cls, workspace: Path | str | None = None) -> BubSeekSettings:
-        """Load settings from workspace .env (pydantic-settings native _env_file). Nested db must get same _env_file."""
-        env_file = None
+        """Load settings from workspace .env and apply the same values to nested settings."""
+        env_file: Path | None = None
         if workspace is not None:
             path = Path(workspace).resolve() / ".env"
             if path.is_file():
                 env_file = path
-            else:
-                return cls(_env_file=None, db=DatabaseSettings(_env_file=None))  # type: ignore[call-arg]
-        if env_file is None:
+        else:
             env_file = _workspace_env_file()
-        if env_file is None:
-            return cls(_env_file=None, db=DatabaseSettings(_env_file=None))  # type: ignore[call-arg]
-        # Nested BaseSettings does not inherit parent _env_file; pass explicitly (pydantic-settings native)
-        return cls(_env_file=env_file, db=DatabaseSettings(_env_file=env_file))  # type: ignore[call-arg]
+
+        env = _env_values(env_file)
+        return cls.model_validate({
+            **env,
+            "db": DatabaseSettings.model_validate(env),
+        })
 
 
 def resolve_tapestore_url(

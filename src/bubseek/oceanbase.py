@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any, cast
+
 import pymysql
 import pyobvector  # noqa: F401
 from bub import hookimpl
@@ -60,9 +63,9 @@ def _patch_tape_store_validate_schema() -> None:
     except ImportError:
         return
     _Store = _store.SQLAlchemyTapeStore
-    _orig = _Store._validate_schema
+    _orig = cast(Callable[[Any], None], _Store._validate_schema)
 
-    def _validate_schema_tolerant(self: _Store) -> None:
+    def _validate_schema_tolerant(self: Any) -> None:
         try:
             _orig(self)
         except Exception as e:
@@ -73,7 +76,7 @@ def _patch_tape_store_validate_schema() -> None:
                 return
             raise
 
-    _store.SQLAlchemyTapeStore._validate_schema = _validate_schema_tolerant  # type: ignore[method-assign]
+    cast(Any, _Store)._validate_schema = _validate_schema_tolerant
 
 
 _patch_tape_store_validate_schema()
