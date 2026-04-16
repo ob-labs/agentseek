@@ -51,6 +51,8 @@ dev = [
     "pre-commit>=4.5.1",
     "tox-uv>=1.29.0",
 
+    "deepagents>=0.5.3",
+
     "ty>=0.0.14",
 
     "pandas",

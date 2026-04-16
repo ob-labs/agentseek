@@ -47,6 +47,4 @@ def test_bub_tool_to_langchain_preserves_nested_json_schema() -> None:
     assert isinstance(langchain_tool.args_schema, dict)
     assert langchain_tool.args_schema == parameters
     assert langchain_tool.tool_call_schema["properties"]["filters"]["properties"]["mode"]["enum"] == ["and", "or"]
-    assert langchain_tool.tool_call_schema["properties"]["filters"]["properties"]["tags"]["items"] == {
-        "type": "string"
-    }
+    assert langchain_tool.tool_call_schema["properties"]["filters"]["properties"]["tags"]["items"] == {"type": "string"}
