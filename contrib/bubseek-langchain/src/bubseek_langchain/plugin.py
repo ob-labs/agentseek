@@ -102,6 +102,16 @@ class LangchainPlugin:
             await session_tape.append_async(TapeEntry.message({"role": "assistant", "content": normalized}))
         return normalized
 
+    async def _ainvoke_resolved_runnable(
+        self,
+        *,
+        runnable: Any,
+        invoke_input: Any,
+        invoke_kwargs: dict[str, Any],
+    ) -> str:
+        output = await runnable.ainvoke(invoke_input, **invoke_kwargs)
+        return normalize_langchain_output(output)
+
     async def _stream_runnable(
         self,
         *,
@@ -132,20 +142,19 @@ class LangchainPlugin:
             assistant_parts: list[str] = []
             if settings.tape and session_tape is not None:
                 await session_tape.append_async(TapeEntry.message({"role": "user", "content": prompt_text}))
-            if hasattr(runnable, "astream"):
-                async for chunk in runnable.astream(invoke_input, **invoke_kwargs):
+            astream = getattr(runnable, "astream", None)
+            if callable(astream):
+                async for chunk in astream(invoke_input, **invoke_kwargs):
                     text = normalize_langchain_output(chunk)
                     if not text:
                         continue
                     assistant_parts.append(text)
                     yield StreamEvent("text", {"delta": text})
             else:
-                text = await self._invoke_runnable(
-                    prompt=prompt,
-                    session_id=session_id,
-                    state=state,
-                    tape_name=tape_name,
-                    session_tape=None,
+                text = await self._ainvoke_resolved_runnable(
+                    runnable=runnable,
+                    invoke_input=invoke_input,
+                    invoke_kwargs=invoke_kwargs,
                 )
                 assistant_parts.append(text)
                 yield StreamEvent("text", {"delta": text})

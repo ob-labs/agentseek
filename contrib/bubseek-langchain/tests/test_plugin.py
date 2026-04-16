@@ -240,6 +240,71 @@ def test_run_model_stream_uses_runnable_astream(monkeypatch: pytest.MonkeyPatch,
     ]
 
 
+def test_run_model_stream_falls_back_to_ainvoke_once(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
+    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_fallback_factory:factory")
+    monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
+    monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "true")
+
+    _write_module(
+        tmp_path,
+        "lc_fallback_factory",
+        """
+        builds = []
+        seen_configs = []
+
+        class PlainRunnable:
+            def invoke(self, text, config=None):
+                return f"SYNC:{text}"
+
+            async def ainvoke(self, text, config=None):
+                seen_configs.append(config)
+                callbacks = (config or {}).get("callbacks", [])
+                for callback in callbacks:
+                    await callback.on_tool_start(
+                        {"name": "plain_tool"},
+                        '{"text": "%s"}' % text,
+                        run_id="tool-1",
+                    )
+                for callback in callbacks:
+                    await callback.on_tool_end({"ok": text}, run_id="tool-1")
+                return f"FALLBACK:{text}"
+
+        def factory(**kwargs):
+            builds.append(kwargs["session_id"])
+            return PlainRunnable()
+        """,
+    )
+
+    tape = _RecordingTape()
+    tapes = _RecordingTapes(tape)
+    runtime_agent = SimpleNamespace(tapes=tapes)
+
+    plugin = LangchainPlugin(_Framework())
+    stream = asyncio.run(
+        plugin.run_model_stream(
+            "hello",
+            session_id="session-5",
+            state={"_runtime_agent": runtime_agent, "_runtime_workspace": str(tmp_path)},
+        )
+    )
+
+    assert stream is not None
+    events = asyncio.run(_collect_events(stream))
+
+    module = _import_module("lc_fallback_factory")
+    assert [(event.kind, event.data) for event in events] == [
+        ("text", {"delta": "FALLBACK:hello"}),
+        ("final", {"text": "FALLBACK:hello", "ok": True}),
+    ]
+    assert module.builds == ["session-5"]
+    assert len(module.seen_configs) == 1
+    assert [entry.kind for entry in tape.entries] == ["message", "tool_call", "tool_result", "message"]
+    assert tapes.ensure_bootstrap_calls == 1
+    assert tapes.merge_back_values == [True]
+
+
 def test_tape_recorder_records_tool_error() -> None:
     tape = _RecordingTape()
     handler = LangchainTapeCallbackHandler(tape)
