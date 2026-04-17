@@ -4,7 +4,7 @@
 # ///
 """Tape Monitor — compact seekdb tapestore dashboard (tabs: Summary / Runs / Tokens / More).
 
-Tapestore URL: `bubseek.config.resolve_tapestore_url` · Marimo: `http://localhost:2718/?file=tape_monitor.py`
+Tapestore URL: `bubseek.oceanbase.resolve_tapestore_url` · Marimo: `http://localhost:2718/?file=tape_monitor.py`
 """
 
 import marimo as mo
@@ -19,7 +19,6 @@ def _():
     import os
     import re
     from datetime import UTC, datetime
-    from pathlib import Path
     from urllib.parse import urlparse
 
     import marimo as mo
@@ -30,18 +29,9 @@ def _():
     tapestore_url = None
     try:
         try:
-            from bubseek.config import resolve_tapestore_url
+            from bubseek.oceanbase import resolve_tapestore_url
 
-            discover = None
-            with contextlib.suppress(Exception):
-                nd = getattr(mo, "notebook_dir", None)
-                if callable(nd) and nd() is not None:
-                    discover = Path(nd()).resolve()
-            if discover is None:
-                with contextlib.suppress(NameError):
-                    if __file__ and str(__file__).strip():
-                        discover = Path(__file__).resolve().parent
-            tapestore_url = resolve_tapestore_url(workspace=None, discover_from=discover)
+            tapestore_url = resolve_tapestore_url()
         except Exception:
             tapestore_url = (os.environ.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip() or _default_seekdb
         if not tapestore_url:

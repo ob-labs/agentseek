@@ -6,8 +6,8 @@ import tomllib
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
-from typing import Any
+from types import ModuleType
+from typing import cast
 
 import pytest
 from bub.skills import _read_skill
@@ -28,29 +28,33 @@ def imported_bubseek_modules(*module_names: str) -> Iterator[list[ModuleType]]:
                 sys.modules.pop(module_name, None)
 
 
-def _load_pyproject() -> dict[str, Any]:
-    return tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+def _load_pyproject() -> dict[str, object]:
+    return _as_dict(tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")))
 
 
-def _settings_with_db_params(params: tuple[str, int, str, str, str] | None) -> SimpleNamespace:
-    db = SimpleNamespace(mysql_connection_params=lambda: params)
-    return SimpleNamespace(db=db)
+def _as_dict(value: object) -> dict[str, object]:
+    assert isinstance(value, dict)
+    return cast(dict[str, object], value)
 
 
 def test_distribution_metadata_exposes_bub_plugin_without_console_script() -> None:
     data = _load_pyproject()
 
-    project = data["project"]
+    project = _as_dict(data["project"])
     assert "scripts" not in project
-    assert project["entry-points"]["bub"] == {
-        "oceanbase-dialect": "bubseek.oceanbase:register",
+    assert project["entry-points"] == {
+        "bub": {
+            "oceanbase-dialect": "bubseek.oceanbase:register",
+        },
     }
 
 
 def test_pyproject_includes_package_and_builtin_skills_in_wheel() -> None:
     data = _load_pyproject()
 
-    build = data["tool"]["pdm"]["build"]
+    tool = _as_dict(data["tool"])
+    pdm = _as_dict(tool["pdm"])
+    build = _as_dict(pdm["build"])
     assert build["includes"] == [
         "src/bubseek",
         "src/skills",
@@ -70,37 +74,41 @@ def test_bundled_skills_have_valid_frontmatter() -> None:
     assert "github-repo-cards" in skill_names
 
 
-def test_resolve_tapestore_url_requires_explicit_url(monkeypatch, tmp_path: Path) -> None:
-    with imported_bubseek_modules("bubseek.config") as [config_mod]:
-        monkeypatch.setenv("BUB_HOME", str(tmp_path / "runtime-home"))
-        monkeypatch.delenv("BUB_WORKSPACE_PATH", raising=False)
+def test_resolve_tapestore_url_requires_explicit_url(monkeypatch) -> None:
+    with imported_bubseek_modules("bubseek.oceanbase") as [oceanbase_mod]:
         monkeypatch.setenv("BUB_TAPESTORE_SQLALCHEMY_URL", "")
 
-        settings = config_mod.DatabaseSettings()
-
-    assert settings.resolved_tapestore_url == ""
-    assert settings.backend_name == ""
-    assert settings.mysql_connection_params() is None
+        assert oceanbase_mod.resolve_tapestore_url() == ""
+        assert oceanbase_mod.mysql_connection_params() is None
 
 
-def test_database_settings_extract_mysql_params(monkeypatch) -> None:
-    with imported_bubseek_modules("bubseek.config") as [config_mod]:
+def test_mysql_connection_params_extract_mysql_values(monkeypatch) -> None:
+    with imported_bubseek_modules("bubseek.oceanbase") as [oceanbase_mod]:
         monkeypatch.setenv(
             "BUB_TAPESTORE_SQLALCHEMY_URL",
             "mysql+pymysql://seek:secret@seekdb.example:2881/analytics",
         )
 
-        settings = config_mod.DatabaseSettings()
+        assert oceanbase_mod.resolve_tapestore_url() == "mysql+oceanbase://seek:secret@seekdb.example:2881/analytics"
+        assert oceanbase_mod.mysql_connection_params() == (
+            "seekdb.example",
+            2881,
+            "seek",
+            "secret",
+            "analytics",
+        )
 
-    assert settings.resolved_tapestore_url == "mysql+oceanbase://seek:secret@seekdb.example:2881/analytics"
-    assert settings.backend_name == "mysql"
-    assert settings.mysql_connection_params() == (
-        "seekdb.example",
-        2881,
-        "seek",
-        "secret",
-        "analytics",
-    )
+
+def test_resolve_tapestore_url_prefers_explicit_argument_over_env(monkeypatch) -> None:
+    with imported_bubseek_modules("bubseek.oceanbase") as [oceanbase_mod]:
+        monkeypatch.setenv(
+            "BUB_TAPESTORE_SQLALCHEMY_URL",
+            "mysql+oceanbase://env:secret@seekdb.example:2881/env_db",
+        )
+
+        url = oceanbase_mod.resolve_tapestore_url("mysql://cli:secret@seekdb.example:2881/cli_db")
+
+    assert url == "mysql+oceanbase://cli:secret@seekdb.example:2881/cli_db"
 
 
 def test_oceanbase_registers_mysql_pymysql_alias() -> None:
@@ -112,69 +120,9 @@ def test_oceanbase_registers_mysql_pymysql_alias() -> None:
     assert dialect_cls is oceanbase_mod.OceanBaseDialect
 
 
-def test_resolve_tapestore_url_reads_workspace_env_file(monkeypatch, tmp_path: Path) -> None:
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-    (workspace / ".env").write_text(
-        "BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://workspace:secret@seekdb.example:2881/workspace_db\n",
-        encoding="utf-8",
-    )
-
-    with imported_bubseek_modules("bubseek.config") as [config_mod]:
-        monkeypatch.delenv("BUB_TAPESTORE_SQLALCHEMY_URL", raising=False)
-        url = config_mod.resolve_tapestore_url(workspace=workspace)
-
-    assert url == "mysql+oceanbase://workspace:secret@seekdb.example:2881/workspace_db"
-
-
-def test_resolve_tapestore_url_prefers_bub_workspace_path(monkeypatch, tmp_path: Path) -> None:
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-    (workspace / ".env").write_text(
-        "BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://workspace:secret@seekdb.example:2881/workspace_db\n",
-        encoding="utf-8",
-    )
-
-    other_root = tmp_path / "other"
-    nested = other_root / "nested"
-    nested.mkdir(parents=True)
-    (other_root / ".env").write_text(
-        "BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://discovered:secret@seekdb.example:2881/discovered_db\n",
-        encoding="utf-8",
-    )
-
-    with imported_bubseek_modules("bubseek.config") as [config_mod]:
-        monkeypatch.delenv("BUB_TAPESTORE_SQLALCHEMY_URL", raising=False)
-        monkeypatch.setenv("BUB_WORKSPACE_PATH", str(workspace))
-        url = config_mod.resolve_tapestore_url(discover_from=nested)
-
-    assert url == "mysql+oceanbase://workspace:secret@seekdb.example:2881/workspace_db"
-
-
-def test_resolve_tapestore_url_discovers_parent_env(monkeypatch, tmp_path: Path) -> None:
-    root = tmp_path / "project"
-    nested = root / "src" / "pkg"
-    nested.mkdir(parents=True)
-    (root / ".env").write_text(
-        "BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://discovered:secret@seekdb.example:2881/discovered_db\n",
-        encoding="utf-8",
-    )
-
-    with imported_bubseek_modules("bubseek.config") as [config_mod]:
-        monkeypatch.delenv("BUB_TAPESTORE_SQLALCHEMY_URL", raising=False)
-        monkeypatch.delenv("BUB_WORKSPACE_PATH", raising=False)
-        url = config_mod.resolve_tapestore_url(discover_from=nested)
-
-    assert url == "mysql+oceanbase://discovered:secret@seekdb.example:2881/discovered_db"
-
-
 def test_ensure_database_skips_non_mysql_backends(monkeypatch) -> None:
-    with imported_bubseek_modules("bubseek.database") as [database_mod]:
-        monkeypatch.setattr(
-            database_mod.BubSeekSettings,
-            "from_workspace",
-            lambda workspace=None: _settings_with_db_params(None),
-        )
+    with imported_bubseek_modules("bubseek.oceanbase") as [oceanbase_mod]:
+        monkeypatch.setattr(oceanbase_mod, "mysql_connection_params", lambda *_: None)
         create_called = False
         exists_called = False
 
@@ -188,47 +136,47 @@ def test_ensure_database_skips_non_mysql_backends(monkeypatch) -> None:
             exists_called = True
             return True
 
-        monkeypatch.setattr(database_mod, "create_database", _create_database)
-        monkeypatch.setattr(database_mod, "database_exists", _database_exists)
+        monkeypatch.setattr(oceanbase_mod, "create_database", _create_database)
+        monkeypatch.setattr(oceanbase_mod, "database_exists", _database_exists)
 
-        database_mod.ensure_database()
+        oceanbase_mod.ensure_database()
 
     assert not exists_called
     assert not create_called
 
 
 def test_ensure_database_returns_when_database_exists(monkeypatch) -> None:
-    with imported_bubseek_modules("bubseek.database") as [database_mod]:
+    with imported_bubseek_modules("bubseek.oceanbase") as [oceanbase_mod]:
         monkeypatch.setattr(
-            database_mod.BubSeekSettings,
-            "from_workspace",
-            lambda workspace=None: _settings_with_db_params(("seekdb.example", 2881, "seek", "secret", "analytics")),
+            oceanbase_mod,
+            "mysql_connection_params",
+            lambda *_: ("seekdb.example", 2881, "seek", "secret", "analytics"),
         )
         create_called = False
 
-        monkeypatch.setattr(database_mod, "database_exists", lambda *args: True)
+        monkeypatch.setattr(oceanbase_mod, "database_exists", lambda *args: True)
 
         def _create_database(*args):
             nonlocal create_called
             create_called = True
             return True
 
-        monkeypatch.setattr(database_mod, "create_database", _create_database)
+        monkeypatch.setattr(oceanbase_mod, "create_database", _create_database)
 
-        database_mod.ensure_database()
+        oceanbase_mod.ensure_database()
 
     assert not create_called
 
 
 def test_ensure_database_creates_missing_database_without_prompt(monkeypatch) -> None:
-    with imported_bubseek_modules("bubseek.database") as [database_mod]:
+    with imported_bubseek_modules("bubseek.oceanbase") as [oceanbase_mod]:
         monkeypatch.setattr(
-            database_mod.BubSeekSettings,
-            "from_workspace",
-            lambda workspace=None: _settings_with_db_params(("seekdb.example", 2881, "seek", "secret", "analytics")),
+            oceanbase_mod,
+            "mysql_connection_params",
+            lambda *_: ("seekdb.example", 2881, "seek", "secret", "analytics"),
         )
-        monkeypatch.setattr(database_mod, "database_exists", lambda *args: False)
-        monkeypatch.setattr(database_mod.sys.stdin, "isatty", lambda: False)
+        monkeypatch.setattr(oceanbase_mod, "database_exists", lambda *args: False)
+        monkeypatch.setattr(oceanbase_mod.sys.stdin, "isatty", lambda: False)
 
         created = False
 
@@ -237,25 +185,25 @@ def test_ensure_database_creates_missing_database_without_prompt(monkeypatch) ->
             created = True
             return True
 
-        monkeypatch.setattr(database_mod, "create_database", _create_database)
+        monkeypatch.setattr(oceanbase_mod, "create_database", _create_database)
 
-        database_mod.ensure_database()
+        oceanbase_mod.ensure_database()
 
     assert created
 
 
 def test_ensure_database_respects_tty_decline(monkeypatch) -> None:
-    with imported_bubseek_modules("bubseek.database") as [database_mod]:
+    with imported_bubseek_modules("bubseek.oceanbase") as [oceanbase_mod]:
         monkeypatch.setattr(
-            database_mod.BubSeekSettings,
-            "from_workspace",
-            lambda workspace=None: _settings_with_db_params(("seekdb.example", 2881, "seek", "secret", "analytics")),
+            oceanbase_mod,
+            "mysql_connection_params",
+            lambda *_: ("seekdb.example", 2881, "seek", "secret", "analytics"),
         )
-        monkeypatch.setattr(database_mod, "database_exists", lambda *args: False)
-        monkeypatch.setattr(database_mod.sys.stdin, "isatty", lambda: True)
-        monkeypatch.setattr(database_mod.typer, "confirm", lambda *args, **kwargs: False)
+        monkeypatch.setattr(oceanbase_mod, "database_exists", lambda *args: False)
+        monkeypatch.setattr(oceanbase_mod.sys.stdin, "isatty", lambda: True)
+        monkeypatch.setattr(oceanbase_mod.typer, "confirm", lambda *args, **kwargs: False)
 
-        with pytest.raises(database_mod.typer.Exit) as exc_info:
-            database_mod.ensure_database()
+        with pytest.raises(oceanbase_mod.typer.Exit) as exc_info:
+            oceanbase_mod.ensure_database()
 
     assert exc_info.value.exit_code == 1

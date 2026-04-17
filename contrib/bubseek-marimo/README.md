@@ -29,7 +29,7 @@ Open `http://localhost:2718/` — marimo gallery. Click **dashboard** for chat +
 
 - Canonical runtime location: `<workspace>/insights/*.py`
 - `dashboard.py` and `index.py` are generated starter notebooks, not hand-maintained repository assets
-- `workspace` resolution order: `BUB_MARIMO_WORKSPACE` -> `BUB_WORKSPACE_PATH` -> current working directory
+- `workspace` resolution order: `BUB_MARIMO_WORKSPACE` -> current working directory
 - Packaged plugin installs still write generated notebooks into the active workspace, never into the installed package directory
 - Format: single `.py` with `@app.cell`, PEP 723
 - Gallery notebooks must contain the scanner markers `import marimo` and `marimo.App`
@@ -52,4 +52,3 @@ The E2E suite runs with `BUB_RUNTIME_ENABLED=0`, so it does not need a remote mo
 | `BUB_MARIMO_HOST` | Bind host (default: `127.0.0.1`) |
 | `BUB_MARIMO_PORT` | Bind port (default: `2718`) |
 | `BUB_MARIMO_WORKSPACE` | Override the Bub workspace root used for runtime notebook output |
-| `BUB_WORKSPACE_PATH` | Default Bub workspace root when `BUB_MARIMO_WORKSPACE` is unset |

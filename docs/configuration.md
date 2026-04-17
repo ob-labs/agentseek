@@ -89,7 +89,6 @@ Visit http://127.0.0.1:2718 after enabling.
 | `BUB_MAX_STEPS` | Max steps per conversation |
 | `BUB_MAX_TOKENS` | Max tokens per response |
 | `BUB_SEARCH_OLLAMA_API_KEY` | For web search tool |
-| `BUB_WORKSPACE_PATH` | Workspace directory |
 
 ## Add contrib packages
 
