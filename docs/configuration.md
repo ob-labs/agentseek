@@ -71,6 +71,24 @@ uv run bub login wechat    # Scan QR code with WeChat app
 uv run bub gateway --enable-channel wechat
 ```
 
+### WeCom
+
+1. Visit WeCom AI bot admin console and create or select a bot
+2. Enable long-connection mode, then get Bot ID and Secret
+3. If needed, configure direct-message or group allowlist policies
+
+```bash
+export BUB_WECOM_BOT_ID=your-bot-id
+export BUB_WECOM_SECRET=your-long-connection-secret
+# optional
+# export BUB_WECOM_WEBSOCKET_URL=wss://openws.work.weixin.qq.com
+# export BUB_WECOM_DM_POLICY=open
+# export BUB_WECOM_ALLOW_FROM='["alice", "bob"]'
+# export BUB_WECOM_GROUP_POLICY=open
+# export BUB_WECOM_GROUP_ALLOW_FROM='["wrXXX", "wrYYY"]'
+uv run bub gateway --enable-channel wecom
+```
+
 ### Marimo (web dashboard)
 
 ```bash
@@ -89,7 +107,6 @@ Visit http://127.0.0.1:2718 after enabling.
 | `BUB_MAX_STEPS` | Max steps per conversation |
 | `BUB_MAX_TOKENS` | Max tokens per response |
 | `BUB_SEARCH_OLLAMA_API_KEY` | For web search tool |
-| `BUB_WORKSPACE_PATH` | Workspace directory |
 
 ## Add contrib packages
 

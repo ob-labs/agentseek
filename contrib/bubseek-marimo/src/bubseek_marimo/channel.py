@@ -17,76 +17,12 @@ from bub.types import MessageHandler
 from loguru import logger
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from bubseek.oceanbase import resolve_tapestore_url
 from bubseek_marimo.chat_store import MarimoChatStore, TurnConflictError
 from bubseek_marimo.notebooks import ensure_seed_notebooks
 
 if TYPE_CHECKING:
     from aiohttp import web as web_types
-
-
-def _discover_project_root_fallback(start: Path) -> Path | None:
-    """Walk up from start for a directory containing .env (used when bubseek not installed)."""
-    for d in [start, *start.parents]:
-        if (d / ".env").is_file():
-            return d
-    return None
-
-
-def discover_project_root(start: Path | str | None = None) -> Path | None:
-    """Use bubseek.config when available, otherwise fall back to local discovery."""
-    if start is None:
-        start = Path.cwd()
-    start = Path(start)
-    try:
-        from bubseek.config import discover_project_root as _discover_project_root
-    except ImportError:
-        return _discover_project_root_fallback(start)
-    else:
-        return _discover_project_root(start)
-
-
-def env_with_workspace_dotenv(workspace: Path | str) -> dict[str, str]:
-    """Load environment variables from workspace/.env with a local fallback."""
-    workspace = Path(workspace)
-    try:
-        from bubseek.config import env_with_workspace_dotenv as _env_with_workspace_dotenv
-    except ImportError:
-        from dotenv import dotenv_values
-
-        env = dict(os.environ)
-        env_file = workspace / ".env"
-        if env_file.is_file():
-            for key, value in dotenv_values(env_file).items():
-                if isinstance(key, str) and isinstance(value, str):
-                    env[key] = value
-        return env
-    else:
-        return _env_with_workspace_dotenv(workspace)
-
-
-def resolve_tapestore_url(workspace: Path | str | None = None, discover_from: Path | str | None = None) -> str:
-    """Resolve the tape store URL using bubseek helpers when they are installed."""
-    if workspace is not None:
-        workspace = Path(workspace)
-    try:
-        from bubseek.config import resolve_tapestore_url as _resolve_tapestore_url
-    except ImportError:
-        if workspace is not None:
-            url = (env_with_workspace_dotenv(workspace).get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
-        else:
-            start = Path(discover_from).resolve() if discover_from else Path.cwd().resolve()
-            for d in [start, *start.parents]:
-                if (d / ".env").is_file():
-                    url = (env_with_workspace_dotenv(d).get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
-                    break
-            else:
-                url = (os.environ.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
-    else:
-        url = _resolve_tapestore_url(workspace, discover_from)
-
-    if url:
-        return url
-    raise RuntimeError("BUB_TAPESTORE_SQLALCHEMY_URL is required for the marimo channel")
 
 
 def _load_web() -> Any:
@@ -148,39 +84,30 @@ class MarimoChannel(Channel):
     def _workspace_dir(self) -> Path:
         if self._config.workspace:
             return Path(self._config.workspace).resolve()
-
-        workspace = os.environ.get("BUB_WORKSPACE_PATH")
-        if workspace:
-            return Path(workspace).resolve()
-
-        for start in (Path.cwd(), Path(__file__).resolve().parent):
-            root = discover_project_root(start)
-            if root is not None:
-                return root
         return Path.cwd().resolve()
 
     def _insights_dir(self) -> Path:
         return self._workspace_dir() / "insights"
 
     def _tapestore_url(self) -> str:
-        return resolve_tapestore_url(self._workspace_dir())
+        if url := resolve_tapestore_url():
+            return url
+        raise RuntimeError("BUB_TAPESTORE_SQLALCHEMY_URL is required for the marimo channel")
 
     def _ensure_seed_notebooks(self) -> None:
         insights_dir = self._insights_dir()
         workspace = self._workspace_dir()
         logger.info(
-            "Marimo workspace={} .env={} exists={}",
+            "Marimo workspace={}",
             workspace,
-            workspace / ".env",
-            (workspace / ".env").is_file(),
         )
         ensure_seed_notebooks(insights_dir)
         logger.info("Ensured starter notebooks under {}", insights_dir)
 
     def _marimo_env(self) -> dict[str, str]:
         workspace = self._workspace_dir()
-        env = env_with_workspace_dotenv(workspace)
-        env["BUB_WORKSPACE_PATH"] = str(workspace)
+        env = dict(os.environ)
+        env["BUB_MARIMO_WORKSPACE"] = str(workspace)
         env["BUB_MARIMO_PORT"] = str(self._config.port)
         return env
 

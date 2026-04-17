@@ -21,65 +21,26 @@ app = mo.App(width="full")
 
 
 @app.cell
-def _():  # noqa: C901
+def _():
     import contextlib
-    import os
     import pickle
     from datetime import UTC, datetime
-    from pathlib import Path
 
     import marimo as mo
     from sqlalchemy import MetaData, Table, case, create_engine, inspect, select, text
 
     _default_seekdb = "mysql+oceanbase://root:@127.0.0.1:2881/bub"
 
-    def _resolve_tapestore_like_gateway() -> str:  # noqa: C901
-        """Same DB as bubseek: env → workspace → repo .env (via __file__) → notebook_dir."""
+    def _resolve_tapestore_like_gateway() -> str:
+        """Use the same tapestore URL as the gateway process."""
         try:
-            from bubseek.config import discover_project_root, resolve_tapestore_url
+            from bubseek.oceanbase import resolve_tapestore_url
         except Exception:
             return _default_seekdb
 
-        direct = (os.environ.get("BUB_TAPESTORE_SQLALCHEMY_URL") or "").strip()
-        if direct:
-            return direct
-
-        ws = (os.environ.get("BUB_WORKSPACE_PATH") or "").strip()
-        if ws:
-            with contextlib.suppress(Exception):
-                return resolve_tapestore_url(workspace=Path(ws).resolve())
-
-        file_parent = None
-        with contextlib.suppress(NameError):
-            if __file__ and str(__file__).strip():
-                file_parent = Path(__file__).resolve().parent
-        if file_parent is not None:
-            root = discover_project_root(file_parent)
-            if root is not None:
-                with contextlib.suppress(Exception):
-                    return resolve_tapestore_url(workspace=root)
-
-        discover = None
         with contextlib.suppress(Exception):
-            nd = getattr(mo, "notebook_dir", None)
-            if callable(nd) and nd() is not None:
-                discover = Path(nd()).resolve()
-        if discover is not None:
-            with contextlib.suppress(Exception):
-                u = resolve_tapestore_url(workspace=None, discover_from=discover)
-                if u:
-                    return u
-
-        if file_parent is not None:
-            with contextlib.suppress(Exception):
-                u = resolve_tapestore_url(workspace=None, discover_from=file_parent)
-                if u:
-                    return u
-
-        with contextlib.suppress(Exception):
-            u = resolve_tapestore_url()
-            if u:
-                return u
+            if url := resolve_tapestore_url():
+                return url
         return _default_seekdb
 
     try:

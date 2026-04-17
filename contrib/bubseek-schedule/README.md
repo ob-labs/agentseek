@@ -47,7 +47,7 @@ dependencies = [
 
 ## Debug: job in chat but not in Marimo kanban / DB
 
-The gateway resolves the job store URL from `BUB_TAPESTORE_SQLALCHEMY_URL` in the workspace `.env` or process environment. Marimo must use the **same** URL.
+The gateway resolves the job store URL from `BUB_TAPESTORE_SQLALCHEMY_URL` in the process environment. Marimo must use the **same** URL.
 
 From the bubseek repo root:
 

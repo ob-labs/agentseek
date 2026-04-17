@@ -18,17 +18,17 @@ import bubseek.oceanbase  # noqa: F401 - register mysql+oceanbase dialect
 
 
 def _get_jobstore_url() -> str:
-    """Resolve tapestore URL (workspace .env, BUB_WORKSPACE_PATH, cwd) like the rest of bubseek."""
-    from bubseek.config import resolve_tapestore_url
+    """Resolve tapestore URL from the shared runtime environment."""
+    from bubseek.oceanbase import resolve_tapestore_url
 
     return resolve_tapestore_url()
 
 
 def _normalize_url(url: str) -> str:
     """Use mysql+oceanbase for pyobvector dialect when mysql is configured."""
-    if "mysql" in url.lower() and "oceanbase" not in url.lower():
-        return url.replace("mysql+pymysql", "mysql+oceanbase", 1).replace("mysql://", "mysql+oceanbase://", 1)
-    return url
+    from bubseek.oceanbase import normalize_oceanbase_url
+
+    return normalize_oceanbase_url(url)
 
 
 class OceanBaseJobStore(BaseJobStore):
