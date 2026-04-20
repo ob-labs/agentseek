@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import inspect
 import re
+from copy import deepcopy
 from typing import Any
 
 from bub.tools import REGISTRY
+from langchain_core.utils.json_schema import dereference_refs
 from republic import Tool, ToolContext
 
 
@@ -19,11 +21,41 @@ def _args_schema_from_parameters(parameters: dict[str, Any]) -> dict[str, Any]:
     if parameters.get("type") != "object":
         return {"type": "object", "properties": {}, "additionalProperties": False}
 
-    schema = dict(parameters)
+    schema = _normalize_json_schema(parameters)
     properties = schema.get("properties")
     if not isinstance(properties, dict):
         schema["properties"] = {}
     return schema
+
+
+def _collect_nested_defs(obj: Any, defs_key: str, collected: dict[str, Any]) -> None:
+    if isinstance(obj, dict):
+        nested_defs = obj.get(defs_key)
+        if isinstance(nested_defs, dict):
+            for name, value in nested_defs.items():
+                collected.setdefault(name, deepcopy(value))
+        for value in obj.values():
+            _collect_nested_defs(value, defs_key, collected)
+        return
+    if isinstance(obj, list):
+        for item in obj:
+            _collect_nested_defs(item, defs_key, collected)
+
+
+def _normalize_json_schema(parameters: dict[str, Any]) -> dict[str, Any]:
+    schema = deepcopy(parameters)
+    for defs_key in ("$defs", "definitions"):
+        collected: dict[str, Any] = {}
+        _collect_nested_defs(schema, defs_key, collected)
+        if collected:
+            root_defs = schema.get(defs_key)
+            if isinstance(root_defs, dict):
+                collected = {**collected, **root_defs}
+            schema[defs_key] = collected
+    normalized = dereference_refs(schema)
+    normalized.pop("$defs", None)
+    normalized.pop("definitions", None)
+    return normalized
 
 
 def bub_tool_to_langchain(bub_tool: Tool, *, tool_context: ToolContext) -> Any:

@@ -10,12 +10,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import bubseek_langchain.tools as langchain_tools_module
 import pytest
 from bubseek_langchain.plugin import LangchainPlugin
 from bubseek_langchain.tape_recorder import LangchainTapeCallbackHandler
 from langchain_core.callbacks.manager import AsyncCallbackManager
 from republic import StreamEvent as RepublicStreamEvent
-from republic import TapeContext, TapeEntry
+from republic import TapeContext, TapeEntry, Tool
 
 pytest.importorskip("langchain_core")
 
@@ -178,6 +179,71 @@ def test_missing_runtime_agent_without_tape(monkeypatch: pytest.MonkeyPatch, tmp
     result = asyncio.run(plugin.run_model("hello", session_id="session-2", state={}))
 
     assert result == "NO_TAPE:hello"
+
+
+def test_include_bub_tools_passes_registry_tools_to_factory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
+    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_with_tools:factory")
+    monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "true")
+    monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
+    monkeypatch.setattr(
+        langchain_tools_module,
+        "REGISTRY",
+        {
+            "sample.tool": Tool(
+                name="sample.tool",
+                description="Sample tool",
+                parameters={
+                    "type": "object",
+                    "properties": {"value": {"type": "string"}},
+                    "required": ["value"],
+                    "additionalProperties": False,
+                },
+                handler=lambda value: f"ok:{value}",
+            ),
+            "context.tool": Tool(
+                name="context.tool",
+                description="Context tool",
+                parameters={
+                    "type": "object",
+                    "properties": {"value": {"type": "string"}},
+                    "required": ["value"],
+                    "additionalProperties": False,
+                },
+                handler=lambda value, *, context: f"{context.run_id}:{value}",
+                context=True,
+            ),
+        },
+    )
+
+    _write_module(
+        tmp_path,
+        "lc_with_tools",
+        """
+        from langchain_core.runnables import RunnableLambda
+
+        seen = {}
+
+        async def _run(text):
+            return f"TOOLS:{text}"
+
+        def factory(*, tools, **kwargs):
+            seen["tool_names"] = [tool.name for tool in tools]
+            seen["tool_count"] = len(tools)
+            seen["schemas"] = [tool.args_schema for tool in tools]
+            return RunnableLambda(lambda x: x, afunc=_run)
+        """,
+    )
+
+    plugin = LangchainPlugin(_Framework())
+    result = asyncio.run(plugin.run_model("hello", session_id="session-tools", state={}))
+
+    module = _import_module("lc_with_tools")
+    assert result == "TOOLS:hello"
+    assert module.seen["tool_count"] == 2
+    assert module.seen["tool_names"] == ["sample_tool", "context_tool"]
+    assert module.seen["schemas"][0]["properties"]["value"]["type"] == "string"
 
 
 def test_factory_tuple_overrides_invoke_input(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
