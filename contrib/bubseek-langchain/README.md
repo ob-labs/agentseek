@@ -2,34 +2,40 @@
 
 `bubseek-langchain` is an optional Bub plugin that routes `run_model` through a LangChain `Runnable`.
 
-It is intentionally narrow:
+Current scope:
 
 - only `Runnable` mode is supported;
 - Bub tools can be bridged into LangChain tools;
-- Bub tape recording remains available for user / assistant turns and tool spans;
+- Bub tape recording still works for user / assistant turns and tool spans;
 - prompts starting with `,` still fall through to Bub built-in internal commands.
 
 ## Install
 
-From the root workspace:
+From the repo root:
 
 ```bash
 uv sync --extra langchain
 ```
 
-Or install the contrib package directly:
+Or install only the plugin package:
 
 ```bash
 uv pip install -e contrib/bubseek-langchain
 ```
 
+If you want the DashScope DeepAgents example too:
+
+```bash
+uv pip install -e 'contrib/bubseek-langchain[deepagents]'
+```
+
 ## Enable
 
-Set two environment variables:
+Set:
 
 ```bash
 export BUB_LANGCHAIN_MODE=runnable
-export BUB_LANGCHAIN_FACTORY=bubseek_langchain.examples.minimal_runnable:minimal_lc_agent
+export BUB_LANGCHAIN_FACTORY=examples.langchain.minimal_runnable:minimal_lc_agent
 ```
 
 Optional flags:
@@ -41,12 +47,10 @@ Optional flags:
 
 `BUB_LANGCHAIN_FACTORY` must point to a `module:attr`.
 
-It exists so the plugin can assemble a turn-local runnable from Bub runtime inputs instead of hard-coding a single global chain inside the adapter.
-
 The imported object may be:
 
-- a `Runnable` instance; or
-- a factory callable returning a `Runnable`; or
+- a `Runnable` instance;
+- a factory callable returning a `Runnable`;
 - a factory callable returning `(runnable, invoke_input)`.
 
 If the callable accepts them, the adapter injects:
@@ -58,29 +62,20 @@ If the callable accepts them, the adapter injects:
 - `system_prompt`
 - `prompt`
 
-If the factory returns only a runnable, the adapter uses the Bub prompt as the default invoke input:
+If the factory returns only a runnable, the adapter uses the Bub prompt as default invoke input.
+If you need a different input shape, derive it from `prompt` and return `(runnable, invoke_input)` explicitly.
 
-- `str` prompt stays `str`
-- multimodal prompt stays `list[dict]`
+## Examples
 
-If you need a different invoke input shape, derive it from `prompt` and return `(runnable, invoke_input)` explicitly.
+Repository examples live under [examples/langchain/README.md](/home/shangzhuoran.szr/oceanbase/bubseek/examples/langchain/README.md):
 
-## Minimal Example
+- [examples/langchain/minimal_runnable.py](/home/shangzhuoran.szr/oceanbase/bubseek/examples/langchain/minimal_runnable.py)
+- [examples/langchain/deepagents_dashscope.py](/home/shangzhuoran.szr/oceanbase/bubseek/examples/langchain/deepagents_dashscope.py)
 
-The package ships a minimal example runnable:
-
-```python
-from bubseek_langchain.examples.minimal_runnable import minimal_lc_agent
-```
-
-It accepts the Bub-bridged tool list and returns a `RunnableLambda`.
-
-## Example
+Typical minimal run:
 
 ```bash
 export BUB_LANGCHAIN_MODE=runnable
-export BUB_LANGCHAIN_FACTORY=bubseek_langchain.examples.minimal_runnable:minimal_lc_agent
+export BUB_LANGCHAIN_FACTORY=examples.langchain.minimal_runnable:minimal_lc_agent
 uv run bub run "Summarize this workspace in one sentence."
 ```
-
-To expose Bub tools inside the runnable, keep `BUB_LANGCHAIN_INCLUDE_BUB_TOOLS=true`.

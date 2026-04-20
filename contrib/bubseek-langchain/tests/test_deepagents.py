@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import importlib
 import sys
-import textwrap
-from pathlib import Path
+from collections.abc import Callable, Sequence
+from types import ModuleType
 from typing import Any
 
 import pytest
@@ -18,55 +17,60 @@ class _Framework:
         return "system prompt"
 
 
-def _write_module(tmp_path: Path, module_name: str, source: str) -> None:
-    (tmp_path / f"{module_name}.py").write_text(textwrap.dedent(source), encoding="utf-8")
-    sys.modules.pop(module_name, None)
-    importlib.invalidate_caches()
+def test_build_chat_model_uses_bub_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    from examples.langchain import deepagents_dashscope
+
+    captured: dict[str, Any] = {}
+
+    class FakeChatOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            captured.update(kwargs)
+
+    fake_module = ModuleType("langchain_openai")
+    fake_module.__dict__["ChatOpenAI"] = FakeChatOpenAI
+    monkeypatch.setitem(sys.modules, "langchain_openai", fake_module)
+    monkeypatch.setenv("BUB_MODEL", "glm-5.1")
+    monkeypatch.setenv("BUB_API_KEY", "dashscope-key")
+    monkeypatch.setenv("BUB_API_BASE", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+
+    model = deepagents_dashscope._build_chat_model()
+
+    assert isinstance(model, FakeChatOpenAI)
+    assert captured == {
+        "model": "glm-5.1",
+        "api_key": "dashscope-key",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "temperature": 0,
+    }
 
 
-def test_run_model_with_deepagents_factory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.syspath_prepend(str(tmp_path))
+def test_run_model_with_deepagents_factory(monkeypatch: pytest.MonkeyPatch) -> None:
+    from langchain_core.language_models.base import LanguageModelInput
+    from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
+    from langchain_core.messages import AIMessage
+    from langchain_core.runnables import Runnable
+    from langchain_core.tools import BaseTool
+
+    from examples.langchain import deepagents_dashscope
+
+    class ToolReadyFakeChatModel(FakeMessagesListChatModel):
+        def bind_tools(
+            self,
+            tools: Sequence[dict[str, Any] | type | Callable[..., Any] | BaseTool],
+            *,
+            tool_choice: str | None = None,
+            **kwargs: Any,
+        ) -> Runnable[LanguageModelInput, AIMessage]:
+            return self
+
     monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
-    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_deepagents_factory:factory")
+    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "examples.langchain.deepagents_dashscope:dashscope_deep_agent")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
-
-    _write_module(
-        tmp_path,
-        "lc_deepagents_factory",
-        """
-        from typing import Any, Sequence
-
-        from deepagents import create_deep_agent
-        from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
-        from langchain_core.messages import AIMessage
-        from langchain_core.runnables import RunnableLambda
-
-        from bubseek_langchain.bridge import extract_prompt_text
-
-
-        class ToolReadyFakeChatModel(FakeMessagesListChatModel):
-            def bind_tools(
-                self,
-                tools: Sequence[dict[str, Any] | type | Any],
-                *,
-                tool_choice: str | None = None,
-                **kwargs: Any,
-            ):
-                return self
-
-
-        def factory(*, prompt, tools, system_prompt, **kwargs):
-            agent = create_deep_agent(
-                model=ToolReadyFakeChatModel(responses=[AIMessage(content="deep ok")]),
-                tools=tools or [],
-                system_prompt=system_prompt,
-                subagents=[],
-                memory=None,
-            )
-            runnable = agent | RunnableLambda(lambda state: state["messages"][-1].content)
-            return runnable, {"messages": [{"role": "user", "content": extract_prompt_text(prompt)}]}
-        """,
+    monkeypatch.setattr(
+        deepagents_dashscope,
+        "_build_chat_model",
+        lambda: ToolReadyFakeChatModel(responses=[AIMessage(content="deep ok")]),
     )
 
     plugin = LangchainPlugin(_Framework())

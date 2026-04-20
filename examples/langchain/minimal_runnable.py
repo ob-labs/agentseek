@@ -4,7 +4,21 @@ from typing import Any
 
 from langchain_core.runnables import RunnableLambda
 
-from bubseek_langchain.bridge import extract_prompt_text
+
+def _extract_prompt_text(prompt: str | list[dict[str, Any]]) -> str:
+    if isinstance(prompt, str):
+        return prompt
+
+    texts: list[str] = []
+    for part in prompt:
+        if not isinstance(part, dict):
+            continue
+        if part.get("type") != "text":
+            continue
+        text = part.get("text")
+        if isinstance(text, str) and text.strip():
+            texts.append(text)
+    return "\n".join(texts).strip()
 
 
 def minimal_lc_agent(
@@ -25,4 +39,4 @@ def minimal_lc_agent(
             return f"{summary}\nTools: {', '.join(tool_names)}\nSystem: {prompt_prefix}"
         return f"{summary}\nSystem: {prompt_prefix}"
 
-    return RunnableLambda(_run), extract_prompt_text(prompt)
+    return RunnableLambda(_run), _extract_prompt_text(prompt)
