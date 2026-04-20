@@ -6,7 +6,7 @@ lock: ## Update uv.lock against PyPI (ignore UV_INDEX_URL so lock stays canonica
 .PHONY: install
 install: ## Install the virtual environment and install the pre-commit hooks
 	@echo "🚀 Creating virtual environment using uv"
-	@uv sync
+	@uv sync --all-packages
 	@uv run pre-commit install
 
 .PHONY: check
