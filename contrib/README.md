@@ -1,8 +1,10 @@
 # Contrib
 
-This directory documents contrib-related examples for `bubseek`.
+This directory contains plugins for `bubseek`.
 
-`bubseek` does not install contrib from this directory. Contrib packages remain standard Python packages and should be added through normal dependency management in `pyproject.toml`.
+Contrib packages remain standard Python packages and should be added through normal dependency management in `pyproject.toml`.
+
+A typical plugin should work with bub as well.
 
 Typical example:
 
