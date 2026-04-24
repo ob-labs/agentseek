@@ -34,6 +34,9 @@ dependencies = [
     "bubseek-marimo",
 ]
 
+[project.scripts]
+bubseek = "bub.__main__:app"
+
 [project.optional-dependencies]
 langchain = [
     "bubseek-langchain",
