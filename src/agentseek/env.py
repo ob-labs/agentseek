@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping, MutableMapping
+from pathlib import Path
 from typing import Any
 
 from pydantic import Field
@@ -59,6 +60,15 @@ def apply_agentseek_env_aliases(environ: MutableMapping[str, str] | None = None)
     target_environ = os.environ if environ is None else environ
     for name, value in AgentseekEnvironmentSettings().aliases.items():
         target_environ.setdefault(name, value)
+    target_environ.setdefault("BUB_HOME", str(default_agentseek_home()))
+
+
+def agentseek_config_file() -> Path:
+    return (Path(os.environ["BUB_HOME"]).expanduser() / "config.yml").resolve()
+
+
+def default_agentseek_home() -> Path:
+    return Path.cwd() / ".agentseek"
 
 
 def _bub_aliases(env_vars: Mapping[str, str | None]) -> dict[str, str]:
