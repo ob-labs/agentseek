@@ -1,7 +1,7 @@
 [project]
-name = "bubseek"
+name = "agentseek"
 version = "0.1.0"
-description = "A Bub distribution for data-driven insight workflows, powered by OceanBase seekdb"
+description = "A database-native Agent Harness for runtime data workflows, powered by Bub"
 authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
 readme = "README.md"
 keywords = ['python']
@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-bubseek = "bub.__main__:app"
+agentseek = "bub.__main__:app"
 
 [project.optional-dependencies]
 langchain = [
@@ -32,7 +32,7 @@ langchain = [
 ]
 
 [project.urls]
-Repository = "https://github.com/ob-labs/bubseek"
+Repository = "https://github.com/ob-labs/agentseek"
 
 [dependency-groups]
 dev = [
@@ -58,7 +58,7 @@ build-backend = "pdm.backend"
 
 [tool.pdm.build]
 includes = [
-    "src/bubseek",
+    "src/agentseek",
     "src/skills",
 ]
 skills = [

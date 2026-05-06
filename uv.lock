@@ -15,10 +15,66 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "agentseek",
     "bub-schedule-sqlalchemy",
-    "bubseek",
     "bubseek-langchain",
     "bubseek-marimo",
+]
+
+[[package]]
+name = "agentseek"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "bub" },
+    { name = "bub-feishu" },
+    { name = "bub-tapestore-sqlalchemy" },
+]
+
+[package.optional-dependencies]
+langchain = [
+    { name = "bubseek-langchain" },
+    { name = "deepagents" },
+    { name = "langchain-openai" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "deepagents" },
+    { name = "mkdocs" },
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings", extra = ["python"] },
+    { name = "pandas" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "tox-uv" },
+    { name = "ty" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bub", specifier = "==0.3.7" },
+    { name = "bub-feishu", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-feishu&branch=main" },
+    { name = "bub-tapestore-sqlalchemy", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-sqlalchemy&branch=main" },
+    { name = "bubseek-langchain", marker = "extra == 'langchain'", editable = "contrib/bubseek-langchain" },
+    { name = "deepagents", marker = "extra == 'langchain'", specifier = ">=0.5.3" },
+    { name = "langchain-openai", marker = "extra == 'langchain'", specifier = ">=0.3.0" },
+]
+provides-extras = ["langchain"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "deepagents", specifier = ">=0.5.3" },
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-material", specifier = ">=9.7.1" },
+    { name = "mkdocstrings", extras = ["python"], specifier = ">=1.0.2" },
+    { name = "pandas" },
+    { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "ruff", specifier = ">=0.14.14" },
+    { name = "tox-uv", specifier = ">=1.29.0" },
+    { name = "ty", specifier = ">=0.0.14" },
 ]
 
 [[package]]
@@ -325,62 +381,6 @@ version = "0.1.0"
 source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-sqlalchemy&branch=main#f2ef9c511c7f5e0a2ea2d3ae448addfa373d9440" }
 dependencies = [
     { name = "sqlalchemy" },
-]
-
-[[package]]
-name = "bubseek"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "bub" },
-    { name = "bub-feishu" },
-    { name = "bub-tapestore-sqlalchemy" },
-]
-
-[package.optional-dependencies]
-langchain = [
-    { name = "bubseek-langchain" },
-    { name = "deepagents" },
-    { name = "langchain-openai" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "deepagents" },
-    { name = "mkdocs" },
-    { name = "mkdocs-material" },
-    { name = "mkdocstrings", extra = ["python"] },
-    { name = "pandas" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "ruff" },
-    { name = "tox-uv" },
-    { name = "ty" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "bub", specifier = "==0.3.7" },
-    { name = "bub-feishu", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-feishu&branch=main" },
-    { name = "bub-tapestore-sqlalchemy", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-sqlalchemy&branch=main" },
-    { name = "bubseek-langchain", marker = "extra == 'langchain'", editable = "contrib/bubseek-langchain" },
-    { name = "deepagents", marker = "extra == 'langchain'", specifier = ">=0.5.3" },
-    { name = "langchain-openai", marker = "extra == 'langchain'", specifier = ">=0.3.0" },
-]
-provides-extras = ["langchain"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "deepagents", specifier = ">=0.5.3" },
-    { name = "mkdocs", specifier = ">=1.6.1" },
-    { name = "mkdocs-material", specifier = ">=9.7.1" },
-    { name = "mkdocstrings", extras = ["python"], specifier = ">=1.0.2" },
-    { name = "pandas" },
-    { name = "pre-commit", specifier = ">=4.5.1" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "ruff", specifier = ">=0.14.14" },
-    { name = "tox-uv", specifier = ">=1.29.0" },
-    { name = "ty", specifier = ">=0.0.14" },
 ]
 
 [[package]]

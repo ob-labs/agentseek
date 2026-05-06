@@ -1,3 +1,3 @@
-"""bubseek package."""
+"""agentseek package."""
 
 __all__: list[str] = []

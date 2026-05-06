@@ -4,8 +4,8 @@ import shutil
 import subprocess
 
 
-def test_bubseek_command_shows_help() -> None:
-    command = shutil.which("bubseek")
+def test_agentseek_command_shows_help() -> None:
+    command = shutil.which("agentseek")
     assert command is not None
 
     result = subprocess.run([command, "--help"], capture_output=True, text=True, check=False)  # noqa: S603
