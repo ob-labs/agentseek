@@ -1,7 +1,7 @@
 [project]
-name = "bubseek"
+name = "agentseek"
 version = "0.1.0"
-description = "A Bub distribution for data-driven insight workflows, powered by OceanBase seekdb"
+description = "A database-native Agent Harness for runtime data workflows, powered by Bub"
 authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
 readme = "README.md"
 keywords = ['python']
@@ -16,39 +16,18 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "bub",
-    "republic>=0.5.4",
-    "typer>=0.12.0",
-    "pydantic-settings>=2.0.0",
-    "python-dotenv>=1.0.0",
+    "bub>=0.3.7",
     "bub-feishu",
-    "bub-dingtalk",
-    "bub-wechat",
-    "bub-wecom",
-    "bub-discord",
-    "bub-web-search",
     "bub-tapestore-sqlalchemy",
-    "bub-mcp",
-    "pyobvector>=0.2.26",
-    "bub-schedule-sqlalchemy",
-    "bubseek-marimo",
+    "agentseek-schedule-sqlalchemy",
+    "pydantic-settings>=2.0.0",
 ]
 
 [project.scripts]
-bubseek = "bub.__main__:app"
-
-[project.optional-dependencies]
-langchain = [
-    "bubseek-langchain",
-    "deepagents>=0.5.3",
-    "langchain-openai>=0.3.0",
-]
+agentseek = "agentseek.__main__:app"
 
 [project.urls]
-Repository = "https://github.com/ob-labs/bubseek"
-
-[project.entry-points."sqlalchemy.dialects"]
-"mysql.oceanbase" = "bubseek.oceanbase:OceanBaseDialect"
+Repository = "https://github.com/ob-labs/agentseek"
 
 [dependency-groups]
 dev = [
@@ -56,11 +35,7 @@ dev = [
     "pre-commit>=4.5.1",
     "tox-uv>=1.29.0",
 
-    "deepagents>=0.5.3",
-
     "ty>=0.0.14",
-
-    "pandas",
 
     "ruff>=0.14.14",
     "mkdocs>=1.6.1",
@@ -74,12 +49,11 @@ build-backend = "pdm.backend"
 
 [tool.pdm.build]
 includes = [
-    "src/bubseek",
+    "src/agentseek",
     "src/skills",
 ]
 skills = [
     { git = "https://github.com/PsiACE/skills.git", subpath = "skills", include = ["friendly-python", "piglet"] },
-    { git = "https://github.com/bubbuild/bub-contrib.git", subpath = ".agents/skills", include = ["plugin-creator"] },
 ]
 
 # Lock file is always resolved against PyPI. For faster install during dev, use:
@@ -88,25 +62,14 @@ skills = [
 index-url = "https://pypi.org/simple"
 
 [tool.uv.sources]
-# bub-contrib: branch=main so bundled runtime packages (e.g. bub-wechat, bub-discord) exist at resolve time; uv.lock pins the exact commit.
-bub = { git = "https://github.com/bubbuild/bub.git" }
-bub-dingtalk = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-dingtalk" }
+# bub-contrib: branch=main so bundled runtime packages exist at resolve time; uv.lock pins the exact commit.
 bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-feishu" }
-bub-wechat = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-wechat" }
-bub-wecom = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-wecom" }
-bub-discord = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-discord" }
-bub-web-search = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-web-search" }
 bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-tapestore-sqlalchemy" }
-bub-mcp  = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-mcp" }
-bubseek-langchain = { workspace = true }
-bub-schedule-sqlalchemy = { workspace = true }
-bubseek-marimo = { workspace = true }
+agentseek-schedule-sqlalchemy = { workspace = true }
 
 [tool.uv.workspace]
 members = [
-    "contrib/bubseek-langchain",
-    "contrib/bub-schedule-sqlalchemy",
-    "contrib/bubseek-marimo",
+    "contrib/agentseek-schedule-sqlalchemy",
 ]
 
 [tool.ty.environment]
@@ -114,12 +77,11 @@ python = "./.venv"
 python-version = "3.12"
 
 [tool.ty.src]
-# references/ = third-party or example code. insights/ = PEP 723 scripts (marimo, pandas, etc.)
-# whose deps are declared in-script only; CI does not install them for type-checking.
-exclude = ["references", "insights", "scripts/sitecustomize.py"]
+# references/ = third-party or example code.
+exclude = ["references"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "contrib/bubseek-langchain/tests", "contrib/bub-schedule-sqlalchemy/src/tests", "contrib/bubseek-marimo/tests"]
+testpaths = ["tests", "contrib/agentseek-schedule-sqlalchemy/src/tests"]
 
 [tool.ruff]
 target-version = "py312"

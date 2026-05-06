@@ -36,7 +36,7 @@ _GITHUB_API = "https://api.github.com"
 def _github_headers(*, accept: str = "application/vnd.github+json") -> dict[str, str]:
     headers = {
         "Accept": accept,
-        "User-Agent": "bubseek-github-repo-cards",
+        "User-Agent": "agentseek-github-repo-cards",
         "X-GitHub-Api-Version": "2022-11-28",
     }
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")

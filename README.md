@@ -1,65 +1,52 @@
-# bubseek
+# agentseek
 
-[![License](https://img.shields.io/github/license/ob-labs/bubseek.svg)](LICENSE)
-[![CI](https://github.com/ob-labs/bubseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/bubseek/actions/workflows/main.yml?query=branch%3Amain)
+[![License](https://img.shields.io/github/license/ob-labs/agentseek.svg)](LICENSE)
+[![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
 
 A database-native Agent Harness, by the [OceanBase](https://en.oceanbase.com/) OSS Team.
 
-## What is bubseek
+## What is agentseek
 
-bubseek is a [Bub](https://github.com/bubbuild/bub) distribution for teams that want a unified data substrate for agents.
+agentseek is a database-native Agent Harness for teams that want agent runtime data to become a first-class database workload.
 
-It follows the same open standards around [agents.md](https://agents.md/) and [Agent Skills](https://agentskills.io/), while treating the database as the natural place to keep agent context, execution history, and observability together. The same data can then serve operational visibility, testing, trajectory comparison, and training workflows without being copied into separate systems or re-ingested later. A related view is reflected in [Tape](https://tape.systems/).
+It treats the database as the natural place to keep agent context, execution history, tool calls, tasks, feedback, and observability together. The same runtime data can then serve debugging, replay, trajectory comparison, evaluation, analysis, and training workflows without being copied into separate systems or re-ingested later.
 
-## Why bubseek
+## Why agentseek
 
-- **Built on the same open agent standards** — Use `AGENTS.md` and Agent Skills as first-class parts of the authoring and extension model.
-- **Context and observability in one substrate** — Conversations, tool spans, tasks, and execution history live in the same database, so the agent's runtime footprint is queryable by default.
-- **Multi-channel by design** — Run the same agent across Feishu, DingTalk, WeChat, WeCom, Discord, Telegram through one harness.
-- **Database-native operations** — Reuse database permissions, SQL queries, and operational tooling rather than building a parallel file and logging stack.
-- **From local to cloud** — Run on a database-backed deployment path from day one. When you want one product line from local development to distributed production, [OceanBase seekdb](https://github.com/oceanbase/seekdb) and OceanBase are the recommended option.
-- **No secondary ingestion** — Once traces are stored in the database, they are ready for analysis, trajectory comparison, eval workflows, or training pipelines without re-importing the same data elsewhere.
+Most agents already prove their value at runtime, but their runtime data is often scattered across JSONL logs, Markdown notes, SQLite files, tracing systems, object storage, and offline pipelines. After the first interaction, that data becomes expensive to query, replay, compare, evaluate, or turn into training material.
 
-## What ships in the harness
-
-- **Database-native runtime** — bubseek packages Bub around database-backed tape storage instead of a file-heavy context stack, with OceanBase offered as a recommended local-to-cloud solution.
-- **Inbound channels** — Gateway integrations for chat platforms let the same harness serve users across different operational surfaces.
-- **Pythonic development and extension workflow** — Use packaged skills for Python development and plugin creation, then extend the harness with contrib packages as ordinary Python dependencies.
-- **Queryable agent footprint** — Tape-backed sessions, tasks, and traces can be inspected directly in the database and reused by downstream analysis workflows.
-
-## What this architecture unlocks
-
-- Keep agent context and observability together instead of maintaining separate operational systems.
-- Let database access control and query capabilities apply directly to agent runtime data.
-- Move from local experiments to larger deployments without redesigning the storage model.
-- Turn production traces into reusable data assets for offline analysis and model improvement.
+agentseek starts from a different assumption: context, memory, tasks, tool calls, traces, feedback, and evaluation material should share one durable substrate from the beginning. For agent systems, this makes runtime data reusable. For databases, it opens a direct path to carry intelligent-application workloads instead of only storing final business results.
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/ob-labs/bubseek.git
-cd bubseek
+git clone https://github.com/ob-labs/agentseek.git
+cd agentseek
 uv sync
-uv run bub --help
+uv run agentseek --help
 ```
 
 Configure model and database, then verify:
 
 ```bash
-export BUB_MODEL=openrouter:qwen/qwen3-coder-next
-export BUB_API_KEY=sk-or-v1-your-key
-export BUB_API_BASE=https://openrouter.ai/api/v1
-export BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://user:pass@host:port/database
-uv run bub chat
+export AGENTSEEK_MODEL=openrouter:free
+export AGENTSEEK_API_KEY=sk-or-v1-your-key
+export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+export AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=sqlite+pysqlite:///./agentseek-tapes.db
+uv run agentseek chat
 ```
 
-See [Getting started](docs/getting-started.md) for detailed setup guide.
+`agentseek` is a Bub-compatible distribution entry point. It defaults to `.agentseek` under the current workspace for local config and runtime home. You can also use `uv run bub ...` and Bub plugins directly when you want the upstream CLI or extension namespace. See [Getting started](docs/getting-started.md) for detailed setup guide.
 
-## Learn more
+## How it works
 
-- [Getting started](docs/getting-started.md)
-- [Configuration](docs/configuration.md)
-- [Architecture](docs/architecture.md)
+- **Bub as the runtime layer** — [Bub](https://github.com/bubbuild/bub) provides the CLI, hook-first turn pipeline, tape context, skills, plugins, and channel model. agentseek uses Bub as the default governance layer, not as the product boundary.
+- **Database-backed runtime storage** — SQLAlchemy-backed tape storage keeps runtime records in a database instead of a file-heavy context stack.
+- **Open authoring model** — `AGENTS.md` and Agent Skills are first-class parts of the authoring and extension workflow.
+- **Team chat entry points** — Telegram comes from Bub, Feishu ships with agentseek, and other channels stay opt-in through contrib packages.
+- **Queryable footprint** — Tape-backed sessions, tasks, and traces can be inspected directly in the database and reused by downstream analysis workflows.
+
+agentseek is database-neutral. SQLite or any suitable SQLAlchemy backend can be used where it fits. For a good default experience from local development to larger deployments, we recommend [OceanBase seekdb](https://github.com/oceanbase/seekdb) and OceanBase.
 
 ## License
 

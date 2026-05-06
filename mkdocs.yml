@@ -1,21 +1,20 @@
-site_name: bubseek
-repo_url: https://github.com/ob-labs/bubseek
-site_description: A Bub distribution for data-driven insight workflows, powered by OceanBase seekdb
+site_name: agentseek
+repo_url: https://github.com/ob-labs/agentseek
+site_description: A database-native Agent Harness for runtime data workflows, powered by Bub
 edit_uri: edit/main/docs/
-repo_name: ob-labs/bubseek
+repo_name: ob-labs/agentseek
 
 nav:
   - Home: index.md
   - Getting started: getting-started.md
   - Configuration: configuration.md
-  - Architecture: architecture.md
-  - Development: development.md
+  - Extensions: extensions.md
 plugins:
   - search
   - mkdocstrings:
       handlers:
         python:
-          paths: ["src/bubseek"]
+          paths: ["src/agentseek"]
 theme:
   name: material
   feature:
@@ -41,9 +40,9 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/ob-labs/bubseek
+      link: https://github.com/ob-labs/agentseek
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/bubseek
+      link: https://pypi.org/project/agentseek
 
 markdown_extensions:
   - toc:

@@ -23,7 +23,8 @@ runs:
       with:
         version: ${{ inputs.uv-version }}
         enable-cache: 'true'
-        cache-suffix: ${{ matrix.python-version }}
+        # Use workflow input, not matrix.* — quality/docs jobs have no matrix.
+        cache-suffix: ${{ inputs.python-version }}
 
     - name: Install Python dependencies
       run: uv sync --frozen --all-packages

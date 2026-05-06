@@ -62,3 +62,16 @@ jobs:
 
       - name: Check if documentation can be built
         run: uv run mkdocs build -s
+
+  docker-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Build container image
+        run: docker build -t agentseek:ci .
+
+      - name: Verify agentseek CLI (--help)
+        run: docker run --rm agentseek:ci /app/.venv/bin/agentseek --help
