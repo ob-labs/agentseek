@@ -1,20 +1,22 @@
-# bubseek
+# agentseek
 
-A Bub distribution for data-driven insight workflows, powered by OceanBase seekdb.
+agentseek is a database-native Agent Harness. It packages Bub with database-backed runtime storage and a small set of defaults for teams that want agent runtime data to be queryable from the beginning.
 
-bubseek is an attempt to explore a different approach to enterprise data needs: instead of scheduling BI tickets, tell the agent what you want and get insights back.
+This overview explains what agentseek is and how the documentation is organized. If you want to run it first, start with [Getting started](getting-started.md).
 
-## Start here
+## What It Is
 
-| Section | What it answers |
-| --- | --- |
-| [Getting started](getting-started.md) | Install, configure model/database, verify setup |
-| [Configuration](configuration.md) | Channel credentials, skills, runtime options |
-| [Architecture](architecture.md) | What bubseek does, and what it leaves to Bub |
-| [Development](development.md) | Test, build, and work on this repo |
+agentseek treats runtime data as database data: context, tasks, tool calls, traces, feedback, and conversation history should live in a durable substrate rather than scattered files and side-channel logs.
 
-## Quick links
+It remains database-neutral. SQLite is enough for local use, and any suitable SQLAlchemy backend can be used. For a smooth local-to-cloud path, we recommend OceanBase seekdb and OceanBase.
 
-- [Repository](https://github.com/ob-labs/bubseek)
-- [Bub](https://github.com/bubbuild/bub)
-- [OceanBase/seekdb](https://github.com/oceanbase/seekdb)
+## What It Is Not
+
+agentseek is not a replacement for Bub. It follows Bub's runtime and extension model, and `bub` remains available when you want to use the upstream CLI or extension namespace directly.
+
+agentseek is also not a single-purpose chat bot. The project boundary is the harness: defaults, packaging, runtime storage, environment aliases, and a small branded entry point.
+
+## Documentation Map
+
+- [Getting started](getting-started.md): a short tutorial that gets agentseek running locally.
+- [Configuration](configuration.md): a reference for environment variables, storage, channels, and onboarding.

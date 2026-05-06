@@ -41,7 +41,7 @@ def _trigger(job_id: str, context: ToolContext) -> str:
 
 
 def test_jobstore_roundtrip_with_sqlite(tmp_path) -> None:
-    """Built-in SQLAlchemyJobStore should persist jobs without bubseek helpers."""
+    """Built-in SQLAlchemyJobStore should persist jobs without agentseek helpers."""
     settings = ScheduleSQLAlchemySettings(
         url=_sqlite_url(tmp_path, "roundtrip.sqlite"),
         tablename=_test_table_name("apscheduler_jobs_test_roundtrip"),

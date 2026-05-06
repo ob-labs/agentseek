@@ -21,7 +21,7 @@ uv add ./contrib/bub-schedule-sqlalchemy
 Install directly from GitHub:
 
 ```bash
-uv pip install "git+https://github.com/ob-labs/bubseek.git#subdirectory=contrib/bub-schedule-sqlalchemy"
+uv pip install "git+https://github.com/ob-labs/agentseek.git#subdirectory=contrib/bub-schedule-sqlalchemy"
 ```
 
 ## Configuration

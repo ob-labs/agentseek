@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: bubseek
+    container_name: agentseek
     depends_on:
       seekdb:
         condition: service_healthy
