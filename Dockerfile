@@ -1,24 +1,23 @@
-# Install uv
+# Install uv (official binary path in ghcr.io/astral-sh/uv image)
 FROM python:3.12-slim
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# Install tini for proper signal handling (aligned with Bub deployment)
-RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
+# tini: signal handling; git: uv resolves git-sourced deps; optional build steps may clone skills
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tini \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy the lockfile and `pyproject.toml` into the image
-COPY uv.lock /app/uv.lock
-COPY pyproject.toml /app/pyproject.toml
-
-# Install dependencies
-RUN uv sync --frozen --no-install-project
-
-# Copy the project into the image
+# Full tree is required: workspace members (e.g. contrib/agentseek-schedule-sqlalchemy) must exist
+# before `uv sync`, otherwise the first-layer-only lock+pyproject pattern fails.
 COPY . /app
 
-# Sync the project
-RUN uv sync --frozen
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1
+
+RUN uv sync --frozen --no-dev
 
 RUN chmod +x /app/entrypoint.sh
 
