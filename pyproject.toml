@@ -70,7 +70,6 @@ agentseek-schedule-sqlalchemy = { workspace = true }
 [tool.uv.workspace]
 members = [
     "contrib/agentseek-schedule-sqlalchemy",
-    ".agentseek/agentseek-project",
 ]
 
 [tool.ty.environment]

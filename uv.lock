@@ -9,7 +9,6 @@ resolution-markers = [
 [manifest]
 members = [
     "agentseek",
-    "agentseek-project",
     "agentseek-schedule-sqlalchemy",
 ]
 
@@ -56,21 +55,6 @@ dev = [
     { name = "ruff", specifier = ">=0.14.14" },
     { name = "tox-uv", specifier = ">=1.29.0" },
     { name = "ty", specifier = ">=0.0.14" },
-]
-
-[[package]]
-name = "agentseek-project"
-version = "0.1.0"
-source = { virtual = ".agentseek/agentseek-project" }
-dependencies = [
-    { name = "agentseek-schedule-sqlalchemy" },
-    { name = "bub" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agentseek-schedule-sqlalchemy", editable = "contrib/agentseek-schedule-sqlalchemy" },
-    { name = "bub", specifier = ">=0.3.7" },
 ]
 
 [[package]]
