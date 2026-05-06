@@ -29,6 +29,7 @@ dependencies = [
     { name = "bub" },
     { name = "bub-feishu" },
     { name = "bub-tapestore-sqlalchemy" },
+    { name = "pydantic-settings" },
 ]
 
 [package.optional-dependencies]
@@ -60,6 +61,7 @@ requires-dist = [
     { name = "bubseek-langchain", marker = "extra == 'langchain'", editable = "contrib/bubseek-langchain" },
     { name = "deepagents", marker = "extra == 'langchain'", specifier = ">=0.5.3" },
     { name = "langchain-openai", marker = "extra == 'langchain'", specifier = ">=0.3.0" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
 ]
 provides-extras = ["langchain"]
 

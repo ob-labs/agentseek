@@ -19,10 +19,11 @@ dependencies = [
     "bub==0.3.7",
     "bub-feishu",
     "bub-tapestore-sqlalchemy",
+    "pydantic-settings>=2.0.0",
 ]
 
 [project.scripts]
-agentseek = "bub.__main__:app"
+agentseek = "agentseek.__main__:app"
 
 [project.optional-dependencies]
 langchain = [

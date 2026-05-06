@@ -17,14 +17,14 @@ uv run agentseek --help
 Configure model and database, then verify:
 
 ```bash
-export BUB_MODEL=openrouter:qwen/qwen3-coder-next
-export BUB_API_KEY=sk-or-v1-your-key
-export BUB_API_BASE=https://openrouter.ai/api/v1
-export BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://user:pass@host:port/database
+export AGENTSEEK_MODEL=openrouter:free
+export AGENTSEEK_API_KEY=sk-or-v1-your-key
+export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+export AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=sqlite+pysqlite:///./agentseek-tapes.db
 uv run agentseek chat
 ```
 
-See [Getting started](docs/getting-started.md) for detailed setup guide.
+`agentseek` is a Bub-compatible distribution entry point. You can also use `uv run bub ...` and Bub plugins directly when you want the upstream CLI or extension namespace. See [Getting started](docs/getting-started.md) for detailed setup guide.
 
 ## What is agentseek
 
@@ -47,12 +47,6 @@ agentseek starts from a different assumption: context, memory, tasks, tool calls
 - **Queryable footprint** — Tape-backed sessions, tasks, and traces can be inspected directly in the database and reused by downstream analysis workflows.
 
 agentseek is database-neutral. SQLite or any suitable SQLAlchemy backend can be used where it fits. For a good default experience from local development to larger deployments, we recommend [OceanBase seekdb](https://github.com/oceanbase/seekdb) and OceanBase.
-
-## Learn more
-
-- [Getting started](docs/getting-started.md)
-- [Configuration](docs/configuration.md)
-- [Architecture](docs/architecture.md)
 
 ## License
 
