@@ -13,7 +13,7 @@ from bub import tool
 from pydantic import BaseModel, Field
 from republic import ToolContext
 
-from bub_schedule_sqlalchemy.jobs import run_scheduled_reminder
+from agentseek_schedule_sqlalchemy.jobs import run_scheduled_reminder
 
 MISSING_SCHEDULER_MESSAGE = "scheduler not found in state, is ScheduleImpl plugin loaded?"
 MISSING_TRIGGER_ARGUMENTS_MESSAGE = "One of after_seconds, interval_seconds, or cron must be set"

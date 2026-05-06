@@ -10,7 +10,7 @@ from bub import hookimpl
 from bub.types import Envelope, MessageHandler, State
 from loguru import logger
 
-from bub_schedule_sqlalchemy.job_store import ScheduleSQLAlchemySettings, build_sqlalchemy_jobstore
+from agentseek_schedule_sqlalchemy.job_store import ScheduleSQLAlchemySettings, build_sqlalchemy_jobstore
 
 SchedulerFactory = Callable[[], BaseScheduler]
 
@@ -43,7 +43,7 @@ class ScheduleImpl:
     """
 
     def __init__(self, scheduler_factory: SchedulerFactory) -> None:
-        from bub_schedule_sqlalchemy import tools  # noqa: F401
+        from agentseek_schedule_sqlalchemy import tools  # noqa: F401
 
         self._scheduler_factory = scheduler_factory
         self._scheduler: BaseScheduler | None = None
@@ -78,7 +78,7 @@ class ScheduleImpl:
 
     @hookimpl
     def provide_channels(self, message_handler: MessageHandler) -> list:
-        from bub_schedule_sqlalchemy.channel import ScheduleChannel
+        from agentseek_schedule_sqlalchemy.channel import ScheduleChannel
 
         try:
             scheduler = self.scheduler

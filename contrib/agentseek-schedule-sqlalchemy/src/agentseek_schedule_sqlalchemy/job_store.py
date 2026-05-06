@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from pydantic import Field, model_validator
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,9 +17,19 @@ class ScheduleSQLAlchemySettings(BaseSettings):
         populate_by_name=True,
     )
 
-    url: str | None = Field(default=None, validation_alias="BUB_SCHEDULE_SQLALCHEMY_URL")
-    tapestore_url: str | None = Field(default=None, validation_alias="BUB_TAPESTORE_SQLALCHEMY_URL", exclude=True)
-    tablename: str = "apscheduler_jobs"
+    url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("BUB_SCHEDULE_SQLALCHEMY_URL", "AGENTSEEK_SCHEDULE_SQLALCHEMY_URL"),
+    )
+    tapestore_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("BUB_TAPESTORE_SQLALCHEMY_URL", "AGENTSEEK_TAPESTORE_SQLALCHEMY_URL"),
+        exclude=True,
+    )
+    tablename: str = Field(
+        default="apscheduler_jobs",
+        validation_alias=AliasChoices("BUB_SCHEDULE_SQLALCHEMY_TABLENAME", "AGENTSEEK_SCHEDULE_SQLALCHEMY_TABLENAME"),
+    )
 
     @model_validator(mode="after")
     def inherit_tapestore_url(self) -> ScheduleSQLAlchemySettings:

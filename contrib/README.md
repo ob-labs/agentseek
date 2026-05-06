@@ -11,7 +11,7 @@ agentseek follows Bub's extension conventions. `AGENTSEEK_*` environment variabl
 ```toml
 [project]
 dependencies = [
-    "bub==0.3.0a1",
-    "bub-codex @ git+https://github.com/bubbuild/bub-contrib.git@main#subdirectory=packages/bub-codex",
+    "bub==0.3.7",
+    "agentseek-schedule-sqlalchemy",
 ]
 ```

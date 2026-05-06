@@ -16,9 +16,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "bub==0.3.7",
+    "bub>=0.3.7",
     "bub-feishu",
     "bub-tapestore-sqlalchemy",
+    "agentseek-schedule-sqlalchemy",
     "pydantic-settings>=2.0.0",
 ]
 
@@ -65,11 +66,11 @@ index-url = "https://pypi.org/simple"
 # bub-contrib: branch=main so bundled runtime packages exist at resolve time; uv.lock pins the exact commit.
 bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-feishu" }
 bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-tapestore-sqlalchemy" }
-bub-schedule-sqlalchemy = { workspace = true }
+agentseek-schedule-sqlalchemy = { workspace = true }
 
 [tool.uv.workspace]
 members = [
-    "contrib/bub-schedule-sqlalchemy",
+    "contrib/agentseek-schedule-sqlalchemy",
 ]
 
 [tool.ty.environment]
@@ -81,7 +82,7 @@ python-version = "3.12"
 exclude = ["references"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "contrib/bub-schedule-sqlalchemy/src/tests"]
+testpaths = ["tests", "contrib/agentseek-schedule-sqlalchemy/src/tests"]
 
 [tool.ruff]
 target-version = "py312"

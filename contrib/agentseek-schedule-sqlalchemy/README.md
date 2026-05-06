@@ -1,6 +1,6 @@
-# bub-schedule-sqlalchemy
+# agentseek-schedule-sqlalchemy
 
-`bub-schedule-sqlalchemy` is a Bub plugin that persists APScheduler jobs in a SQLAlchemy-backed store.
+`agentseek-schedule-sqlalchemy` is a Bub plugin that persists APScheduler jobs in a SQLAlchemy-backed store.
 
 It targets the Bub deployment shape where:
 
@@ -15,39 +15,42 @@ The package exposes the Bub plugin entry point `schedule` and uses `BackgroundSc
 Install from the monorepo package directory during local development:
 
 ```bash
-uv add ./contrib/bub-schedule-sqlalchemy
+uv add ./contrib/agentseek-schedule-sqlalchemy
 ```
 
 Install directly from GitHub:
 
 ```bash
-uv pip install "git+https://github.com/ob-labs/agentseek.git#subdirectory=contrib/bub-schedule-sqlalchemy"
+uv pip install "git+https://github.com/ob-labs/agentseek.git#subdirectory=contrib/agentseek-schedule-sqlalchemy"
 ```
 
 ## Configuration
 
-The plugin reads settings from environment variables:
+The plugin reads both agentseek-prefixed variables and Bub-compatible variables:
 
-- `BUB_SCHEDULE_SQLALCHEMY_URL`: primary SQLAlchemy database URL for APScheduler jobs
-- `BUB_TAPESTORE_SQLALCHEMY_URL`: fallback URL when the schedule-specific URL is unset
+- `AGENTSEEK_SCHEDULE_SQLALCHEMY_URL` or `BUB_SCHEDULE_SQLALCHEMY_URL`: primary SQLAlchemy database URL for APScheduler jobs
+- `AGENTSEEK_TAPESTORE_SQLALCHEMY_URL` or `BUB_TAPESTORE_SQLALCHEMY_URL`: fallback URL when the schedule-specific URL is unset
+- `AGENTSEEK_SCHEDULE_SQLALCHEMY_TABLENAME` or `BUB_SCHEDULE_SQLALCHEMY_TABLENAME`: optional table name
 - table name defaults to `apscheduler_jobs`
 
 Resolution order:
 
-1. use `BUB_SCHEDULE_SQLALCHEMY_URL` when set
-2. otherwise fall back to `BUB_TAPESTORE_SQLALCHEMY_URL`
+1. use the schedule-specific URL when set
+2. otherwise fall back to the shared tapestore SQLAlchemy URL
 3. otherwise scheduler creation may fail and the plugin will log a warning and stay disabled
+
+When both prefixes are present for the same setting, the `BUB_*` value wins. This matches agentseek's global environment alias behavior while keeping the package usable as a plain Bub plugin.
 
 Example:
 
 ```bash
-export BUB_SCHEDULE_SQLALCHEMY_URL=sqlite:////tmp/bub-schedule.sqlite
+export AGENTSEEK_SCHEDULE_SQLALCHEMY_URL=sqlite:////tmp/agentseek-schedule.sqlite
 ```
 
-Or reuse the shared Bub tapestore:
+Or reuse the shared agentseek/Bub tapestore:
 
 ```bash
-export BUB_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://root:@127.0.0.1:2881/bub
+export AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://root:@127.0.0.1:2881/agentseek
 ```
 
 ## Runtime Behavior
@@ -67,8 +70,9 @@ Current tests cover these behaviors:
 
 - SQLAlchemy job store round-trip persistence with SQLite
 - `ScheduleImpl.load_state()` starts the injected scheduler
-- settings resolution from `BUB_SCHEDULE_SQLALCHEMY_URL`
-- fallback from `BUB_TAPESTORE_SQLALCHEMY_URL`
+- settings resolution from `AGENTSEEK_SCHEDULE_SQLALCHEMY_URL`
+- compatibility with `BUB_SCHEDULE_SQLALCHEMY_URL`
+- fallback from `AGENTSEEK_TAPESTORE_SQLALCHEMY_URL`
 - `schedule.trigger` executes both sync and async jobs
 - `schedule.trigger` does not shift an interval job's `next_run_time`
 
