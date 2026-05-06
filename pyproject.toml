@@ -54,7 +54,6 @@ includes = [
 ]
 skills = [
     { git = "https://github.com/PsiACE/skills.git", subpath = "skills", include = ["friendly-python", "piglet"] },
-    { git = "https://github.com/bubbuild/bub-contrib.git", subpath = ".agents/skills", include = ["plugin-creator"] },
 ]
 
 # Lock file is always resolved against PyPI. For faster install during dev, use:

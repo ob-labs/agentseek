@@ -1,5 +1,5 @@
-# Built-in Skills Directory
+# Built-in Skills
 
-This directory contains built-in skills for Bubseek.
+This directory contains built-in skills for agentseek.
 
-These skills are designed to provide essential functionalities and can be easily integrated into your workspace.
+These skills are packaged with agentseek and are available to the runtime without pulling them from a remote skill source.
