@@ -6,12 +6,12 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="A Bub distribution for data-driven insight workflows, powered by OceanBase seekdb">
+        <meta name="description" content="A database-native Agent Harness for runtime data workflows, powered by Bub">
       
       
       
       
-        <link rel="prev" href="../architecture/">
+        <link rel="prev" href="../configuration/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Development - bubseek</title>
+        <title>Extensions - agentseek</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#development" class="md-skip">
+        <a href="#extensions" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="bubseek" class="md-header__button md-logo" aria-label="bubseek" data-md-component="logo">
+    <a href=".." title="agentseek" class="md-header__button md-logo" aria-label="agentseek" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -106,13 +106,13 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            bubseek
+            agentseek
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Development
+              Extensions
             
           </span>
         </div>
@@ -192,13 +192,13 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/ob-labs/bubseek" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/ob-labs/agentseek" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
   </div>
   <div class="md-source__repository">
-    ob-labs/bubseek
+    ob-labs/agentseek
   </div>
 </a>
       </div>
@@ -228,23 +228,23 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="bubseek" class="md-nav__button md-logo" aria-label="bubseek" data-md-component="logo">
+    <a href=".." title="agentseek" class="md-nav__button md-logo" aria-label="agentseek" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    bubseek
+    agentseek
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/ob-labs/bubseek" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/ob-labs/agentseek" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
   </div>
   <div class="md-source__repository">
-    ob-labs/bubseek
+    ob-labs/agentseek
   </div>
 </a>
     </div>
@@ -336,33 +336,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Architecture
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -382,7 +355,7 @@
   <span class="md-ellipsis">
     
   
-    Development
+    Extensions
   
 
     
@@ -400,7 +373,7 @@
   <span class="md-ellipsis">
     
   
-    Development
+    Extensions
   
 
     
@@ -426,10 +399,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
+  <a href="#project-instructions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Setup
+        Project Instructions
       
     </span>
   </a>
@@ -437,57 +410,119 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-commands" class="md-nav__link">
+  <a href="#extend-with-plugins" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common commands
+        Extend With Plugins
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extend With Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-a-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install A Plugin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install A Plugin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-bub-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Bub Hub
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#path-or-git-for-agentseek-contrib-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing
+        Path or Git For agentseek Contrib Packages
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#building" class="md-nav__link">
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-plugin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Building
+        Create A Plugin
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#docs" class="md-nav__link">
+  <a href="#extend-with-skills" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Docs
+        Extend With Skills
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extend With Skills">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-skills-in-a-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install Skills In A Project
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#contributing" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#bundle-skills-with-agentseek" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contributing
+        Bundle Skills With agentseek
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-external-skill-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use External Skill Sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -526,10 +561,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
+  <a href="#project-instructions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Setup
+        Project Instructions
       
     </span>
   </a>
@@ -537,57 +572,119 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-commands" class="md-nav__link">
+  <a href="#extend-with-plugins" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common commands
+        Extend With Plugins
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extend With Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-a-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install A Plugin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install A Plugin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-bub-hub" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Bub Hub
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#path-or-git-for-agentseek-contrib-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing
+        Path or Git For agentseek Contrib Packages
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#building" class="md-nav__link">
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-plugin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Building
+        Create A Plugin
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#docs" class="md-nav__link">
+  <a href="#extend-with-skills" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Docs
+        Extend With Skills
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extend With Skills">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-skills-in-a-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install Skills In A Project
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#contributing" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#bundle-skills-with-agentseek" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contributing
+        Bundle Skills With agentseek
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-external-skill-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use External Skill Sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -611,66 +708,91 @@
   
 
 
-<h1 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h1>
-<p>This page covers local development for the bubseek repository.</p>
-<h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
-<p>From the repository root:</p>
-<pre><code class="language-bash">uv sync
-make install
+<h1 id="extensions">Extensions<a class="headerlink" href="#extensions" title="Permanent link">&para;</a></h1>
+<p>This guide explains the supported extension points for agentseek projects. For runtime settings, see <a href="../configuration/">Configuration</a>.</p>
+<p>agentseek follows Bub's extension model. The agentseek layer adds naming conventions, environment aliases, packaging defaults, and bundled skills; it does not replace Bub hooks or entry points.</p>
+<h2 id="project-instructions">Project Instructions<a class="headerlink" href="#project-instructions" title="Permanent link">&para;</a></h2>
+<p>Use <code>AGENTS.md</code> to teach agents how to operate in your project.</p>
+<p>Good project instructions usually include:</p>
+<ul>
+<li>which channels are enabled, such as <code>$feishu</code> or <code>$telegram</code></li>
+<li>when the agent should reply directly and when it should call a channel-specific send tool</li>
+<li>repository-specific coding, testing, and documentation rules</li>
+<li>runtime constraints that should be followed on every task</li>
+</ul>
+<p>Keep <code>AGENTS.md</code> focused on durable behavior. Do not put credentials, deployment-only secrets, or one-off task notes in it.</p>
+<h2 id="extend-with-plugins">Extend With Plugins<a class="headerlink" href="#extend-with-plugins" title="Permanent link">&para;</a></h2>
+<p>Plugins add runtime behavior through Bub's hook system. Use this path when you need a new channel, model provider, store, tool package, scheduler, or other runtime integration.</p>
+<h3 id="install-a-plugin">Install A Plugin<a class="headerlink" href="#install-a-plugin" title="Permanent link">&para;</a></h3>
+<p>Plugins install into the <strong>same Python environment</strong> as agentseek. Browse the ecosystem on <a href="https://hub.bub.build/">Bub Hub</a>: it lists plugins with install specs such as <code>bub install bub-feishu@main</code>.</p>
+<h4 id="from-bub-hub">From Bub Hub<a class="headerlink" href="#from-bub-hub" title="Permanent link">&para;</a></h4>
+<p>Hub entries typically use <code>bub install …</code>. The agentseek CLI exposes the same resolver:</p>
+<pre><code class="language-bash">agentseek install bub-feishu@main
 </code></pre>
-<p><code>make install</code> creates the virtual environment, installs dependencies, and installs pre-commit hooks.</p>
-<h2 id="common-commands">Common commands<a class="headerlink" href="#common-commands" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Command</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>make install</code></td>
-<td>Install dependencies and pre-commit hooks.</td>
-</tr>
-<tr>
-<td><code>make check</code></td>
-<td>Run lock verification, linting, formatting checks, and type checks.</td>
-</tr>
-<tr>
-<td><code>make test</code></td>
-<td>Run pytest.</td>
-</tr>
-<tr>
-<td><code>make build</code></td>
-<td>Build the wheel and source distribution.</td>
-</tr>
-<tr>
-<td><code>make docs</code></td>
-<td>Serve documentation locally.</td>
-</tr>
-<tr>
-<td><code>make docs-test</code></td>
-<td>Build documentation and fail on warnings.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">make test
+<p><code>install</code> accepts package specs described in its help output: a git URL, <code>owner/repo</code>, or a package name <strong>published through the Bub contrib resolver</strong> (often <code>name@branch</code>). It is <strong>not</strong> a generic PyPI installer for arbitrary distribution names.</p>
+<p>By default, agentseek sets <code>BUB_PROJECT</code> to <code>{BUB_HOME}/agentseek-project</code> (so <code>AGENTSEEK_PROJECT</code> can override it). New sandboxes use <code>uv init --name agentseek-project</code> instead of <code>bub-project</code>.</p>
+<p>Use <code>bub install …</code> instead if you prefer the upstream Bub entry point; behavior matches the Hub examples.</p>
+<h4 id="path-or-git-for-agentseek-contrib-packages">Path or Git For agentseek Contrib Packages<a class="headerlink" href="#path-or-git-for-agentseek-contrib-packages" title="Permanent link">&para;</a></h4>
+<p>Packages that live only in this repository (for example <code>agentseek-schedule-sqlalchemy</code> under <code>contrib/</code>) are <strong>not</strong> guaranteed to resolve when you run <code>agentseek install agentseek-schedule-sqlalchemy</code> or <code>uv add agentseek-schedule-sqlalchemy</code> outside the monorepo. Prefer wiring them explicitly:</p>
+<pre><code class="language-bash">uv add ./contrib/agentseek-schedule-sqlalchemy
 </code></pre>
-<p>Or directly:</p>
-<pre><code class="language-bash">uv run pytest tests
+<p>or install from Git with the subdirectory that contains <code>pyproject.toml</code>:</p>
+<pre><code class="language-bash">uv pip install &quot;git+https://github.com/ob-labs/agentseek.git#subdirectory=contrib/agentseek-schedule-sqlalchemy&quot;
 </code></pre>
-<h2 id="building">Building<a class="headerlink" href="#building" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">make build
+<p>When you vendor the package next to your project, the dependency entry looks like:</p>
+<pre><code class="language-toml">[project]
+dependencies = [
+    &quot;agentseek-schedule-sqlalchemy&quot;,
+]
 </code></pre>
-<p>The wheel includes builtin skills from <code>skills/</code>.
-The source files for those builtin skills live in <code>src/skills/</code>.</p>
-<h2 id="docs">Docs<a class="headerlink" href="#docs" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">make docs
-make docs-test
+<p>For workspace packages, also wire the source:</p>
+<pre><code class="language-toml">[tool.uv.sources]
+agentseek-schedule-sqlalchemy = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    &quot;contrib/agentseek-schedule-sqlalchemy&quot;,
+]
 </code></pre>
-<h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
-<p>See <a href="https://github.com/ob-labs/bubseek/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+<p>The package must expose a Bub entry point:</p>
+<pre><code class="language-toml">[project.entry-points.bub]
+schedule = &quot;agentseek_schedule_sqlalchemy.plugin:main&quot;
+</code></pre>
+<p>After changing dependencies, refresh the environment:</p>
+<pre><code class="language-bash">uv lock
+uv sync
+</code></pre>
+<h3 id="create-a-plugin">Create A Plugin<a class="headerlink" href="#create-a-plugin" title="Permanent link">&para;</a></h3>
+<p>Create an agentseek-owned plugin under <code>contrib/agentseek-&lt;feature&gt;/</code> unless the user asks for another location.</p>
+<p>Use these conventions:</p>
+<ul>
+<li>distribution name: <code>agentseek-&lt;feature&gt;</code></li>
+<li>Python package: <code>agentseek_&lt;feature&gt;</code></li>
+<li>entry point group: <code>[project.entry-points.bub]</code></li>
+<li>environment variables: prefer <code>AGENTSEEK_*</code>, accept <code>BUB_*</code> when the setting maps to Bub runtime behavior</li>
+</ul>
+<p>When both prefixes are supported for the same setting, <code>BUB_*</code> should take precedence. This keeps the plugin usable from plain Bub while letting agentseek projects document <code>AGENTSEEK_*</code> names.</p>
+<p>agentseek bundles the <code>plugin-creator</code> skill to help scaffold or update plugin packages according to these conventions.</p>
+<h2 id="extend-with-skills">Extend With Skills<a class="headerlink" href="#extend-with-skills" title="Permanent link">&para;</a></h2>
+<p>Skills teach agents task-specific behavior. Use this path when the extension is instruction, workflow knowledge, or a small script the agent should know how to call. Use a plugin instead when the runtime itself needs a new hook, channel, store, or tool registration.</p>
+<h3 id="install-skills-in-a-project">Install Skills In A Project<a class="headerlink" href="#install-skills-in-a-project" title="Permanent link">&para;</a></h3>
+<p>Install project-local skills under:</p>
+<pre><code class="language-text">.agents/skills/&lt;skill-name&gt;/SKILL.md
+</code></pre>
+<p>Install skills from a registry into <code>.agents/skills</code> using <code>npx skills add</code>, matching <a href="https://hub.bub.build/">Bub Hub</a> examples:</p>
+<pre><code class="language-bash">npx skills add psiace/skills --skill friendly-python
+npx skills add bubbuild/bub-contrib --skill plugin-creator
+</code></pre>
+<p>This is the right place for repository-specific workflows that should not ship with the agentseek package.</p>
+<h3 id="bundle-skills-with-agentseek">Bundle Skills With agentseek<a class="headerlink" href="#bundle-skills-with-agentseek" title="Permanent link">&para;</a></h3>
+<p>Bundle release skills under:</p>
+<pre><code class="language-text">src/skills/&lt;skill-name&gt;/SKILL.md
+</code></pre>
+<p>Bundled skills are included in the agentseek package because <code>src/skills</code> is part of the build includes.</p>
+<p>Use bundled skills for behavior that should be available wherever agentseek is installed. Keep them stable, general, and aligned with the agentseek extension model.</p>
+<h3 id="use-external-skill-sources">Use External Skill Sources<a class="headerlink" href="#use-external-skill-sources" title="Permanent link">&para;</a></h3>
+<p>The build can also import selected skills from external repositories through <code>[tool.pdm.build].skills</code>.</p>
+<p>Use this for shared upstream skills. Prefer bundling under <code>src/skills</code> when the skill is agentseek-specific or has been adapted to agentseek conventions.</p>
 
 
 
@@ -717,7 +839,7 @@ make docs-test
       
       
     
-    <a href="https://github.com/ob-labs/bubseek" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+    <a href="https://github.com/ob-labs/agentseek" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
     </a>
   
@@ -728,7 +850,7 @@ make docs-test
       
       
     
-    <a href="https://pypi.org/project/bubseek" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+    <a href="https://pypi.org/project/agentseek" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
     </a>
   
