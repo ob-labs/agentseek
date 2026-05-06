@@ -16,22 +16,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "bub",
-    "republic>=0.5.4",
-    "typer>=0.12.0",
-    "pydantic-settings>=2.0.0",
-    "python-dotenv>=1.0.0",
+    "bub==0.3.7",
     "bub-feishu",
-    "bub-dingtalk",
-    "bub-wechat",
-    "bub-wecom",
-    "bub-discord",
-    "bub-web-search",
     "bub-tapestore-sqlalchemy",
-    "bub-mcp",
-    "pyobvector>=0.2.26",
-    "bub-schedule-sqlalchemy",
-    "bubseek-marimo",
 ]
 
 [project.scripts]
@@ -46,9 +33,6 @@ langchain = [
 
 [project.urls]
 Repository = "https://github.com/ob-labs/bubseek"
-
-[project.entry-points."sqlalchemy.dialects"]
-"mysql.oceanbase" = "bubseek.oceanbase:OceanBaseDialect"
 
 [dependency-groups]
 dev = [
@@ -88,16 +72,9 @@ skills = [
 index-url = "https://pypi.org/simple"
 
 [tool.uv.sources]
-# bub-contrib: branch=main so bundled runtime packages (e.g. bub-wechat, bub-discord) exist at resolve time; uv.lock pins the exact commit.
-bub = { git = "https://github.com/bubbuild/bub.git" }
-bub-dingtalk = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-dingtalk" }
+# bub-contrib: branch=main so bundled runtime packages exist at resolve time; uv.lock pins the exact commit.
 bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-feishu" }
-bub-wechat = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-wechat" }
-bub-wecom = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-wecom" }
-bub-discord = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-discord" }
-bub-web-search = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-web-search" }
 bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-tapestore-sqlalchemy" }
-bub-mcp  = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-mcp" }
 bubseek-langchain = { workspace = true }
 bub-schedule-sqlalchemy = { workspace = true }
 bubseek-marimo = { workspace = true }
