@@ -5,6 +5,18 @@
 
 A database-native Agent Harness, by the [OceanBase](https://en.oceanbase.com/) OSS Team.
 
+## What is agentseek
+
+agentseek is a database-native Agent Harness for teams that want agent runtime data to become a first-class database workload.
+
+It treats the database as the natural place to keep agent context, execution history, tool calls, tasks, feedback, and observability together. The same runtime data can then serve debugging, replay, trajectory comparison, evaluation, analysis, and training workflows without being copied into separate systems or re-ingested later.
+
+## Why agentseek
+
+Most agents already prove their value at runtime, but their runtime data is often scattered across JSONL logs, Markdown notes, SQLite files, tracing systems, object storage, and offline pipelines. After the first interaction, that data becomes expensive to query, replay, compare, evaluate, or turn into training material.
+
+agentseek starts from a different assumption: context, memory, tasks, tool calls, traces, feedback, and evaluation material should share one durable substrate from the beginning. For agent systems, this makes runtime data reusable. For databases, it opens a direct path to carry intelligent-application workloads instead of only storing final business results.
+
 ## Quick Start
 
 ```bash
@@ -25,18 +37,6 @@ uv run agentseek chat
 ```
 
 `agentseek` is a Bub-compatible distribution entry point. It defaults to `.agentseek` under the current workspace for local config and runtime home. You can also use `uv run bub ...` and Bub plugins directly when you want the upstream CLI or extension namespace. See [Getting started](docs/getting-started.md) for detailed setup guide.
-
-## What is agentseek
-
-agentseek is a database-native Agent Harness for teams that want agent runtime data to become a first-class database workload.
-
-It treats the database as the natural place to keep agent context, execution history, tool calls, tasks, feedback, and observability together. The same runtime data can then serve debugging, replay, trajectory comparison, evaluation, analysis, and training workflows without being copied into separate systems or re-ingested later.
-
-## Why agentseek
-
-Most agents already prove their value at runtime, but their runtime data is often scattered across JSONL logs, Markdown notes, SQLite files, tracing systems, object storage, and offline pipelines. After the first interaction, that data becomes expensive to query, replay, compare, evaluate, or turn into training material.
-
-agentseek starts from a different assumption: context, memory, tasks, tool calls, traces, feedback, and evaluation material should share one durable substrate from the beginning. For agent systems, this makes runtime data reusable. For databases, it opens a direct path to carry intelligent-application workloads instead of only storing final business results.
 
 ## How it works
 
