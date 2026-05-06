@@ -17,6 +17,7 @@ Prefer `AGENTSEEK_*` in agentseek projects. At startup, agentseek maps missing `
 | `AGENTSEEK_API_BASE` | OpenAI-compatible API base URL. |
 | `AGENTSEEK_TAPESTORE_SQLALCHEMY_URL` | SQLAlchemy URL for runtime tape storage. |
 | `AGENTSEEK_HOME` | Runtime home. Defaults to `.agentseek` in the current workspace. |
+| `AGENTSEEK_PROJECT` | Directory used by `agentseek install` as Bub's plugin sandbox. Defaults to `{AGENTSEEK_HOME}/agentseek-project`. Maps to `BUB_PROJECT`. |
 
 ## Optional Runtime Variables
 

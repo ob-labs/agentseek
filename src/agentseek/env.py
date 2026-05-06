@@ -13,6 +13,16 @@ from pydantic_settings.sources import DotEnvSettingsSource, EnvSettingsSource, P
 AGENTSEEK_ENV_PREFIX = "AGENTSEEK_"
 BUB_ENV_PREFIX = "BUB_"
 
+# Default layout when ``BUB_HOME`` / ``AGENTSEEK_HOME`` are unset: ``cwd / DEFAULT_AGENTSEEK_HOME``.
+DEFAULT_AGENTSEEK_HOME = ".agentseek"
+
+# Basename of Bub config under ``BUB_HOME``.
+DEFAULT_AGENTSEEK_CONFIG = "config.yml"
+
+# Under ``BUB_HOME`` for ``agentseek install`` when ``BUB_PROJECT`` / ``AGENTSEEK_PROJECT`` are unset.
+# Must match ``uv init --name`` in ``apply_agentseek_install_project_defaults`` (cli.py).
+DEFAULT_PLUGIN_SANDBOX = "agentseek-project"
+
 
 class AgentseekAliasSource(PydanticBaseSettingsSource):
     """Build BUB_* aliases from AGENTSEEK_* settings sources."""
@@ -56,19 +66,38 @@ class AgentseekEnvironmentSettings(BaseSettings):
 
 
 def apply_agentseek_env_aliases(environ: MutableMapping[str, str] | None = None) -> None:
-    """Let AGENTSEEK_* variables act as fallbacks for BUB_* variables."""
+    """Let AGENTSEEK_* variables act as fallbacks for BUB_* variables.
+
+    Also applies agentseek defaults for ``BUB_HOME`` (see ``DEFAULT_AGENTSEEK_HOME``) and
+    ``BUB_PROJECT`` (under that home, see ``DEFAULT_PLUGIN_SANDBOX``) when unset.
+    """
     target_environ = os.environ if environ is None else environ
     for name, value in AgentseekEnvironmentSettings().aliases.items():
         target_environ.setdefault(name, value)
-    target_environ.setdefault("BUB_HOME", str(default_agentseek_home()))
+    _apply_agentseek_bub_location_defaults(target_environ)
+
+
+def _apply_agentseek_bub_location_defaults(target_environ: MutableMapping[str, str]) -> None:
+    """Set ``BUB_HOME`` then ``BUB_PROJECT`` only when missing (``setdefault``)."""
+    target_environ.setdefault("BUB_HOME", _default_bub_home_for_agentseek())
+    bub_home = Path(target_environ["BUB_HOME"]).expanduser()
+    plugin_root = bub_home / DEFAULT_PLUGIN_SANDBOX
+    target_environ.setdefault("BUB_PROJECT", str(plugin_root))
+
+
+def _default_bub_home_for_agentseek() -> str:
+    """String path Bub uses as ``BUB_HOME`` when the user has not set ``BUB_HOME`` / ``AGENTSEEK_HOME``."""
+    return str(default_agentseek_home())
 
 
 def agentseek_config_file() -> Path:
-    return (Path(os.environ["BUB_HOME"]).expanduser() / "config.yml").resolve()
+    bub_home = Path(os.environ["BUB_HOME"]).expanduser()
+    return (bub_home / DEFAULT_AGENTSEEK_CONFIG).resolve()
 
 
 def default_agentseek_home() -> Path:
-    return Path.cwd() / ".agentseek"
+    """Resolved directory for Bub runtime home when ``BUB_HOME`` is unset."""
+    return Path.cwd() / DEFAULT_AGENTSEEK_HOME
 
 
 def _bub_aliases(env_vars: Mapping[str, str | None]) -> dict[str, str]:

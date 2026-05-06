@@ -5,11 +5,11 @@ import sys
 
 import typer
 
-from agentseek.branding import apply_agentseek_onboard_branding
+from agentseek.cli import apply_agentseek_cli_overrides
 from agentseek.env import agentseek_config_file, apply_agentseek_env_aliases
 
 apply_agentseek_env_aliases()
-apply_agentseek_onboard_branding()
+apply_agentseek_cli_overrides()
 
 
 def _instrument_agentseek() -> None:

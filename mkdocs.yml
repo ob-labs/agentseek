@@ -8,6 +8,7 @@ nav:
   - Home: index.md
   - Getting started: getting-started.md
   - Configuration: configuration.md
+  - Extensions: extensions.md
 plugins:
   - search
   - mkdocstrings:

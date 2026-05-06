@@ -20,3 +20,4 @@ agentseek is also not a single-purpose chat bot. The project boundary is the har
 
 - [Getting started](getting-started.md): a short tutorial that gets agentseek running locally.
 - [Configuration](configuration.md): a reference for environment variables, storage, channels, and onboarding.
+- [Extensions](extensions.md): a guide to project instructions, plugins, and skills.
