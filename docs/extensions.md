@@ -101,7 +101,7 @@ Use these conventions:
 
 When both prefixes are supported for the same setting, `BUB_*` should take precedence. This keeps the plugin usable from plain Bub while letting agentseek projects document `AGENTSEEK_*` names.
 
-agentseek bundles the `plugin-creator` skill to help scaffold or update plugin packages according to these conventions.
+agentseek bundles an agentseek-adapted `plugin-creator` skill to help scaffold or update Bub-compatible plugin packages according to these conventions. It follows the upstream Bub contrib workflow shape, but specializes the guidance for `contrib/agentseek-*`, bundled `src/skills`, and `AGENTSEEK_*` alias behavior in this repository.
 
 ## Extend With Skills
 

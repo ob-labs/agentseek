@@ -1,18 +1,22 @@
 """Tests for agentseek-schedule-sqlalchemy."""
 
 import asyncio
+import importlib
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
+import yaml
 from agentseek_schedule_sqlalchemy import tools
-from agentseek_schedule_sqlalchemy.job_store import (
+from agentseek_schedule_sqlalchemy.config import (
     ScheduleSQLAlchemySettings,
-    build_sqlalchemy_jobstore,
+    get_schedule_settings,
+    onboard_config,
 )
-from agentseek_schedule_sqlalchemy.plugin import ScheduleImpl, build_scheduler
+from agentseek_schedule_sqlalchemy.job_store import build_sqlalchemy_jobstore
+from agentseek_schedule_sqlalchemy.plugin import ScheduleImpl, _default_scheduler, build_scheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from republic import ToolContext
@@ -38,6 +42,29 @@ def _trigger(job_id: str, context: ToolContext) -> str:
         raise RuntimeError("schedule.trigger handler is not registered")
 
     return _trigger_result(handler(job_id, context=context))
+
+
+def _load_bub_config(config_path) -> None:
+    configure = importlib.import_module("bub.configure")
+    configure.load(config_path)
+
+
+@pytest.fixture(autouse=True)
+def _reset_bub_config(tmp_path, monkeypatch) -> Iterator[None]:
+    # Isolate from os.environ pollution (e.g. tests/test_env.py applies AGENTSEEK_* → BUB_* via setdefault).
+    for key in (
+        "BUB_SCHEDULE_SQLALCHEMY_URL",
+        "AGENTSEEK_SCHEDULE_SQLALCHEMY_URL",
+        "BUB_TAPESTORE_SQLALCHEMY_URL",
+        "AGENTSEEK_TAPESTORE_SQLALCHEMY_URL",
+        "BUB_SCHEDULE_SQLALCHEMY_TABLENAME",
+        "AGENTSEEK_SCHEDULE_SQLALCHEMY_TABLENAME",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    config_path = tmp_path / "empty-config.yml"
+    _load_bub_config(config_path)
+    yield
+    _load_bub_config(config_path)
 
 
 def test_jobstore_roundtrip_with_sqlite(tmp_path) -> None:
@@ -85,12 +112,140 @@ def test_schedule_impl_uses_injected_scheduler(tmp_path) -> None:
     assert [channel.name for channel in plugin.provide_channels(message_handler=_message_handler)] == ["schedule"]
 
 
+def test_onboard_config_can_skip_schedule_configuration(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "agentseek_schedule_sqlalchemy.config.bub_inquirer.ask_confirm", lambda message, default=False: False
+    )
+
+    config = onboard_config(current_config={})
+
+    assert config is None
+
+
+def test_onboard_config_collects_schedule_section(monkeypatch) -> None:
+    answers = iter([
+        True,
+        "sqlite+pysqlite:///./schedule.sqlite",
+        "custom_schedule_jobs",
+    ])
+
+    monkeypatch.setattr(
+        "agentseek_schedule_sqlalchemy.config.bub_inquirer.ask_confirm",
+        lambda message, default=False: next(answers),
+    )
+    monkeypatch.setattr(
+        "agentseek_schedule_sqlalchemy.config.bub_inquirer.ask_text",
+        lambda message, default="": next(answers),
+    )
+
+    config = onboard_config(current_config={})
+
+    assert config == {
+        "schedule": {
+            "url": "sqlite+pysqlite:///./schedule.sqlite",
+            "tablename": "custom_schedule_jobs",
+        }
+    }
+
+
+def test_onboard_config_reuses_existing_schedule_defaults(monkeypatch) -> None:
+    prompts: list[tuple[str, str]] = []
+
+    monkeypatch.setattr(
+        "agentseek_schedule_sqlalchemy.config.bub_inquirer.ask_confirm",
+        lambda message, default=False: True,
+    )
+
+    def _ask_text(message: str, default: str = "") -> str:
+        prompts.append((message, default))
+        return default
+
+    monkeypatch.setattr(
+        "agentseek_schedule_sqlalchemy.config.bub_inquirer.ask_text",
+        _ask_text,
+    )
+
+    config = onboard_config(
+        current_config={
+            "schedule": {
+                "url": "sqlite+pysqlite:///./existing.sqlite",
+                "tablename": "existing_schedule_jobs",
+            }
+        }
+    )
+
+    assert prompts == [
+        ("Schedule SQLAlchemy URL (optional)", "sqlite+pysqlite:///./existing.sqlite"),
+        ("Schedule table name", "existing_schedule_jobs"),
+    ]
+    assert config == {
+        "schedule": {
+            "url": "sqlite+pysqlite:///./existing.sqlite",
+            "tablename": "existing_schedule_jobs",
+        }
+    }
+
+
+def test_registered_schedule_settings_support_config_section(tmp_path) -> None:
+    config_path = tmp_path / "config.yml"
+    config_data = {
+        "schedule": {
+            "url": _sqlite_url(tmp_path, "config.sqlite"),
+            "tablename": "schedule_jobs_from_config",
+        }
+    }
+    config_path.write_text(yaml.safe_dump(config_data), encoding="utf-8")
+    _load_bub_config(config_path)
+
+    settings = get_schedule_settings()
+
+    assert settings.url == _sqlite_url(tmp_path, "config.sqlite")
+    assert settings.tablename == "schedule_jobs_from_config"
+
+
+def test_registered_schedule_settings_env_override_config(monkeypatch, tmp_path) -> None:
+    config_path = tmp_path / "config.yml"
+    config_data = {
+        "schedule": {
+            "url": _sqlite_url(tmp_path, "config.sqlite"),
+            "tablename": "schedule_jobs_from_config",
+        }
+    }
+    config_path.write_text(yaml.safe_dump(config_data), encoding="utf-8")
+    _load_bub_config(config_path)
+    monkeypatch.setenv("BUB_SCHEDULE_SQLALCHEMY_URL", _sqlite_url(tmp_path, "env.sqlite"))
+
+    settings = get_schedule_settings()
+
+    assert settings.url == _sqlite_url(tmp_path, "env.sqlite")
+    assert settings.tablename == "schedule_jobs_from_config"
+
+
+def test_default_scheduler_uses_registered_schedule_settings(tmp_path) -> None:
+    config_path = tmp_path / "config.yml"
+    config_data = {
+        "schedule": {
+            "url": _sqlite_url(tmp_path, "registered.sqlite"),
+            "tablename": "jobs_from_registered_settings",
+        }
+    }
+    config_path.write_text(yaml.safe_dump(config_data), encoding="utf-8")
+    _load_bub_config(config_path)
+
+    scheduler = _default_scheduler()
+
+    try:
+        assert scheduler._jobstores["default"].jobs_t.name == "jobs_from_registered_settings"
+        assert str(scheduler._jobstores["default"].engine.url) == _sqlite_url(tmp_path, "registered.sqlite")
+    finally:
+        if scheduler.running:
+            scheduler.shutdown(wait=False)
+
+
 def test_sqlalchemy_settings_support_env(monkeypatch, tmp_path) -> None:
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("AGENTSEEK_SCHEDULE_SQLALCHEMY_URL", _sqlite_url(tmp_path, "env.sqlite"))
     monkeypatch.delenv("BUB_SCHEDULE_SQLALCHEMY_URL", raising=False)
-    monkeypatch.delenv("BUB_TAPESTORE_SQLALCHEMY_URL", raising=False)
-    monkeypatch.delenv("AGENTSEEK_TAPESTORE_SQLALCHEMY_URL", raising=False)
 
     settings = ScheduleSQLAlchemySettings()
 
@@ -102,8 +257,6 @@ def test_sqlalchemy_settings_keep_bub_env_compatible(monkeypatch, tmp_path) -> N
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("BUB_SCHEDULE_SQLALCHEMY_URL", _sqlite_url(tmp_path, "bub.sqlite"))
     monkeypatch.delenv("AGENTSEEK_SCHEDULE_SQLALCHEMY_URL", raising=False)
-    monkeypatch.delenv("BUB_TAPESTORE_SQLALCHEMY_URL", raising=False)
-    monkeypatch.delenv("AGENTSEEK_TAPESTORE_SQLALCHEMY_URL", raising=False)
 
     settings = ScheduleSQLAlchemySettings()
 
@@ -114,8 +267,6 @@ def test_sqlalchemy_settings_prefer_bub_env_over_agentseek_alias(monkeypatch, tm
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("BUB_SCHEDULE_SQLALCHEMY_URL", _sqlite_url(tmp_path, "bub.sqlite"))
     monkeypatch.setenv("AGENTSEEK_SCHEDULE_SQLALCHEMY_URL", _sqlite_url(tmp_path, "agentseek.sqlite"))
-    monkeypatch.delenv("BUB_TAPESTORE_SQLALCHEMY_URL", raising=False)
-    monkeypatch.delenv("AGENTSEEK_TAPESTORE_SQLALCHEMY_URL", raising=False)
 
     settings = ScheduleSQLAlchemySettings()
 
@@ -139,8 +290,6 @@ def test_sqlalchemy_settings_allow_missing_url(monkeypatch, tmp_path) -> None:
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("BUB_SCHEDULE_SQLALCHEMY_URL", raising=False)
     monkeypatch.delenv("AGENTSEEK_SCHEDULE_SQLALCHEMY_URL", raising=False)
-    monkeypatch.delenv("BUB_TAPESTORE_SQLALCHEMY_URL", raising=False)
-    monkeypatch.delenv("AGENTSEEK_TAPESTORE_SQLALCHEMY_URL", raising=False)
 
     settings = ScheduleSQLAlchemySettings()
 

@@ -10,7 +10,14 @@ from bub import hookimpl
 from bub.types import Envelope, MessageHandler, State
 from loguru import logger
 
-from agentseek_schedule_sqlalchemy.job_store import ScheduleSQLAlchemySettings, build_sqlalchemy_jobstore
+from agentseek_schedule_sqlalchemy.config import (
+    ScheduleSQLAlchemySettings,
+    get_schedule_settings,
+)
+from agentseek_schedule_sqlalchemy.config import (
+    onboard_config as collect_onboard_config,
+)
+from agentseek_schedule_sqlalchemy.job_store import build_sqlalchemy_jobstore
 
 SchedulerFactory = Callable[[], BaseScheduler]
 
@@ -31,7 +38,7 @@ def build_sqlalchemy_scheduler(
 
 
 def _default_scheduler() -> BaseScheduler:
-    return build_sqlalchemy_scheduler(settings=ScheduleSQLAlchemySettings())
+    return build_sqlalchemy_scheduler(settings=get_schedule_settings())
 
 
 class ScheduleImpl:
@@ -75,6 +82,10 @@ class ScheduleImpl:
             logger.warning(f"Schedule plugin disabled: {exc}")
             return {}
         return {"scheduler": scheduler}
+
+    @hookimpl
+    def onboard_config(self, current_config: dict[str, Any]) -> dict[str, Any] | None:
+        return collect_onboard_config(current_config)
 
     @hookimpl
     def provide_channels(self, message_handler: MessageHandler) -> list:

@@ -92,6 +92,9 @@ def test_agentseek_dotenv_fills_missing_bub_env(monkeypatch, tmp_path) -> None:
         encoding="utf-8",
     )
 
-    apply_agentseek_env_aliases()
-
-    assert os.environ["BUB_TAPESTORE_SQLALCHEMY_URL"] == "sqlite+pysqlite:////tmp/agentseek.sqlite"
+    try:
+        apply_agentseek_env_aliases()
+        assert os.environ["BUB_TAPESTORE_SQLALCHEMY_URL"] == "sqlite+pysqlite:////tmp/agentseek.sqlite"
+    finally:
+        # apply_agentseek_env_aliases uses setdefault on os.environ; pytest does not undo that.
+        os.environ.pop("BUB_TAPESTORE_SQLALCHEMY_URL", None)

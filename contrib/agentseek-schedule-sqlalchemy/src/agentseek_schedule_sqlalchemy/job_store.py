@@ -4,38 +4,8 @@ from collections.abc import Mapping
 from typing import Any
 
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from pydantic import AliasChoices, Field, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-class ScheduleSQLAlchemySettings(BaseSettings):
-    """Configuration for the APScheduler SQLAlchemy job store."""
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore",
-        populate_by_name=True,
-    )
-
-    url: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("BUB_SCHEDULE_SQLALCHEMY_URL", "AGENTSEEK_SCHEDULE_SQLALCHEMY_URL"),
-    )
-    tapestore_url: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("BUB_TAPESTORE_SQLALCHEMY_URL", "AGENTSEEK_TAPESTORE_SQLALCHEMY_URL"),
-        exclude=True,
-    )
-    tablename: str = Field(
-        default="apscheduler_jobs",
-        validation_alias=AliasChoices("BUB_SCHEDULE_SQLALCHEMY_TABLENAME", "AGENTSEEK_SCHEDULE_SQLALCHEMY_TABLENAME"),
-    )
-
-    @model_validator(mode="after")
-    def inherit_tapestore_url(self) -> ScheduleSQLAlchemySettings:
-        if self.url is None and self.tapestore_url:
-            self.url = self.tapestore_url
-        return self
+from agentseek_schedule_sqlalchemy.config import ScheduleSQLAlchemySettings
 
 
 def build_sqlalchemy_jobstore(
