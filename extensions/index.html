@@ -772,7 +772,7 @@ uv sync
 <li>environment variables: prefer <code>AGENTSEEK_*</code>, accept <code>BUB_*</code> when the setting maps to Bub runtime behavior</li>
 </ul>
 <p>When both prefixes are supported for the same setting, <code>BUB_*</code> should take precedence. This keeps the plugin usable from plain Bub while letting agentseek projects document <code>AGENTSEEK_*</code> names.</p>
-<p>agentseek bundles the <code>plugin-creator</code> skill to help scaffold or update plugin packages according to these conventions.</p>
+<p>agentseek bundles an agentseek-adapted <code>plugin-creator</code> skill to help scaffold or update Bub-compatible plugin packages according to these conventions. It follows the upstream Bub contrib workflow shape, but specializes the guidance for <code>contrib/agentseek-*</code>, bundled <code>src/skills</code>, and <code>AGENTSEEK_*</code> alias behavior in this repository.</p>
 <h2 id="extend-with-skills">Extend With Skills<a class="headerlink" href="#extend-with-skills" title="Permanent link">&para;</a></h2>
 <p>Skills teach agents task-specific behavior. Use this path when the extension is instruction, workflow knowledge, or a small script the agent should know how to call. Use a plugin instead when the runtime itself needs a new hook, channel, store, or tool registration.</p>
 <h3 id="install-skills-in-a-project">Install Skills In A Project<a class="headerlink" href="#install-skills-in-a-project" title="Permanent link">&para;</a></h3>
