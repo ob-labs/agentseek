@@ -1,0 +1,62 @@
+name: docs-pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: docs-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build Mintlify docs
+        run: npx --yes mint@latest build
+
+      - name: Detect build output
+        id: output
+        run: |
+          for dir in _site site dist build out; do
+            if [ -f "$dir/index.html" ]; then
+              echo "path=$dir" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "Mintlify build output directory not found" >&2
+          exit 1
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.output.outputs.path }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

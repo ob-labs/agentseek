@@ -1,4 +1,7 @@
-# Getting Started
+---
+title: "Getting Started"
+description: "Run agentseek locally with SQLite-backed runtime storage."
+---
 
 This tutorial gets agentseek running locally with SQLite-backed runtime storage. It assumes Python 3.12+ and `uv` are already available.
 

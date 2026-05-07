@@ -43,11 +43,11 @@ build-and-publish: build publish ## Build and publish.
 
 .PHONY: docs-test
 docs-test: ## Test if documentation can be built without warnings or errors
-	@uv run mkdocs build -s
+	@npx --yes mint@latest validate
 
 .PHONY: docs
 docs: ## Build and serve the documentation
-	@uv run mkdocs serve
+	@npx --yes mint@latest dev
 
 .PHONY: help
 help:

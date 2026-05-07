@@ -1,4 +1,7 @@
-# agentseek
+---
+title: "agentseek"
+description: "Overview of the database-native Agent Harness and how the docs are organized."
+---
 
 agentseek is a database-native Agent Harness. It packages Bub with database-backed runtime storage and a small set of defaults for teams that want agent runtime data to be queryable from the beginning.
 

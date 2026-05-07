@@ -1,4 +1,7 @@
-# Extensions
+---
+title: "Extensions"
+description: "Project instructions, plugins, and skills in agentseek."
+---
 
 This guide explains the supported extension points for agentseek projects. For runtime settings, see [Configuration](configuration.md).
 

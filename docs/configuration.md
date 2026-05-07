@@ -1,4 +1,7 @@
-# Configuration
+---
+title: "Configuration"
+description: "Reference for environment variables, storage, channels, and onboarding."
+---
 
 This is a reference for agentseek configuration. For a guided setup, use [Getting started](getting-started.md).
 

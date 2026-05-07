@@ -1,0 +1,5 @@
+.venv/
+contrib/
+skills/
+src/skills/
+AGENTS.md

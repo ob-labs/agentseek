@@ -38,9 +38,6 @@ dev = [
     "ty>=0.0.14",
 
     "ruff>=0.14.14",
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.7.1",
-    "mkdocstrings[python]>=1.0.2",
 ]
 
 [build-system]

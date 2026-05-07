@@ -1,0 +1,24 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "agentseek",
+  "description": "A database-native Agent Harness for runtime data workflows, powered by Bub",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#55D799",
+    "dark": "#0D9373"
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Documentation",
+        "pages": [
+          "docs/index",
+          "docs/getting-started",
+          "docs/configuration",
+          "docs/extensions"
+        ]
+      }
+    ]
+  }
+}

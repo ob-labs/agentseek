@@ -57,11 +57,13 @@ jobs:
       - name: Check out
         uses: actions/checkout@v4
 
-      - name: Set up the environment
-        uses: ./.github/actions/setup-python-env
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
-      - name: Check if documentation can be built
-        run: uv run mkdocs build -s
+      - name: Validate Mintlify docs
+        run: npx --yes mint@latest validate
 
   docker-check:
     runs-on: ubuntu-latest
