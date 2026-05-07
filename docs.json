@@ -8,17 +8,28 @@
     "light": "#55D799",
     "dark": "#0D9373"
   },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/ob-labs/agentseek"
+    }
+  },
   "navigation": {
     "groups": [
       {
         "group": "Documentation",
+        "root": "docs/index",
         "pages": [
-          "docs/index",
           "docs/getting-started",
           "docs/configuration",
           "docs/extensions"
         ]
       }
     ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/ob-labs/agentseek"
+    }
   }
 }
