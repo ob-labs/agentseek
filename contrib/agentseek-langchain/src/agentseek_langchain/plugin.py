@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterable, AsyncIterator
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from typing import Any, cast
 from uuid import uuid4
 
@@ -16,18 +16,12 @@ from .bridge import (
     LangchainFactoryRequest,
     LangchainRunContext,
     RunnableBinding,
+    build_runnable_config,
 )
-from .config import LangchainPluginSettings, is_enabled, load_settings, validate_config
+from .config import LangchainPluginSettings, load_settings
 from .loader import resolve_runnable_binding
-from .runnable_executor import RunnableExecutor
 from .tape_recorder import LangchainTapeCallbackHandler
 from .tools import bub_registry_to_langchain_tools
-
-
-@dataclass(frozen=True)
-class _PreparedInvocation:
-    request: LangchainFactoryRequest
-    executor: RunnableExecutor
 
 
 class LangchainPlugin:
@@ -36,17 +30,14 @@ class LangchainPlugin:
     def __init__(self, framework: Any) -> None:
         self.framework = framework
 
-    def _enabled_settings(self) -> LangchainPluginSettings | None:
+    def _load_settings(self, prompt: str | list[dict[str, Any]]) -> LangchainPluginSettings | None:
         settings = load_settings()
-        return settings if is_enabled(settings) else None
-
-    def _validated_settings(self, prompt: str | list[dict[str, Any]]) -> LangchainPluginSettings | None:
-        settings = self._enabled_settings()
-        if settings is None:
+        factory = (settings.factory or "").strip()
+        if not factory:
             return None
+        settings.factory = factory
         if isinstance(prompt, str) and prompt.strip().startswith(","):
             return None
-        validate_config(settings)
         return settings
 
     def _build_langchain_tools(
@@ -67,7 +58,7 @@ class LangchainPlugin:
         tool_context = ToolContext(
             tape=tape_name,
             run_id=run_context.run_id,
-            state=dict(state),
+            state=state,
         )
         return bub_registry_to_langchain_tools(tool_context=tool_context), run_context
 
@@ -127,57 +118,6 @@ class LangchainPlugin:
             )
         ]
 
-    def _build_request(
-        self,
-        *,
-        settings: LangchainPluginSettings,
-        prompt: str | list[dict[str, Any]],
-        session_id: str,
-        state: State,
-        tape_name: str | None,
-    ) -> LangchainFactoryRequest:
-        langchain_tools, run_context = self._build_langchain_tools(
-            settings=settings,
-            state=state,
-            session_id=session_id,
-            tape_name=tape_name,
-        )
-        return LangchainFactoryRequest(
-            state=state,
-            session_id=session_id,
-            workspace=workspace_from_state(state),
-            tools=langchain_tools,
-            system_prompt=self.framework.get_system_prompt(prompt, state),
-            prompt=prompt,
-            langchain_context=run_context,
-        )
-
-    def _resolve_binding(
-        self,
-        *,
-        settings: LangchainPluginSettings,
-        prompt: str | list[dict[str, Any]],
-        session_id: str,
-        state: State,
-        tape_name: str | None,
-    ) -> tuple[RunnableBinding, LangchainFactoryRequest]:
-        request = self._build_request(
-            settings=settings,
-            prompt=prompt,
-            session_id=session_id,
-            state=state,
-            tape_name=tape_name,
-        )
-        run_context = request.langchain_context
-        bound_logger = self._bind_logger(run_context)
-        bound_logger.debug("Resolving LangChain runnable factory={}", settings.factory)
-        binding = resolve_runnable_binding(
-            cast(str, settings.factory),
-            request,
-        )
-        bound_logger.debug("Resolved LangChain runnable")
-        return binding, request
-
     def _prepare_invocation(
         self,
         *,
@@ -187,27 +127,70 @@ class LangchainPlugin:
         state: State,
         tape_name: str | None,
         session_tape: Any | None,
-    ) -> _PreparedInvocation:
-        binding, request = self._resolve_binding(
+    ) -> tuple[LangchainFactoryRequest, RunnableBinding, dict[str, Any]]:
+        langchain_tools, run_context = self._build_langchain_tools(
             settings=settings,
-            prompt=prompt,
-            session_id=session_id,
             state=state,
+            session_id=session_id,
             tape_name=tape_name,
         )
+        request = LangchainFactoryRequest(
+            state=state,
+            session_id=session_id,
+            workspace=workspace_from_state(state),
+            tools=langchain_tools,
+            system_prompt=self.framework.get_system_prompt(prompt, state),
+            prompt=prompt,
+            langchain_context=run_context,
+        )
+        bound_logger = self._bind_logger(run_context)
+        bound_logger.debug("Resolving LangChain runnable factory={}", settings.factory)
+        binding = resolve_runnable_binding(
+            cast(str, settings.factory),
+            request,
+        )
+        bound_logger.debug("Resolved LangChain runnable")
         callbacks = self._build_callbacks(
             settings=settings,
             session_tape=session_tape,
             run_context=request.langchain_context,
         )
-        return _PreparedInvocation(
-            request=request,
-            executor=RunnableExecutor(
-                binding=binding,
-                run_context=request.langchain_context,
-                callbacks=callbacks,
-            ),
+        config = build_runnable_config(
+            langchain_context=request.langchain_context,
+            callbacks=callbacks,
         )
+        return request, binding, config
+
+    async def _invoke_binding(
+        self,
+        binding: RunnableBinding,
+        *,
+        config: dict[str, Any],
+    ) -> str:
+        output = await binding.runnable.ainvoke(
+            binding.invoke_input,
+            config=config,
+        )
+        parser = binding.output_parser
+        if parser is None:
+            raise RuntimeError("RunnableBinding.output_parser must be resolved before execution")
+        return parser(output)
+
+    async def _stream_binding(
+        self,
+        binding: RunnableBinding,
+        *,
+        config: dict[str, Any],
+    ) -> AsyncIterable[str]:
+        astream = getattr(binding.runnable, "astream", None)
+        if not callable(astream) or binding.stream_parser is None:
+            yield await self._invoke_binding(binding, config=config)
+            return
+
+        async for chunk in astream(binding.invoke_input, config=config):
+            text = binding.stream_parser(chunk)
+            if text:
+                yield text
 
     async def _append_tape_message(
         self,
@@ -230,7 +213,7 @@ class LangchainPlugin:
         tape_name: str | None,
         session_tape: Any | None,
     ) -> str:
-        invocation = self._prepare_invocation(
+        request, binding, config = self._prepare_invocation(
             settings=settings,
             prompt=prompt,
             session_id=session_id,
@@ -238,15 +221,15 @@ class LangchainPlugin:
             tape_name=tape_name,
             session_tape=session_tape,
         )
-        bound_logger = self._bind_logger(invocation.request.langchain_context)
+        bound_logger = self._bind_logger(request.langchain_context)
         await self._append_tape_message(
             session_tape,
             role="user",
-            content=invocation.request.prompt_text,
+            content=request.prompt_text,
         )
 
         bound_logger.debug("Invoking LangChain runnable")
-        normalized = await invocation.executor.ainvoke_text()
+        normalized = await self._invoke_binding(binding, config=config)
         bound_logger.debug("LangChain runnable completed")
 
         await self._append_tape_message(
@@ -266,7 +249,7 @@ class LangchainPlugin:
         tape_name: str | None,
         session_tape: Any | None,
     ) -> AsyncStreamEvents:
-        invocation = self._prepare_invocation(
+        request, binding, config = self._prepare_invocation(
             settings=settings,
             prompt=prompt,
             session_id=session_id,
@@ -274,24 +257,24 @@ class LangchainPlugin:
             tape_name=tape_name,
             session_tape=session_tape,
         )
-        bound_logger = self._bind_logger(invocation.request.langchain_context)
+        bound_logger = self._bind_logger(request.langchain_context)
 
         async def iterator():
             assistant_parts: list[str] = []
             await self._append_tape_message(
                 session_tape,
                 role="user",
-                content=invocation.request.prompt_text,
+                content=request.prompt_text,
             )
-            astream = getattr(invocation.executor.binding.runnable, "astream", None)
-            if callable(astream) and invocation.executor.binding.stream_parser is not None:
+            astream = getattr(binding.runnable, "astream", None)
+            if callable(astream) and binding.stream_parser is not None:
                 bound_logger.debug("Streaming LangChain runnable")
             elif callable(astream):
                 bound_logger.debug("Runnable has no stream parser; falling back to ainvoke for stable final output")
             else:
                 bound_logger.debug("LangChain runnable has no astream; falling back to ainvoke")
 
-            async for text in invocation.executor.astream_text():
+            async for text in self._stream_binding(binding, config=config):
                 assistant_parts.append(text)
                 yield StreamEvent("text", {"delta": text})
 
@@ -308,7 +291,7 @@ class LangchainPlugin:
 
     @hookimpl(tryfirst=True)
     async def run_model(self, prompt: str | list[dict[str, Any]], session_id: str, state: State) -> str | None:
-        settings = self._validated_settings(prompt)
+        settings = self._load_settings(prompt)
         if settings is None:
             return None
 
@@ -334,7 +317,7 @@ class LangchainPlugin:
         session_id: str,
         state: State,
     ) -> AsyncStreamEvents | None:
-        settings = self._validated_settings(prompt)
+        settings = self._load_settings(prompt)
         if settings is None:
             return None
 

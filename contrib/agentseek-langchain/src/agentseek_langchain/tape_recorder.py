@@ -64,40 +64,6 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
     ) -> None:
         await self._tape.append_async(TapeEntry.event(name, data=data, **self._entry_meta(**meta)))
 
-    async def _append_error_event(
-        self,
-        name: str,
-        error: BaseException,
-        **meta: Any,
-    ) -> None:
-        await self._append_event(name, data={"error": str(error)}, **meta)
-
-    def _serialized_name(self, serialized: Any) -> str:
-        if not isinstance(serialized, dict):
-            return str(serialized or "unknown")
-        return str(serialized.get("name") or serialized.get("id") or "unknown")
-
-    async def _append_run_event(
-        self,
-        name: str,
-        *,
-        run_id: Any,
-        parent_run_id: Any | None = None,
-        data: dict[str, Any] | None = None,
-        tags: list[str] | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> None:
-        await self._append_event(
-            name,
-            data=data or None,
-            **self._run_meta(
-                run_id=run_id,
-                parent_run_id=parent_run_id,
-                tags=tags,
-                metadata=metadata,
-            ),
-        )
-
     async def _append_tool_call(
         self,
         *,
@@ -159,7 +125,11 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         metadata: dict[str, Any] | None = None,
         **_: Any,
     ) -> None:
-        name = self._serialized_name(serialized)
+        name = (
+            str(serialized.get("name") or serialized.get("id") or "unknown")
+            if isinstance(serialized, dict)
+            else str(serialized or "unknown")
+        )
         await self._append_tool_call(
             name=name,
             input_str=input_str,
@@ -212,16 +182,23 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         metadata: dict[str, Any] | None = None,
         **_: Any,
     ) -> None:
-        await self._append_run_event(
+        name = (
+            str(serialized.get("name") or serialized.get("id") or "unknown")
+            if isinstance(serialized, dict)
+            else str(serialized or "unknown")
+        )
+        await self._append_event(
             "langchain.chain.start",
-            run_id=run_id,
-            parent_run_id=parent_run_id,
             data={
-                "name": self._serialized_name(serialized),
+                "name": name,
                 "inputs": to_record(inputs),
             },
-            tags=tags,
-            metadata=metadata,
+            **self._run_meta(
+                run_id=run_id,
+                parent_run_id=parent_run_id,
+                tags=tags,
+                metadata=metadata,
+            ),
         )
 
     async def on_chain_end(
@@ -233,12 +210,14 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         tags: list[str] | None = None,
         **_: Any,
     ) -> None:
-        await self._append_run_event(
+        await self._append_event(
             "langchain.chain.end",
-            run_id=run_id,
-            parent_run_id=parent_run_id,
             data={"outputs": to_record(outputs)},
-            tags=tags,
+            **self._run_meta(
+                run_id=run_id,
+                parent_run_id=parent_run_id,
+                tags=tags,
+            ),
         )
 
     async def on_chain_error(
@@ -250,12 +229,14 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         tags: list[str] | None = None,
         **_: Any,
     ) -> None:
-        await self._append_error_event(
+        await self._append_event(
             "langchain.chain.error",
-            error,
-            run_id=str(run_id),
-            parent_run_id=str(parent_run_id) if parent_run_id is not None else None,
-            tags=tags,
+            data={"error": str(error)},
+            **self._run_meta(
+                run_id=run_id,
+                parent_run_id=parent_run_id,
+                tags=tags,
+            ),
         )
 
     async def on_chat_model_start(
@@ -269,16 +250,23 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         metadata: dict[str, Any] | None = None,
         **_: Any,
     ) -> None:
-        await self._append_run_event(
+        name = (
+            str(serialized.get("name") or serialized.get("id") or "unknown")
+            if isinstance(serialized, dict)
+            else str(serialized or "unknown")
+        )
+        await self._append_event(
             "langchain.chat_model.start",
-            run_id=run_id,
-            parent_run_id=parent_run_id,
             data={
-                "name": self._serialized_name(serialized),
+                "name": name,
                 "messages": to_record(messages),
             },
-            tags=tags,
-            metadata=metadata,
+            **self._run_meta(
+                run_id=run_id,
+                parent_run_id=parent_run_id,
+                tags=tags,
+                metadata=metadata,
+            ),
         )
 
     async def on_llm_start(
@@ -292,16 +280,23 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         metadata: dict[str, Any] | None = None,
         **_: Any,
     ) -> None:
-        await self._append_run_event(
+        name = (
+            str(serialized.get("name") or serialized.get("id") or "unknown")
+            if isinstance(serialized, dict)
+            else str(serialized or "unknown")
+        )
+        await self._append_event(
             "langchain.llm.start",
-            run_id=run_id,
-            parent_run_id=parent_run_id,
             data={
-                "name": self._serialized_name(serialized),
+                "name": name,
                 "prompts": to_record(prompts),
             },
-            tags=tags,
-            metadata=metadata,
+            **self._run_meta(
+                run_id=run_id,
+                parent_run_id=parent_run_id,
+                tags=tags,
+                metadata=metadata,
+            ),
         )
 
     async def on_llm_end(
@@ -313,12 +308,14 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         tags: list[str] | None = None,
         **_: Any,
     ) -> None:
-        await self._append_run_event(
+        await self._append_event(
             "langchain.llm.end",
-            run_id=run_id,
-            parent_run_id=parent_run_id,
             data={"response": to_record(response)},
-            tags=tags,
+            **self._run_meta(
+                run_id=run_id,
+                parent_run_id=parent_run_id,
+                tags=tags,
+            ),
         )
 
     async def on_llm_error(
@@ -330,12 +327,14 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         tags: list[str] | None = None,
         **_: Any,
     ) -> None:
-        await self._append_error_event(
+        await self._append_event(
             "langchain.llm.error",
-            error,
-            run_id=str(run_id),
-            parent_run_id=str(parent_run_id) if parent_run_id is not None else None,
-            tags=tags,
+            data={"error": str(error)},
+            **self._run_meta(
+                run_id=run_id,
+                parent_run_id=parent_run_id,
+                tags=tags,
+            ),
         )
 
     async def on_custom_event(
@@ -348,10 +347,12 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         metadata: dict[str, Any] | None = None,
         **_: Any,
     ) -> None:
-        await self._append_run_event(
+        await self._append_event(
             f"langchain.custom.{name}",
-            run_id=run_id,
             data={"data": to_record(data)},
-            tags=tags,
-            metadata=metadata,
+            **self._run_meta(
+                run_id=run_id,
+                tags=tags,
+                metadata=metadata,
+            ),
         )

@@ -2,26 +2,10 @@ from __future__ import annotations
 
 import pytest
 from agentseek_langchain.agent_protocol import load_agent_protocol_settings
-from agentseek_langchain.config import (
-    LangchainPluginSettings,
-    validate_config,
-)
-from agentseek_langchain.errors import LangchainConfigError
-
-
-def test_validate_runnable_requires_factory() -> None:
-    settings = LangchainPluginSettings(mode="runnable", factory=None)
-    with pytest.raises(LangchainConfigError, match="BUB_LANGCHAIN_FACTORY"):
-        validate_config(settings)
-
-
-def test_validate_runnable_ok_with_factory() -> None:
-    settings = LangchainPluginSettings(mode="runnable", factory="builtins:str")
-    validate_config(settings)
+from agentseek_langchain.config import LangchainPluginSettings
 
 
 def test_agentseek_aliases_work(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("AGENTSEEK_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("AGENTSEEK_LANGCHAIN_FACTORY", "builtins:str")
     monkeypatch.setenv("AGENTSEEK_AGENT_PROTOCOL_URL", "http://remote")
     monkeypatch.setenv("AGENTSEEK_AGENT_PROTOCOL_AGENT_ID", "agent")
@@ -29,7 +13,6 @@ def test_agentseek_aliases_work(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = LangchainPluginSettings()
     protocol_settings = load_agent_protocol_settings()
 
-    assert settings.mode == "runnable"
     assert settings.factory == "builtins:str"
     assert protocol_settings.url == "http://remote"
     assert protocol_settings.agent_id == "agent"

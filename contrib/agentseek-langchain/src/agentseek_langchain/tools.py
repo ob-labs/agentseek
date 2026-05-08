@@ -11,35 +11,32 @@ from republic import Tool, ToolContext
 from .errors import LangchainConfigError
 
 
-def _raw_bub_handler(bub_tool: Tool) -> Any:
+def bub_tool_to_langchain(
+    bub_tool: Tool,
+    *,
+    tool_context: ToolContext,
+    tool_name: str | None = None,
+) -> Any:
     handler = bub_tool.handler
     if handler is None:
         raise LangchainConfigError(f"Tool {bub_tool.name!r} is schema-only and cannot be executed")
 
-    closure = getattr(handler, "__closure__", None)
-    for cell in closure or ():
+    for cell in getattr(handler, "__closure__", None) or ():
         value = cell.cell_contents
         if isinstance(value, Tool) and value.handler is not None:
-            return value.handler
-    return handler
+            handler = value.handler
+            break
 
-
-def _call_signature(handler: Any, *, with_context: bool) -> inspect.Signature:
     signature = inspect.signature(handler)
-    if with_context:
-        return signature
-    parameters = [parameter for parameter in signature.parameters.values() if parameter.name != "context"]
-    return signature.replace(parameters=parameters)
-
-
-def _langchain_callable(bub_tool: Tool, tool_context: ToolContext) -> Any:
-    handler = _raw_bub_handler(bub_tool)
-    signature = _call_signature(handler, with_context=not bub_tool.context)
+    if bub_tool.context:
+        signature = signature.replace(
+            parameters=[parameter for parameter in signature.parameters.values() if parameter.name != "context"]
+        )
 
     if inspect.iscoroutinefunction(handler):
 
         @wraps(handler)
-        async def _call(*args: Any, **kwargs: Any) -> Any:
+        async def callable_handler(*args: Any, **kwargs: Any) -> Any:
             if bub_tool.context:
                 kwargs["context"] = tool_context
             return await handler(*args, **kwargs)
@@ -47,26 +44,17 @@ def _langchain_callable(bub_tool: Tool, tool_context: ToolContext) -> Any:
     else:
 
         @wraps(handler)
-        def _call(*args: Any, **kwargs: Any) -> Any:
+        def callable_handler(*args: Any, **kwargs: Any) -> Any:
             if bub_tool.context:
                 kwargs["context"] = tool_context
             return handler(*args, **kwargs)
 
-    wrapped: Any = _call
-    wrapped.__signature__ = signature
-    return _call
-
-
-def bub_tool_to_langchain(
-    bub_tool: Tool,
-    *,
-    tool_context: ToolContext,
-    tool_name: str | None = None,
-) -> Any:
+    wrapped_handler: Any = callable_handler
+    wrapped_handler.__signature__ = signature
     return langchain_tool(
         tool_name or bub_tool.name,
         description=bub_tool.description or bub_tool.name,
-    )(_langchain_callable(bub_tool, tool_context))
+    )(wrapped_handler)
 
 
 def bub_registry_to_langchain_tools(

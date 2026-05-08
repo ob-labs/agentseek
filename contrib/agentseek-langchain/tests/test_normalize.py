@@ -2,39 +2,35 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from agentseek_langchain.normalize import normalize_langchain_output, normalize_langchain_value, to_input
+from agentseek_langchain.normalize import to_input, to_record, to_text
 
 
-def test_normalize_str() -> None:
-    assert normalize_langchain_output("hello") == "hello"
-
-
-def test_normalize_message_like_object() -> None:
+def test_to_text_reads_message_like_object() -> None:
     message = SimpleNamespace(content="hello")
-    assert normalize_langchain_output(message) == "hello"
+    assert to_text(message) == "hello"
 
 
-def test_normalize_dict_messages() -> None:
+def test_to_text_reads_last_message_content() -> None:
     payload = {
         "messages": [
             {"content": "alpha"},
             {"content": [{"text": "beta"}]},
         ]
     }
-    assert normalize_langchain_output(payload) == "beta"
+    assert to_text(payload) == "beta"
 
 
-def test_normalize_prefers_output_keys_before_dumping_json() -> None:
+def test_to_text_prefers_final_answer_keys() -> None:
     payload = {
         "answer": {
             "content": "final answer",
         },
         "messages": [{"content": "intermediate"}],
     }
-    assert normalize_langchain_output(payload) == "final answer"
+    assert to_text(payload) == "final answer"
 
 
-def test_normalize_value_preserves_mapping_structure() -> None:
+def test_to_record_preserves_mapping_structure() -> None:
     payload = {
         "messages": [
             SimpleNamespace(content="alpha"),
@@ -43,7 +39,7 @@ def test_normalize_value_preserves_mapping_structure() -> None:
         "meta": SimpleNamespace(content="gamma"),
     }
 
-    assert normalize_langchain_value(payload) == {
+    assert to_record(payload) == {
         "messages": ["alpha", {"content": [{"text": "beta"}]}],
         "meta": "gamma",
     }

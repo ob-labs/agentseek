@@ -39,7 +39,6 @@ minimal_runnable:minimal_lc_agent
 Enable it:
 
 ```bash
-export AGENTSEEK_LANGCHAIN_MODE=runnable
 export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
 ```
 
@@ -61,7 +60,6 @@ deepagents_dashscope:dashscope_deep_agent
 Enable it:
 
 ```bash
-export AGENTSEEK_LANGCHAIN_MODE=runnable
 export AGENTSEEK_LANGCHAIN_FACTORY=deepagents_dashscope:dashscope_deep_agent
 export AGENTSEEK_MODEL=openai:glm-5.1
 export AGENTSEEK_API_KEY=your-dashscope-api-key
@@ -104,7 +102,6 @@ remote_agent_protocol:remote_agent_protocol_agent
 Enable it:
 
 ```bash
-export AGENTSEEK_LANGCHAIN_MODE=runnable
 export AGENTSEEK_LANGCHAIN_FACTORY=remote_agent_protocol:remote_agent_protocol_agent
 export AGENTSEEK_AGENT_PROTOCOL_URL=http://localhost:2024
 export AGENTSEEK_AGENT_PROTOCOL_AGENT_ID=agent

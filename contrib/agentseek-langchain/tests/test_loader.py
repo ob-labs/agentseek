@@ -40,7 +40,7 @@ def test_resolve_runnable_binding_wraps_missing_module_error() -> None:
         resolve_runnable_binding("missing_langchain_factory:factory", _request(Path(".")))
 
 
-def test_resolve_runnable_binding_sets_default_output_and_stream_parser(
+def test_resolve_runnable_binding_uses_default_output_parser(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -66,9 +66,7 @@ def test_resolve_runnable_binding_sets_default_output_and_stream_parser(
     )
 
     assert binding.output_parser is not None
-    assert binding.stream_parser is not None
     assert binding.output_parser({"answer": "ok"}) == "ok"
-    assert binding.stream_parser({"answer": "ok"}) == "ok"
 
 
 def test_resolve_runnable_binding_rejects_invalid_factory_spec() -> None:
@@ -81,7 +79,7 @@ def test_resolve_runnable_binding_wraps_missing_attribute_error() -> None:
         resolve_runnable_binding("json:not_there", _request(Path(".")))
 
 
-def test_resolve_runnable_binding_accepts_explicit_output_parser(
+def test_resolve_runnable_binding_keeps_explicit_output_parser(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -152,24 +150,3 @@ def test_resolve_runnable_binding_requires_callable_factory(
 
     with pytest.raises(LangchainConfigError, match="callable factory"):
         resolve_runnable_binding("lc_binding_value:binding", _request(tmp_path))
-
-
-def test_resolve_runnable_binding_requires_request_keyword(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    monkeypatch.syspath_prepend(str(tmp_path))
-    _write_module(
-        tmp_path,
-        "lc_missing_request_factory",
-        """
-        from agentseek_langchain import RunnableBinding
-        from langchain_core.runnables import RunnableLambda
-
-        def factory(**kwargs):
-            return RunnableBinding(runnable=RunnableLambda(lambda x: x), invoke_input=kwargs["request"].prompt_text)
-        """,
-    )
-
-    with pytest.raises(LangchainConfigError, match=r"`request` keyword argument"):
-        resolve_runnable_binding("lc_missing_request_factory:factory", _request(tmp_path))

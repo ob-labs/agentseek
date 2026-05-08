@@ -65,8 +65,13 @@ def _import_module(module_name: str):
     return importlib.import_module(module_name)
 
 
+def _message_contents(tape: _RecordingTape) -> list[str]:
+    return [entry.payload["content"] for entry in tape.entries if entry.kind == "message"]
+
+
 def test_disabled_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "")
+    monkeypatch.delenv("BUB_LANGCHAIN_FACTORY", raising=False)
+    monkeypatch.delenv("AGENTSEEK_LANGCHAIN_FACTORY", raising=False)
     plugin = LangchainPlugin(_Framework())
 
     result = asyncio.run(plugin.run_model("hello", session_id="session-1", state={}))
@@ -75,7 +80,6 @@ def test_disabled_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_comma_command_skips(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "builtins:str")
     plugin = LangchainPlugin(_Framework())
 
@@ -84,18 +88,17 @@ def test_comma_command_skips(monkeypatch: pytest.MonkeyPatch) -> None:
     assert result is None
 
 
-def test_runnable_missing_factory_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
+def test_blank_factory_disables_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "")
     plugin = LangchainPlugin(_Framework())
 
-    with pytest.raises(ValueError, match="BUB_LANGCHAIN_FACTORY"):
-        asyncio.run(plugin.run_model("hello", session_id="session-1", state={}))
+    result = asyncio.run(plugin.run_model("hello", session_id="session-1", state={}))
+
+    assert result is None
 
 
-def test_runnable_mode_echo(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_factory_echo(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_inline_factory:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "true")
@@ -149,19 +152,13 @@ def test_runnable_mode_echo(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> 
     assert config["metadata"]["session_id"] == "session-1"
     assert config["metadata"]["tape_name"] == "tape-x"
     assert "agentseek-langchain" in config["tags"]
-    assert len(tape.entries) == 4
-    assert [entry.kind for entry in tape.entries] == ["message", "event", "event", "message"]
-    assert [entry.payload.get("name") for entry in tape.entries if entry.kind == "event"] == [
-        "langchain.chain.start",
-        "langchain.chain.end",
-    ]
+    assert _message_contents(tape) == ["ping", "ECHO:ping"]
     assert tapes.ensure_bootstrap_calls == 1
     assert tapes.merge_back_values == [True]
 
 
 def test_missing_runtime_agent_without_tape(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_no_tape:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
@@ -192,7 +189,6 @@ def test_missing_runtime_agent_without_tape(monkeypatch: pytest.MonkeyPatch, tmp
 
 def test_include_bub_tools_passes_registry_tools_to_factory(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_with_tools:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "true")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
@@ -251,7 +247,6 @@ def test_include_bub_tools_passes_registry_tools_to_factory(monkeypatch: pytest.
 
 def test_factory_binding_overrides_invoke_input(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_binding_input_factory:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
@@ -289,7 +284,6 @@ def test_factory_binding_overrides_invoke_input(monkeypatch: pytest.MonkeyPatch,
 
 def test_runnable_binding_makes_result_selection_explicit(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_binding_factory:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
@@ -327,7 +321,6 @@ def test_runnable_binding_makes_result_selection_explicit(monkeypatch: pytest.Mo
 
 def test_run_model_stream_uses_runnable_astream(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_stream_factory:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
@@ -365,7 +358,6 @@ def test_run_model_stream_uses_runnable_astream(monkeypatch: pytest.MonkeyPatch,
 
 def test_run_model_stream_falls_back_to_ainvoke_once(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_fallback_factory:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "true")
@@ -442,22 +434,10 @@ def test_run_model_stream_falls_back_to_ainvoke_once(monkeypatch: pytest.MonkeyP
     assert module.builds == ["session-5"]
     assert module.seen_contexts[0].session_id == "session-5"
     assert len(module.seen_configs) == 1
-    assert [entry.kind for entry in tape.entries] == [
-        "message",
-        "event",
-        "tool_call",
-        "tool_result",
-        "event",
-        "message",
-    ]
-    assert [entry.payload.get("name") for entry in tape.entries if entry.kind == "event"] == [
-        "langchain.chain.start",
-        "langchain.chain.end",
-    ]
+    assert _message_contents(tape) == ["hello", "FALLBACK:hello"]
+    assert any(entry.kind == "tool_call" for entry in tape.entries)
     tool_result_entry = next(entry for entry in tape.entries if entry.kind == "tool_result")
     assert tool_result_entry.payload["results"] == [{"ok": "hello"}]
-    assert all(entry.meta["session_id"] == "session-5" for entry in tape.entries[1:5])
-    assert all(entry.meta["tape_name"] == "tape-x" for entry in tape.entries[1:5])
     assert module.seen_configs[0]["metadata"]["langchain_run_id"].startswith("langchain-")
     assert tapes.ensure_bootstrap_calls == 1
     assert tapes.merge_back_values == [True]
@@ -468,7 +448,6 @@ def test_run_model_stream_uses_ainvoke_when_binding_has_custom_output_parser(
     tmp_path: Path,
 ) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_stream_binding:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
@@ -517,7 +496,6 @@ def test_run_model_stream_uses_custom_stream_parser_when_declared(
     tmp_path: Path,
 ) -> None:
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_stream_parser_binding:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")

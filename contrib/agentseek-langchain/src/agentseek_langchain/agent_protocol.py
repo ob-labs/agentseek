@@ -68,102 +68,6 @@ def load_agent_protocol_settings() -> AgentProtocolSettings:
         raise LangchainConfigError(str(exc)) from exc
 
 
-def _bind_logger(run_context: LangchainRunContext | None):
-    if run_context is None:
-        return logger
-    return logger.bind(**run_context.as_logger_extra())
-
-
-def _message_role(message: Mapping[str, Any]) -> str | None:
-    for key in ("role", "type"):
-        value = message.get(key)
-        if isinstance(value, str) and value.strip():
-            return value.strip().lower()
-    return None
-
-
-def _is_assistant_message(message: Mapping[str, Any]) -> bool:
-    role = _message_role(message)
-    if role is None:
-        return True
-    return role in {"assistant", "ai", "aimessage", "aimessagechunk"}
-
-
-def _stream_event_name(part: Any) -> str | None:
-    if hasattr(part, "event"):
-        event = part.event
-        return event if isinstance(event, str) else None
-    if isinstance(part, dict):
-        event = part.get("event") or part.get("type")
-        return event if isinstance(event, str) else None
-    return None
-
-
-def _stream_event_data(part: Any) -> Any:
-    if hasattr(part, "data"):
-        return part.data
-    if isinstance(part, dict):
-        return part.get("data")
-    return None
-
-
-def _interrupts_from_stream_part(part: Any) -> list[Any]:
-    if isinstance(part, dict):
-        interrupts = part.get("interrupts")
-        if isinstance(interrupts, list) and interrupts:
-            return interrupts
-
-    data = _stream_event_data(part)
-    if isinstance(data, Mapping):
-        interrupts = data.get(INTERRUPT_KEY)
-        if isinstance(interrupts, list) and interrupts:
-            return interrupts
-    return []
-
-
-def _raise_for_stream_part(part: Any) -> None:
-    event = _stream_event_name(part)
-    if event is None:
-        return
-
-    if event.startswith("error"):
-        detail = to_text(_stream_event_data(part))
-        message = detail or "Remote agent-protocol run failed"
-        raise AgentProtocolRemoteError(message)
-
-    interrupts = _interrupts_from_stream_part(part)
-    if interrupts and (event == "values" or event.startswith("updates")):
-        raise AgentProtocolInterruptedError(
-            f"Remote agent-protocol run interrupted: {json.dumps(interrupts, ensure_ascii=False, default=str)}"
-        )
-
-
-def _messages_from_stream_part(part: Any) -> tuple[str | None, list[Mapping[str, Any]]]:
-    event = _stream_event_name(part)
-    data = _stream_event_data(part)
-    if event is None:
-        return None, []
-
-    if event == "messages" and isinstance(data, list) and data:
-        first = data[0]
-        if isinstance(first, Mapping):
-            return event, [first]
-        return event, []
-
-    if event in {"messages/partial", "messages/complete"} and isinstance(data, list):
-        return event, [item for item in data if isinstance(item, Mapping)]
-
-    return event, []
-
-
-def _text_from_message(message: Mapping[str, Any]) -> str:
-    return to_text(dict(message))
-
-
-def _final_state_from_stream_part(part: Any) -> Any | None:
-    return _stream_event_data(part) if _stream_event_name(part) == "values" else None
-
-
 class AgentProtocolRemoteError(RuntimeError):
     """Raised when the remote agent-protocol run returns an explicit error event."""
 
@@ -189,7 +93,7 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
         self._settings = settings
         self._session_id = session_id
         self._langchain_context = langchain_context
-        self._logger = _bind_logger(langchain_context)
+        self._logger = logger if langchain_context is None else logger.bind(**langchain_context.as_logger_extra())
         self._client: Any | None = None
 
     def invoke(self, input: Any, config: RunnableConfig | None = None, **kwargs: Any) -> Any:  # noqa: A002
@@ -200,8 +104,7 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
         raise RuntimeError("AgentProtocolRunnable.invoke cannot be used from a running event loop; use ainvoke instead")
 
     async def ainvoke(self, input: Any, config: RunnableConfig | None = None, **kwargs: Any) -> Any:  # noqa: A002
-        thread_id = await self._resolve_thread_id()
-        run_input = self._build_run_input(input)
+        thread_id = self._default_thread_id() if self._settings.stateful and self._session_id else None
         metadata = self._build_metadata(config)
         self._logger.debug(
             "Invoking remote agent-protocol agent={} stateful={} thread_id={}",
@@ -212,10 +115,82 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
         return await self._client_instance().runs.wait(
             thread_id=thread_id,
             assistant_id=self._settings.agent_id,
-            input=run_input,
+            input=to_input(input),
             metadata=metadata,
             if_not_exists="create" if thread_id is not None else None,
         )
+
+    @staticmethod
+    def _stream_event(part: Any) -> tuple[str | None, Any]:
+        event = None
+        data = None
+        if hasattr(part, "event"):
+            raw_event = part.event
+            event = raw_event if isinstance(raw_event, str) else None
+        elif isinstance(part, dict):
+            raw_event = part.get("event") or part.get("type")
+            event = raw_event if isinstance(raw_event, str) else None
+
+        if hasattr(part, "data"):
+            data = part.data
+        elif isinstance(part, dict):
+            data = part.get("data")
+        return event, data
+
+    @staticmethod
+    def _stream_interrupts(part: Any, data: Any) -> list[Any]:
+        if isinstance(part, dict):
+            raw_interrupts = part.get("interrupts")
+            if isinstance(raw_interrupts, list) and raw_interrupts:
+                return raw_interrupts
+        if isinstance(data, Mapping):
+            raw_interrupts = data.get(INTERRUPT_KEY)
+            if isinstance(raw_interrupts, list) and raw_interrupts:
+                return raw_interrupts
+        return []
+
+    @staticmethod
+    def _raise_for_stream_issue(event: str | None, data: Any, interrupts: list[Any]) -> None:
+        if event is not None and event.startswith("error"):
+            detail = to_text(data)
+            raise AgentProtocolRemoteError(detail or "Remote agent-protocol run failed")
+
+        if interrupts and event is not None and (event == "values" or event.startswith("updates")):
+            raise AgentProtocolInterruptedError(
+                f"Remote agent-protocol run interrupted: {json.dumps(interrupts, ensure_ascii=False, default=str)}"
+            )
+
+    @staticmethod
+    def _stream_messages(
+        event: str | None,
+        data: Any,
+        *,
+        saw_partial_message: bool,
+    ) -> tuple[list[Mapping[str, Any]], bool]:
+        if event == "messages/complete" and saw_partial_message:
+            return [], saw_partial_message
+        if event == "messages":
+            if isinstance(data, list) and data and isinstance(data[0], Mapping):
+                return [data[0]], saw_partial_message
+            return [], saw_partial_message
+        if event == "messages/partial":
+            saw_partial_message = True
+        if event in {"messages/partial", "messages/complete"} and isinstance(data, list):
+            return [item for item in data if isinstance(item, Mapping)], saw_partial_message
+        return [], saw_partial_message
+
+    @staticmethod
+    def _assistant_text(message: Mapping[str, Any]) -> str | None:
+        role = None
+        for key in ("role", "type"):
+            value = message.get(key)
+            if isinstance(value, str) and value.strip():
+                role = value.strip().lower()
+                break
+        if role is not None and role not in {"assistant", "ai", "aimessage", "aimessagechunk"}:
+            return None
+        text = to_text(dict(message))
+        return text or None
 
     async def astream(
         self,
@@ -223,8 +198,7 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
         config: RunnableConfig | None = None,
         **kwargs: Any | None,
     ) -> AsyncIterator[str]:
-        thread_id = await self._resolve_thread_id()
-        run_input = self._build_run_input(input)
+        thread_id = self._default_thread_id() if self._settings.stateful and self._session_id else None
         metadata = self._build_metadata(config)
         self._logger.debug(
             "Streaming remote agent-protocol agent={} stateful={} thread_id={}",
@@ -238,28 +212,27 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
         async for part in self._client_instance().runs.stream(
             thread_id=thread_id,
             assistant_id=self._settings.agent_id,
-            input=run_input,
+            input=to_input(input),
             metadata=metadata,
             if_not_exists="create" if thread_id is not None else None,
             stream_mode=["messages", "values", "updates"],
         ):
-            _raise_for_stream_part(part)
+            event, data = self._stream_event(part)
+            interrupts = self._stream_interrupts(part, data)
+            self._raise_for_stream_issue(event, data, interrupts)
 
-            maybe_final_state = _final_state_from_stream_part(part)
-            if maybe_final_state is not None:
-                final_state = maybe_final_state
+            if event == "values":
+                final_state = data
 
-            event, messages = _messages_from_stream_part(part)
-            if event == "messages/partial":
-                saw_partial_message = True
-            if event == "messages/complete" and saw_partial_message:
-                continue
+            messages, saw_partial_message = self._stream_messages(
+                event,
+                data,
+                saw_partial_message=saw_partial_message,
+            )
 
             for message in messages:
-                if not _is_assistant_message(message):
-                    continue
-                text = _text_from_message(message)
-                if not text:
+                text = self._assistant_text(message)
+                if text is None:
                     continue
                 emitted = True
                 yield text
@@ -279,9 +252,6 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
             self._client = get_client(**client_kwargs)
         return self._client
 
-    def _build_run_input(self, value: Any) -> dict[str, Any]:
-        return to_input(value)
-
     def _build_metadata(self, config: Mapping[str, Any] | None) -> dict[str, Any]:
         metadata: dict[str, Any] = {}
         if self._langchain_context is not None:
@@ -298,11 +268,6 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
             if isinstance(key, str):
                 metadata[key] = value
         return metadata
-
-    async def _resolve_thread_id(self) -> str | None:
-        if not self._settings.stateful or not self._session_id:
-            return None
-        return self._default_thread_id()
 
     def _default_thread_id(self) -> str:
         payload = f"{self._settings.url}\0{self._settings.agent_id}\0{self._session_id}"

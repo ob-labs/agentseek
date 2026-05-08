@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import importlib.util
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -12,19 +13,34 @@ import pytest
 from agentseek_langchain.bridge import LangchainFactoryRequest, LangchainRunContext
 from agentseek_langchain.plugin import LangchainPlugin
 
-pytest.importorskip("deepagents")
+pytestmark = pytest.mark.skipif(
+    importlib.util.find_spec("langchain_core") is None,
+    reason="langchain_core is not installed in the root test environment",
+)
 
 
 class _Framework:
     def get_system_prompt(self, prompt: str | list[dict[str, Any]], state: dict[str, Any]) -> str:
-        return "system prompt"
+        return "You are a helpful assistant"
 
 
 def _deepagents_dashscope_example():
+    pytest.importorskip("deepagents")
     return importlib.import_module("deepagents_dashscope")
 
 
-def test_build_chat_model_uses_bub_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_minimal_runnable_example_works_through_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "minimal_runnable:minimal_lc_agent")
+    monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
+    monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
+
+    plugin = LangchainPlugin(_Framework())
+    result = asyncio.run(plugin.run_model("hello from minimal", session_id="session-minimal", state={}))
+
+    assert result == "[minimal_lc_agent] hello from minimal\nSystem: You are a helpful assistant"
+
+
+def test_deepagents_example_builds_chat_model_from_bub_env(monkeypatch: pytest.MonkeyPatch) -> None:
     deepagents_dashscope = _deepagents_dashscope_example()
 
     captured: dict[str, Any] = {}
@@ -51,7 +67,7 @@ def test_build_chat_model_uses_bub_env(monkeypatch: pytest.MonkeyPatch) -> None:
     }
 
 
-def test_build_chat_model_prefers_deepagents_specific_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_deepagents_example_prefers_specific_env(monkeypatch: pytest.MonkeyPatch) -> None:
     deepagents_dashscope = _deepagents_dashscope_example()
 
     captured: dict[str, Any] = {}
@@ -81,7 +97,7 @@ def test_build_chat_model_prefers_deepagents_specific_env(monkeypatch: pytest.Mo
     }
 
 
-def test_run_model_with_deepagents_factory(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_deepagents_example_factory_works_through_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
     from langchain_core.language_models.base import LanguageModelInput
     from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
     from langchain_core.messages import AIMessage
@@ -100,7 +116,6 @@ def test_run_model_with_deepagents_factory(monkeypatch: pytest.MonkeyPatch) -> N
         ) -> Runnable[LanguageModelInput, AIMessage]:
             return self
 
-    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "deepagents_dashscope:dashscope_deep_agent")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
@@ -116,7 +131,7 @@ def test_run_model_with_deepagents_factory(monkeypatch: pytest.MonkeyPatch) -> N
     assert result == "deep ok"
 
 
-def test_dashscope_deep_agent_binds_logger_context(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_deepagents_example_binds_logger_context(monkeypatch: pytest.MonkeyPatch) -> None:
     from types import SimpleNamespace
 
     from langchain_core.messages import AIMessage
@@ -129,12 +144,6 @@ def test_dashscope_deep_agent_binds_logger_context(monkeypatch: pytest.MonkeyPat
     class FakeBoundLogger:
         def info(self, message: str, *args: Any) -> None:
             captured.setdefault("info", []).append((message, args))
-
-        def debug(self, message: str, *args: Any) -> None:
-            captured.setdefault("debug", []).append((message, args))
-
-        def error(self, message: str, *args: Any) -> None:
-            captured.setdefault("error", []).append((message, args))
 
     class FakeLogger:
         def bind(self, **kwargs: Any) -> FakeBoundLogger:
@@ -168,9 +177,8 @@ def test_dashscope_deep_agent_binds_logger_context(monkeypatch: pytest.MonkeyPat
         prompt="hello deepagents",
         langchain_context=context,
     )
-    binding = deepagents_dashscope.dashscope_deep_agent(
-        request=request,
-    )
+
+    binding = deepagents_dashscope.dashscope_deep_agent(request=request)
 
     assert captured["bind"] == {
         "session_id": "session-deepagents",
@@ -183,10 +191,4 @@ def test_dashscope_deep_agent_binds_logger_context(monkeypatch: pytest.MonkeyPat
     assert binding.runnable.invoke(binding.invoke_input)["messages"][-1].content == "hello deepagents"
     assert binding.output_parser is not None
     assert binding.output_parser({"messages": [AIMessage(content="hello deepagents")]}) == "hello deepagents"
-    weather_tool = captured["tools"][0]
-    assert weather_tool("Shanghai") == "It's always sunny in Shanghai!"
-    assert any(
-        message == "Building DeepAgents DashScope runnable tool_count={} prompt_chars={}"
-        for message, _ in captured["info"]
-    )
-    assert any(message == "Created DeepAgents agent bubbled_tools={}" for message, _ in captured["info"])
+    assert captured["tools"][0]("Shanghai") == "It's always sunny in Shanghai!"

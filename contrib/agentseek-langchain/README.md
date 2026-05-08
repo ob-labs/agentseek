@@ -4,7 +4,7 @@
 
 Current scope:
 
-- only `Runnable` mode is supported;
+- only LangChain `Runnable` factories are supported;
 - Bub tools can be bridged into LangChain tools;
 - remote agent-protocol services can be wrapped through `langgraph-sdk`;
 - Bub tape recording still works for user / assistant turns and tool spans;
@@ -41,9 +41,10 @@ export PYTHONPATH="$(pwd)/contrib/agentseek-langchain/examples${PYTHONPATH:+:$PY
 Set:
 
 ```bash
-export AGENTSEEK_LANGCHAIN_MODE=runnable
 export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
 ```
+
+The plugin is active whenever `AGENTSEEK_LANGCHAIN_FACTORY` or `BUB_LANGCHAIN_FACTORY` is non-empty.
 
 Optional flags:
 
@@ -73,7 +74,6 @@ Bundled examples are plain Python files under [`examples/`](examples/):
 Typical minimal run:
 
 ```bash
-export AGENTSEEK_LANGCHAIN_MODE=runnable
 export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
 uv run agentseek run "Summarize this workspace in one sentence."
 ```
@@ -81,7 +81,6 @@ uv run agentseek run "Summarize this workspace in one sentence."
 Typical remote agent-protocol run:
 
 ```bash
-export AGENTSEEK_LANGCHAIN_MODE=runnable
 export AGENTSEEK_LANGCHAIN_FACTORY=remote_agent_protocol:remote_agent_protocol_agent
 export AGENTSEEK_AGENT_PROTOCOL_URL=http://localhost:2024
 export AGENTSEEK_AGENT_PROTOCOL_AGENT_ID=agent

@@ -116,11 +116,3 @@ def to_input(value: Any) -> dict[str, Any]:
     if isinstance(value, dict):
         return to_record(value)
     return {"messages": [{"role": "user", "content": to_text(value)}]}
-
-
-def normalize_langchain_value(value: Any) -> Any:
-    return to_record(value)
-
-
-def normalize_langchain_output(value: Any) -> str:
-    return to_text(value)
