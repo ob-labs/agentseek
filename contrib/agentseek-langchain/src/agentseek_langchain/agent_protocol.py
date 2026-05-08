@@ -8,64 +8,30 @@ from typing import Any, Self
 
 from langchain_core.runnables import Runnable, RunnableConfig
 from loguru import logger
-from pydantic import AliasChoices, Field, ValidationError, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, model_validator
 
 from .bridge import LangchainRunContext
-from .errors import LangchainConfigError
 from .normalize import to_input, to_text
 
 INTERRUPT_KEY = "__interrupt__"
 
 
-class AgentProtocolSettings(BaseSettings):
-    """Configuration for the remote agent-protocol runnable adapter."""
+class AgentProtocolSettings(BaseModel):
+    """Explicit configuration for factories that wrap a remote agent-protocol runnable."""
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore",
-        populate_by_name=True,
-    )
-
-    url: str = Field(
-        default="",
-        validation_alias=AliasChoices("BUB_AGENT_PROTOCOL_URL", "AGENTSEEK_AGENT_PROTOCOL_URL"),
-    )
-    agent_id: str = Field(
-        default="",
-        validation_alias=AliasChoices("BUB_AGENT_PROTOCOL_AGENT_ID", "AGENTSEEK_AGENT_PROTOCOL_AGENT_ID"),
-    )
+    url: str
+    agent_id: str
 
     @model_validator(mode="after")
     def _require_url_and_agent_id(self) -> Self:
         if not self.url.strip():
-            raise ValueError(
-                "Set BUB_AGENT_PROTOCOL_URL or AGENTSEEK_AGENT_PROTOCOL_URL (remote agent-protocol base URL)."
-            )
+            raise ValueError("Remote agent-protocol url is required.")
         if not self.agent_id.strip():
-            raise ValueError("Set BUB_AGENT_PROTOCOL_AGENT_ID or AGENTSEEK_AGENT_PROTOCOL_AGENT_ID (remote agent id).")
+            raise ValueError("Remote agent-protocol agent_id is required.")
         return self
 
-    api_key: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices(
-            "BUB_AGENT_PROTOCOL_API_KEY",
-            "AGENTSEEK_AGENT_PROTOCOL_API_KEY",
-            "BUB_API_KEY",
-            "AGENTSEEK_API_KEY",
-        ),
-    )
-    stateful: bool = Field(
-        default=True,
-        validation_alias=AliasChoices("BUB_AGENT_PROTOCOL_STATEFUL", "AGENTSEEK_AGENT_PROTOCOL_STATEFUL"),
-    )
-
-
-def load_agent_protocol_settings() -> AgentProtocolSettings:
-    try:
-        return AgentProtocolSettings()
-    except ValidationError as exc:
-        raise LangchainConfigError(str(exc)) from exc
+    api_key: str | None = None
+    stateful: bool = True
 
 
 class AgentProtocolRemoteError(RuntimeError):
@@ -77,7 +43,7 @@ class AgentProtocolInterruptedError(RuntimeError):
 
 
 class AgentProtocolRunnable(Runnable[Any, Any]):
-    """Wrap a remote Bub agent-protocol endpoint as a Bub-oriented Runnable.
+    """Wrap a user-managed remote agent-protocol endpoint as a Bub-oriented Runnable.
 
     This adapter intentionally accepts Bub prompt shapes or a fully-formed input
     dict. It does not implement general Pregel or RemoteGraph config semantics.

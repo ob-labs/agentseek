@@ -41,6 +41,8 @@ dev = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.1",
     "mkdocstrings[python]>=1.0.2",
+    "deepagents>=0.5.3",
+    "langchain-openai>=0.3.0",
 ]
 
 [build-system]
@@ -79,7 +81,7 @@ python = "./.venv"
 python-version = "3.12"
 
 [tool.ty.analysis]
-# Optional extra; example installs agentseek-langchain[deepagents].
+# DeepAgents is a dev dependency used by contrib examples and tests.
 allowed-unresolved-imports = ["deepagents.**"]
 
 [tool.ty.src]

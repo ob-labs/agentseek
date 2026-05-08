@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterable, AsyncIterator
 from contextlib import asynccontextmanager
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from typing import Any, cast
 from uuid import uuid4
 
@@ -24,6 +24,19 @@ from .tape_recorder import LangchainTapeCallbackHandler
 from .tools import bub_registry_to_langchain_tools
 
 
+@dataclass(frozen=True)
+class _InvocationContext:
+    prompt: str | list[dict[str, Any]]
+    session_id: str
+    state: State
+    settings: LangchainPluginSettings
+    tape_name: str | None
+    session_tape: Any | None
+    request: LangchainFactoryRequest
+    binding: RunnableBinding
+    config: dict[str, Any]
+
+
 class LangchainPlugin:
     """Route Bub ``run_model`` through a LangChain Runnable."""
 
@@ -43,7 +56,7 @@ class LangchainPlugin:
     def _build_langchain_tools(
         self,
         *,
-        settings: LangchainPluginSettings,
+        include_bub_tools: bool,
         state: State,
         session_id: str,
         tape_name: str | None,
@@ -53,7 +66,7 @@ class LangchainPlugin:
             tape_name=tape_name,
             run_id=f"langchain-{uuid4().hex}",
         )
-        if not settings.include_bub_tools:
+        if not include_bub_tools:
             return [], run_context
         tool_context = ToolContext(
             tape=tape_name,
@@ -118,18 +131,18 @@ class LangchainPlugin:
             )
         ]
 
-    def _prepare_invocation(
+    def _build_invocation_context(
         self,
         *,
-        settings: LangchainPluginSettings,
         prompt: str | list[dict[str, Any]],
         session_id: str,
         state: State,
+        settings: LangchainPluginSettings,
         tape_name: str | None,
         session_tape: Any | None,
-    ) -> tuple[LangchainFactoryRequest, RunnableBinding, dict[str, Any]]:
+    ) -> _InvocationContext:
         langchain_tools, run_context = self._build_langchain_tools(
-            settings=settings,
+            include_bub_tools=settings.include_bub_tools,
             state=state,
             session_id=session_id,
             tape_name=tape_name,
@@ -159,7 +172,17 @@ class LangchainPlugin:
             langchain_context=request.langchain_context,
             callbacks=callbacks,
         )
-        return request, binding, config
+        return _InvocationContext(
+            prompt=prompt,
+            session_id=session_id,
+            state=state,
+            settings=settings,
+            tape_name=tape_name,
+            session_tape=session_tape,
+            request=request,
+            binding=binding,
+            config=config,
+        )
 
     async def _invoke_binding(
         self,
@@ -192,99 +215,43 @@ class LangchainPlugin:
             if text:
                 yield text
 
-    async def _append_tape_message(
-        self,
-        session_tape: Any | None,
-        *,
-        role: str,
-        content: str,
-    ) -> None:
-        if session_tape is None:
+    async def _append_tape_message(self, context: _InvocationContext, *, role: str, content: str) -> None:
+        if context.session_tape is None:
             return
-        await session_tape.append_async(TapeEntry.message({"role": role, "content": content}))
+        await context.session_tape.append_async(TapeEntry.message({"role": role, "content": content}))
 
-    async def _invoke_runnable(
-        self,
-        *,
-        settings: LangchainPluginSettings,
-        prompt: str | list[dict[str, Any]],
-        session_id: str,
-        state: State,
-        tape_name: str | None,
-        session_tape: Any | None,
-    ) -> str:
-        request, binding, config = self._prepare_invocation(
-            settings=settings,
-            prompt=prompt,
-            session_id=session_id,
-            state=state,
-            tape_name=tape_name,
-            session_tape=session_tape,
-        )
-        bound_logger = self._bind_logger(request.langchain_context)
-        await self._append_tape_message(
-            session_tape,
-            role="user",
-            content=request.prompt_text,
-        )
+    async def _invoke_context(self, context: _InvocationContext) -> str:
+        bound_logger = self._bind_logger(context.request.langchain_context)
+        await self._append_tape_message(context, role="user", content=context.request.prompt_text)
 
         bound_logger.debug("Invoking LangChain runnable")
-        normalized = await self._invoke_binding(binding, config=config)
+        normalized = await self._invoke_binding(context.binding, config=context.config)
         bound_logger.debug("LangChain runnable completed")
 
-        await self._append_tape_message(
-            session_tape,
-            role="assistant",
-            content=normalized,
-        )
+        await self._append_tape_message(context, role="assistant", content=normalized)
         return normalized
 
-    async def _stream_runnable(
-        self,
-        *,
-        settings: LangchainPluginSettings,
-        prompt: str | list[dict[str, Any]],
-        session_id: str,
-        state: State,
-        tape_name: str | None,
-        session_tape: Any | None,
-    ) -> AsyncStreamEvents:
-        request, binding, config = self._prepare_invocation(
-            settings=settings,
-            prompt=prompt,
-            session_id=session_id,
-            state=state,
-            tape_name=tape_name,
-            session_tape=session_tape,
-        )
-        bound_logger = self._bind_logger(request.langchain_context)
+    async def _stream_context(self, context: _InvocationContext) -> AsyncStreamEvents:
+        bound_logger = self._bind_logger(context.request.langchain_context)
 
         async def iterator():
             assistant_parts: list[str] = []
-            await self._append_tape_message(
-                session_tape,
-                role="user",
-                content=request.prompt_text,
-            )
-            astream = getattr(binding.runnable, "astream", None)
-            if callable(astream) and binding.stream_parser is not None:
+            await self._append_tape_message(context, role="user", content=context.request.prompt_text)
+            astream = getattr(context.binding.runnable, "astream", None)
+            if callable(astream) and context.binding.stream_parser is not None:
                 bound_logger.debug("Streaming LangChain runnable")
             elif callable(astream):
                 bound_logger.debug("Runnable has no stream parser; falling back to ainvoke for stable final output")
             else:
                 bound_logger.debug("LangChain runnable has no astream; falling back to ainvoke")
 
-            async for text in self._stream_binding(binding, config=config):
+            async for text in self._stream_binding(context.binding, config=context.config):
                 assistant_parts.append(text)
                 yield StreamEvent("text", {"delta": text})
 
             final_text = "".join(assistant_parts)
             bound_logger.debug("LangChain stream completed")
-            await self._append_tape_message(
-                session_tape,
-                role="assistant",
-                content=final_text,
-            )
+            await self._append_tape_message(context, role="assistant", content=final_text)
             yield StreamEvent("final", {"text": final_text, "ok": True})
 
         return AsyncStreamEvents(iterator(), state=StreamState())
@@ -301,7 +268,7 @@ class LangchainPlugin:
             session_id=session_id,
             state=state,
         ) as (tape_name, session_tape):
-            return await self._invoke_runnable(
+            context = self._build_invocation_context(
                 settings=settings,
                 prompt=prompt,
                 session_id=session_id,
@@ -309,6 +276,7 @@ class LangchainPlugin:
                 tape_name=tape_name,
                 session_tape=session_tape,
             )
+            return await self._invoke_context(context)
 
     @hookimpl(tryfirst=True)
     async def run_model_stream(
@@ -328,7 +296,7 @@ class LangchainPlugin:
                 session_id=session_id,
                 state=state,
             ) as (tape_name, session_tape):
-                stream = await self._stream_runnable(
+                context = self._build_invocation_context(
                     settings=settings,
                     prompt=prompt,
                     session_id=session_id,
@@ -336,6 +304,7 @@ class LangchainPlugin:
                     tape_name=tape_name,
                     session_tape=session_tape,
                 )
+                stream = await self._stream_context(context)
                 async for event in stream:
                     yield event
 

@@ -1,6 +1,6 @@
 """LangChain Runnable adapter for agentseek."""
 
-from .agent_protocol import AgentProtocolRunnable, AgentProtocolSettings, load_agent_protocol_settings
+from .agent_protocol import AgentProtocolRunnable, AgentProtocolSettings
 from .bridge import LangchainFactoryRequest, LangchainRunContext, RunnableBinding
 from .config import LangchainPluginSettings, load_settings
 from .errors import LangchainConfigError
@@ -15,7 +15,6 @@ __all__ = [
     "LangchainPluginSettings",
     "LangchainRunContext",
     "RunnableBinding",
-    "load_agent_protocol_settings",
     "load_settings",
     "main",
 ]

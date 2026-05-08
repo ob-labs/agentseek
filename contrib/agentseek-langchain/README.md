@@ -6,7 +6,7 @@ Current scope:
 
 - only LangChain `Runnable` factories are supported;
 - Bub tools can be bridged into LangChain tools;
-- remote agent-protocol services can be wrapped through `langgraph-sdk`;
+- user-managed remote agent-protocol runnables can be wrapped through `langgraph-sdk`;
 - Bub tape recording still works for user / assistant turns and tool spans;
 - prompts starting with `,` still fall through to Bub built-in internal commands.
 
@@ -18,16 +18,19 @@ From the repo root:
 uv sync --all-packages
 ```
 
-Or install only the plugin package:
+Or install only the plugin package runtime:
 
 ```bash
 uv pip install -e contrib/agentseek-langchain
 ```
 
-If you want the DashScope DeepAgents example too:
+The bundled DeepAgents example uses repository development dependencies from the root workspace.
+It is not part of the plugin runtime dependency set.
+
+If you want to work on examples and tests from the repo:
 
 ```bash
-uv pip install -e 'contrib/agentseek-langchain[deepagents]'
+uv sync --all-packages --group dev
 ```
 
 If you want to run the repository examples directly, expose `examples/` on `PYTHONPATH`:
@@ -62,6 +65,9 @@ The factory must return `RunnableBinding`.
 `RunnableBinding.invoke_input` is always explicit.
 `RunnableBinding.output_parser` is optional; if omitted, the adapter uses the default LangChain output normalizer.
 
+The plugin does not own the runnable implementation.
+If your factory uses DeepAgents, a remote agent-protocol service, or any other runtime, that runtime is managed by your factory and its own settings.
+
 ## Examples
 
 Bundled examples are plain Python files under [`examples/`](examples/):
@@ -86,3 +92,7 @@ export AGENTSEEK_AGENT_PROTOCOL_URL=http://localhost:2024
 export AGENTSEEK_AGENT_PROTOCOL_AGENT_ID=agent
 uv run agentseek chat
 ```
+
+Those `AGENTSEEK_AGENT_PROTOCOL_*` variables are consumed by the example factory, not by the plugin core.
+That example wraps a user-managed remote runtime.
+`agentseek-langchain` only loads the factory and executes the returned `RunnableBinding`.

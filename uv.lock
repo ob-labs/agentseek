@@ -27,6 +27,8 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "deepagents" },
+    { name = "langchain-openai" },
     { name = "mkdocs" },
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
@@ -48,6 +50,8 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "deepagents", specifier = ">=0.5.3" },
+    { name = "langchain-openai", specifier = ">=0.3.0" },
     { name = "mkdocs", specifier = ">=1.6.1" },
     { name = "mkdocs-material", specifier = ">=9.7.1" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=1.0.2" },
@@ -70,23 +74,14 @@ dependencies = [
     { name = "pydantic-settings" },
 ]
 
-[package.optional-dependencies]
-deepagents = [
-    { name = "deepagents" },
-    { name = "langchain-openai" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "bub", specifier = ">=0.3.7" },
-    { name = "deepagents", marker = "extra == 'deepagents'", specifier = ">=0.5.3" },
     { name = "langchain-core", specifier = ">=0.3.0" },
-    { name = "langchain-openai", marker = "extra == 'deepagents'", specifier = ">=0.3.0" },
     { name = "langgraph-sdk", specifier = ">=0.3.13" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
 ]
-provides-extras = ["deepagents"]
 
 [[package]]
 name = "agentseek-schedule-sqlalchemy"

@@ -145,6 +145,9 @@ def test_deepagents_example_binds_logger_context(monkeypatch: pytest.MonkeyPatch
         def info(self, message: str, *args: Any) -> None:
             captured.setdefault("info", []).append((message, args))
 
+        def debug(self, message: str, *args: Any) -> None:
+            captured.setdefault("debug", []).append((message, args))
+
     class FakeLogger:
         def bind(self, **kwargs: Any) -> FakeBoundLogger:
             captured["bind"] = kwargs

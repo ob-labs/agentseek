@@ -13,12 +13,6 @@ dependencies = [
     "pydantic-settings>=2.0.0",
 ]
 
-[project.optional-dependencies]
-deepagents = [
-    "deepagents>=0.5.3",
-    "langchain-openai>=0.3.0",
-]
-
 [project.entry-points."bub"]
 langchain = "agentseek_langchain.plugin:main"
 

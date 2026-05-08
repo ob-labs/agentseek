@@ -22,10 +22,10 @@ Expose this directory before using the examples directly:
 export PYTHONPATH="$(pwd)/contrib/agentseek-langchain/examples${PYTHONPATH:+:$PYTHONPATH}"
 ```
 
-For the DashScope DeepAgents example, install the extra runtime deps if they are not already present:
+For the DashScope DeepAgents example, install repository development dependencies if they are not already present:
 
 ```bash
-uv pip install -e 'contrib/agentseek-langchain[deepagents]'
+uv sync --all-packages --group dev
 ```
 
 ## Minimal Runnable
@@ -90,6 +90,7 @@ def get_weather(city: str) -> str:
 ```
 
 If `AGENTSEEK_LANGCHAIN_INCLUDE_BUB_TOOLS=true`, the DeepAgents example also appends Bub-bridged tools to its tool list.
+This is only an example factory. The DeepAgents runtime remains user-managed.
 
 ## Remote Agent Protocol
 
@@ -126,3 +127,4 @@ Notes:
 - `AGENTSEEK_AGENT_PROTOCOL_STATEFUL=true` maps each Bub session to a deterministic protocol `thread_id`.
 - The adapter uses `langgraph_sdk.get_client()` as transport, but only relies on the standard `agent_id`, `thread_id`, `messages`, `values`, and `stream_mode` subset.
 - Remote tool execution remains owned by the server-side assistant; local Bub tools are not forwarded into the remote runtime.
+- This is an example factory around a user-managed remote runnable, not a separate plugin mode.

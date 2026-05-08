@@ -28,7 +28,7 @@ class MissingLangChainOpenAIError(DashScopeExampleError):
 
     def __init__(self) -> None:
         super().__init__(
-            "langchain-openai is required for the DashScope deepagents example. Install the langchain extra first."
+            "langchain-openai is required for the DashScope deepagents example. Install the repository dev dependencies first."
         )
 
 
