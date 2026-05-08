@@ -21,7 +21,7 @@ class _Framework:
 
 
 def _deepagents_dashscope_example():
-    return importlib.import_module("agentseek_langchain_examples.deepagents_dashscope")
+    return importlib.import_module("deepagents_dashscope")
 
 
 def test_build_chat_model_uses_bub_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -101,9 +101,7 @@ def test_run_model_with_deepagents_factory(monkeypatch: pytest.MonkeyPatch) -> N
             return self
 
     monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
-    monkeypatch.setenv(
-        "BUB_LANGCHAIN_FACTORY", "agentseek_langchain_examples.deepagents_dashscope:dashscope_deep_agent"
-    )
+    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "deepagents_dashscope:dashscope_deep_agent")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
     monkeypatch.setattr(

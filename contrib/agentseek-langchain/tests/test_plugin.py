@@ -14,9 +14,10 @@ import agentseek_langchain.tools as langchain_tools_module
 import pytest
 from agentseek_langchain.plugin import LangchainPlugin
 from agentseek_langchain.tape_recorder import LangchainTapeCallbackHandler
+from bub.tools import tool as bub_tool
 from langchain_core.callbacks.manager import AsyncCallbackManager
 from republic import StreamEvent as RepublicStreamEvent
-from republic import TapeContext, TapeEntry, Tool
+from republic import TapeContext, TapeEntry, ToolContext
 
 pytest.importorskip("langchain_core")
 
@@ -195,33 +196,23 @@ def test_include_bub_tools_passes_registry_tools_to_factory(monkeypatch: pytest.
     monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_with_tools:factory")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "true")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
+
+    def sample_tool_impl(value: str) -> str:
+        """Sample tool."""
+
+        return f"ok:{value}"
+
+    def context_tool_impl(value: str, *, context: ToolContext) -> str:
+        """Context tool."""
+
+        return f"{context.run_id}:{value}"
+
     monkeypatch.setattr(
         langchain_tools_module,
         "REGISTRY",
         {
-            "sample.tool": Tool(
-                name="sample.tool",
-                description="Sample tool",
-                parameters={
-                    "type": "object",
-                    "properties": {"value": {"type": "string"}},
-                    "required": ["value"],
-                    "additionalProperties": False,
-                },
-                handler=lambda value: f"ok:{value}",
-            ),
-            "context.tool": Tool(
-                name="context.tool",
-                description="Context tool",
-                parameters={
-                    "type": "object",
-                    "properties": {"value": {"type": "string"}},
-                    "required": ["value"],
-                    "additionalProperties": False,
-                },
-                handler=lambda value, *, context: f"{context.run_id}:{value}",
-                context=True,
-            ),
+            "sample.tool": bub_tool(name="sample.tool")(sample_tool_impl),
+            "context.tool": bub_tool(name="context.tool", context=True)(context_tool_impl),
         },
     )
 
@@ -240,7 +231,7 @@ def test_include_bub_tools_passes_registry_tools_to_factory(monkeypatch: pytest.
         def factory(*, request):
             seen["tool_names"] = [tool.name for tool in request.tools]
             seen["tool_count"] = len(request.tools)
-            seen["schemas"] = [tool.args_schema for tool in request.tools]
+            seen["schemas"] = [tool.args_schema.model_json_schema() for tool in request.tools]
             return RunnableBinding(
                 runnable=RunnableLambda(lambda x: x, afunc=_run),
                 invoke_input=request.prompt_text,
@@ -254,7 +245,7 @@ def test_include_bub_tools_passes_registry_tools_to_factory(monkeypatch: pytest.
     module = _import_module("lc_with_tools")
     assert result == "TOOLS:hello"
     assert module.seen["tool_count"] == 2
-    assert module.seen["tool_names"] == ["sample_tool", "context_tool"]
+    assert module.seen["tool_names"] == ["sample.tool", "context.tool"]
     assert module.seen["schemas"][0]["properties"]["value"]["type"] == "string"
 
 
@@ -463,6 +454,8 @@ def test_run_model_stream_falls_back_to_ainvoke_once(monkeypatch: pytest.MonkeyP
         "langchain.chain.start",
         "langchain.chain.end",
     ]
+    tool_result_entry = next(entry for entry in tape.entries if entry.kind == "tool_result")
+    assert tool_result_entry.payload["results"] == [{"ok": "hello"}]
     assert all(entry.meta["session_id"] == "session-5" for entry in tape.entries[1:5])
     assert all(entry.meta["tape_name"] == "tape-x" for entry in tape.entries[1:5])
     assert module.seen_configs[0]["metadata"]["langchain_run_id"].startswith("langchain-")
@@ -537,6 +530,23 @@ def test_tape_recorder_records_tool_error() -> None:
     assert entry.meta["session_id"] == "session-err"
     assert entry.meta["tape_name"] == "tape-err"
     assert entry.meta["langchain_run_id"] == "langchain-root"
+
+
+def test_tape_recorder_records_structured_tool_result() -> None:
+    tape = _RecordingTape()
+    handler = LangchainTapeCallbackHandler(tape, session_id="session-result")
+
+    asyncio.run(
+        handler.on_tool_end(
+            {"answer": {"content": "hello"}, "items": [SimpleNamespace(content="world")]},
+            run_id="run-1",
+        )
+    )
+
+    assert len(tape.entries) == 1
+    entry = tape.entries[0]
+    assert entry.kind == "tool_result"
+    assert entry.payload["results"] == [{"answer": {"content": "hello"}, "items": ["world"]}]
 
 
 def test_tape_recorder_normalizes_tool_metadata() -> None:

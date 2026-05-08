@@ -28,4 +28,4 @@ build-backend = "pdm.backend"
 
 [tool.pdm.build]
 package-dir = "src"
-includes = ["src/agentseek_langchain", "examples/agentseek_langchain_examples"]
+includes = ["src/agentseek_langchain"]

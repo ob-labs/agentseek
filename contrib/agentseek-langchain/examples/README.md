@@ -1,9 +1,9 @@
 # LangChain Examples
 
-These are bundled factories for `agentseek-langchain`.
+These are repository examples for `agentseek-langchain`.
 
-The runnable modules live under `examples/agentseek_langchain_examples/` and are loaded through
-`AGENTSEEK_LANGCHAIN_FACTORY`.
+Each example is a plain Python file under `examples/`. To load one directly, add this directory to
+`PYTHONPATH` and point `AGENTSEEK_LANGCHAIN_FACTORY` at `<module>:<factory>`.
 
 Each factory returns `RunnableBinding`.
 Each factory accepts `request: LangchainFactoryRequest`.
@@ -14,6 +14,12 @@ From the repo root:
 
 ```bash
 uv sync --all-packages
+```
+
+Expose this directory before using the examples directly:
+
+```bash
+export PYTHONPATH="$(pwd)/contrib/agentseek-langchain/examples${PYTHONPATH:+:$PYTHONPATH}"
 ```
 
 For the DashScope DeepAgents example, install the extra runtime deps if they are not already present:
@@ -27,14 +33,14 @@ uv pip install -e 'contrib/agentseek-langchain[deepagents]'
 Factory path:
 
 ```bash
-agentseek_langchain_examples.minimal_runnable:minimal_lc_agent
+minimal_runnable:minimal_lc_agent
 ```
 
 Enable it:
 
 ```bash
 export AGENTSEEK_LANGCHAIN_MODE=runnable
-export AGENTSEEK_LANGCHAIN_FACTORY=agentseek_langchain_examples.minimal_runnable:minimal_lc_agent
+export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
 ```
 
 Run it:
@@ -49,14 +55,14 @@ uv run agentseek run "Summarize this workspace in one sentence."
 Factory path:
 
 ```bash
-agentseek_langchain_examples.deepagents_dashscope:dashscope_deep_agent
+deepagents_dashscope:dashscope_deep_agent
 ```
 
 Enable it:
 
 ```bash
 export AGENTSEEK_LANGCHAIN_MODE=runnable
-export AGENTSEEK_LANGCHAIN_FACTORY=agentseek_langchain_examples.deepagents_dashscope:dashscope_deep_agent
+export AGENTSEEK_LANGCHAIN_FACTORY=deepagents_dashscope:dashscope_deep_agent
 export AGENTSEEK_MODEL=openai:glm-5.1
 export AGENTSEEK_API_KEY=your-dashscope-api-key
 export AGENTSEEK_API_BASE=https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -92,14 +98,14 @@ If `AGENTSEEK_LANGCHAIN_INCLUDE_BUB_TOOLS=true`, the DeepAgents example also app
 Factory path:
 
 ```bash
-agentseek_langchain_examples.remote_agent_protocol:remote_agent_protocol_agent
+remote_agent_protocol:remote_agent_protocol_agent
 ```
 
 Enable it:
 
 ```bash
 export AGENTSEEK_LANGCHAIN_MODE=runnable
-export AGENTSEEK_LANGCHAIN_FACTORY=agentseek_langchain_examples.remote_agent_protocol:remote_agent_protocol_agent
+export AGENTSEEK_LANGCHAIN_FACTORY=remote_agent_protocol:remote_agent_protocol_agent
 export AGENTSEEK_AGENT_PROTOCOL_URL=http://localhost:2024
 export AGENTSEEK_AGENT_PROTOCOL_AGENT_ID=agent
 ```

@@ -47,7 +47,34 @@ def _run_context() -> LangchainRunContext:
 
 
 def _remote_agent_protocol_example():
-    return importlib.import_module("agentseek_langchain_examples.remote_agent_protocol")
+    return importlib.import_module("remote_agent_protocol")
+
+
+def _runnable(
+    *,
+    wait_response: Any = None,
+    stream_parts: list[Any] | None = None,
+    stateful: bool = False,
+    session_id: str | None = None,
+) -> tuple[AgentProtocolRunnable, _FakeClient]:
+    fake_client = _FakeClient(
+        wait_response=wait_response,
+        stream_parts=stream_parts or [],
+    )
+    runnable = AgentProtocolRunnable(
+        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=stateful),
+        session_id=session_id,
+        langchain_context=_run_context(),
+    )
+    runnable._client = fake_client
+    return runnable, fake_client
+
+
+def _collect_stream(runnable: AgentProtocolRunnable, value: Any = "hello") -> list[str]:
+    async def _collect() -> list[str]:
+        return [chunk async for chunk in runnable.astream(value)]
+
+    return asyncio.run(_collect())
 
 
 def test_agent_protocol_runnable_is_langchain_compatible() -> None:
@@ -64,16 +91,11 @@ def test_agent_protocol_runnable_is_langchain_compatible() -> None:
 
 
 def test_ainvoke_uses_deterministic_thread_id_for_stateful_sessions() -> None:
-    fake_client = _FakeClient(
+    runnable, fake_client = _runnable(
         wait_response={"messages": [{"role": "assistant", "content": "remote answer"}]},
-        stream_parts=[],
-    )
-    runnable = AgentProtocolRunnable(
-        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=True),
         session_id="session-1",
-        langchain_context=_run_context(),
+        stateful=True,
     )
-    runnable._client = fake_client
 
     first = asyncio.run(runnable.ainvoke("hello"))
     second = asyncio.run(runnable.ainvoke("again"))
@@ -91,13 +113,7 @@ def test_ainvoke_uses_deterministic_thread_id_for_stateful_sessions() -> None:
 
 
 def test_ainvoke_passes_dict_input_through() -> None:
-    fake_client = _FakeClient(wait_response={"ok": True}, stream_parts=[])
-    runnable = AgentProtocolRunnable(
-        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=False),
-        session_id=None,
-        langchain_context=_run_context(),
-    )
-    runnable._client = fake_client
+    runnable, fake_client = _runnable(wait_response={"ok": True})
 
     payload = {"messages": [{"role": "user", "content": "hi"}], "context": {"mode": "fast"}}
     asyncio.run(runnable.ainvoke(payload))
@@ -108,13 +124,7 @@ def test_ainvoke_passes_dict_input_through() -> None:
 
 
 def test_ainvoke_merges_config_metadata() -> None:
-    fake_client = _FakeClient(wait_response={"ok": True}, stream_parts=[])
-    runnable = AgentProtocolRunnable(
-        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=False),
-        session_id=None,
-        langchain_context=_run_context(),
-    )
-    runnable._client = fake_client
+    runnable, fake_client = _runnable(wait_response={"ok": True})
 
     asyncio.run(runnable.ainvoke("hello", config={"metadata": {"source": "test"}}))
 
@@ -127,8 +137,7 @@ def test_ainvoke_merges_config_metadata() -> None:
 
 
 def test_astream_yields_assistant_message_chunks() -> None:
-    fake_client = _FakeClient(
-        wait_response=None,
+    runnable, fake_client = _runnable(
         stream_parts=[
             {"event": "messages/partial", "data": [{"type": "human", "content": "hello"}]},
             {"event": "messages/partial", "data": [{"type": "ai", "content": "Hel"}]},
@@ -136,17 +145,7 @@ def test_astream_yields_assistant_message_chunks() -> None:
             {"event": "values", "data": {"messages": [{"type": "ai", "content": "Hello"}]}},
         ],
     )
-    runnable = AgentProtocolRunnable(
-        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=False),
-        session_id=None,
-        langchain_context=_run_context(),
-    )
-    runnable._client = fake_client
-
-    async def _collect() -> list[str]:
-        return [chunk async for chunk in runnable.astream("hello")]
-
-    chunks = asyncio.run(_collect())
+    chunks = _collect_stream(runnable)
 
     assert chunks == ["Hel", "lo"]
     assert fake_client.runs.stream_calls[0]["stream_mode"] == ["messages", "values", "updates"]
@@ -154,89 +153,45 @@ def test_astream_yields_assistant_message_chunks() -> None:
 
 
 def test_astream_does_not_duplicate_complete_message_after_partials() -> None:
-    fake_client = _FakeClient(
-        wait_response=None,
+    runnable, _ = _runnable(
         stream_parts=[
             {"event": "messages/partial", "data": [{"type": "ai", "content": "Hel"}]},
             {"event": "messages/partial", "data": [{"type": "ai", "content": "lo"}]},
             {"event": "messages/complete", "data": [{"type": "ai", "content": "Hello"}]},
         ],
     )
-    runnable = AgentProtocolRunnable(
-        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=False),
-        session_id=None,
-        langchain_context=_run_context(),
-    )
-    runnable._client = fake_client
-
-    async def _collect() -> list[str]:
-        return [chunk async for chunk in runnable.astream("hello")]
-
-    assert asyncio.run(_collect()) == ["Hel", "lo"]
+    assert _collect_stream(runnable) == ["Hel", "lo"]
 
 
 def test_astream_falls_back_to_final_state_when_no_message_chunks() -> None:
-    fake_client = _FakeClient(
-        wait_response=None,
+    runnable, _ = _runnable(
         stream_parts=[
             {"event": "values", "data": {"messages": [{"type": "ai", "content": "Final answer"}]}},
         ],
     )
-    runnable = AgentProtocolRunnable(
-        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=False),
-        session_id=None,
-        langchain_context=_run_context(),
-    )
-    runnable._client = fake_client
-
-    async def _collect() -> list[str]:
-        return [chunk async for chunk in runnable.astream("hello")]
-
-    chunks = asyncio.run(_collect())
+    chunks = _collect_stream(runnable)
 
     assert chunks == ["Final answer"]
 
 
 def test_astream_raises_on_remote_error_event() -> None:
-    fake_client = _FakeClient(
-        wait_response=None,
+    runnable, _ = _runnable(
         stream_parts=[
             {"event": "error", "data": {"message": "boom"}},
         ],
     )
-    runnable = AgentProtocolRunnable(
-        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=False),
-        session_id=None,
-        langchain_context=_run_context(),
-    )
-    runnable._client = fake_client
-
-    async def _collect() -> list[str]:
-        return [chunk async for chunk in runnable.astream("hello")]
-
     with pytest.raises(AgentProtocolRemoteError, match="boom"):
-        asyncio.run(_collect())
+        _collect_stream(runnable)
 
 
 def test_astream_raises_on_interrupt_update_event() -> None:
-    fake_client = _FakeClient(
-        wait_response=None,
+    runnable, _ = _runnable(
         stream_parts=[
             {"event": "updates", "data": {"__interrupt__": [{"value": "wait"}]}},
         ],
     )
-    runnable = AgentProtocolRunnable(
-        settings=AgentProtocolSettings(url="http://remote", agent_id="agent", stateful=False),
-        session_id=None,
-        langchain_context=_run_context(),
-    )
-    runnable._client = fake_client
-
-    async def _collect() -> list[str]:
-        return [chunk async for chunk in runnable.astream("hello")]
-
     with pytest.raises(AgentProtocolInterruptedError, match="interrupted"):
-        asyncio.run(_collect())
+        _collect_stream(runnable)
 
 
 def test_remote_example_factory_uses_prompt_and_request_context(

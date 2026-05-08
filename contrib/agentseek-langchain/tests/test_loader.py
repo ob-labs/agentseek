@@ -40,6 +40,16 @@ def test_resolve_runnable_binding_wraps_missing_module_error() -> None:
         resolve_runnable_binding("missing_langchain_factory:factory", _request(Path(".")))
 
 
+def test_resolve_runnable_binding_rejects_invalid_factory_spec() -> None:
+    with pytest.raises(LangchainConfigError, match="Expected 'module:attr'"):
+        resolve_runnable_binding("invalid-factory-spec", _request(Path(".")))
+
+
+def test_resolve_runnable_binding_wraps_missing_attribute_error() -> None:
+    with pytest.raises(LangchainConfigError, match="Failed to resolve factory"):
+        resolve_runnable_binding("json:not_there", _request(Path(".")))
+
+
 def test_resolve_runnable_binding_accepts_explicit_output_parser(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

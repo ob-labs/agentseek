@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from agentseek_langchain.normalize import normalize_langchain_output
+from agentseek_langchain.normalize import normalize_langchain_output, normalize_langchain_value
 
 
 def test_normalize_str() -> None:
@@ -32,3 +32,18 @@ def test_normalize_prefers_output_keys_before_dumping_json() -> None:
         "messages": [{"content": "intermediate"}],
     }
     assert normalize_langchain_output(payload) == "final answer"
+
+
+def test_normalize_value_preserves_mapping_structure() -> None:
+    payload = {
+        "messages": [
+            SimpleNamespace(content="alpha"),
+            {"content": [{"text": "beta"}]},
+        ],
+        "meta": SimpleNamespace(content="gamma"),
+    }
+
+    assert normalize_langchain_value(payload) == {
+        "messages": ["alpha", {"content": [{"text": "beta"}]}],
+        "meta": "gamma",
+    }

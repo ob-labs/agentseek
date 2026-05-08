@@ -19,7 +19,7 @@ class _Framework:
 
 def test_minimal_runnable_factory_works_through_plugin(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
-    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "agentseek_langchain_examples.minimal_runnable:minimal_lc_agent")
+    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "minimal_runnable:minimal_lc_agent")
     monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
     monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
 

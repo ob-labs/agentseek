@@ -1,101 +1,58 @@
 from __future__ import annotations
 
 import inspect
-import re
-from copy import deepcopy
+from functools import wraps
 from typing import Any
 
 from bub.tools import REGISTRY
-from langchain_core.utils.json_schema import dereference_refs
+from langchain_core.tools import tool as langchain_tool
 from republic import Tool, ToolContext
 
 from .errors import LangchainConfigError
 
 
-def _sanitize_tool_name(name: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9_]", "_", name)
+def _raw_bub_handler(bub_tool: Tool) -> Any:
+    handler = bub_tool.handler
+    if handler is None:
+        raise LangchainConfigError(f"Tool {bub_tool.name!r} is schema-only and cannot be executed")
+
+    for cell in handler.__closure__ or ():
+        value = cell.cell_contents
+        if isinstance(value, Tool) and value.handler is not None:
+            return value.handler
+    return handler
 
 
-def _empty_args_schema() -> dict[str, Any]:
-    return {"type": "object", "properties": {}, "additionalProperties": False}
+def _call_signature(handler: Any, *, with_context: bool) -> inspect.Signature:
+    signature = inspect.signature(handler)
+    if with_context:
+        return signature
+    parameters = [parameter for parameter in signature.parameters.values() if parameter.name != "context"]
+    return signature.replace(parameters=parameters)
 
 
-def _args_schema_from_parameters(tool_name: str, parameters: dict[str, Any] | None) -> dict[str, Any]:
-    if not isinstance(parameters, dict):
-        if parameters is None:
-            return _empty_args_schema()
-        raise LangchainConfigError(f"Tool {tool_name!r} parameters must be a JSON schema object")
+def _langchain_callable(bub_tool: Tool, tool_context: ToolContext) -> Any:
+    handler = _raw_bub_handler(bub_tool)
+    signature = _call_signature(handler, with_context=not bub_tool.context)
 
-    if not parameters:
-        return _empty_args_schema()
+    if inspect.iscoroutinefunction(handler):
 
-    schema = _normalize_json_schema(parameters)
-    schema_type = schema.get("type")
-    if schema_type not in (None, "object"):
-        raise LangchainConfigError(f"Tool {tool_name!r} parameters must use an object schema, got {schema_type!r}")
+        @wraps(handler)
+        async def _call(*args: Any, **kwargs: Any) -> Any:
+            if bub_tool.context:
+                kwargs["context"] = tool_context
+            return await handler(*args, **kwargs)
 
-    if schema_type is None:
-        schema["type"] = "object"
+    else:
 
-    properties = schema.get("properties")
-    if properties is None:
-        schema["properties"] = {}
-    elif not isinstance(properties, dict):
-        raise LangchainConfigError(f"Tool {tool_name!r} parameters.properties must be a mapping")
+        @wraps(handler)
+        def _call(*args: Any, **kwargs: Any) -> Any:
+            if bub_tool.context:
+                kwargs["context"] = tool_context
+            return handler(*args, **kwargs)
 
-    schema.setdefault("additionalProperties", False)
-    return schema
-
-
-def _collect_nested_defs(obj: Any, defs_key: str, collected: dict[str, Any]) -> None:
-    if isinstance(obj, dict):
-        nested_defs = obj.get(defs_key)
-        if isinstance(nested_defs, dict):
-            for name, value in nested_defs.items():
-                collected.setdefault(name, deepcopy(value))
-        for value in obj.values():
-            _collect_nested_defs(value, defs_key, collected)
-        return
-    if isinstance(obj, list):
-        for item in obj:
-            _collect_nested_defs(item, defs_key, collected)
-
-
-def _normalize_json_schema(parameters: dict[str, Any]) -> dict[str, Any]:
-    schema = deepcopy(parameters)
-    for defs_key in ("$defs", "definitions"):
-        collected: dict[str, Any] = {}
-        _collect_nested_defs(schema, defs_key, collected)
-        if collected:
-            root_defs = schema.get(defs_key)
-            if isinstance(root_defs, dict):
-                collected = {**collected, **root_defs}
-            schema[defs_key] = collected
-    normalized = dereference_refs(schema)
-    normalized.pop("$defs", None)
-    normalized.pop("definitions", None)
-    return normalized
-
-
-def _build_tool_call_kwargs(
-    *,
-    bub_tool: Tool,
-    tool_context: ToolContext,
-    kwargs: dict[str, Any],
-) -> dict[str, Any]:
-    call_kwargs = dict(kwargs)
-    if bub_tool.context:
-        call_kwargs["context"] = tool_context
-    return call_kwargs
-
-
-def _run_bub_tool(
-    *,
-    bub_tool: Tool,
-    tool_context: ToolContext,
-    kwargs: dict[str, Any],
-) -> Any:
-    return bub_tool.run(**_build_tool_call_kwargs(bub_tool=bub_tool, tool_context=tool_context, kwargs=kwargs))
+    _call.__signature__ = signature
+    return _call
 
 
 def bub_tool_to_langchain(
@@ -104,29 +61,10 @@ def bub_tool_to_langchain(
     tool_context: ToolContext,
     tool_name: str | None = None,
 ) -> Any:
-    from langchain_core.tools import StructuredTool
-
-    langchain_name = tool_name or _sanitize_tool_name(bub_tool.name)
-
-    async def _async_call(**kwargs: Any) -> Any:
-        result = _run_bub_tool(bub_tool=bub_tool, tool_context=tool_context, kwargs=kwargs)
-        if inspect.isawaitable(result):
-            result = await result
-        return result
-
-    def _sync_call(**kwargs: Any) -> Any:
-        result = _run_bub_tool(bub_tool=bub_tool, tool_context=tool_context, kwargs=kwargs)
-        if inspect.isawaitable(result):
-            raise TypeError(f"Tool {bub_tool.name!r} returned awaitable in sync path")
-        return result
-
-    return StructuredTool.from_function(
-        func=_sync_call,
-        coroutine=_async_call,
-        name=langchain_name,
+    return langchain_tool(
+        tool_name or bub_tool.name,
         description=bub_tool.description or bub_tool.name,
-        args_schema=_args_schema_from_parameters(bub_tool.name, bub_tool.parameters),
-    )
+    )(_langchain_callable(bub_tool, tool_context))
 
 
 def bub_registry_to_langchain_tools(
@@ -135,15 +73,8 @@ def bub_registry_to_langchain_tools(
     include_names: set[str] | None = None,
 ) -> list[Any]:
     results: list[Any] = []
-    seen_names: dict[str, str] = {}
-    for name, bub_tool in REGISTRY.items():
-        if include_names is not None and name not in include_names:
+    for registry_name, bub_tool in REGISTRY.items():
+        if include_names is not None and registry_name not in include_names:
             continue
-        langchain_name = _sanitize_tool_name(bub_tool.name)
-        if existing_name := seen_names.get(langchain_name):
-            raise LangchainConfigError(
-                f"Tools {existing_name!r} and {bub_tool.name!r} map to the same LangChain name {langchain_name!r}"
-            )
-        seen_names[langchain_name] = bub_tool.name
-        results.append(bub_tool_to_langchain(bub_tool, tool_context=tool_context, tool_name=langchain_name))
+        results.append(bub_tool_to_langchain(bub_tool, tool_context=tool_context))
     return results

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import json
 from typing import Any, Protocol
 
 from langchain_core.callbacks import AsyncCallbackHandler
 from republic import TapeEntry
 
-from .normalize import normalize_langchain_output
+from .normalize import normalize_langchain_value
 
 
 class TapeAppender(Protocol):
@@ -52,7 +51,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             run_id=str(run_id),
             parent_run_id=str(parent_run_id) if parent_run_id is not None else None,
             tags=list(tags) if tags else None,
-            metadata=self._jsonable(metadata) if metadata else None,
+            metadata=normalize_langchain_value(metadata) if metadata else None,
             **extra,
         )
 
@@ -72,21 +71,6 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         **meta: Any,
     ) -> None:
         await self._append_event(name, data={"error": str(error)}, **meta)
-
-    def _jsonable(self, value: Any) -> Any:
-        if value is None or isinstance(value, str | int | float | bool):
-            return value
-        if isinstance(value, dict):
-            return {str(key): self._jsonable(item) for key, item in value.items()}
-        if isinstance(value, list | tuple):
-            return [self._jsonable(item) for item in value]
-        if hasattr(value, "content"):
-            return normalize_langchain_output(value)
-        try:
-            json.dumps(value)
-        except TypeError:
-            return str(value)
-        return value
 
     def _serialized_name(self, serialized: Any) -> str:
         if not isinstance(serialized, dict):
@@ -195,7 +179,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         **_: Any,
     ) -> None:
         await self._append_tool_result(
-            result=normalize_langchain_output(output),
+            result=normalize_langchain_value(output),
             run_id=run_id,
             parent_run_id=parent_run_id,
             tags=tags,
@@ -234,7 +218,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             parent_run_id=parent_run_id,
             data={
                 "name": self._serialized_name(serialized),
-                "inputs": self._jsonable(inputs),
+                "inputs": normalize_langchain_value(inputs),
             },
             tags=tags,
             metadata=metadata,
@@ -253,7 +237,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             "langchain.chain.end",
             run_id=run_id,
             parent_run_id=parent_run_id,
-            data={"outputs": self._jsonable(outputs)},
+            data={"outputs": normalize_langchain_value(outputs)},
             tags=tags,
         )
 
@@ -291,7 +275,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             parent_run_id=parent_run_id,
             data={
                 "name": self._serialized_name(serialized),
-                "messages": self._jsonable(messages),
+                "messages": normalize_langchain_value(messages),
             },
             tags=tags,
             metadata=metadata,
@@ -314,7 +298,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             parent_run_id=parent_run_id,
             data={
                 "name": self._serialized_name(serialized),
-                "prompts": self._jsonable(prompts),
+                "prompts": normalize_langchain_value(prompts),
             },
             tags=tags,
             metadata=metadata,
@@ -333,7 +317,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             "langchain.llm.end",
             run_id=run_id,
             parent_run_id=parent_run_id,
-            data={"response": self._jsonable(response)},
+            data={"response": normalize_langchain_value(response)},
             tags=tags,
         )
 
@@ -367,7 +351,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         await self._append_run_event(
             f"langchain.custom.{name}",
             run_id=run_id,
-            data={"data": self._jsonable(data)},
+            data={"data": normalize_langchain_value(data)},
             tags=tags,
             metadata=metadata,
         )

@@ -1,176 +1,113 @@
-from __future__ import annotations
-
 import asyncio
 
-import agentseek_langchain.tools as langchain_tools_module
 import pytest
 from agentseek_langchain.errors import LangchainConfigError
-from agentseek_langchain.tools import bub_registry_to_langchain_tools, bub_tool_to_langchain
+from agentseek_langchain.tools import bub_tool_to_langchain
+from bub.tools import tool as bub_tool
 from langchain_core.utils.function_calling import convert_to_openai_tool
+from pydantic import BaseModel
 from republic import Tool, ToolContext
 
 
-def test_bub_tool_to_langchain_preserves_nested_json_schema() -> None:
-    parameters = {
-        "type": "object",
-        "properties": {
-            "query": {
-                "type": "string",
-                "minLength": 1,
-            },
-            "filters": {
-                "type": "object",
-                "properties": {
-                    "mode": {
-                        "type": "string",
-                        "enum": ["and", "or"],
-                    },
-                    "tags": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "minItems": 1,
-                    },
-                },
-                "required": ["mode", "tags"],
-                "additionalProperties": False,
-            },
-        },
-        "required": ["query", "filters"],
-        "additionalProperties": False,
-    }
-    bub_tool = Tool(
-        name="search-docs",
-        description="Search docs",
-        parameters=parameters,
-        handler=lambda **kwargs: kwargs,
-    )
+class Filters(BaseModel):
+    mode: str
+    tags: list[str]
 
+
+class MessageMedia(BaseModel):
+    media_type: str
+    file_path: str
+
+
+class MessagePayload(BaseModel):
+    text: str
+    media: MessageMedia | None = None
+
+
+@bub_tool(name="search-docs")
+def search_docs(query: str, filters: Filters) -> dict[str, object]:
+    """Search docs."""
+
+    return {
+        "query": query,
+        "filters": filters.model_dump(),
+    }
+
+
+@bub_tool(name="sample.tool", context=True)
+def sample_tool(value: str, *, context: ToolContext) -> str:
+    """Sample tool."""
+
+    return f"{context.run_id}:{value}"
+
+
+@bub_tool(name="wechat")
+def send_wechat(message: MessagePayload) -> dict[str, object]:
+    """Send a WeChat message."""
+
+    return message.model_dump()
+
+
+@bub_tool(name="async.tool", context=True)
+async def async_tool(value: str, *, context: ToolContext) -> str:
+    """Async tool."""
+
+    return f"{context.run_id}:{value}"
+
+
+def test_bub_tool_to_langchain_uses_bub_function_schema() -> None:
     langchain_tool = bub_tool_to_langchain(
-        bub_tool,
+        search_docs,
         tool_context=ToolContext(tape=None, run_id="run-1", state={}),
     )
 
-    assert isinstance(langchain_tool.args_schema, dict)
-    assert langchain_tool.tool_call_schema["properties"]["filters"]["properties"]["mode"]["enum"] == ["and", "or"]
-    assert langchain_tool.tool_call_schema["properties"]["filters"]["properties"]["tags"]["items"] == {"type": "string"}
+    openai_tool = convert_to_openai_tool(langchain_tool)
+    filters_schema = openai_tool["function"]["parameters"]["properties"]["filters"]
+
+    assert langchain_tool.name == "search-docs"
+    assert filters_schema["properties"]["mode"]["type"] == "string"
+    assert filters_schema["properties"]["tags"]["items"] == {"type": "string"}
 
 
 def test_bub_tool_to_langchain_passes_context_to_handler() -> None:
-    seen: dict[str, object] = {}
-
-    def handler(value: str, *, context: ToolContext) -> str:
-        seen["value"] = value
-        seen["context"] = context
-        return f"ok:{value}"
-
-    bub_tool = Tool(
-        name="sample.tool",
-        description="Sample tool",
-        parameters={
-            "type": "object",
-            "properties": {"value": {"type": "string"}},
-            "required": ["value"],
-            "additionalProperties": False,
-        },
-        handler=handler,
-        context=True,
-    )
     tool_context = ToolContext(tape="tape-x", run_id="run-1", state={"x": 1})
 
-    langchain_tool = bub_tool_to_langchain(bub_tool, tool_context=tool_context)
-    result = asyncio.run(langchain_tool.ainvoke({"value": "hi"}))
+    langchain_tool = bub_tool_to_langchain(sample_tool, tool_context=tool_context)
+    result = langchain_tool.invoke({"value": "hi"})
 
-    assert result == "ok:hi"
-    assert seen == {
-        "value": "hi",
-        "context": tool_context,
-    }
+    assert langchain_tool.name == "sample.tool"
+    assert result == "run-1:hi"
 
 
-def test_bub_tool_to_langchain_normalizes_nested_defs_schema() -> None:
-    parameters = {
-        "type": "object",
-        "properties": {
-            "message": {
-                "$defs": {
-                    "OutgoingMedia": {
-                        "type": "object",
-                        "properties": {
-                            "media_type": {"type": "string", "enum": ["image", "video", "file"]},
-                            "file_path": {"type": "string"},
-                        },
-                        "required": ["media_type", "file_path"],
-                    }
-                },
-                "type": "object",
-                "properties": {
-                    "text": {"type": "string"},
-                    "media": {
-                        "anyOf": [
-                            {"$ref": "#/$defs/OutgoingMedia"},
-                            {"type": "null"},
-                        ]
-                    },
-                },
-                "required": ["text"],
-            }
-        },
-        "required": ["message"],
-    }
-    bub_tool = Tool(
-        name="wechat",
-        description="Send a WeChat message",
-        parameters=parameters,
-        handler=lambda **kwargs: kwargs,
-    )
-
+def test_bub_tool_to_langchain_supports_nested_pydantic_models() -> None:
     langchain_tool = bub_tool_to_langchain(
-        bub_tool,
+        send_wechat,
         tool_context=ToolContext(tape=None, run_id="run-1", state={}),
     )
     openai_tool = convert_to_openai_tool(langchain_tool)
 
     media_schema = openai_tool["function"]["parameters"]["properties"]["message"]["properties"]["media"]["anyOf"][0]
-    assert media_schema["properties"]["media_type"]["enum"] == ["image", "video", "file"]
+    assert media_schema["properties"]["media_type"]["type"] == "string"
     assert media_schema["properties"]["file_path"]["type"] == "string"
 
 
-def test_bub_tool_to_langchain_rejects_non_object_schema() -> None:
-    bub_tool = Tool(
-        name="bad-schema",
-        description="Bad schema tool",
-        parameters={"type": "array", "items": {"type": "string"}},
-        handler=lambda **kwargs: kwargs,
+def test_bub_tool_to_langchain_supports_async_handlers() -> None:
+    tool_context = ToolContext(tape=None, run_id="run-async", state={})
+    langchain_tool = bub_tool_to_langchain(async_tool, tool_context=tool_context)
+
+    assert asyncio.run(langchain_tool.ainvoke({"value": "hi"})) == "run-async:hi"
+
+
+def test_bub_tool_to_langchain_rejects_schema_only_tool() -> None:
+    bub_tool_instance = Tool(
+        name="schema.only",
+        description="Schema only",
+        parameters={},
+        handler=None,
     )
 
-    with pytest.raises(LangchainConfigError, match="object schema"):
+    with pytest.raises(LangchainConfigError, match="schema-only"):
         bub_tool_to_langchain(
-            bub_tool,
-            tool_context=ToolContext(tape=None, run_id="run-1", state={}),
-        )
-
-
-def test_bub_registry_to_langchain_tools_rejects_name_collisions(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        langchain_tools_module,
-        "REGISTRY",
-        {
-            "a-b": Tool(
-                name="a-b",
-                description="First",
-                parameters={},
-                handler=lambda **kwargs: kwargs,
-            ),
-            "a_b": Tool(
-                name="a_b",
-                description="Second",
-                parameters={},
-                handler=lambda **kwargs: kwargs,
-            ),
-        },
-    )
-
-    with pytest.raises(LangchainConfigError, match="same LangChain name"):
-        bub_registry_to_langchain_tools(
+            bub_tool_instance,
             tool_context=ToolContext(tape=None, run_id="run-1", state={}),
         )

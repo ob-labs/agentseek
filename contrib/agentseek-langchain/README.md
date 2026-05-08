@@ -30,13 +30,19 @@ If you want the DashScope DeepAgents example too:
 uv pip install -e 'contrib/agentseek-langchain[deepagents]'
 ```
 
+If you want to run the repository examples directly, expose `examples/` on `PYTHONPATH`:
+
+```bash
+export PYTHONPATH="$(pwd)/contrib/agentseek-langchain/examples${PYTHONPATH:+:$PYTHONPATH}"
+```
+
 ## Enable
 
 Set:
 
 ```bash
 export AGENTSEEK_LANGCHAIN_MODE=runnable
-export AGENTSEEK_LANGCHAIN_FACTORY=agentseek_langchain_examples.minimal_runnable:minimal_lc_agent
+export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
 ```
 
 Optional flags:
@@ -57,18 +63,18 @@ The factory must return `RunnableBinding`.
 
 ## Examples
 
-Bundled examples live under [`examples/agentseek_langchain_examples/`](examples/agentseek_langchain_examples):
+Bundled examples are plain Python files under [`examples/`](examples/):
 
-- [minimal_runnable.py](examples/agentseek_langchain_examples/minimal_runnable.py)
-- [deepagents_dashscope.py](examples/agentseek_langchain_examples/deepagents_dashscope.py)
-- [remote_agent_protocol.py](examples/agentseek_langchain_examples/remote_agent_protocol.py)
+- [minimal_runnable.py](examples/minimal_runnable.py)
+- [deepagents_dashscope.py](examples/deepagents_dashscope.py)
+- [remote_agent_protocol.py](examples/remote_agent_protocol.py)
 - [examples/README.md](examples/README.md)
 
 Typical minimal run:
 
 ```bash
 export AGENTSEEK_LANGCHAIN_MODE=runnable
-export AGENTSEEK_LANGCHAIN_FACTORY=agentseek_langchain_examples.minimal_runnable:minimal_lc_agent
+export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
 uv run agentseek run "Summarize this workspace in one sentence."
 ```
 
@@ -76,7 +82,7 @@ Typical remote agent-protocol run:
 
 ```bash
 export AGENTSEEK_LANGCHAIN_MODE=runnable
-export AGENTSEEK_LANGCHAIN_FACTORY=agentseek_langchain_examples.remote_agent_protocol:remote_agent_protocol_agent
+export AGENTSEEK_LANGCHAIN_FACTORY=remote_agent_protocol:remote_agent_protocol_agent
 export AGENTSEEK_AGENT_PROTOCOL_URL=http://localhost:2024
 export AGENTSEEK_AGENT_PROTOCOL_AGENT_ID=agent
 uv run agentseek chat
