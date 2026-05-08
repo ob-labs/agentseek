@@ -5,7 +5,7 @@ from typing import Any
 
 from agentseek_langchain import AgentProtocolRunnable, RunnableBinding, load_agent_protocol_settings
 from agentseek_langchain.bridge import LangchainFactoryRequest
-from agentseek_langchain.normalize import normalize_langchain_output
+from agentseek_langchain.normalize import to_text
 
 
 def _extract_visible_text_blocks(payload: Any) -> str:
@@ -24,7 +24,7 @@ def _extract_visible_text_blocks(payload: Any) -> str:
 
 
 def _parse_remote_agent_output(value: Any) -> str:
-    text = normalize_langchain_output(value)
+    text = to_text(value)
     stripped = text.strip()
     if not stripped or stripped[0] not in "[{":
         return text
@@ -53,4 +53,5 @@ def remote_agent_protocol_agent(
         runnable=runnable,
         invoke_input=request.prompt,
         output_parser=_parse_remote_agent_output,
+        stream_parser=to_text,
     )

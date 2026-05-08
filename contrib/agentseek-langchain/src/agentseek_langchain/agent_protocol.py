@@ -4,16 +4,68 @@ import asyncio
 import hashlib
 import json
 from collections.abc import AsyncIterator, Mapping
-from typing import Any
+from typing import Any, Self
 
 from langchain_core.runnables import Runnable, RunnableConfig
 from loguru import logger
+from pydantic import AliasChoices, Field, ValidationError, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .bridge import LangchainRunContext, extract_prompt_text
-from .config import AgentProtocolSettings
-from .normalize import normalize_langchain_output
+from .bridge import LangchainRunContext
+from .errors import LangchainConfigError
+from .normalize import to_input, to_text
 
 INTERRUPT_KEY = "__interrupt__"
+
+
+class AgentProtocolSettings(BaseSettings):
+    """Configuration for the remote agent-protocol runnable adapter."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    url: str = Field(
+        default="",
+        validation_alias=AliasChoices("BUB_AGENT_PROTOCOL_URL", "AGENTSEEK_AGENT_PROTOCOL_URL"),
+    )
+    agent_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("BUB_AGENT_PROTOCOL_AGENT_ID", "AGENTSEEK_AGENT_PROTOCOL_AGENT_ID"),
+    )
+
+    @model_validator(mode="after")
+    def _require_url_and_agent_id(self) -> Self:
+        if not self.url.strip():
+            raise ValueError(
+                "Set BUB_AGENT_PROTOCOL_URL or AGENTSEEK_AGENT_PROTOCOL_URL (remote agent-protocol base URL)."
+            )
+        if not self.agent_id.strip():
+            raise ValueError("Set BUB_AGENT_PROTOCOL_AGENT_ID or AGENTSEEK_AGENT_PROTOCOL_AGENT_ID (remote agent id).")
+        return self
+
+    api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "BUB_AGENT_PROTOCOL_API_KEY",
+            "AGENTSEEK_AGENT_PROTOCOL_API_KEY",
+            "BUB_API_KEY",
+            "AGENTSEEK_API_KEY",
+        ),
+    )
+    stateful: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("BUB_AGENT_PROTOCOL_STATEFUL", "AGENTSEEK_AGENT_PROTOCOL_STATEFUL"),
+    )
+
+
+def load_agent_protocol_settings() -> AgentProtocolSettings:
+    try:
+        return AgentProtocolSettings()
+    except ValidationError as exc:
+        raise LangchainConfigError(str(exc)) from exc
 
 
 def _bind_logger(run_context: LangchainRunContext | None):
@@ -75,7 +127,7 @@ def _raise_for_stream_part(part: Any) -> None:
         return
 
     if event.startswith("error"):
-        detail = normalize_langchain_output(_stream_event_data(part))
+        detail = to_text(_stream_event_data(part))
         message = detail or "Remote agent-protocol run failed"
         raise AgentProtocolRemoteError(message)
 
@@ -105,7 +157,7 @@ def _messages_from_stream_part(part: Any) -> tuple[str | None, list[Mapping[str,
 
 
 def _text_from_message(message: Mapping[str, Any]) -> str:
-    return normalize_langchain_output(dict(message))
+    return to_text(dict(message))
 
 
 def _final_state_from_stream_part(part: Any) -> Any | None:
@@ -213,7 +265,7 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
                 yield text
 
         if not emitted and final_state is not None:
-            fallback_text = normalize_langchain_output(final_state)
+            fallback_text = to_text(final_state)
             if fallback_text:
                 yield fallback_text
 
@@ -228,10 +280,7 @@ class AgentProtocolRunnable(Runnable[Any, Any]):
         return self._client
 
     def _build_run_input(self, value: Any) -> dict[str, Any]:
-        if isinstance(value, dict):
-            return value
-        prompt_text = extract_prompt_text(value) if isinstance(value, str | list) else normalize_langchain_output(value)
-        return {"messages": [{"role": "user", "content": prompt_text}]}
+        return to_input(value)
 
     def _build_metadata(self, config: Mapping[str, Any] | None) -> dict[str, Any]:
         metadata: dict[str, Any] = {}

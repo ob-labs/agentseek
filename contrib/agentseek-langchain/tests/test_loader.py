@@ -40,6 +40,37 @@ def test_resolve_runnable_binding_wraps_missing_module_error() -> None:
         resolve_runnable_binding("missing_langchain_factory:factory", _request(Path(".")))
 
 
+def test_resolve_runnable_binding_sets_default_output_and_stream_parser(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.syspath_prepend(str(tmp_path))
+    _write_module(
+        tmp_path,
+        "lc_default_binding_factory",
+        """
+        from agentseek_langchain import RunnableBinding
+        from langchain_core.runnables import RunnableLambda
+
+        def factory(*, request):
+            return RunnableBinding(
+                runnable=RunnableLambda(lambda _: {"answer": request.prompt_text}),
+                invoke_input=request.prompt_text,
+            )
+        """,
+    )
+
+    binding = resolve_runnable_binding(
+        "lc_default_binding_factory:factory",
+        _request(tmp_path),
+    )
+
+    assert binding.output_parser is not None
+    assert binding.stream_parser is not None
+    assert binding.output_parser({"answer": "ok"}) == "ok"
+    assert binding.stream_parser({"answer": "ok"}) == "ok"
+
+
 def test_resolve_runnable_binding_rejects_invalid_factory_spec() -> None:
     with pytest.raises(LangchainConfigError, match="Expected 'module:attr'"):
         resolve_runnable_binding("invalid-factory-spec", _request(Path(".")))

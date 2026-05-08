@@ -16,20 +16,18 @@ from .bridge import (
     LangchainFactoryRequest,
     LangchainRunContext,
     RunnableBinding,
-    build_runnable_config,
 )
 from .config import LangchainPluginSettings, is_enabled, load_settings, validate_config
 from .loader import resolve_runnable_binding
-from .normalize import normalize_langchain_output
+from .runnable_executor import RunnableExecutor
 from .tape_recorder import LangchainTapeCallbackHandler
 from .tools import bub_registry_to_langchain_tools
 
 
 @dataclass(frozen=True)
 class _PreparedInvocation:
-    binding: RunnableBinding
     request: LangchainFactoryRequest
-    invoke_kwargs: dict[str, Any]
+    executor: RunnableExecutor
 
 
 class LangchainPlugin:
@@ -180,19 +178,6 @@ class LangchainPlugin:
         bound_logger.debug("Resolved LangChain runnable")
         return binding, request
 
-    def _invoke_kwargs(
-        self,
-        *,
-        run_context: LangchainRunContext,
-        callbacks: list[Any],
-    ) -> dict[str, Any]:
-        return {
-            "config": build_runnable_config(
-                langchain_context=run_context,
-                callbacks=callbacks,
-            )
-        }
-
     def _prepare_invocation(
         self,
         *,
@@ -216,16 +201,13 @@ class LangchainPlugin:
             run_context=request.langchain_context,
         )
         return _PreparedInvocation(
-            binding=binding,
             request=request,
-            invoke_kwargs=self._invoke_kwargs(
+            executor=RunnableExecutor(
+                binding=binding,
                 run_context=request.langchain_context,
                 callbacks=callbacks,
             ),
         )
-
-    def _parse_output(self, binding: RunnableBinding, output: Any) -> str:
-        return cast(Any, binding.output_parser)(output)
 
     async def _append_tape_message(
         self,
@@ -264,11 +246,7 @@ class LangchainPlugin:
         )
 
         bound_logger.debug("Invoking LangChain runnable")
-        output = await invocation.binding.runnable.ainvoke(
-            invocation.binding.invoke_input,
-            **invocation.invoke_kwargs,
-        )
-        normalized = self._parse_output(invocation.binding, output)
+        normalized = await invocation.executor.ainvoke_text()
         bound_logger.debug("LangChain runnable completed")
 
         await self._append_tape_message(
@@ -305,27 +283,15 @@ class LangchainPlugin:
                 role="user",
                 content=invocation.request.prompt_text,
             )
-            astream = getattr(invocation.binding.runnable, "astream", None)
-            if callable(astream) and invocation.binding.output_parser is normalize_langchain_output:
+            astream = getattr(invocation.executor.binding.runnable, "astream", None)
+            if callable(astream) and invocation.executor.binding.stream_parser is not None:
                 bound_logger.debug("Streaming LangChain runnable")
-                async for chunk in astream(invocation.binding.invoke_input, **invocation.invoke_kwargs):
-                    text = normalize_langchain_output(chunk)
-                    if not text:
-                        continue
-                    assistant_parts.append(text)
-                    yield StreamEvent("text", {"delta": text})
+            elif callable(astream):
+                bound_logger.debug("Runnable has no stream parser; falling back to ainvoke for stable final output")
             else:
-                if callable(astream):
-                    bound_logger.debug(
-                        "Custom output parser configured; falling back to ainvoke for stable final output"
-                    )
-                else:
-                    bound_logger.debug("LangChain runnable has no astream; falling back to ainvoke")
-                output = await invocation.binding.runnable.ainvoke(
-                    invocation.binding.invoke_input,
-                    **invocation.invoke_kwargs,
-                )
-                text = self._parse_output(invocation.binding, output)
+                bound_logger.debug("LangChain runnable has no astream; falling back to ainvoke")
+
+            async for text in invocation.executor.astream_text():
                 assistant_parts.append(text)
                 yield StreamEvent("text", {"delta": text})
 

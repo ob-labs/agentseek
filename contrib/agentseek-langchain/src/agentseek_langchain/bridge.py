@@ -7,7 +7,10 @@ from typing import Any
 
 from bub.types import State
 
+from .normalize import to_text
+
 OutputParser = Callable[[Any], str]
+StreamParser = Callable[[Any], str]
 
 
 @dataclass(frozen=True)
@@ -51,7 +54,7 @@ class LangchainFactoryRequest:
 
     @property
     def prompt_text(self) -> str:
-        return extract_prompt_text(self.prompt)
+        return to_text(self.prompt)
 
 
 @dataclass(frozen=True)
@@ -59,22 +62,7 @@ class RunnableBinding:
     runnable: Any
     invoke_input: Any
     output_parser: OutputParser | None = None
-
-
-def extract_prompt_text(prompt: str | list[dict[str, Any]]) -> str:
-    if isinstance(prompt, str):
-        return prompt
-
-    texts: list[str] = []
-    for part in prompt:
-        if not isinstance(part, dict):
-            continue
-        if part.get("type") != "text":
-            continue
-        text = part.get("text")
-        if isinstance(text, str) and text.strip():
-            texts.append(text)
-    return "\n".join(texts).strip()
+    stream_parser: StreamParser | None = None
 
 
 def build_runnable_config(

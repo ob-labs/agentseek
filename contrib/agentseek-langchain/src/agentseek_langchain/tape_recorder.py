@@ -5,7 +5,7 @@ from typing import Any, Protocol
 from langchain_core.callbacks import AsyncCallbackHandler
 from republic import TapeEntry
 
-from .normalize import normalize_langchain_value
+from .normalize import to_record
 
 
 class TapeAppender(Protocol):
@@ -51,7 +51,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             run_id=str(run_id),
             parent_run_id=str(parent_run_id) if parent_run_id is not None else None,
             tags=list(tags) if tags else None,
-            metadata=normalize_langchain_value(metadata) if metadata else None,
+            metadata=to_record(metadata) if metadata else None,
             **extra,
         )
 
@@ -179,7 +179,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         **_: Any,
     ) -> None:
         await self._append_tool_result(
-            result=normalize_langchain_value(output),
+            result=to_record(output),
             run_id=run_id,
             parent_run_id=parent_run_id,
             tags=tags,
@@ -218,7 +218,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             parent_run_id=parent_run_id,
             data={
                 "name": self._serialized_name(serialized),
-                "inputs": normalize_langchain_value(inputs),
+                "inputs": to_record(inputs),
             },
             tags=tags,
             metadata=metadata,
@@ -237,7 +237,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             "langchain.chain.end",
             run_id=run_id,
             parent_run_id=parent_run_id,
-            data={"outputs": normalize_langchain_value(outputs)},
+            data={"outputs": to_record(outputs)},
             tags=tags,
         )
 
@@ -275,7 +275,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             parent_run_id=parent_run_id,
             data={
                 "name": self._serialized_name(serialized),
-                "messages": normalize_langchain_value(messages),
+                "messages": to_record(messages),
             },
             tags=tags,
             metadata=metadata,
@@ -298,7 +298,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             parent_run_id=parent_run_id,
             data={
                 "name": self._serialized_name(serialized),
-                "prompts": normalize_langchain_value(prompts),
+                "prompts": to_record(prompts),
             },
             tags=tags,
             metadata=metadata,
@@ -317,7 +317,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
             "langchain.llm.end",
             run_id=run_id,
             parent_run_id=parent_run_id,
-            data={"response": normalize_langchain_value(response)},
+            data={"response": to_record(response)},
             tags=tags,
         )
 
@@ -351,7 +351,7 @@ class LangchainTapeCallbackHandler(AsyncCallbackHandler):
         await self._append_run_event(
             f"langchain.custom.{name}",
             run_id=run_id,
-            data={"data": normalize_langchain_value(data)},
+            data={"data": to_record(data)},
             tags=tags,
             metadata=metadata,
         )

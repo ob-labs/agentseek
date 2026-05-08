@@ -7,7 +7,7 @@ from typing import Any
 
 from .bridge import LangchainFactoryRequest, RunnableBinding
 from .errors import LangchainConfigError
-from .normalize import normalize_langchain_output
+from .normalize import to_text
 
 
 def _factory_error(factory: str, message: str) -> LangchainConfigError:
@@ -51,10 +51,17 @@ def _normalize_factory_result(value: Any, *, factory: str) -> RunnableBinding:
     ensure_runnable(value.runnable, factory=factory)
 
     if value.output_parser is None:
-        return replace(value, output_parser=normalize_langchain_output)
+        return replace(
+            value,
+            output_parser=to_text,
+            stream_parser=to_text,
+        )
 
     if not callable(value.output_parser):
         raise _factory_error(factory, f"Expected output parser to be callable, got {type(value.output_parser)!r}")
+
+    if value.stream_parser is not None and not callable(value.stream_parser):
+        raise _factory_error(factory, f"Expected stream parser to be callable, got {type(value.stream_parser)!r}")
 
     return value
 

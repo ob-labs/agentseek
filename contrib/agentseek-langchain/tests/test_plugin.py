@@ -512,6 +512,61 @@ def test_run_model_stream_uses_ainvoke_when_binding_has_custom_output_parser(
     ]
 
 
+def test_run_model_stream_uses_custom_stream_parser_when_declared(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.setenv("BUB_LANGCHAIN_MODE", "runnable")
+    monkeypatch.setenv("BUB_LANGCHAIN_FACTORY", "lc_stream_parser_binding:factory")
+    monkeypatch.setenv("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "false")
+    monkeypatch.setenv("BUB_LANGCHAIN_TAPE", "false")
+
+    _write_module(
+        tmp_path,
+        "lc_stream_parser_binding",
+        """
+        from agentseek_langchain import RunnableBinding
+
+        class StatefulRunnable:
+            def invoke(self, _input, config=None):
+                return {"answer": "SYNC"}
+
+            async def ainvoke(self, _input, config=None):
+                return {"answer": "FINAL"}
+
+            async def astream(self, _input, config=None):
+                yield {"chunk": "alpha"}
+                yield {"chunk": "beta"}
+
+        def parse_output(payload):
+            return payload["answer"]
+
+        def parse_stream(payload):
+            return payload["chunk"]
+
+        def factory(*, request):
+            return RunnableBinding(
+                runnable=StatefulRunnable(),
+                invoke_input=request.prompt_text,
+                output_parser=parse_output,
+                stream_parser=parse_stream,
+            )
+        """,
+    )
+
+    plugin = LangchainPlugin(_Framework())
+    stream = asyncio.run(plugin.run_model_stream("hello", session_id="session-stream-parser", state={}))
+
+    assert stream is not None
+    events = asyncio.run(_collect_events(stream))
+    assert [(event.kind, event.data) for event in events] == [
+        ("text", {"delta": "alpha"}),
+        ("text", {"delta": "beta"}),
+        ("final", {"text": "alphabeta", "ok": True}),
+    ]
+
+
 def test_tape_recorder_records_tool_error() -> None:
     tape = _RecordingTape()
     handler = LangchainTapeCallbackHandler(

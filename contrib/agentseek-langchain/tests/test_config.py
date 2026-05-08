@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pytest
+from agentseek_langchain.agent_protocol import load_agent_protocol_settings
 from agentseek_langchain.config import (
     LangchainPluginSettings,
-    load_agent_protocol_settings,
     validate_config,
 )
 from agentseek_langchain.errors import LangchainConfigError

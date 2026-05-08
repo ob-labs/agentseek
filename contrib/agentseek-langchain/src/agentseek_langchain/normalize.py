@@ -23,17 +23,34 @@ def _message_content(value: Any) -> Any:
     return _MISSING
 
 
-def normalize_langchain_value(value: Any) -> Any:
+def _prompt_parts_to_text(parts: list[Any]) -> str | None:
+    texts: list[str] = []
+    saw_prompt_part = False
+    for part in parts:
+        if not isinstance(part, dict) or "type" not in part:
+            continue
+        saw_prompt_part = True
+        if part.get("type") != "text":
+            continue
+        text = part.get("text")
+        if isinstance(text, str) and text.strip():
+            texts.append(text)
+    if not saw_prompt_part:
+        return None
+    return "\n".join(texts).strip()
+
+
+def to_record(value: Any) -> Any:
     if isinstance(value, _PRIMITIVE_TYPES):
         return value
     if isinstance(value, dict):
-        return {str(key): normalize_langchain_value(item) for key, item in value.items()}
+        return {str(key): to_record(item) for key, item in value.items()}
     if isinstance(value, list | tuple):
-        return [normalize_langchain_value(item) for item in value]
+        return [to_record(item) for item in value]
     if hasattr(value, "model_dump"):
-        return normalize_langchain_value(value.model_dump())
+        return to_record(value.model_dump())
     if (content := _message_content(value)) is not _MISSING:
-        return normalize_langchain_value(content)
+        return to_record(content)
     try:
         json.dumps(value)
     except TypeError:
@@ -47,7 +64,7 @@ def _content_to_text(content: Any) -> str:
     if isinstance(content, str):
         return content
     if isinstance(content, list):
-        parts = [normalize_langchain_output(item) for item in content]
+        parts = [to_text(item) for item in content]
         return "\n".join(part for part in parts if part)
     if isinstance(content, dict):
         if isinstance(content.get("text"), str):
@@ -62,23 +79,23 @@ def _mapping_to_text(data: dict[str, Any]) -> str:
 
     for key in PREFERRED_TEXT_KEYS:
         if key in data:
-            return normalize_langchain_output(data[key])
+            return to_text(data[key])
 
     messages = data.get("messages")
     if isinstance(messages, list):
         if messages:
-            return normalize_langchain_output(messages[-1])
+            return to_text(messages[-1])
         if "values" in data:
-            return normalize_langchain_output(data["values"])
+            return to_text(data["values"])
         return ""
 
     if "values" in data:
-        return normalize_langchain_output(data["values"])
+        return to_text(data["values"])
 
-    return json.dumps(normalize_langchain_value(data), ensure_ascii=False, default=str)
+    return json.dumps(to_record(data), ensure_ascii=False, default=str)
 
 
-def normalize_langchain_output(value: Any) -> str:
+def to_text(value: Any) -> str:
     if value is None:
         return ""
     if isinstance(value, str):
@@ -86,8 +103,24 @@ def normalize_langchain_output(value: Any) -> str:
     if isinstance(value, dict):
         return _mapping_to_text(value)
     if isinstance(value, list):
-        parts = [normalize_langchain_output(item) for item in value]
+        if (prompt_text := _prompt_parts_to_text(value)) is not None:
+            return prompt_text
+        parts = [to_text(item) for item in value]
         return "\n".join(part for part in parts if part)
     if (content := _message_content(value)) is not _MISSING:
         return _content_to_text(content)
     return str(value)
+
+
+def to_input(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return to_record(value)
+    return {"messages": [{"role": "user", "content": to_text(value)}]}
+
+
+def normalize_langchain_value(value: Any) -> Any:
+    return to_record(value)
+
+
+def normalize_langchain_output(value: Any) -> str:
+    return to_text(value)

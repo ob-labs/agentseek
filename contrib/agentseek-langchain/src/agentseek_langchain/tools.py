@@ -16,7 +16,8 @@ def _raw_bub_handler(bub_tool: Tool) -> Any:
     if handler is None:
         raise LangchainConfigError(f"Tool {bub_tool.name!r} is schema-only and cannot be executed")
 
-    for cell in handler.__closure__ or ():
+    closure = getattr(handler, "__closure__", None)
+    for cell in closure or ():
         value = cell.cell_contents
         if isinstance(value, Tool) and value.handler is not None:
             return value.handler
@@ -51,7 +52,8 @@ def _langchain_callable(bub_tool: Tool, tool_context: ToolContext) -> Any:
                 kwargs["context"] = tool_context
             return handler(*args, **kwargs)
 
-    _call.__signature__ = signature
+    wrapped: Any = _call
+    wrapped.__signature__ = signature
     return _call
 
 

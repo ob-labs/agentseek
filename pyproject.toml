@@ -78,6 +78,10 @@ members = [
 python = "./.venv"
 python-version = "3.12"
 
+[tool.ty.analysis]
+# Optional extra; example installs agentseek-langchain[deepagents].
+allowed-unresolved-imports = ["deepagents.**"]
+
 [tool.ty.src]
 # references/ = third-party or example code.
 exclude = ["references"]
