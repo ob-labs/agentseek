@@ -41,6 +41,8 @@ dev = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.1",
     "mkdocstrings[python]>=1.0.2",
+    "deepagents>=0.5.3",
+    "langchain-openai>=0.3.0",
 ]
 
 [build-system]
@@ -65,10 +67,12 @@ index-url = "https://pypi.org/simple"
 # bub-contrib: branch=main so bundled runtime packages exist at resolve time; uv.lock pins the exact commit.
 bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-feishu" }
 bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-tapestore-sqlalchemy" }
+agentseek-langchain = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }
 
 [tool.uv.workspace]
 members = [
+    "contrib/agentseek-langchain",
     "contrib/agentseek-schedule-sqlalchemy",
 ]
 
@@ -76,12 +80,16 @@ members = [
 python = "./.venv"
 python-version = "3.12"
 
+[tool.ty.analysis]
+# DeepAgents is a dev dependency used by contrib examples and tests.
+allowed-unresolved-imports = ["deepagents.**"]
+
 [tool.ty.src]
 # references/ = third-party or example code.
 exclude = ["references"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "contrib/agentseek-schedule-sqlalchemy/src/tests"]
+testpaths = ["tests", "contrib/agentseek-langchain/tests", "contrib/agentseek-schedule-sqlalchemy/src/tests"]
 
 [tool.ruff]
 target-version = "py312"
