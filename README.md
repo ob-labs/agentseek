@@ -38,6 +38,24 @@ uv run agentseek chat
 
 `agentseek` is a Bub-compatible distribution entry point. It defaults to `.agentseek` under the current workspace for local config and runtime home. You can also use `uv run bub ...` and Bub plugins directly when you want the upstream CLI or extension namespace. See [Getting started](docs/getting-started.md) for detailed setup guide.
 
+## Docker Compose
+
+If you want to run `agentseek` in a container with the project workspace mounted in, use the bundled compose setup:
+
+```bash
+cp .env.example .env
+make compose-up
+```
+
+By default, compose will:
+
+- mount the current repository into `/workspace`
+- reuse `.agents/skills` and `.agents/mcp.json`
+- persist runtime state under `.agentseek` in the workspace
+- use a SQLite tape store under `.agentseek`
+
+To mount a different host directory as the workspace, set `AGENTSEEK_DOCKER_WORKSPACE`. To override the MCP config source path in containers, set `AGENTSEEK_MCP_CONFIG_PATH`.
+
 ## How it works
 
 - **Bub as the runtime layer** — [Bub](https://github.com/bubbuild/bub) provides the CLI, hook-first turn pipeline, tape context, skills, plugins, and channel model. agentseek uses Bub as the default governance layer, not as the product boundary.
