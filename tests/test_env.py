@@ -66,6 +66,7 @@ def test_agentseek_defaults_bub_project_under_home(monkeypatch, tmp_path) -> Non
     monkeypatch.delenv("BUB_PROJECT", raising=False)
     monkeypatch.delenv("AGENTSEEK_PROJECT", raising=False)
     monkeypatch.delenv("BUB_HOME", raising=False)
+    monkeypatch.delenv("AGENTSEEK_HOME", raising=False)
 
     apply_agentseek_env_aliases()
 
