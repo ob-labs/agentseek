@@ -39,7 +39,7 @@ By default, agentseek sets `BUB_PROJECT` to `{BUB_HOME}/agentseek-project` (so `
 
 Use `bub install …` instead if you prefer the upstream Bub entry point; behavior matches the Hub examples.
 
-#### Path or Git For agentseek Contrib Packages
+#### Path, Extra, Or Git For agentseek Contrib Packages
 
 Packages that live only in this repository (for example `agentseek-schedule-sqlalchemy` under `contrib/`) are **not** guaranteed to resolve when you run `agentseek install agentseek-schedule-sqlalchemy` or `uv add agentseek-schedule-sqlalchemy` outside the monorepo. Prefer wiring them explicitly:
 
@@ -47,7 +47,14 @@ Packages that live only in this repository (for example `agentseek-schedule-sqla
 uv add ./contrib/agentseek-schedule-sqlalchemy
 ```
 
-or install from Git with the subdirectory that contains `pyproject.toml`:
+For contrib packages that are also exposed as root extras in this monorepo, prefer the extra when you are working from the repository root. Do not `uv add ./contrib/...` for those packages from the root workspace:
+
+```bash
+uv sync --extra langchain
+uv sync --extra oceanbase
+```
+
+For packages without a root extra, or when you want the plugin package by itself, use a path or Git install. For example:
 
 ```bash
 uv pip install "git+https://github.com/ob-labs/agentseek.git#subdirectory=contrib/agentseek-schedule-sqlalchemy"

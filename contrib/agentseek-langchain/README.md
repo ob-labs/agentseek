@@ -15,7 +15,7 @@ Current scope:
 From the repo root:
 
 ```bash
-uv sync --all-packages
+uv sync --extra langchain
 ```
 
 Or install only the plugin package runtime:
@@ -23,6 +23,8 @@ Or install only the plugin package runtime:
 ```bash
 uv pip install -e contrib/agentseek-langchain
 ```
+
+That direct package install is mainly for plugin-only development outside the root extra flow.
 
 The bundled DeepAgents example uses repository development dependencies from the root workspace.
 It is not part of the plugin runtime dependency set.

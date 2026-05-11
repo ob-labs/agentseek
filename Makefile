@@ -1,3 +1,13 @@
+.PHONY: check-lock lint typecheck typecheck-langchain typecheck-oceanbase test-langchain test-oceanbase check-langchain check-oceanbase check-optional check-all
+
+BASELINE_TY_PATHS = src tests contrib/agentseek-schedule-sqlalchemy/src contrib/agentseek-schedule-sqlalchemy/src/tests
+LANGCHAIN_TY_PATHS = contrib/agentseek-langchain/src contrib/agentseek-langchain/tests contrib/agentseek-langchain/examples
+OCEANBASE_TY_PATHS = contrib/agentseek-tapestore-oceanbase/src contrib/agentseek-tapestore-oceanbase/tests
+
+BASELINE_PYTEST_PATHS = tests contrib/agentseek-schedule-sqlalchemy/src/tests
+LANGCHAIN_PYTEST_PATHS = contrib/agentseek-langchain/tests
+OCEANBASE_PYTEST_PATHS = contrib/agentseek-tapestore-oceanbase/tests
+
 .PHONY: lock
 lock: ## Update uv.lock against PyPI (ignore UV_INDEX_URL so lock stays canonical)
 	@echo "🚀 Updating lock file against PyPI"
@@ -10,18 +20,67 @@ install: ## Install the virtual environment and install the pre-commit hooks
 	@uv run pre-commit install
 
 .PHONY: check
-check: ## Run code quality tools.
+check: check-lock lint typecheck ## Run baseline code quality tools.
+
+.PHONY: check-lock
+check-lock:
 	@echo "🚀 Checking lock file consistency with 'pyproject.toml'"
 	@uv lock --locked
+
+.PHONY: lint
+lint:
 	@echo "🚀 Linting code: Running pre-commit"
 	@uv run pre-commit run -a
+
+.PHONY: typecheck
+typecheck: ## Run baseline static type checks.
 	@echo "🚀 Static type checking: Running ty"
-	@uv run ty check
+	@uv run ty check $(BASELINE_TY_PATHS)
 
 .PHONY: test
-test: ## Test the code with pytest
+test: ## Test the baseline code with pytest
 	@echo "🚀 Testing code: Running pytest"
-	@uv run python -m pytest --doctest-modules
+	@uv run python -m pytest --doctest-modules $(BASELINE_PYTEST_PATHS)
+
+.PHONY: typecheck-langchain
+typecheck-langchain: ## Run static type checks for the optional langchain plugin.
+	@echo "🚀 Syncing optional langchain extra"
+	@uv sync --extra langchain
+	@echo "🚀 Static type checking: Running ty for langchain"
+	@uv run ty check $(LANGCHAIN_TY_PATHS)
+
+.PHONY: test-langchain
+test-langchain: ## Run tests for the optional langchain plugin.
+	@echo "🚀 Syncing optional langchain extra"
+	@uv sync --extra langchain
+	@echo "🚀 Testing code: Running pytest for langchain"
+	@uv run python -m pytest $(LANGCHAIN_PYTEST_PATHS)
+
+.PHONY: check-langchain
+check-langchain: typecheck-langchain test-langchain ## Run checks for the optional langchain plugin.
+
+.PHONY: typecheck-oceanbase
+typecheck-oceanbase: ## Run static type checks for the optional oceanbase plugin.
+	@echo "🚀 Syncing optional oceanbase extra"
+	@uv sync --extra oceanbase
+	@echo "🚀 Static type checking: Running ty for oceanbase"
+	@uv run ty check $(OCEANBASE_TY_PATHS)
+
+.PHONY: test-oceanbase
+test-oceanbase: ## Run tests for the optional oceanbase plugin.
+	@echo "🚀 Syncing optional oceanbase extra"
+	@uv sync --extra oceanbase
+	@echo "🚀 Testing code: Running pytest for oceanbase"
+	@uv run python -m pytest $(OCEANBASE_PYTEST_PATHS)
+
+.PHONY: check-oceanbase
+check-oceanbase: typecheck-oceanbase test-oceanbase ## Run checks for the optional oceanbase plugin.
+
+.PHONY: check-optional
+check-optional: check-langchain check-oceanbase ## Run checks for optional plugins.
+
+.PHONY: check-all
+check-all: check check-optional ## Run baseline and optional plugin checks.
 
 .PHONY: build
 build: clean-build ## Build wheel file

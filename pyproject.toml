@@ -19,9 +19,16 @@ dependencies = [
     "bub>=0.3.7",
     "bub-feishu",
     "bub-mcp",
-    "bub-tapestore-sqlalchemy",
     "agentseek-schedule-sqlalchemy",
     "pydantic-settings>=2.0.0",
+]
+
+[project.optional-dependencies]
+langchain = [
+    "agentseek-langchain",
+]
+oceanbase = [
+    "agentseek-tapestore-oceanbase",
 ]
 
 [project.scripts]
@@ -69,6 +76,7 @@ index-url = "https://pypi.org/simple"
 bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-feishu" }
 bub-mcp = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-mcp" }
 bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-tapestore-sqlalchemy" }
+agentseek-tapestore-oceanbase = { workspace = true }
 agentseek-langchain = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }
 
@@ -76,6 +84,7 @@ agentseek-schedule-sqlalchemy = { workspace = true }
 members = [
     "contrib/agentseek-langchain",
     "contrib/agentseek-schedule-sqlalchemy",
+    "contrib/agentseek-tapestore-oceanbase",
 ]
 
 [tool.ty.environment]
@@ -91,7 +100,10 @@ allowed-unresolved-imports = ["deepagents.**"]
 exclude = ["references"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "contrib/agentseek-langchain/tests", "contrib/agentseek-schedule-sqlalchemy/src/tests"]
+testpaths = [
+    "tests",
+    "contrib/agentseek-schedule-sqlalchemy/src/tests",
+]
 
 [tool.ruff]
 target-version = "py312"

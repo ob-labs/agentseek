@@ -32,6 +32,7 @@ Configure model and database, then verify:
 export AGENTSEEK_MODEL=openrouter:free
 export AGENTSEEK_API_KEY=sk-or-v1-your-key
 export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+uv sync --extra oceanbase
 export AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=sqlite+pysqlite:///./agentseek-tapes.db
 uv run agentseek chat
 ```
@@ -61,12 +62,12 @@ To mount a different host directory as the workspace, set `AGENTSEEK_DOCKER_WORK
 ## How it works
 
 - **Bub as the runtime layer** — [Bub](https://github.com/bubbuild/bub) provides the CLI, hook-first turn pipeline, tape context, skills, plugins, and channel model. agentseek uses Bub as the default governance layer, not as the product boundary.
-- **Database-backed runtime storage** — SQLAlchemy-backed tape storage keeps runtime records in a database instead of a file-heavy context stack.
+- **Database-backed runtime storage** — an optional OceanBase-oriented SQLAlchemy tape store plugin can keep runtime records in a database instead of a file-heavy context stack, while preserving SQLite or OceanBase as runtime backends when installed.
 - **Open authoring model** — `AGENTS.md` and Agent Skills are first-class parts of the authoring and extension workflow.
 - **Team chat entry points** — Telegram comes from Bub, Feishu ships with agentseek, and other channels stay opt-in through contrib packages.
 - **Queryable footprint** — Tape-backed sessions, tasks, and traces can be inspected directly in the database and reused by downstream analysis workflows.
 
-agentseek is database-neutral. SQLite or any suitable SQLAlchemy backend can be used where it fits. For a good default experience from local development to larger deployments, we recommend [OceanBase seekdb](https://github.com/oceanbase/seekdb) and OceanBase.
+agentseek is database-neutral at the storage API level. From this monorepo, enable SQLAlchemy-backed tape storage with `uv sync --extra oceanbase`; that installs `agentseek-tapestore-oceanbase`, which keeps compatibility with the existing SQLAlchemy URL setting, falls back to SQLite locally, and enables optional OceanBase vector retrieval when `pyobvector` and an embedding model are configured. For a good default experience from local development to larger deployments, we recommend [OceanBase seekdb](https://github.com/oceanbase/seekdb) and OceanBase.
 
 ## License
 
