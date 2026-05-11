@@ -15,11 +15,12 @@ WORKDIR /app
 COPY . /app
 
 ENV UV_LINK_MODE=copy \
-    UV_COMPILE_BYTECODE=1
+    UV_COMPILE_BYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 RUN uv sync --frozen --no-dev
 
-RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && mkdir -p /workspace
 
 WORKDIR /workspace
 
