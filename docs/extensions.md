@@ -124,17 +124,26 @@ npx skills add bubbuild/bub-contrib --skill plugin-creator
 
 This is the right place for repository-specific workflows that should not ship with the agentseek package.
 
-In containers or compose, the entrypoint defaults `AGENTSEEK_SKILLS_HOME` / `BUB_SKILLS_HOME` to `.agents/skills` under the workspace, so host-installed skills can be reused directly.
+This path works for local `agentseek` runs immediately because Bub discovers project skills from the workspace.
+
+In containers or compose, the entrypoint preserves the same `.agents/skills` convention by default, so host-installed skills can be reused directly.
 
 ## Extend With MCP
 
-If you want to attach MCP servers to the runtime, the project-level config file can live at:
+If you want to attach MCP servers to the runtime, `bub-mcp` reads MCP config from `${BUB_HOME}/mcp.json` by default. With agentseek defaults, the local path is:
 
 ```text
-.agents/mcp.json
+.agentseek/mcp.json
 ```
 
-The container entrypoint auto-discovers this file from the workspace first and maps it to the runtime MCP config path. If you need another path, set `AGENTSEEK_MCP_CONFIG_PATH` or `BUB_MCP_CONFIG_PATH` explicitly.
+If you prefer to keep the MCP file in the project root instead, this also works without Docker:
+
+```bash
+export AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json
+uv run agentseek chat
+```
+
+In Docker / Compose, the entrypoint adds one convenience behavior: it auto-discovers `.agents/mcp.json` from the mounted workspace and links it into the runtime MCP config path. If you need another path, set `AGENTSEEK_MCP_CONFIG_PATH` or `BUB_MCP_CONFIG_PATH` explicitly.
 
 ### Bundle Skills With agentseek
 
