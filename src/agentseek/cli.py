@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Iterable
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from pathlib import Path
+
+import typer
 
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
 
@@ -36,6 +40,15 @@ def _brand_onboard_echo(original_echo):
     return echo
 
 
+def resolve_enabled_channels(framework, primary_channels: Iterable[str]) -> list[str]:
+    """Enable requested channels plus all lifecycle channels exposed by the framework."""
+    enabled = list(dict.fromkeys(primary_channels))
+    for channel_name in framework.get_channels(lambda _message: None):
+        if channel_name.endswith(".lifecycle") and channel_name not in enabled:
+            enabled.append(channel_name)
+    return enabled
+
+
 def apply_agentseek_onboard_branding() -> None:
     """Replace Bub's onboard banner and copy without changing the onboard workflow."""
     from bub.builtin import cli
@@ -43,6 +56,34 @@ def apply_agentseek_onboard_branding() -> None:
     cli.ONBOARD_BANNER = AGENTSEEK_ONBOARD_BANNER
     cli.typer.echo = _brand_onboard_echo(cli.typer.echo)
     cli.__version__ = agentseek_version()
+
+
+def apply_agentseek_chat_channel_defaults() -> None:
+    """Include lifecycle channels in chat mode so MCP and similar helpers can boot."""
+    import bub.builtin.cli as bub_cli
+    from bub.channels.cli import CliChannel
+    from bub.channels.manager import ChannelManager
+    from bub.framework import BubFramework
+
+    def chat(
+        ctx: typer.Context,
+        chat_id: str = bub_cli.typer.Option("local", "--chat-id", help="Chat id"),
+        session_id: str | None = bub_cli.typer.Option(None, "--session-id", help="Optional session id"),
+    ) -> None:
+        framework = ctx.ensure_object(BubFramework)
+        manager = ChannelManager(
+            framework,
+            enabled_channels=resolve_enabled_channels(framework, ["cli"]),
+            stream_output=True,
+        )
+        channel = manager.get_channel("cli")
+        if not isinstance(channel, CliChannel):
+            bub_cli.typer.echo("CLI channel not found. Please check your hook implementations.")
+            raise bub_cli.typer.Exit(1)
+        channel.set_metadata(chat_id=chat_id, session_id=session_id)
+        asyncio.run(manager.listen_and_run())
+
+    object.__setattr__(bub_cli, "chat", chat)
 
 
 def apply_agentseek_install_project_defaults() -> None:
@@ -68,10 +109,11 @@ def apply_agentseek_install_project_defaults() -> None:
 def apply_agentseek_cli_overrides() -> None:
     """Patch ``bub.builtin.cli`` before ``BubFramework.create_cli_app`` registers commands.
 
-    Apply onboarding branding first, then install sandbox behavior; both target the same module
-    and must run before Typer binds builtin commands.
+    Apply onboarding branding first, then chat channel defaults and install sandbox behavior; all
+    target the same module and must run before Typer binds builtin commands.
     """
     apply_agentseek_onboard_branding()
+    apply_agentseek_chat_channel_defaults()
     apply_agentseek_install_project_defaults()
 
 
@@ -79,7 +121,9 @@ __all__ = [
     "AGENTSEEK_ONBOARD_BANNER",
     "AGENTSEEK_ONBOARD_WELCOME",
     "agentseek_version",
+    "apply_agentseek_chat_channel_defaults",
     "apply_agentseek_cli_overrides",
     "apply_agentseek_install_project_defaults",
     "apply_agentseek_onboard_branding",
+    "resolve_enabled_channels",
 ]

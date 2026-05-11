@@ -1,20 +1,31 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
+from typing import cast
+
+import typer
+from typer.testing import CliRunner
 
 from agentseek.cli import (
     AGENTSEEK_ONBOARD_BANNER,
     AGENTSEEK_ONBOARD_WELCOME,
     agentseek_version,
+    apply_agentseek_chat_channel_defaults,
     apply_agentseek_cli_overrides,
     apply_agentseek_install_project_defaults,
     apply_agentseek_onboard_branding,
+    resolve_enabled_channels,
 )
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
+
+runner = CliRunner()
 
 
 def test_agentseek_onboard_branding_replaces_bub_banner(monkeypatch) -> None:
     from bub.builtin import cli
+
+    importlib.reload(cli)
 
     messages = []
 
@@ -45,15 +56,109 @@ def test_apply_agentseek_cli_overrides_runs_onboard_then_install(monkeypatch) ->
     def fake_onboard() -> None:
         order.append("onboard")
 
+    def fake_chat() -> None:
+        order.append("chat")
+
     def fake_install() -> None:
         order.append("install")
 
     monkeypatch.setattr("agentseek.cli.apply_agentseek_onboard_branding", fake_onboard)
+    monkeypatch.setattr("agentseek.cli.apply_agentseek_chat_channel_defaults", fake_chat)
     monkeypatch.setattr("agentseek.cli.apply_agentseek_install_project_defaults", fake_install)
 
     apply_agentseek_cli_overrides()
 
-    assert order == ["onboard", "install"]
+    assert order == ["onboard", "chat", "install"]
+
+
+class _FakeFramework:
+    def get_channels(self, _message_handler):
+        return {
+            "cli": object(),
+            "mcp.lifecycle": object(),
+            "skills.lifecycle": object(),
+            "telegram": object(),
+        }
+
+
+def test_resolve_enabled_channels_adds_lifecycle_channels() -> None:
+    enabled = resolve_enabled_channels(_FakeFramework(), ["cli"])
+
+    assert enabled == ["cli", "mcp.lifecycle", "skills.lifecycle"]
+
+
+def test_resolve_enabled_channels_preserves_explicit_entries() -> None:
+    enabled = resolve_enabled_channels(_FakeFramework(), ["cli", "mcp.lifecycle"])
+
+    assert enabled == ["cli", "mcp.lifecycle", "skills.lifecycle"]
+
+
+def test_apply_agentseek_chat_channel_defaults_enables_lifecycle_channels(monkeypatch) -> None:
+    import asyncio
+
+    import bub.builtin.cli as bub_cli
+    import bub.channels.cli as cli_channel_module
+    import bub.channels.manager as manager_module
+
+    importlib.reload(bub_cli)
+
+    captured: dict[str, object] = {}
+    original = bub_cli.chat
+
+    class FakeChannel:
+        def __init__(self) -> None:
+            self.metadata: dict[str, str | None] = {}
+
+        def set_metadata(self, *, chat_id: str, session_id: str | None) -> None:
+            self.metadata = {"chat_id": chat_id, "session_id": session_id}
+
+    class FakeManager:
+        def __init__(self, framework, *, enabled_channels, stream_output) -> None:
+            del framework
+            captured["enabled_channels"] = list(enabled_channels)
+            captured["stream_output"] = stream_output
+            self.channel = FakeChannel()
+            captured["channel"] = self.channel
+
+        def get_channel(self, name: str):
+            captured["channel_name"] = name
+            return self.channel
+
+        async def listen_and_run(self) -> str:
+            captured["listen_called"] = True
+            return "ok"
+
+    class FakeContext:
+        def __init__(self, framework) -> None:
+            self.framework = framework
+
+        def ensure_object(self, _cls):
+            return self.framework
+
+    def fake_asyncio_run(coro):
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            loop.close()
+
+    monkeypatch.setattr(manager_module, "ChannelManager", FakeManager)
+    monkeypatch.setattr(cli_channel_module, "CliChannel", FakeChannel)
+    monkeypatch.setattr(asyncio, "run", fake_asyncio_run)
+
+    try:
+        apply_agentseek_chat_channel_defaults()
+        fake_ctx = cast(typer.Context, FakeContext(_FakeFramework()))
+        bub_cli.chat(fake_ctx, chat_id="chat-1", session_id="session-1")
+    finally:
+        object.__setattr__(bub_cli, "chat", original)
+
+    assert captured["enabled_channels"] == ["cli", "mcp.lifecycle", "skills.lifecycle"]
+    assert captured["stream_output"] is True
+    assert captured["channel_name"] == "cli"
+    assert captured["listen_called"] is True
+    channel = cast(FakeChannel, captured["channel"])
+    assert channel.metadata == {"chat_id": "chat-1", "session_id": "session-1"}
 
 
 def test_install_project_defaults_calls_uv_init_with_agentseek_sandbox_name(monkeypatch, tmp_path) -> None:
