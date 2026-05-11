@@ -29,7 +29,9 @@ Prefer `AGENTSEEK_*` in agentseek projects. At startup, agentseek maps missing `
 
 ## Storage
 
-agentseek uses SQLAlchemy-backed tape storage through `bub-tapestore-sqlalchemy`.
+agentseek does not install a SQLAlchemy tape store by default.
+If you want SQLAlchemy-backed tape storage from this monorepo, enable the optional `oceanbase` extra with `uv sync --extra oceanbase`. If you want the plugin package by itself, install `agentseek-tapestore-oceanbase` directly; that plugin wraps `bub-tapestore-sqlalchemy`.
+That plugin installs `pyobvector` and `any-llm-sdk`, but OceanBase vector retrieval stays disabled until an embedding model is configured.
 
 For local development:
 
@@ -38,6 +40,15 @@ AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=sqlite+pysqlite:///./agentseek-tapes.db
 ```
 
 For deployment, use any suitable SQLAlchemy URL. OceanBase seekdb and OceanBase are recommended for a good local-to-cloud experience, but they are not required.
+
+Optional OceanBase vector search uses these additional variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `AGENTSEEK_TAPESTORE_OCEANBASE_EMBEDDING_MODEL` | Embedding model used for lazy message indexing on OceanBase. |
+| `AGENTSEEK_TAPESTORE_OCEANBASE_VECTOR_METRIC` | Distance metric for OceanBase vector search. Supported values: `cosine`, `l2`. |
+
+When `AGENTSEEK_TAPESTORE_OCEANBASE_EMBEDDING_MODEL` is unset, the plugin falls back to the original `bub-tapestore-sqlalchemy` query behavior even on OceanBase URLs.
 
 When you use the bundled `docker compose` setup, the app stores tapes in `/workspace/.agentseek/agentseek-tapes.db` by default.
 

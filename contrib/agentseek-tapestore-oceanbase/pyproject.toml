@@ -1,0 +1,25 @@
+[project]
+name = "agentseek-tapestore-oceanbase"
+version = "0.1.0"
+description = "OceanBase compatibility and vector enhancement for bub-tapestore-sqlalchemy"
+readme = "README.md"
+authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
+requires-python = ">=3.12"
+dependencies = [
+    "any-llm-sdk",
+    "bub>=0.3.7",
+    "bub-tapestore-sqlalchemy",
+    "pymysql>=1.1.0",
+    "pyobvector>=0.2.22",
+]
+
+[project.entry-points.bub]
+tapestore-oceanbase = "agentseek_tapestore_oceanbase.plugin:OceanBaseTapeStorePlugin"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.build]
+package-dir = "src"
+includes = ["src/agentseek_tapestore_oceanbase"]

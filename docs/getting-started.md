@@ -15,6 +15,12 @@ uv run agentseek --help
 
 Use `AGENTSEEK_*` variables for the agentseek distribution. They are passed through to Bub as `BUB_*` aliases.
 
+If you want SQLAlchemy-backed tape storage, install the optional OceanBase tape store plugin first:
+
+```bash
+uv sync --extra oceanbase
+```
+
 ```bash
 export AGENTSEEK_MODEL=openrouter:free
 export AGENTSEEK_API_KEY=sk-or-v1-your-key
@@ -23,6 +29,7 @@ export AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=sqlite+pysqlite:///./agentseek-tapes.d
 ```
 
 The SQLite file is created automatically on first use.
+If you later switch the same setting to an OceanBase URL, the optional tape store plugin can also enable vector retrieval through `pyobvector`.
 
 ## 3. Run
 
