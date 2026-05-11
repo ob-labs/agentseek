@@ -1,0 +1,16 @@
+services:
+  app:
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      AGENTSEEK_WORKSPACE_PATH: /workspace
+      AGENTSEEK_HOME: /workspace/.agentseek
+      AGENTSEEK_PROJECT: /workspace/.agentseek/agentseek-project
+      AGENTSEEK_SKILLS_HOME: /workspace/.agents/skills
+      AGENTSEEK_MCP_CONFIG_PATH: /workspace/.agents/mcp.json
+      AGENTSEEK_TAPESTORE_SQLALCHEMY_URL: ${AGENTSEEK_TAPESTORE_SQLALCHEMY_URL:-sqlite+pysqlite:////workspace/.agentseek/agentseek-tapes.db}
+    volumes:
+      - ${AGENTSEEK_DOCKER_WORKSPACE:-.}:/workspace
+    restart: unless-stopped

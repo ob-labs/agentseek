@@ -211,7 +211,11 @@ marimo/_lsp/
 __marimo__/
 
 # Bub
-/references/
-.agents/
 .bub/
+
+# Agentseek
 .agentseek/
+agentseek-tapes.db
+
+# References
+/references/

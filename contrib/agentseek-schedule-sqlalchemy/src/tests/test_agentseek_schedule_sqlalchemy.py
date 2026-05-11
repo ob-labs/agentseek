@@ -52,6 +52,7 @@ def _load_bub_config(config_path) -> None:
 @pytest.fixture(autouse=True)
 def _reset_bub_config(tmp_path, monkeypatch) -> Iterator[None]:
     # Isolate from os.environ pollution (e.g. tests/test_env.py applies AGENTSEEK_* → BUB_* via setdefault).
+    monkeypatch.chdir(tmp_path)
     for key in (
         "BUB_SCHEDULE_SQLALCHEMY_URL",
         "AGENTSEEK_SCHEDULE_SQLALCHEMY_URL",

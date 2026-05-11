@@ -39,6 +39,18 @@ AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=sqlite+pysqlite:///./agentseek-tapes.db
 
 For deployment, use any suitable SQLAlchemy URL. OceanBase seekdb and OceanBase are recommended for a good local-to-cloud experience, but they are not required.
 
+When you use the bundled `docker compose` setup, the app stores tapes in `/workspace/.agentseek/agentseek-tapes.db` by default.
+
+## MCP
+
+`bub-mcp` reads MCP server definitions from `${BUB_HOME}/mcp.json` by default. With agentseek defaults, that means `.agentseek/mcp.json` in the current workspace.
+
+| Variable | Purpose |
+| --- | --- |
+| `AGENTSEEK_MCP_CONFIG_PATH` | Alias for Bub's MCP config path. Use it when you want MCP config somewhere other than `${AGENTSEEK_HOME}/mcp.json`, such as `.agents/mcp.json` in the project root. |
+
+In Docker / Compose, the entrypoint adds one convenience layer on top: if `.agents/mcp.json` exists in the mounted workspace, it links that file into the runtime MCP config path automatically.
+
 ## Channels
 
 Telegram is available through Bub. Feishu is bundled with agentseek.
@@ -54,6 +66,17 @@ Telegram is available through Bub. Feishu is bundled with agentseek.
 | `AGENTSEEK_FEISHU_ENCRYPT_KEY` | Optional Feishu encrypt key. |
 
 Other channels can be added through Bub-compatible plugins.
+
+## Docker Workspace
+
+These variables are primarily consumed by the Docker entrypoint and bundled compose workflow. The same entrypoint also respects the Bub aliases.
+
+| Variable | Purpose |
+| --- | --- |
+| `AGENTSEEK_WORKSPACE_PATH` | Workspace root used by the container entrypoint. In the bundled compose setup it defaults to `/workspace`. |
+| `AGENTSEEK_SKILLS_HOME` | Skills source directory used by the container entrypoint. By default it is `.agents/skills` under the workspace, and non-default values are linked back into the workspace path Bub scans. |
+
+When they are not set explicitly, the entrypoint treats `/workspace` as the default workspace root and uses `/workspace/.agents/skills` as the project skill root.
 
 ## Onboarding
 

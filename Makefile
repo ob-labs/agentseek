@@ -49,6 +49,22 @@ docs-test: ## Test if documentation can be built without warnings or errors
 docs: ## Build and serve the documentation
 	@uv run mkdocs serve
 
+.PHONY: compose-up
+compose-up: ## Build and start the SQLite-based app container with docker compose
+	@docker compose up --build
+
+.PHONY: compose-down
+compose-down: ## Stop docker compose
+	@docker compose down
+
+.PHONY: compose-logs
+compose-logs: ## Tail docker compose logs
+	@docker compose logs -f
+
+.PHONY: docker-build
+docker-build: ## Build the container image
+	@docker build -t agentseek:latest .
+
 .PHONY: help
 help:
 	@uv run python -c "import re; \

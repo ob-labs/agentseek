@@ -38,6 +38,44 @@ agentseek stores local config and runtime state under `.agentseek` in the curren
 
 Set `AGENTSEEK_HOME` or `BUB_HOME` to use another location.
 
+## 5. Local Skills And MCP
+
+Project-local skills can live under:
+
+```text
+.agents/skills
+```
+
+Bub discovers that path from the workspace automatically, so local `agentseek` runs can use those skills without extra wiring.
+
+For MCP, `bub-mcp` reads `${BUB_HOME}/mcp.json` by default. With agentseek defaults, that means:
+
+```text
+.agentseek/mcp.json
+```
+
+If you prefer a project-level MCP file such as `.agents/mcp.json`, set `AGENTSEEK_MCP_CONFIG_PATH` explicitly before starting the CLI.
+
+## 6. Docker Compose
+
+If you want to run `agentseek` in a container with the current workspace mounted in, the repository already includes `docker-compose.yml`:
+
+```bash
+cp .env.example .env
+make compose-up
+```
+
+This mode mounts the current repository into `/workspace`, so the container reuses these host-side paths directly:
+
+- `.agents/skills`
+- `.agents/mcp.json`
+- `.agentseek`
+- `startup.sh`
+
+Compose uses a SQLite tape store under `/workspace/.agentseek/agentseek-tapes.db` by default.
+It also auto-discovers `.agents/mcp.json` and links it into the runtime MCP config path inside the container.
+To use another MCP config file, set `AGENTSEEK_MCP_CONFIG_PATH`.
+
 ## Next
 
 - Run `uv run agentseek onboard` to collect configuration interactively.
