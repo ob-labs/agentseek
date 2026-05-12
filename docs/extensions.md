@@ -1,8 +1,20 @@
 # Extensions
 
-This guide explains the supported extension points for agentseek projects. For runtime settings, see [Configuration](configuration.md).
+This guide explains how to extend agentseek projects. For exact variables and defaults, see [Configuration](configuration.md).
 
 agentseek follows Bub's extension model. The agentseek layer adds naming conventions, environment aliases, packaging defaults, and bundled skills; it does not replace Bub hooks or entry points.
+
+## Choose The Right Extension Point
+
+Use the smallest extension point that matches the change:
+
+| Need | Use |
+| --- | --- |
+| Persistent project instructions | `AGENTS.md` |
+| Task-specific agent behavior | Agent Skills |
+| Runtime hooks, channels, tools, stores, or schedulers | Bub-compatible plugins |
+| External tools or services exposed over MCP | MCP server config |
+| Larger maintained integrations | Contrib package README |
 
 ## Project Instructions
 
@@ -17,20 +29,18 @@ Good project instructions usually include:
 
 Keep `AGENTS.md` focused on durable behavior. Do not put credentials, deployment-only secrets, or one-off task notes in it.
 
-## Extend With Plugins
+## Add A Plugin
 
 Plugins add runtime behavior through Bub's hook system. Use this path when you need a new channel, model provider, store, tool package, scheduler, or other runtime integration.
 
-### Install A Plugin
+### Install From Bub Hub
 
 Plugins install into the **same Python environment** as agentseek. Browse the ecosystem on [Bub Hub](https://hub.bub.build/): it lists plugins with install specs such as `bub install bub-feishu@main`.
-
-#### From Bub Hub
 
 Hub entries typically use `bub install …`. The agentseek CLI exposes the same resolver:
 
 ```bash
-agentseek install bub-feishu@main
+uv run agentseek install bub-feishu@main
 ```
 
 `install` accepts package specs described in its help output: a git URL, `owner/repo`, or a package name **published through the Bub contrib resolver** (often `name@branch`). It is **not** a generic PyPI installer for arbitrary distribution names.
@@ -39,63 +49,15 @@ By default, agentseek sets `BUB_PROJECT` to `{BUB_HOME}/agentseek-project` (so `
 
 Use `bub install …` instead if you prefer the upstream Bub entry point; behavior matches the Hub examples.
 
-#### Path, Extra, Or Git For agentseek Contrib Packages
+### Link To agentseek Contrib Packages
 
-Packages that live only in this repository (for example `agentseek-schedule-sqlalchemy` under `contrib/`) are **not** guaranteed to resolve when you run `agentseek install agentseek-schedule-sqlalchemy` or `uv add agentseek-schedule-sqlalchemy` outside the monorepo. Prefer wiring them explicitly:
+Contrib packages live outside the built-in `src/agentseek` documentation scope. Their README files are the source of truth for install commands, environment variables, plugin entry points, and examples:
 
-```bash
-uv add ./contrib/agentseek-schedule-sqlalchemy
-```
+- [agentseek-tapestore-oceanbase](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-tapestore-oceanbase)
+- [agentseek-langchain](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-langchain)
+- [agentseek-schedule-sqlalchemy](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-schedule-sqlalchemy)
 
-For contrib packages that are also exposed as root extras in this monorepo, prefer the extra when you are working from the repository root. Do not `uv add ./contrib/...` for those packages from the root workspace:
-
-```bash
-uv sync --extra langchain
-uv sync --extra oceanbase
-```
-
-For packages without a root extra, or when you want the plugin package by itself, use a path or Git install. For example:
-
-```bash
-uv pip install "git+https://github.com/ob-labs/agentseek.git#subdirectory=contrib/agentseek-schedule-sqlalchemy"
-```
-
-When you vendor the package next to your project, the dependency entry looks like:
-
-```toml
-[project]
-dependencies = [
-    "agentseek-schedule-sqlalchemy",
-]
-```
-
-For workspace packages, also wire the source:
-
-```toml
-[tool.uv.sources]
-agentseek-schedule-sqlalchemy = { workspace = true }
-
-[tool.uv.workspace]
-members = [
-    "contrib/agentseek-schedule-sqlalchemy",
-]
-```
-
-The package must expose a Bub entry point:
-
-```toml
-[project.entry-points.bub]
-schedule = "agentseek_schedule_sqlalchemy.plugin:main"
-```
-
-After changing dependencies, refresh the environment:
-
-```bash
-uv lock
-uv sync
-```
-
-### Create A Plugin
+### Create An agentseek Plugin
 
 Create an agentseek-owned plugin under `contrib/agentseek-<feature>/` unless the user asks for another location.
 
@@ -110,11 +72,11 @@ When both prefixes are supported for the same setting, `BUB_*` should take prece
 
 agentseek bundles an agentseek-adapted `plugin-creator` skill to help scaffold or update Bub-compatible plugin packages according to these conventions. It follows the upstream Bub contrib workflow shape, but specializes the guidance for `contrib/agentseek-*`, bundled `src/skills`, and `AGENTSEEK_*` alias behavior in this repository.
 
-## Extend With Skills
+## Add Skills
 
 Skills teach agents task-specific behavior. Use this path when the extension is instruction, workflow knowledge, or a small script the agent should know how to call. Use a plugin instead when the runtime itself needs a new hook, channel, store, or tool registration.
 
-### Install Skills In A Project
+### Install Project Skills
 
 Install project-local skills under:
 
@@ -135,24 +97,7 @@ This path works for local `agentseek` runs immediately because Bub discovers pro
 
 In containers or compose, the entrypoint preserves the same `.agents/skills` convention by default, so host-installed skills can be reused directly.
 
-## Extend With MCP
-
-If you want to attach MCP servers to the runtime, `bub-mcp` reads MCP config from `${BUB_HOME}/mcp.json` by default. With agentseek defaults, the local path is:
-
-```text
-.agentseek/mcp.json
-```
-
-If you prefer to keep the MCP file in the project root instead, this also works without Docker:
-
-```bash
-export AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json
-uv run agentseek chat
-```
-
-In Docker / Compose, the entrypoint adds one convenience behavior: it auto-discovers `.agents/mcp.json` from the mounted workspace and links it into the runtime MCP config path. If you need another path, set `AGENTSEEK_MCP_CONFIG_PATH` or `BUB_MCP_CONFIG_PATH` explicitly.
-
-### Bundle Skills With agentseek
+### Bundle Release Skills
 
 Bundle release skills under:
 
@@ -169,3 +114,20 @@ Use bundled skills for behavior that should be available wherever agentseek is i
 The build can also import selected skills from external repositories through `[tool.pdm.build].skills`.
 
 Use this for shared upstream skills. Prefer bundling under `src/skills` when the skill is agentseek-specific or has been adapted to agentseek conventions.
+
+## Add MCP Servers
+
+If you want to attach MCP servers to the runtime, `bub-mcp` reads MCP config from `${BUB_HOME}/mcp.json` by default. With agentseek defaults, the local path is:
+
+```text
+.agentseek/mcp.json
+```
+
+If you prefer to keep the MCP file in the project root instead, this also works without Docker:
+
+```bash
+export AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json
+uv run agentseek chat
+```
+
+In Docker / Compose, the entrypoint adds one convenience behavior: it auto-discovers `.agents/mcp.json` from the mounted workspace and links it into the runtime MCP config path. If you need another path, set `AGENTSEEK_MCP_CONFIG_PATH` or `BUB_MCP_CONFIG_PATH` explicitly.
