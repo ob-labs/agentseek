@@ -1,12 +1,12 @@
-.PHONY: check-lock lint typecheck typecheck-langchain typecheck-oceanbase test-langchain test-oceanbase check-langchain check-oceanbase check-optional check-all
+.PHONY: \
+	lock install check check-lock lint typecheck test \
+	check-contrib check-all build clean-build publish build-and-publish \
+	docs-test docs compose-up compose-down compose-logs docker-build help
 
-BASELINE_TY_PATHS = src tests contrib/agentseek-schedule-sqlalchemy/src contrib/agentseek-schedule-sqlalchemy/src/tests
-LANGCHAIN_TY_PATHS = contrib/agentseek-langchain/src contrib/agentseek-langchain/tests contrib/agentseek-langchain/examples
-OCEANBASE_TY_PATHS = contrib/agentseek-tapestore-oceanbase/src contrib/agentseek-tapestore-oceanbase/tests
-
-BASELINE_PYTEST_PATHS = tests contrib/agentseek-schedule-sqlalchemy/src/tests
-LANGCHAIN_PYTEST_PATHS = contrib/agentseek-langchain/tests
-OCEANBASE_PYTEST_PATHS = contrib/agentseek-tapestore-oceanbase/tests
+CORE_TY_PATHS = src tests
+CONTRIB_DIRS = $(sort $(dir $(wildcard contrib/agentseek-*/pyproject.toml)))
+contrib_name = $(patsubst contrib/agentseek-%,%,$(patsubst %/,%,$(1)))
+CONTRIB_CHECKS = $(foreach dir,$(CONTRIB_DIRS),check-$(call contrib_name,$(dir)))
 
 .PHONY: lock
 lock: ## Update uv.lock against PyPI (ignore UV_INDEX_URL so lock stays canonical)
@@ -35,52 +35,45 @@ lint:
 .PHONY: typecheck
 typecheck: ## Run baseline static type checks.
 	@echo "🚀 Static type checking: Running ty"
-	@uv run ty check $(BASELINE_TY_PATHS)
+	@uv run ty check $(CORE_TY_PATHS)
 
 .PHONY: test
 test: ## Test the baseline code with pytest
 	@echo "🚀 Testing code: Running pytest"
-	@uv run python -m pytest --doctest-modules $(BASELINE_PYTEST_PATHS)
+	@uv run python -m pytest --doctest-modules
 
-.PHONY: typecheck-langchain
-typecheck-langchain: ## Run static type checks for the optional langchain plugin.
-	@echo "🚀 Syncing optional langchain extra"
-	@uv sync --extra langchain
-	@echo "🚀 Static type checking: Running ty for langchain"
-	@uv run ty check $(LANGCHAIN_TY_PATHS)
+define define_contrib_targets
+.PHONY: typecheck-$(1) test-$(1) check-$(1)
 
-.PHONY: test-langchain
-test-langchain: ## Run tests for the optional langchain plugin.
-	@echo "🚀 Syncing optional langchain extra"
-	@uv sync --extra langchain
-	@echo "🚀 Testing code: Running pytest for langchain"
-	@uv run python -m pytest $(LANGCHAIN_PYTEST_PATHS)
+typecheck-$(1): sync-contrib ## Run static type checks for the $(1) contrib package.
+	@dir="$(2)"; \
+	paths=$$$$(for path in src tests examples; do if [ -e "$$$$dir/$$$$path" ]; then printf '%s ' "$$$$dir/$$$$path"; fi; done); \
+	test -n "$$$$paths" || { echo "No typecheck paths found for $$$$dir" >&2; exit 1; }; \
+	echo "🚀 Static type checking: Running ty for $(1)"; \
+	uv run ty check $$$$paths
 
-.PHONY: check-langchain
-check-langchain: typecheck-langchain test-langchain ## Run checks for the optional langchain plugin.
+test-$(1): sync-contrib ## Run tests for the $(1) contrib package.
+	@dir="$(2)"; \
+	paths=$$$$(for path in tests src/tests; do if [ -e "$$$$dir/$$$$path" ]; then printf '%s ' "$$$$dir/$$$$path"; fi; done); \
+	test -n "$$$$paths" || { echo "No test paths found for $$$$dir" >&2; exit 1; }; \
+	echo "🚀 Testing code: Running pytest for $(1)"; \
+	uv run python -m pytest $$$$paths
 
-.PHONY: typecheck-oceanbase
-typecheck-oceanbase: ## Run static type checks for the optional oceanbase plugin.
-	@echo "🚀 Syncing optional oceanbase extra"
-	@uv sync --extra oceanbase
-	@echo "🚀 Static type checking: Running ty for oceanbase"
-	@uv run ty check $(OCEANBASE_TY_PATHS)
+check-$(1): typecheck-$(1) test-$(1) ## Run checks for the $(1) contrib package.
+endef
 
-.PHONY: test-oceanbase
-test-oceanbase: ## Run tests for the optional oceanbase plugin.
-	@echo "🚀 Syncing optional oceanbase extra"
-	@uv sync --extra oceanbase
-	@echo "🚀 Testing code: Running pytest for oceanbase"
-	@uv run python -m pytest $(OCEANBASE_PYTEST_PATHS)
+$(foreach dir,$(CONTRIB_DIRS),$(eval $(call define_contrib_targets,$(call contrib_name,$(dir)),$(patsubst %/,%,$(dir)))))
 
-.PHONY: check-oceanbase
-check-oceanbase: typecheck-oceanbase test-oceanbase ## Run checks for the optional oceanbase plugin.
+.PHONY: sync-contrib
+sync-contrib: ## Sync dependencies for all contrib packages.
+	@echo "🚀 Syncing dependencies for contrib packages"
+	@uv sync --all-packages
 
-.PHONY: check-optional
-check-optional: check-langchain check-oceanbase ## Run checks for optional plugins.
+.PHONY: check-contrib
+check-contrib: $(CONTRIB_CHECKS) ## Run checks for contrib packages.
 
 .PHONY: check-all
-check-all: check check-optional ## Run baseline and optional plugin checks.
+check-all: check check-contrib ## Run baseline and contrib package checks.
 
 .PHONY: build
 build: clean-build ## Build wheel file
@@ -127,6 +120,10 @@ docker-build: ## Build the container image
 .PHONY: help
 help:
 	@uv run python -c "import re; \
-	[[print(f'\033[36m{m[0]:<20}\033[0m {m[1]}') for m in re.findall(r'^([a-zA-Z_-]+):.*?## (.*)$$', open(makefile).read(), re.M)] for makefile in ('$(MAKEFILE_LIST)').strip().split()]"
+	entries = []; \
+	seen = set(); \
+	[entries.extend(re.findall(r'^([a-zA-Z0-9_-]+):.*?## (.*)$$', open(makefile).read(), re.M)) for makefile in '$(MAKEFILE_LIST)'.strip().split()]; \
+	[entries.append((f'{prefix}-{directory.removeprefix(\"contrib/agentseek-\").removesuffix(\"/\")}', template.format(name=directory.removeprefix('contrib/agentseek-').removesuffix('/')))) for directory in '$(CONTRIB_DIRS)'.split() for prefix, template in [('typecheck', 'Run static type checks for the {name} contrib package.'), ('test', 'Run tests for the {name} contrib package.'), ('check', 'Run checks for the {name} contrib package.')]]; \
+	[(seen.add(target), print(f'\033[36m{target:<20}\033[0m {description}')) for target, description in entries if target not in seen]"
 
 .DEFAULT_GOAL := help

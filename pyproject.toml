@@ -24,6 +24,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ag-ui = [
+    "agentseek-ag-ui",
+]
 langchain = [
     "agentseek-langchain",
 ]
@@ -79,9 +82,11 @@ bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git"
 agentseek-tapestore-oceanbase = { workspace = true }
 agentseek-langchain = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }
+agentseek-ag-ui = { workspace = true }
 
 [tool.uv.workspace]
 members = [
+    "contrib/agentseek-ag-ui",
     "contrib/agentseek-langchain",
     "contrib/agentseek-schedule-sqlalchemy",
     "contrib/agentseek-tapestore-oceanbase",
@@ -102,7 +107,6 @@ exclude = ["references"]
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
-    "contrib/agentseek-schedule-sqlalchemy/src/tests",
 ]
 
 [tool.ruff]
