@@ -82,16 +82,14 @@ dependencies = [
     { name = "bub" },
     { name = "langchain-core" },
     { name = "langgraph-sdk" },
-    { name = "pydantic" },
     { name = "pydantic-settings" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "bub", specifier = ">=0.3.7" },
-    { name = "langchain-core", specifier = ">=0.3.0" },
-    { name = "langgraph-sdk", specifier = ">=0.3.13" },
-    { name = "pydantic", specifier = ">=2.0" },
+    { name = "langchain-core", specifier = ">=0.3" },
+    { name = "langgraph-sdk" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
 ]
 

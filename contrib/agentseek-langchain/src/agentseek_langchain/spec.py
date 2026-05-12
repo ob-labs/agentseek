@@ -1,0 +1,101 @@
+from __future__ import annotations
+
+import asyncio
+import inspect
+from collections.abc import AsyncIterator, Callable, Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+
+@dataclass(frozen=True, slots=True)
+class InvocationContext:
+    prompt: str | list[dict[str, Any]]
+    session_id: str
+    state: Mapping[str, object]
+    workspace: Path
+    agents_md: str | None
+
+
+InputBuilder = Callable[[InvocationContext], object]
+OutputParser = Callable[[object], str]
+ConfigBuilder = Callable[[InvocationContext], Mapping[str, object] | None]
+StreamBuilder = Callable[[object, object, Mapping[str, object] | None, InvocationContext], AsyncIterator[str]]
+
+
+@dataclass(frozen=True, slots=True)
+class RunnableSpec:
+    runnable: object
+    build_input: InputBuilder
+    parse_output: OutputParser
+    build_config: ConfigBuilder = lambda _context: default_runnable_config(_context)
+    stream_output: StreamBuilder | None = None
+
+    async def invoke(self, context: InvocationContext) -> str:
+        runnable_input, config = self._prepare(context)
+        result = await invoke_runnable(self.runnable, runnable_input, config)
+        return self.parse_output(result)
+
+    async def stream(self, context: InvocationContext) -> AsyncIterator[str]:
+        runnable_input, config = self._prepare(context)
+        if self.stream_output is None:
+            yield self.parse_output(await invoke_runnable(self.runnable, runnable_input, config))
+            return
+        async for chunk in self.stream_output(self.runnable, runnable_input, config, context):
+            yield chunk
+
+    def _prepare(self, context: InvocationContext) -> tuple[object, Mapping[str, object] | None]:
+        return self.build_input(context), self.build_config(context)
+
+
+def default_runnable_config(context: InvocationContext) -> Mapping[str, object]:
+    return {
+        "run_name": "agentseek",
+        "tags": ["agentseek"],
+        "metadata": {
+            "session_id": context.session_id,
+            "workspace": str(context.workspace),
+        },
+        "configurable": {
+            "session_id": context.session_id,
+            "thread_id": context.session_id,
+        },
+    }
+
+
+async def invoke_runnable(
+    runnable: object,
+    runnable_input: object,
+    config: Mapping[str, object] | None = None,
+) -> object:
+    if hasattr(runnable, "ainvoke"):
+        result = _call_runnable_method(runnable.ainvoke, runnable_input, config)
+        if inspect.isawaitable(result):
+            return await result
+        return result
+    if hasattr(runnable, "invoke"):
+        return await asyncio.to_thread(_call_runnable_method, runnable.invoke, runnable_input, config)
+    raise TypeError("Runnable object must define invoke() or ainvoke()")
+
+
+def _call_runnable_method(
+    method: Callable[..., object],
+    runnable_input: object,
+    config: Mapping[str, object] | None,
+) -> object:
+    if config is not None and _supports_config_argument(method):
+        return method(runnable_input, config=config)
+    return method(runnable_input)
+
+
+def _supports_config_argument(method: Callable[..., object]) -> bool:
+    try:
+        signature = inspect.signature(method)
+    except (TypeError, ValueError):
+        return True
+    for parameter in signature.parameters.values():
+        if parameter.kind is inspect.Parameter.VAR_KEYWORD:
+            return True
+        if parameter.name == "config":
+            return True
+    return False

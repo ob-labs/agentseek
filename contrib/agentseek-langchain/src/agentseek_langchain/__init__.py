@@ -1,20 +1,18 @@
-"""LangChain Runnable adapter for agentseek."""
-
-from .agent_protocol import AgentProtocolRunnable, AgentProtocolSettings
-from .bridge import LangchainFactoryRequest, LangchainRunContext, RunnableBinding
-from .config import LangchainPluginSettings, load_settings
-from .errors import LangchainConfigError
-from .plugin import LangchainPlugin, main
+from agentseek_langchain.langgraph_client import (
+    LangGraphClientProtocol,
+    LangGraphClientRunnable,
+    LangGraphRunsProtocol,
+)
+from agentseek_langchain.profiles import messages_spec, text_spec
+from agentseek_langchain.spec import InvocationContext, RunnableSpec, default_runnable_config
 
 __all__ = [
-    "AgentProtocolRunnable",
-    "AgentProtocolSettings",
-    "LangchainConfigError",
-    "LangchainFactoryRequest",
-    "LangchainPlugin",
-    "LangchainPluginSettings",
-    "LangchainRunContext",
-    "RunnableBinding",
-    "load_settings",
-    "main",
+    "InvocationContext",
+    "LangGraphClientProtocol",
+    "LangGraphClientRunnable",
+    "LangGraphRunsProtocol",
+    "RunnableSpec",
+    "default_runnable_config",
+    "messages_spec",
+    "text_spec",
 ]

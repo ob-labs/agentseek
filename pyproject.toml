@@ -102,6 +102,7 @@ exclude = ["references"]
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
+    "contrib/agentseek-langchain/tests",
     "contrib/agentseek-schedule-sqlalchemy/src/tests",
 ]
 
