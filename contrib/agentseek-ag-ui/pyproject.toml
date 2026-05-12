@@ -1,0 +1,24 @@
+[project]
+name = "agentseek-ag-ui"
+version = "0.1.0"
+description = "AG-UI protocol adapter for Bub and agentseek runtimes"
+readme = "README.md"
+authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
+requires-python = ">=3.12"
+dependencies = [
+    "ag-ui-protocol>=0.1.18",
+    "bub>=0.3.7",
+    "fastapi>=0.115.12",
+    "uvicorn>=0.34.0",
+]
+
+[project.entry-points."bub"]
+ag-ui = "agentseek_ag_ui.plugin:main"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.build]
+package-dir = "src"
+includes = ["src/agentseek_ag_ui"]
