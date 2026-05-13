@@ -10,6 +10,7 @@ class AGUISettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
+        case_sensitive=True,
         populate_by_name=True,
     )
 
