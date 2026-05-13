@@ -49,12 +49,8 @@ jobs:
       - name: Check typing
         run: make typecheck
 
-  optional-plugin-checks:
+  contrib-package-checks:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: ["langchain", "oceanbase"]
-      fail-fast: false
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -64,8 +60,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run optional plugin checks
-        run: make check-${{ matrix.target }}
+      - name: Run contrib package checks
+        run: make check-contrib
 
 
 
