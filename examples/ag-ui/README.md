@@ -38,6 +38,8 @@ export AGENTSEEK_API_KEY=sk-or-v1-your-key
 export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
 ```
 
+Optional: `AGENTSEEK_STREAM_OUTPUT=true` (or `BUB_STREAM_OUTPUT=true`) in the environment or repo root `.env` so the assistant streams token-by-token — see **Gateway streaming** below.
+
 **Node.js** — CopilotKit’s dependency tree targets current Node releases; **Node 20+** is recommended. Older versions may still install with engine warnings.
 
 **Frontend dependencies:**
@@ -52,10 +54,11 @@ npm install
 **1. Start the gateway** (repository root):
 
 ```bash
+export AGENTSEEK_STREAM_OUTPUT=true   # recommended; or BUB_STREAM_OUTPUT=true
 uv run agentseek gateway --enable-channel ag-ui
 ```
 
-By default the AG-UI HTTP endpoint is served at **`http://127.0.0.1:8088/agent`** (adjust with your gateway / AG-UI settings if you changed host or path).
+Default AG-UI URL: **`http://127.0.0.1:8088/agent`** (change if your gateway settings differ).
 
 **2. Start the frontend** (second terminal):
 
@@ -64,9 +67,18 @@ cd examples/ag-ui/frontend
 npm run dev
 ```
 
-**3. Open** `http://127.0.0.1:5173` and send a message in the chat. Responses should stream from your configured provider.
+**3. Open** `http://127.0.0.1:5173` and send a message in the chat.
 
 ## Configuration
+
+### Gateway streaming
+
+Bub uses `BUB_STREAM_OUTPUT` (default `false`). When it stays off, the gateway calls `run_model` and AG-UI mostly gets one assistant payload on `send()`. Turn it on with `AGENTSEEK_STREAM_OUTPUT=true` or `BUB_STREAM_OUTPUT=true` so `run_model_stream` runs and `stream_events()` can emit incremental `TEXT_MESSAGE_CONTENT`. Agentseek maps `AGENTSEEK_STREAM_OUTPUT` → `BUB_STREAM_OUTPUT` only if `BUB_STREAM_OUTPUT` is not already set.
+
+| Variable | Notes |
+| --- | --- |
+| `AGENTSEEK_STREAM_OUTPUT` | `true` enables streaming for the process (via alias above). |
+| `BUB_STREAM_OUTPUT` | Same meaning; if set explicitly, it overrides the agentseek alias. |
 
 ### Runtime → gateway (`server.ts`)
 
@@ -125,6 +137,7 @@ Smoke checks with dev servers running:
 - **`runtime_info_fetch_failed` or 404 on `/api/copilotkit`:** ensure imports are from **`@copilotkit/react-core/v2`** and `useSingleEndpoint={false}` matches the multi-route Express handler.
 - **`ECONNREFUSED 127.0.0.1:4000` in the Vite log:** the runtime is not up yet or `COPILOTKIT_PORT` / `VITE_COPILOTKIT_RUNTIME_PROXY` are mismatched.
 - **Empty or hanging chat:** confirm the gateway is running and `AGENTSEEK_AG_UI_AGENT_URL` points at the live `/agent` URL.
+- **Reply appears in one block:** set `AGENTSEEK_STREAM_OUTPUT=true` or `BUB_STREAM_OUTPUT=true` and restart the gateway (see **Gateway streaming**).
 
 ## Limitations
 

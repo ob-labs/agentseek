@@ -55,11 +55,12 @@ uv pip install -e contrib/agentseek-ag-ui
 
 ## Usage
 
-After installation, start the gateway with the `ag-ui` channel enabled:
-
 ```bash
+export AGENTSEEK_STREAM_OUTPUT=true   # recommended for streaming UIs; or BUB_STREAM_OUTPUT=true
 uv run agentseek gateway --enable-channel ag-ui
 ```
+
+Bub’s `BUB_STREAM_OUTPUT` (default `false`) switches the gateway to `run_model_stream` so this channel’s `stream_events()` path can emit deltas. With it off, the run still completes over SSE via `send()`, usually as a single text block. Under agentseek, `AGENTSEEK_STREAM_OUTPUT` is copied to `BUB_STREAM_OUTPUT` only when `BUB_STREAM_OUTPUT` is unset.
 
 Default bind settings:
 
@@ -76,6 +77,7 @@ Supported environment variables:
 | `AGENTSEEK_AG_UI_PORT` | `BUB_AG_UI_PORT` | `8088` | HTTP bind port |
 | `AGENTSEEK_AG_UI_PATH` | `BUB_AG_UI_PATH` | `/agent` | AG-UI endpoint path |
 | `AGENTSEEK_AG_UI_HEALTH_PATH` | `BUB_AG_UI_HEALTH_PATH` | `/agent/health` | Health endpoint path |
+| `AGENTSEEK_STREAM_OUTPUT` | `BUB_STREAM_OUTPUT` | `false` | `true`: stream model output to channels (useful for AG-UI clients). |
 
 ## Runtime Behavior
 
@@ -85,7 +87,7 @@ Supported environment variables:
 - `usage` is exposed as a `CUSTOM` event named `republic.usage`;
 - final state is observed and staged by `save_state()`, then sent on the successful `channel.send()` path;
 - `RUN_FINISHED` is emitted only after successful delivery, while failure paths emit `RUN_ERROR`;
-- even when the gateway is not streaming, the channel still fills in the minimal terminal sequence on `send()`: `RUN_STARTED` / text / `RUN_FINISHED`, without intermediate tool or usage stream events.
+- with `BUB_STREAM_OUTPUT=false`, live deltas from `stream_events()` are absent; the channel still closes the SSE on `send()` with `RUN_STARTED` / text / `RUN_FINISHED`.
 
 ## Verification
 
