@@ -1,0 +1,6 @@
+# Python extras for the LangChain + CopilotKit-style demo (CopilotKitState / middleware).
+# Install after workspace deps, e.g. from repo root:
+#   uv sync --extra ag-ui --extra langchain
+#   uv pip install -r examples/ag_ui_langchain/requirements.txt
+copilotkit>=0.1.80
+pydantic-settings>=2.0.0

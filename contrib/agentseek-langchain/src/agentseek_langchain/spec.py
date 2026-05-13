@@ -15,6 +15,8 @@ class InvocationContext:
     state: Mapping[str, object]
     workspace: Path
     agents_md: str | None
+    # LangGraph runtime context, e.g. CopilotKit ``output_schema`` binding.
+    runtime_context: Mapping[str, object] | None = None
 
 
 InputBuilder = Callable[[InvocationContext], object]
@@ -33,13 +35,15 @@ class RunnableSpec:
 
     async def invoke(self, context: InvocationContext) -> str:
         runnable_input, config = self._prepare(context)
-        result = await invoke_runnable(self.runnable, runnable_input, config)
+        result = await invoke_runnable(self.runnable, runnable_input, config, runtime_context=context.runtime_context)
         return self.parse_output(result)
 
     async def stream(self, context: InvocationContext) -> AsyncIterator[str]:
         runnable_input, config = self._prepare(context)
         if self.stream_output is None:
-            yield self.parse_output(await invoke_runnable(self.runnable, runnable_input, config))
+            yield self.parse_output(
+                await invoke_runnable(self.runnable, runnable_input, config, runtime_context=context.runtime_context)
+            )
             return
         async for chunk in self.stream_output(self.runnable, runnable_input, config, context):
             yield chunk
@@ -67,14 +71,16 @@ async def invoke_runnable(
     runnable: object,
     runnable_input: object,
     config: Mapping[str, object] | None = None,
+    *,
+    runtime_context: Mapping[str, object] | None = None,
 ) -> object:
     if hasattr(runnable, "ainvoke"):
-        result = _call_runnable_method(runnable.ainvoke, runnable_input, config)
+        result = _call_runnable_method(runnable.ainvoke, runnable_input, config, runtime_context)
         if inspect.isawaitable(result):
             return await result
         return result
     if hasattr(runnable, "invoke"):
-        return await asyncio.to_thread(_call_runnable_method, runnable.invoke, runnable_input, config)
+        return await asyncio.to_thread(_call_runnable_method, runnable.invoke, runnable_input, config, runtime_context)
     raise TypeError("Runnable object must define invoke() or ainvoke()")
 
 
@@ -82,9 +88,15 @@ def _call_runnable_method(
     method: Callable[..., object],
     runnable_input: object,
     config: Mapping[str, object] | None,
+    runtime_context: Mapping[str, object] | None,
 ) -> object:
+    kwargs: dict[str, object] = {}
     if config is not None and _supports_config_argument(method):
-        return method(runnable_input, config=config)
+        kwargs["config"] = config
+    if runtime_context is not None and _supports_context_argument(method):
+        kwargs["context"] = runtime_context
+    if kwargs:
+        return method(runnable_input, **kwargs)
     return method(runnable_input)
 
 
@@ -97,5 +109,18 @@ def _supports_config_argument(method: Callable[..., object]) -> bool:
         if parameter.kind is inspect.Parameter.VAR_KEYWORD:
             return True
         if parameter.name == "config":
+            return True
+    return False
+
+
+def _supports_context_argument(method: Callable[..., object]) -> bool:
+    try:
+        signature = inspect.signature(method)
+    except (TypeError, ValueError):
+        return True
+    for parameter in signature.parameters.values():
+        if parameter.kind is inspect.Parameter.VAR_KEYWORD:
+            return True
+        if parameter.name == "context":
             return True
     return False

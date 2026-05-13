@@ -27,6 +27,10 @@ export AGENTSEEK_LANGCHAIN_SPEC=my_project.agent_binding:SPEC
 
 The plugin does not accept a bare runnable export. Input and output shapes must be declared explicitly in `RunnableSpec`.
 
+### Hook precedence
+
+When this plugin loads successfully, `run_model` / `run_model_stream` are registered with **`tryfirst=True`** so your LangChain spec runs **before** Bub’s built-in model agent. To use the builtin agent instead, do not install this plugin or unset / fix `BUB_LANGCHAIN_SPEC` so the plugin fails to initialize.
+
 ## Usage
 
 ### LangChain Agent

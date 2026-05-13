@@ -21,7 +21,7 @@ def test_plugin_run_model_delegates_to_loaded_spec(monkeypatch, tmp_path) -> Non
     runnable = _AsyncRunnable("delegated-output")
     spec = text_spec(runnable)
 
-    monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(spec="dummy:SPEC"))
+    monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(SPEC="dummy:SPEC"))
     monkeypatch.setattr(plugin_module, "load_spec_from_path", lambda path: spec)
 
     plugin = plugin_module.LangChainRunnablePlugin()
@@ -42,7 +42,7 @@ def test_plugin_run_model_stream_wraps_single_result(monkeypatch, tmp_path) -> N
     runnable = _AsyncRunnable("streamed-once")
     spec = text_spec(runnable)
 
-    monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(spec="dummy:SPEC"))
+    monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(SPEC="dummy:SPEC"))
     monkeypatch.setattr(plugin_module, "load_spec_from_path", lambda path: spec)
 
     plugin = plugin_module.LangChainRunnablePlugin()

@@ -2,10 +2,40 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
+from typing import Any
 
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from agentseek_langchain.spec import InvocationContext, RunnableSpec, default_runnable_config
+
+
+def _serialize_structured_value(value: object) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "model_dump"):
+        return json.dumps(value.model_dump(), ensure_ascii=False, default=str)
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, default=str)
+    return str(value)
+
+
+def _copilotkit_from_ag_ui_state(state: Mapping[str, object]) -> dict[str, Any] | None:
+    items = state.get("ag_ui_context")
+    if not isinstance(items, list) or not items:
+        return None
+    context_items: list[dict[str, Any]] = []
+    for raw in items:
+        if not isinstance(raw, Mapping):
+            continue
+        description = raw.get("description")
+        value = raw.get("value")
+        if not description or value is None:
+            continue
+        value_str = json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else str(value)
+        context_items.append({"description": str(description), "value": value_str})
+    if not context_items:
+        return None
+    return {"actions": [], "context": context_items}
 
 
 def text_spec(
@@ -37,7 +67,11 @@ def messages_spec(
             messages.append(SystemMessage(content=context.agents_md))
         messages.append(HumanMessage(content=context.prompt))
         if as_state:
-            return {messages_key: messages}
+            graph_state: dict[str, Any] = {messages_key: messages}
+            copilotkit = _copilotkit_from_ag_ui_state(context.state)
+            if copilotkit is not None:
+                graph_state["copilotkit"] = copilotkit
+            return graph_state
         return messages
 
     def parse_output(result: object) -> str:
@@ -57,6 +91,9 @@ def parse_text_output(result: object) -> str:
     if isinstance(result, BaseMessage):
         return _render_message_content(result.content)
     if isinstance(result, Mapping):
+        structured = result.get("structured_response")
+        if structured is not None:
+            return _serialize_structured_value(structured)
         for key in ("output", "result", "text", "final_output"):
             if key in result:
                 return parse_text_output(result[key])
@@ -68,8 +105,12 @@ def parse_text_output(result: object) -> str:
 
 
 def parse_messages_output(result: object, *, messages_key: str = "messages") -> str:
-    if isinstance(result, Mapping) and messages_key in result:
-        return _extract_text_from_messages(result[messages_key])
+    if isinstance(result, Mapping):
+        structured = result.get("structured_response")
+        if structured is not None:
+            return _serialize_structured_value(structured)
+        if messages_key in result:
+            return _extract_text_from_messages(result[messages_key])
     return parse_text_output(result)
 
 

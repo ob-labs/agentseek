@@ -17,7 +17,7 @@ class LangChainRunnablePlugin:
     @cached_property
     def _spec(self):
         settings = get_langchain_settings()
-        return load_spec_from_path(settings.spec)
+        return load_spec_from_path(settings.SPEC)
 
     def _build_context(self, prompt: str | list[dict[str, Any]], session_id: str, state: State) -> InvocationContext:
         workspace_value = state.get("_runtime_workspace")
@@ -41,11 +41,11 @@ class LangChainRunnablePlugin:
             return None
         return content or None
 
-    @hookimpl
+    @hookimpl(tryfirst=True)
     async def run_model(self, prompt: str | list[dict[str, Any]], session_id: str, state: State) -> str:
         return await self._spec.invoke(self._build_context(prompt, session_id, state))
 
-    @hookimpl
+    @hookimpl(tryfirst=True)
     async def run_model_stream(
         self,
         prompt: str | list[dict[str, Any]],

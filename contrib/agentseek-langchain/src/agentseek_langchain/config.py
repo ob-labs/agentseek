@@ -15,7 +15,8 @@ class LangChainSettings(BaseSettings):
         extra="ignore",
     )
 
-    spec: str
+    # Uppercase field name so the env var is `BUB_LANGCHAIN_SPEC` (not `BUB_LANGCHAIN_spec`).
+    SPEC: str
 
 
 @lru_cache(maxsize=1)

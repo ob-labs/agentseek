@@ -22,6 +22,8 @@ During `npm run dev`, **two processes** start via `concurrently`:
 
 The React app uses **`@copilotkit/react-core/v2`** with `runtimeUrl` pointing at `/api/copilotkit` and **`useSingleEndpoint={false}`** so the client hits the multi-route runtime surface (for example `/api/copilotkit/info`), not a legacy single-endpoint POST.
 
+For **CopilotKit + Hashbrown** structured UI on top of the same gateway stack, use the separate app under [`../ag_ui_langchain/frontend`](../ag_ui_langchain/frontend/README.md) (different ports so this demo stays unchanged).
+
 ## Prerequisites
 
 **Python (repo root)** — install the distribution with the AG-UI extra:
@@ -150,3 +152,4 @@ Smoke checks with dev servers running:
 | --- | --- |
 | AG-UI channel | [`../../contrib/agentseek-ag-ui`](../../contrib/agentseek-ag-ui) |
 | CopilotKit frontend | [`frontend`](frontend) |
+| LangChain + Hashbrown UI (separate Vite app) | [`../ag_ui_langchain/frontend/README.md`](../ag_ui_langchain/frontend/README.md) |
