@@ -6,7 +6,7 @@ from typing import Any
 from ag_ui.core import Context, RunAgentInput, TextInputContent, Tool, UserMessage
 from ag_ui.encoder import EventEncoder
 from agentseek_ag_ui.channel import AGUIChannel
-from agentseek_ag_ui.config import AGUISettings
+from agentseek_ag_ui.config import AGUISettings, load_settings
 from agentseek_ag_ui.plugin import AGUIPlugin
 from bub.channels.message import ChannelMessage
 from republic import StreamEvent
@@ -30,6 +30,26 @@ def _input(*, state: Any = None) -> RunAgentInput:
         context=[Context(description="tenant", value="demo")],
         forwarded_props={},
     )
+
+
+def test_settings_do_not_read_process_path(monkeypatch: Any) -> None:
+    monkeypatch.setenv("PATH", "/tmp/not-an-ag-ui-path")  # noqa: S108
+    monkeypatch.delenv("AGENTSEEK_AG_UI_PATH", raising=False)
+    monkeypatch.delenv("BUB_AG_UI_PATH", raising=False)
+
+    settings = load_settings()
+
+    assert settings.path == "/agent"
+    assert settings.health_path == "/agent/health"
+
+
+def test_settings_read_explicit_agentseek_path_alias(monkeypatch: Any) -> None:
+    monkeypatch.setenv("PATH", "/tmp/not-an-ag-ui-path")  # noqa: S108
+    monkeypatch.setenv("AGENTSEEK_AG_UI_PATH", "/custom-agent")
+
+    settings = load_settings()
+
+    assert settings.path == "/custom-agent"
 
 
 def _decode_payloads(chunks: list[str]) -> list[str]:

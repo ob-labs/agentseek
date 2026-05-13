@@ -1,5 +1,9 @@
 docs/source
 
+# JavaScript frontend dependencies
+node_modules/
+*.tsbuildinfo
+
 # From https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
 
 # Byte-compiled / optimized / DLL files
