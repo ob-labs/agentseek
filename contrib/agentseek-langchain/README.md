@@ -1,6 +1,12 @@
 # agentseek-langchain
 
-`agentseek-langchain` is an optional Bub-compatible plugin that routes `run_model` through a LangChain `Runnable`.
+`agentseek-langchain` is a Bub/agentseek plugin that delegates model turns to a LangChain `Runnable` you provide.
+
+It does not introduce a new agent wrapper or own your model credentials. Its job is narrow:
+
+- load a `RunnableSpec` from configuration;
+- convert Bub turn state into runnable input and config;
+- normalize runnable output into the text result Bub expects.
 
 ## At A Glance
 
@@ -9,152 +15,138 @@
 | Distribution | `agentseek-langchain` |
 | Python package | `agentseek_langchain` |
 | Bub entry point | `langchain` |
-| Config section / surface | Environment variables only |
+| Config surface | `AGENTSEEK_LANGCHAIN_SPEC` (agentseek alias) or `BUB_LANGCHAIN_SPEC` |
 | Root install path | `uv sync --extra langchain` |
 | Test target | `make check-langchain` |
 
 ## When To Use It
 
-Use this package when you want to keep Bub/agentseek as the harness but delegate model execution to a LangChain runnable that you own.
+Use it when:
 
-The plugin does not own the LangChain agent implementation, remote service, or model credentials. It loads your factory, builds a request object, and invokes the returned `RunnableBinding`.
+- you already have a LangChain runnable, agent, or compiled graph that should own turn execution;
+- you want agentseek / Bub transport, channels, and persistence to stay in place around that runnable;
+- you want AG-UI request state to arrive as normal LangChain messages, tools, and runtime context where possible.
 
-Current scope:
+It does not:
 
-- only LangChain `Runnable` factories are supported
-- Bub tools can be bridged into LangChain tools
-- user-managed remote agent-protocol runnables can be wrapped through `langgraph-sdk`
-- Bub tape recording still works for user / assistant turns and tool spans
-- prompts starting with `,` still fall through to Bub built-in internal commands
+- build an agent for you;
+- choose a model provider for you;
+- force your code into an agentseek-specific middleware or wrapper shape.
 
 ## Install
 
-From the repo root:
+From the repository root:
 
 ```bash
 uv sync --extra langchain
 ```
 
-Or install only the plugin package runtime:
+Or install only this package:
 
 ```bash
 uv pip install -e contrib/agentseek-langchain
 ```
 
-That direct package install is mainly for plugin-only development outside the root extra flow.
-
-The bundled DeepAgents example uses repository development dependencies from the root workspace.
-It is not part of the plugin runtime dependency set.
-
-If you want to work on examples and tests from the repo:
-
-```bash
-uv sync --all-packages --group dev
-```
-
-If you want to run the repository examples directly, expose `examples/` on `PYTHONPATH`:
-
-```bash
-export PYTHONPATH="$(pwd)/contrib/agentseek-langchain/examples${PYTHONPATH:+:$PYTHONPATH}"
-```
-
 ## Configure
 
-Set a factory reference:
+Set one spec path:
 
 ```bash
-export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
+export AGENTSEEK_LANGCHAIN_SPEC=my_project.agent_binding:SPEC
 ```
 
-The plugin is active whenever `AGENTSEEK_LANGCHAIN_FACTORY` or `BUB_LANGCHAIN_FACTORY` is non-empty.
+`agentseek` maps `AGENTSEEK_LANGCHAIN_SPEC` to Bub’s native `BUB_LANGCHAIN_SPEC`, so either name works. `SPEC` must resolve to:
 
-| agentseek variable | Bub variable | Default | Purpose |
-| --- | --- | --- | --- |
-| `AGENTSEEK_LANGCHAIN_FACTORY` | `BUB_LANGCHAIN_FACTORY` | unset | Callable reference in `module:attr` form. Enables the plugin when non-empty. |
-| `AGENTSEEK_LANGCHAIN_INCLUDE_BUB_TOOLS` | `BUB_LANGCHAIN_INCLUDE_BUB_TOOLS` | `true` | Expose Bub tools to the runnable as LangChain tools. |
-| `AGENTSEEK_LANGCHAIN_TAPE` | `BUB_LANGCHAIN_TAPE` | `true` | Record user, assistant, and tool spans to the session tape. |
+- A `RunnableSpec` object, or
+- A zero-argument factory function that returns a `RunnableSpec`
 
-`BUB_LANGCHAIN_*` remains valid and takes precedence when both prefixes are set.
-
-### Factory Contract
-
-`AGENTSEEK_LANGCHAIN_FACTORY` must point to a callable `module:attr`.
-The callable must accept a single `request: LangchainFactoryRequest` keyword argument.
-The factory must return `RunnableBinding`.
-
-`RunnableBinding.invoke_input` is always explicit.
-`RunnableBinding.output_parser` is optional; if omitted, the adapter uses the default LangChain output normalizer.
-`RunnableBinding.stream_parser` is optional; if absent, streaming falls back to `ainvoke` for a stable final output.
-
-The plugin does not own the runnable implementation.
-If your factory uses DeepAgents, a remote agent-protocol service, or any other runtime, that runtime is managed by your factory and its own settings.
+The plugin does not accept a bare runnable export. Input and output shapes must be declared explicitly in `RunnableSpec`.
 
 ## Run
 
-From the repository root:
+Minimal binding:
 
-```bash
-uv sync --extra langchain
-export PYTHONPATH="$(pwd)/contrib/agentseek-langchain/examples${PYTHONPATH:+:$PYTHONPATH}"
-export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
-uv run agentseek run "Summarize this workspace in one sentence."
+```python
+from langchain.agents import create_agent
+
+from agentseek_langchain import messages_spec
+
+
+agent = create_agent(
+    model="openai:gpt-4.1",
+    tools=[],
+)
+
+SPEC = messages_spec(agent)
 ```
 
-If you also want Bub tools available to the runnable, keep `AGENTSEEK_LANGCHAIN_INCLUDE_BUB_TOOLS` unset or set it to `true`.
-
-To disable tape recording for the adapter:
+Then point the gateway at that binding and start it normally:
 
 ```bash
-export AGENTSEEK_LANGCHAIN_TAPE=false
+export AGENTSEEK_LANGCHAIN_SPEC=my_project.agent_binding:SPEC
+uv run agentseek gateway
 ```
 
-### Examples
+Common runnable shapes:
 
-Bundled examples are plain Python files under [`examples/`](examples/):
+- `messages_spec(...)`: messages/state-style runnables such as `create_agent()`, `StateGraph.compile()`, and `create_deep_agent()`
+- `text_spec(...)`: prompt-in / text-out runnables
+- `LangGraphClientRunnable(...)`: remote LangGraph SDK client bridge
 
-- [minimal_runnable.py](examples/minimal_runnable.py)
-- [deepagents_dashscope.py](examples/deepagents_dashscope.py)
-- [remote_agent_protocol.py](examples/remote_agent_protocol.py)
-- [examples/README.md](examples/README.md)
+### LangGraph
 
-Typical minimal run:
+```python
+from langgraph.graph import StateGraph
 
-```bash
-export PYTHONPATH="$(pwd)/contrib/agentseek-langchain/examples${PYTHONPATH:+:$PYTHONPATH}"
-export AGENTSEEK_LANGCHAIN_FACTORY=minimal_runnable:minimal_lc_agent
-uv run agentseek run "Summarize this workspace in one sentence."
+from agentseek_langchain import messages_spec
+
+graph = StateGraph(...)
+compiled = graph.compile()
+
+SPEC = messages_spec(compiled)
 ```
 
-Typical remote agent-protocol run:
+### DeepAgents
 
-```bash
-export AGENTSEEK_LANGCHAIN_FACTORY=remote_agent_protocol:remote_agent_protocol_agent
-export AGENTSEEK_AGENT_PROTOCOL_URL=http://localhost:2024
-export AGENTSEEK_AGENT_PROTOCOL_AGENT_ID=agent
-uv run agentseek chat
+```python
+from deepagents import create_deep_agent
+
+from agentseek_langchain import messages_spec
+
+deep_agent = create_deep_agent(...)
+
+SPEC = messages_spec(deep_agent)
 ```
 
-Those `AGENTSEEK_AGENT_PROTOCOL_*` variables are consumed by the example factory, not by the plugin core.
-That example wraps a user-managed remote runtime.
-`agentseek-langchain` only loads the factory and executes the returned `RunnableBinding`.
+### LangGraph SDK Client
+
+```python
+from langgraph_sdk import get_client
+from agentseek_langchain import LangGraphClientRunnable, messages_spec
+
+client = get_client(url="http://127.0.0.1:8123")
+runnable = LangGraphClientRunnable(client, assistant_id="agent")
+
+SPEC = messages_spec(runnable)
+```
+
+`LangGraphClientRunnable` only translates `ainvoke(...)` into `client.runs.wait(...)`. Input and output shapes are still determined by `messages_spec(...)` / `text_spec(...)`.
 
 ## Runtime Behavior
 
-- `run_model` and `run_model_stream` are implemented with `tryfirst=True`, so this plugin gets the first chance to handle model calls when enabled.
-- The plugin is skipped when `AGENTSEEK_LANGCHAIN_FACTORY` / `BUB_LANGCHAIN_FACTORY` is unset or blank.
-- String prompts starting with `,` are skipped so Bub internal commands still work.
-- When tape recording is enabled and a runtime agent is present, the adapter forks the session tape, writes user/assistant messages, records tool spans through callbacks, and merges back for normal session IDs.
-- When Bub tool bridging is enabled, the adapter converts the Bub tool registry into LangChain tools with a `ToolContext`.
+- When this plugin loads successfully, `run_model` / `run_model_stream` register with `tryfirst=True`, so the LangChain spec runs before Bub’s built-in model agent.
+- For AG-UI turns, the plugin rebuilds LangChain messages, frontend-declared tools, and CopilotKit context from the private `_ag_ui` state staged by `agentseek-ag-ui`.
+- If your runnable supports LangChain runtime `context=...` (for example `create_agent(..., context_schema=...)`), AG-UI context is forwarded there automatically.
+- If the runnable returns `structured_response`, the package serializes it into JSON text so the surrounding transport can decide how to render it.
+- `messages_spec(...)` decides whether `AGENTS.md` is injected; the plugin only reads it and places it on `InvocationContext.agents_md`.
 
 ## Verify
-
-From the repository root:
 
 ```bash
 make check-langchain
 ```
 
-Or run only this package's tests after syncing the extra:
+Or run it directly:
 
 ```bash
 uv sync --extra langchain
@@ -163,6 +155,6 @@ uv run python -m pytest contrib/agentseek-langchain/tests
 
 ## Limitations
 
-- The plugin supports `Runnable` factories, not arbitrary LangChain object discovery.
-- Runtime-specific settings for DeepAgents, remote agent-protocol services, or model providers belong to your factory or example code.
-- Example dependencies used only for development are not part of the plugin runtime dependency set.
+- This package only understands the shapes declared through `RunnableSpec`; a bare runnable export is rejected.
+- `text_spec(...)` is intentionally narrow and does not accept multimodal prompt input.
+- Structured UI still depends on the runnable and model provider being able to satisfy the schema you pass in at runtime.

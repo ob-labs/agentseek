@@ -1,31 +1,24 @@
 from __future__ import annotations
 
-from pydantic import AliasChoices, Field
+from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class LangchainPluginSettings(BaseSettings):
-    """Configuration for the agentseek LangChain Runnable adapter."""
-
+class LangChainSettings(BaseSettings):
     model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_prefix="BUB_LANGCHAIN_",
         env_file=".env",
+        env_file_encoding="utf-8",
+        env_ignore_empty=True,
         extra="ignore",
-        populate_by_name=True,
     )
 
-    factory: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("BUB_LANGCHAIN_FACTORY", "AGENTSEEK_LANGCHAIN_FACTORY"),
-    )
-    include_bub_tools: bool = Field(
-        default=True,
-        validation_alias=AliasChoices("BUB_LANGCHAIN_INCLUDE_BUB_TOOLS", "AGENTSEEK_LANGCHAIN_INCLUDE_BUB_TOOLS"),
-    )
-    tape: bool = Field(
-        default=True,
-        validation_alias=AliasChoices("BUB_LANGCHAIN_TAPE", "AGENTSEEK_LANGCHAIN_TAPE"),
-    )
+    # Uppercase field name so the env var is `BUB_LANGCHAIN_SPEC` (not `BUB_LANGCHAIN_spec`).
+    SPEC: str = ""
 
 
-def load_settings() -> LangchainPluginSettings:
-    return LangchainPluginSettings()
+@lru_cache(maxsize=1)
+def get_langchain_settings() -> LangChainSettings:
+    return LangChainSettings()

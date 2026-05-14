@@ -22,7 +22,7 @@ agentseek follows Bub's extension conventions. `AGENTSEEK_*` environment variabl
 | --- | --- | --- |
 | [agentseek-ag-ui](agentseek-ag-ui/README.md) | n/a | AG-UI protocol adapter and FastAPI endpoint helpers for Bub/agentseek runtimes. |
 | [agentseek-tapestore-oceanbase](agentseek-tapestore-oceanbase/README.md) | `tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility and optional vector retrieval. |
-| [agentseek-langchain](agentseek-langchain/README.md) | `langchain` | Route Bub model execution through a LangChain `Runnable`. |
+| [agentseek-langchain](agentseek-langchain/README.md) | `langchain` | Route Bub model turns through a user-provided LangChain `Runnable` or agent. |
 | [agentseek-schedule-sqlalchemy](agentseek-schedule-sqlalchemy/README.md) | `schedule` | Persist APScheduler jobs in a SQLAlchemy-backed store. |
 
 ## Documentation Boundary

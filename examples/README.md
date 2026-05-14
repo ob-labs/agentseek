@@ -7,7 +7,8 @@ its contrib packages.
 
 | Example | Purpose |
 | --- | --- |
-| [`ag-ui`](ag-ui/README.md) | Validate `agentseek-ag-ui` through an end-to-end CopilotKit browser frontend and `agentseek gateway` without LangChain. |
+| [`ag-ui`](ag-ui/README.md) | CopilotKit + AG-UI + gateway (`agentseek-ag-ui`) without LangChain. |
+| [`ag_ui_langchain`](ag_ui_langchain/README.md) | Dedicated [`frontend/README`](ag_ui_langchain/frontend/README.md) (CopilotKit + Hashbrown); LangChain `create_agent` + CopilotKit middleware via **`agentseek-langchain`** on the gateway. |
 
 Examples are intentionally kept outside package source trees so they can show how the pieces are
 installed and run together from a user workspace.

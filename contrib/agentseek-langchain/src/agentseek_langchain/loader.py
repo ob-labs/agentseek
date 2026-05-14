@@ -1,49 +1,33 @@
 from __future__ import annotations
 
-from dataclasses import replace
-from pkgutil import resolve_name
+import importlib
 from typing import Any
 
-from .bridge import LangchainFactoryRequest, RunnableBinding
-from .errors import LangchainConfigError
-from .normalize import to_text
+from agentseek_langchain.spec import RunnableSpec
 
 
-def _factory_error(factory: str, message: str) -> LangchainConfigError:
-    return LangchainConfigError(f"{message} (BUB_LANGCHAIN_FACTORY={factory!r})")
-
-
-def _normalize_factory_result(value: Any, *, factory: str) -> RunnableBinding:
-    if not isinstance(value, RunnableBinding):
-        raise _factory_error(factory, "Factory must return RunnableBinding")
-
-    if not hasattr(value.runnable, "invoke") or not hasattr(value.runnable, "ainvoke"):
-        raise _factory_error(factory, f"Expected a Runnable with invoke/ainvoke, got {type(value.runnable)!r}")
-
-    if value.output_parser is None:
-        return replace(
-            value,
-            output_parser=to_text,
-            stream_parser=to_text,
-        )
-
-    if not callable(value.output_parser):
-        raise _factory_error(factory, f"Expected output parser to be callable, got {type(value.output_parser)!r}")
-
-    if value.stream_parser is not None and not callable(value.stream_parser):
-        raise _factory_error(factory, f"Expected stream parser to be callable, got {type(value.stream_parser)!r}")
-
-    return value
-
-
-def resolve_runnable_binding(factory: str, request: LangchainFactoryRequest) -> RunnableBinding:
+def load_spec_from_path(path: str) -> RunnableSpec:
+    module_name, separator, symbol_name = path.partition(":")
+    if not separator or not module_name or not symbol_name:
+        raise ValueError("LangChain spec path must look like 'module.submodule:SYMBOL'")
+    module = importlib.import_module(module_name)
     try:
-        imported = resolve_name(factory)
-    except ValueError as exc:
-        raise _factory_error(factory, "Expected 'module:attr'") from exc
-    except (ImportError, AttributeError) as exc:
-        raise _factory_error(factory, f"Failed to resolve factory {factory!r}: {exc}") from exc
-    if not callable(imported) or (hasattr(imported, "invoke") and hasattr(imported, "ainvoke")):
-        raise _factory_error(factory, "BUB_LANGCHAIN_FACTORY must point to a callable factory")
-    value = imported(request=request)
-    return _normalize_factory_result(value, factory=factory)
+        exported = getattr(module, symbol_name)
+    except AttributeError as exc:
+        raise AttributeError(f"Cannot find symbol {symbol_name!r} in module {module_name!r}") from exc
+    return resolve_spec(exported)
+
+
+def resolve_spec(exported: Any) -> RunnableSpec:
+    if isinstance(exported, RunnableSpec):
+        return exported
+    if callable(exported) and not _looks_like_runnable(exported):
+        produced = exported()
+        if isinstance(produced, RunnableSpec):
+            return produced
+        raise TypeError("LangChain spec factory must return RunnableSpec")
+    raise TypeError("LangChain spec export must be RunnableSpec or zero-argument factory returning RunnableSpec")
+
+
+def _looks_like_runnable(value: object) -> bool:
+    return hasattr(value, "invoke") or hasattr(value, "ainvoke")
