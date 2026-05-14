@@ -1,28 +1,48 @@
-# AG-UI + LangChain (CopilotKit-style + AgentSeek)
+# AG-UI + LangChain
 
-This example follows the same ideas as the [LangChain CopilotKit integration guide](https://docs.langchain.com/oss/python/langchain/frontend/integrations/copilotkit), but runs through the agentseek gateway instead of mounting a separate FastAPI runtime next to LangGraph.
+This example follows the LangChain CopilotKit integration shape as closely as possible.
+It keeps the LangChain agent, CopilotKit middleware, structured-output bridge, and frontend UI contract aligned with the official guide, and only marks the AgentSeek-specific transport substitutions.
 
-## At A Glance
+## Mapping
 
-| Field | Value |
-| --- | --- |
-| Python side | LangChain `create_agent(...)` with `CopilotKitState`, `CopilotKitMiddleware`, and structured-output middleware |
-| Frontend | CopilotKit + Hashbrown UI |
-| Gateway path | `agentseek gateway --enable-channel ag-ui` |
-| Ports | frontend `5174`, runtime `4001`, gateway `8088` |
-| Example-local verification | `uv run pytest examples/ag_ui_langchain/test_middleware.py` |
+| LangChain guide | This repo | Match | Conversion point |
+| --- | --- | --- | --- |
+| `create_agent(...)` + `CopilotKitState` + `CopilotKitMiddleware` | [`demo_binding.py`](demo_binding.py) | Yes | None |
+| `normalize_context` + `apply_structured_output_schema` | [`middleware.py`](middleware.py) | Yes | None |
+| `langgraph.json` + `http.app` custom endpoint | `agentseek gateway --enable-channel ag-ui` + [`build_spec()`](demo_binding.py) | No | FastAPI endpoint replaced by `messages_spec(...)` |
+| `runtimeUrl="/api/copilotkit"` | [`frontend/src/App.tsx`](frontend/src/App.tsx) | Yes | None |
+| `useAgentContext(...)` + `useUiKit(...)` | [`frontend/src/langchainCopilotKitUi.tsx`](frontend/src/langchainCopilotKitUi.tsx) | Yes | None |
+| Custom CopilotKit runtime route | [`frontend/server.ts`](frontend/server.ts) | No | Local Copilot Runtime forwards to AgentSeek `/agent` |
 
-## Shape
+## How it works
 
-- **Python**: `CopilotKitState`, `AgentContext` (including `output_schema`), `create_agent` with `normalize_context`, `CopilotKitMiddleware`, `apply_structured_output_schema`, and the guide’s system prompt.
-  **Difference from the guide**: there is no FastAPI `add_langgraph_fastapi_endpoint` in-repo; the same agent runs on the **AgentSeek gateway** via **`agentseek-langchain`** `RunnableSpec` (`messages_spec`).
-- **Frontend** — dedicated app under [`frontend/`](frontend/) (does **not** change [`examples/ag-ui/frontend`](../ag-ui/frontend)): CopilotKit plus **`@hashbrownai/core` / `@hashbrownai/react` (0.5 beta, `useUiKit` / `useJsonParser`)**, `useAgentContext` (`output_schema`), and an assistant markdown slot that parses structured JSON with `kit.render` (falls back to default markdown when content is not valid UI JSON), matching the [LangChain CopilotKit guide](https://docs.langchain.com/oss/python/langchain/frontend/integrations/copilotkit) flow.
+1. The backend still uses a normal LangChain `create_agent(...)`.
+2. `CopilotKitMiddleware` and the structured-output middleware still run inside LangChain.
+3. The frontend still sends chat state to `/api/copilotkit`.
+4. The local Copilot Runtime forwards requests to the AgentSeek gateway `/agent`.
+5. The gateway invokes the same LangChain agent through `agentseek-langchain` `messages_spec(...)`.
+6. Assistant JSON is validated against the Hashbrown schema and rendered as React components.
 
-**Config loading** uses **`pydantic-settings.BaseSettings`** in [`settings.py`](settings.py): repository root `.env` plus `examples/ag_ui_langchain/.env`, with `Field(..., validation_alias=AliasChoices(...))` over **`AGENTSEEK_*` / `BUB_*` / `OPENAI_*`** names.
+```mermaid
+graph LR
+  USER["User input"]
+  UI["CopilotKit React app"]
+  RUNTIME["/api/copilotkit"]
+  GATEWAY["AgentSeek gateway /agent"]
+  AGENT["LangChain create_agent(...)"]
+  RENDER["Hashbrown UI kit"]
 
-The compatibility point is that [`build_agent()`](demo_binding.py) stays doc-shaped: ordinary LangChain `create_agent(...)` code with `CopilotKitState`, `CopilotKitMiddleware`, and the same middleware pattern shown in the guide. AgentSeek only adapts transport and forwards CopilotKit / AG-UI context into LangChain runtime `context`.
+  USER --> UI
+  UI --> RUNTIME
+  RUNTIME --> GATEWAY
+  GATEWAY --> AGENT
+  AGENT --> GATEWAY
+  GATEWAY --> RUNTIME
+  RUNTIME --> UI
+  UI --> RENDER
+```
 
-## Prerequisites
+## Installation
 
 From the repository root:
 
@@ -31,79 +51,391 @@ uv sync --extra ag-ui --extra langchain
 uv pip install -r examples/ag_ui_langchain/requirements.txt
 ```
 
-`requirements.txt` mainly adds **`copilotkit`** (and explicitly **`pydantic-settings`** for the example settings module).
+Frontend dependencies:
 
-Model and gateway variables match the rest of agentseek: **`AGENTSEEK_MODEL`**, **`AGENTSEEK_API_KEY`**, **`AGENTSEEK_API_BASE`**. You can copy the model block from the root `.env` into **`examples/ag_ui_langchain/.env`** (see [`.env.example`](.env.example)). For **`openai:`** models, when `OPENAI_*` are unset, [`settings.py`](settings.py) bridges AgentSeek credentials into **`OPENAI_API_KEY`** / **`OPENAI_API_BASE`** via `apply_openai_env_bridge()` (called from [`demo_binding.py`](demo_binding.py) before `create_agent`).
+```bash
+cd examples/ag_ui_langchain/frontend
+npm install
+```
+
+## Backend
+
+The backend agent stays guide-shaped. Transport adaptation lives outside `build_agent()`.
+
+```python
+from typing import Any, TypedDict
+
+from copilotkit import CopilotKitMiddleware, CopilotKitState
+from langchain.agents import create_agent
+
+from ag_ui_langchain.middleware import apply_structured_output_schema, normalize_context
+from ag_ui_langchain.settings import get_ag_ui_langchain_demo_settings
+
+
+class AgentState(CopilotKitState):
+    pass
+
+
+class AgentContext(TypedDict, total=False):
+    output_schema: dict[str, Any]
+
+
+def build_agent() -> Any:
+    settings = get_ag_ui_langchain_demo_settings()
+    model = settings.model.strip()
+    if not model:
+        msg = "Set AGENTSEEK_MODEL (e.g. openai:gpt-4o-mini) for the LangChain demo agent."
+        raise RuntimeError(msg)
+
+    settings.apply_openai_env_bridge()
+
+    return create_agent(
+        model=model,
+        tools=[],
+        middleware=[
+            normalize_context,
+            CopilotKitMiddleware(),
+            apply_structured_output_schema,
+        ],
+        context_schema=AgentContext,
+        state_schema=AgentState,
+        system_prompt=(
+            "You are a helpful UI assistant. "
+            "Build visual responses using the available components."
+        ),
+    )
+```
+
+Source: [demo_binding.py](demo_binding.py)
+
+### Backend conversion point
+
+The LangChain guide mounts a CopilotKit-aware HTTP app next to the LangGraph deployment.
+This example keeps the same agent shape and swaps only the transport layer:
+
+```python
+from agentseek_langchain import messages_spec
+
+def build_spec():
+    return messages_spec(build_agent(), include_agents_md=True)
+```
+
+Source: [demo_binding.py](demo_binding.py)
+
+## Middleware
+
+The middleware layer follows the guide pattern: normalize CopilotKit context, then turn `output_schema` into LangChain structured output.
+
+```python
+import json
+from collections.abc import Mapping
+
+from langchain.agents.middleware import before_agent, wrap_model_call
+from langchain.agents.structured_output import ProviderStrategy
+
+_DEFAULT_OUTPUT_SCHEMA_TITLE = "structured_response"
+
+
+@wrap_model_call
+async def apply_structured_output_schema(request, handler):
+    schema = None
+    runtime = getattr(request, "runtime", None)
+    runtime_context = getattr(runtime, "context", None)
+
+    if isinstance(runtime_context, Mapping):
+        schema = runtime_context.get("output_schema")
+
+    if schema is None and isinstance(getattr(request, "state", None), dict):
+        copilot_context = request.state.get("copilotkit", {}).get("context")
+        if isinstance(copilot_context, list):
+            for item in copilot_context:
+                if isinstance(item, dict) and item.get("description") == "output_schema":
+                    schema = item.get("value")
+                    break
+
+    if isinstance(schema, str):
+        try:
+            schema = json.loads(schema)
+        except json.JSONDecodeError:
+            schema = None
+
+    if isinstance(schema, dict):
+        title = schema.get("title")
+        if not isinstance(title, str) or not title.strip():
+            schema = {**schema, "title": _DEFAULT_OUTPUT_SCHEMA_TITLE}
+        request = request.override(
+            response_format=ProviderStrategy(schema=schema, strict=True),
+        )
+
+    return await handler(request)
+
+
+@before_agent
+def normalize_context(state, runtime):
+    copilotkit_state = state.get("copilotkit", {})
+    context = copilotkit_state.get("context")
+
+    if isinstance(context, list):
+        normalized = [
+            item.model_dump() if hasattr(item, "model_dump") else item
+            for item in context
+        ]
+        return {"copilotkit": {**copilotkit_state, "context": normalized}}
+
+    return None
+```
+
+Source: [middleware.py](middleware.py)
+
+## Frontend
+
+The frontend keeps the same contract as the guide: `CopilotKit` provides the runtime, `useAgentContext(...)` sends the schema, and assistant output is parsed before rendering.
+
+```tsx
+import { CopilotChat, CopilotKit } from "@copilotkit/react-core/v2";
+import "@copilotkit/react-core/v2/styles.css";
+
+import {
+  HashbrownAssistantMarkdown,
+  LangChainGenerativeUiProvider,
+} from "./langchainCopilotKitUi";
+
+const RUNTIME_URL =
+  import.meta.env.VITE_COPILOTKIT_RUNTIME_URL || "/api/copilotkit";
+
+export function App() {
+  return (
+    <CopilotKit runtimeUrl={RUNTIME_URL} useSingleEndpoint={false}>
+      <LangChainGenerativeUiProvider>
+        <div className="app-root">
+          <CopilotChat
+            agentId="default"
+            messageView={{
+              assistantMessage: {
+                markdownRenderer: HashbrownAssistantMarkdown,
+              },
+            }}
+          />
+        </div>
+      </LangChainGenerativeUiProvider>
+    </CopilotKit>
+  );
+}
+```
+
+Source: [frontend/src/App.tsx](frontend/src/App.tsx)
+
+### UI registry
+
+```tsx
+import { s } from "@hashbrownai/core";
+import { exposeComponent, exposeMarkdown, useUiKit } from "@hashbrownai/react";
+import { useAgentContext } from "@copilotkit/react-core/v2";
+
+export function LangChainGenerativeUiProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const kit = useUiKit({
+    components: [
+      exposeMarkdown(),
+      exposeComponent(Card, {
+        name: "card",
+        description: "Card to wrap generative UI content.",
+        children: "any",
+      }),
+      exposeComponent(Row, {
+        name: "row",
+        description: "Horizontal row layout.",
+        props: {
+          gap: s.string("Tailwind gap size") as never,
+        },
+        children: "any",
+      }),
+      exposeComponent(Column, {
+        name: "column",
+        description: "Vertical column layout.",
+        children: "any",
+      }),
+      exposeComponent(SimpleChart, {
+        name: "chart",
+        description: "Simple bar-style chart for numeric series.",
+        props: {
+          labels: s.array("Category labels", s.string("A label")),
+          values: s.array("Numeric values", s.number("A value")),
+        },
+        children: false,
+      }),
+      exposeComponent(CodeBlock, {
+        name: "code_block",
+        description: "Syntax-highlighted code block.",
+        props: {
+          code: s.streaming.string("The code to display"),
+          language: s.string("Programming language") as never,
+        },
+        children: false,
+      }),
+      exposeComponent(Button, {
+        name: "button",
+        description: "Clickable button.",
+        children: "text",
+      }),
+    ],
+  });
+
+  useAgentContext({
+    description: "output_schema",
+    value: s.toJsonSchema(kit.schema),
+  });
+
+  return (
+    <LangChainUiKitContext.Provider value={kit}>
+      {children}
+    </LangChainUiKitContext.Provider>
+  );
+}
+```
+
+Source: [frontend/src/langchainCopilotKitUi.tsx](frontend/src/langchainCopilotKitUi.tsx)
+
+### Assistant rendering
+
+```tsx
+import { CopilotChatAssistantMessage } from "@copilotkit/react-core/v2";
+import { useJsonParser } from "@hashbrownai/react";
+import { memo } from "react";
+
+const HashbrownAssistantMarkdownInner = memo(function HashbrownAssistantMarkdownInner({
+  kit,
+  content,
+  className,
+  ...rest
+}) {
+  const { value } = useJsonParser(content ?? "", kit.schema);
+
+  if (value) {
+    const nodes = kit.render(value);
+    return (
+      <div className={`magic-text-output ${className ?? ""}`.trim()} {...rest}>
+        {nodes}
+      </div>
+    );
+  }
+
+  if (!content?.trim()) {
+    return null;
+  }
+
+  return (
+    <CopilotChatAssistantMessage.MarkdownRenderer
+      content={content}
+      className={className}
+      {...rest}
+    />
+  );
+});
+```
+
+Source: [frontend/src/langchainCopilotKitUi.tsx](frontend/src/langchainCopilotKitUi.tsx)
+
+### Frontend conversion point
+
+The LangChain guide mounts `/api/copilotkit` next to the deployment.
+This example keeps the same route shape and moves the runtime bridge into the frontend workspace:
+
+```ts
+import { HttpAgent } from "@ag-ui/client";
+import { CopilotRuntime } from "@copilotkit/runtime/v2";
+import { createCopilotExpressHandler } from "@copilotkit/runtime/v2/express";
+import express from "express";
+
+const port = Number(process.env.COPILOTKIT_PORT || 4001);
+const basePath = "/api/copilotkit";
+const agentseekAgentUrl =
+  process.env.AGENTSEEK_AG_UI_AGENT_URL || "http://127.0.0.1:8088/agent";
+
+const runtime = new CopilotRuntime({
+  agents: {
+    default: new HttpAgent({
+      url: agentseekAgentUrl,
+    }),
+  },
+});
+
+const app = express();
+
+app.use(
+  createCopilotExpressHandler({
+    runtime,
+    basePath,
+    cors: true,
+  }),
+);
+```
+
+Source: [frontend/server.ts](frontend/server.ts)
 
 ## Configure
 
-Recommended local env file:
+Create the example-local env file:
 
 ```bash
 cp examples/ag_ui_langchain/.env.example examples/ag_ui_langchain/.env
 ```
 
-Then set:
+Required variables:
 
-- `AGENTSEEK_MODEL`, `AGENTSEEK_API_KEY`, `AGENTSEEK_API_BASE`
-- `AGENTSEEK_LANGCHAIN_SPEC=ag_ui_langchain.demo_binding:build_spec`
-- `AGENTSEEK_STREAM_OUTPUT=true`
-- `PYTHONPATH=examples`
+```bash
+AGENTSEEK_MODEL=...
+AGENTSEEK_API_KEY=...
+AGENTSEEK_API_BASE=...
+AGENTSEEK_LANGCHAIN_SPEC=ag_ui_langchain.demo_binding:build_spec
+AGENTSEEK_STREAM_OUTPUT=true
+PYTHONPATH=examples
+```
 
-The commands below assume you start from the repository root and load both `.env` files with `uv run --env-file ...`.
+If the model id starts with `openai:` and `OPENAI_*` is unset, [`settings.py`](settings.py) bridges `AGENTSEEK_API_KEY` and `AGENTSEEK_API_BASE` into `OPENAI_API_KEY` and `OPENAI_API_BASE`.
 
 ## Run
 
-**1. Gateway** (repository root):
+Start the gateway:
 
 ```bash
-uv run --env-file .env --env-file examples/ag_ui_langchain/.env agentseek gateway --enable-channel ag-ui
+uv run --env-file .env --env-file examples/ag_ui_langchain/.env \
+  agentseek gateway --enable-channel ag-ui
 ```
 
-**2. Frontend** (second terminal) — this example’s Vite + Copilot Runtime (defaults **5174** / **4001** so the plain [`ag-ui`](../ag-ui/README.md) demo can keep **5173** / **4000**):
+Start the frontend runtime and Vite app:
 
 ```bash
 cd examples/ag_ui_langchain/frontend
-npm install   # once
 npm run dev
 ```
 
-Open **`http://127.0.0.1:5174`**: CopilotKit → local Copilot Runtime → `HttpAgent` → gateway `/agent` → LangChain spec → AG-UI SSE.
+Default ports:
 
-See [`frontend/README.md`](frontend/README.md) and [`frontend/.env.example`](frontend/.env.example). Generic CopilotKit / Vite notes: [`../ag-ui/README.md`](../ag-ui/README.md).
+- Vite: `http://127.0.0.1:5174`
+- Copilot Runtime: `http://127.0.0.1:4001`
+- AgentSeek gateway: `http://127.0.0.1:8088`
 
 ## Verify
-
-Smoke checks:
 
 ```bash
 curl -s http://127.0.0.1:4001/health
 cd examples/ag_ui_langchain/frontend
 npm run build
-```
-
-Example-local Python verification:
-
-```bash
 uv run pytest examples/ag_ui_langchain/test_middleware.py
 ```
-
-That test intentionally lives under `examples/` and is not collected by the repository-level `make test`. It covers only the example glue layer.
 
 ## Files
 
 | File | Role |
 | --- | --- |
-| [`demo_binding.py`](demo_binding.py) | `build_spec()` → `messages_spec` + guide-aligned `create_agent` / CopilotKit middleware |
-| [`middleware.py`](middleware.py) | `normalize_context`, `apply_structured_output_schema` (as in the guide) |
-| [`settings.py`](settings.py) | `BaseSettings` + `AliasChoices` + OpenAI env bridge |
-| [`requirements.txt`](requirements.txt) | Extra Python deps (`uv pip install -r …`) |
-| [`.env.example`](.env.example) | Checklist; local `examples/ag_ui_langchain/.env` is not committed |
+| [`demo_binding.py`](demo_binding.py) | LangChain agent definition + AgentSeek `messages_spec` binding |
+| [`middleware.py`](middleware.py) | CopilotKit context normalization + structured output bridge |
+| [`settings.py`](settings.py) | Demo env loading + `openai:` credential bridge |
 | [`test_middleware.py`](test_middleware.py) | Example-local regression test for schema normalization |
-| [`frontend/`](frontend/) | Standalone CopilotKit + Hashbrown UI (Vite **5174**, runtime **4001**) |
-
-## Limitations
-
-- This is a demo integration, not a production deployment recipe.
-- Structured UI depends on the model provider being able to satisfy LangChain structured output for the supplied schema.
-- If the assistant reply is not valid UI JSON for the registered component schema, the frontend falls back to normal markdown rendering instead of coercing it.
+| [`frontend/src/App.tsx`](frontend/src/App.tsx) | CopilotKit app shell |
+| [`frontend/src/langchainCopilotKitUi.tsx`](frontend/src/langchainCopilotKitUi.tsx) | UI kit registration + assistant structured rendering |
+| [`frontend/server.ts`](frontend/server.ts) | Local Copilot Runtime forwarding to AgentSeek gateway |

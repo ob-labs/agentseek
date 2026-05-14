@@ -54,28 +54,6 @@ def build_agent() -> Any:
     )
 
 
-class _LazyAgentRunnable:
-    """Defer agent creation until first `ainvoke` so imports stay lightweight."""
-
-    __slots__ = ("_compiled",)
-
-    def __init__(self) -> None:
-        self._compiled: Any = None
-
-    def _agent(self) -> Any:
-        if self._compiled is None:
-            self._compiled = build_agent()
-        return self._compiled
-
-    async def ainvoke(self, runnable_input: object, config: Any = None, context: Any = None) -> object:
-        kwargs: dict[str, Any] = {}
-        if config is not None:
-            kwargs["config"] = config
-        if context is not None:
-            kwargs["context"] = context
-        return await self._agent().ainvoke(runnable_input, **kwargs)
-
-
 def build_spec():
     """Return a `RunnableSpec` (``BUB_LANGCHAIN_SPEC`` / ``AGENTSEEK_LANGCHAIN_SPEC``)."""
-    return messages_spec(_LazyAgentRunnable(), include_agents_md=True)
+    return messages_spec(build_agent(), include_agents_md=True)
