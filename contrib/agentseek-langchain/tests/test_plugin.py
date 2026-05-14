@@ -5,14 +5,15 @@ from types import SimpleNamespace
 
 import agentseek_langchain.plugin as plugin_module
 from agentseek_langchain.profiles import text_spec
+from agentseek_langchain.shapes import ObjectDict, copy_str_mapping
 
 
 class _AsyncRunnable:
     def __init__(self, output: str) -> None:
         self.output = output
-        self.calls: list[tuple[object, object]] = []
+        self.calls: list[tuple[object, ObjectDict | None]] = []
 
-    async def ainvoke(self, runnable_input: object, config=None) -> str:
+    async def ainvoke(self, runnable_input: object, config: ObjectDict | None = None) -> str:
         self.calls.append((runnable_input, config))
         return self.output
 
@@ -20,9 +21,14 @@ class _AsyncRunnable:
 class _AsyncRunnableWithContext:
     def __init__(self, output: str) -> None:
         self.output = output
-        self.calls: list[tuple[object, object, object]] = []
+        self.calls: list[tuple[object, ObjectDict | None, ObjectDict | None]] = []
 
-    async def ainvoke(self, runnable_input: object, config=None, context=None) -> str:
+    async def ainvoke(
+        self,
+        runnable_input: object,
+        config: ObjectDict | None = None,
+        context: ObjectDict | None = None,
+    ) -> str:
         self.calls.append((runnable_input, config, context))
         return self.output
 
@@ -45,7 +51,11 @@ def test_plugin_run_model_delegates_to_loaded_spec(monkeypatch, tmp_path) -> Non
 
     assert result == "delegated-output"
     assert runnable.calls[0][0] == "hello"
-    assert runnable.calls[0][1]["metadata"]["session_id"] == "session-1"
+    metadata = copy_str_mapping(runnable.calls[0][1].get("metadata") if runnable.calls[0][1] else None)
+    assert metadata == {
+        "session_id": "session-1",
+        "workspace": str(tmp_path),
+    }
 
 
 def test_plugin_run_model_stream_wraps_single_result(monkeypatch, tmp_path) -> None:

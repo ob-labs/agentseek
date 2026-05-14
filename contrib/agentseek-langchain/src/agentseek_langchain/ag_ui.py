@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
-from typing import Any
+from collections.abc import Mapping, Sequence
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
+
+from agentseek_langchain.shapes import HumanMessageContent, ObjectDict, StrMapping, as_str_mapping, copy_str_mapping
 
 AG_UI_INPUT_STATE_KEY = "_ag_ui"
 _MESSAGES_FIELD = "messages"
@@ -12,11 +13,16 @@ _TOOLS_FIELD = "tools"
 _CONTEXT_FIELD = "context"
 _DESCRIPTION_FIELD = "description"
 _VALUE_FIELD = "value"
+_ROLE_FIELD = "role"
+_ID_FIELD = "id"
+_NAME_FIELD = "name"
+_CONTENT_FIELD = "content"
+_TYPE_FIELD = "type"
+_TEXT_FIELD = "text"
 
 
-def ag_ui_input_from_state(state: Mapping[str, object]) -> Mapping[str, object] | None:
-    raw = state.get(AG_UI_INPUT_STATE_KEY)
-    return raw if isinstance(raw, Mapping) else None
+def ag_ui_input_from_state(state: Mapping[str, object]) -> StrMapping | None:
+    return as_str_mapping(state.get(AG_UI_INPUT_STATE_KEY))
 
 
 def application_state_from_state(state: Mapping[str, object]) -> dict[str, object]:
@@ -34,12 +40,13 @@ def ag_ui_context_items_from_state(state: Mapping[str, object]) -> list[tuple[st
 
     items: list[tuple[str, object]] = []
     for raw_item in raw_items:
-        if not isinstance(raw_item, Mapping):
+        item = as_str_mapping(raw_item)
+        if item is None:
             continue
-        description = raw_item.get(_DESCRIPTION_FIELD)
+        description = item.get(_DESCRIPTION_FIELD)
         if not isinstance(description, str) or not description:
             continue
-        value = normalize_context_value(raw_item.get(_VALUE_FIELD))
+        value = normalize_context_value(item.get(_VALUE_FIELD))
         if value is None:
             continue
         items.append((description, value))
@@ -73,7 +80,7 @@ def copilotkit_state_from_state(state: Mapping[str, object]) -> dict[str, object
     }
 
 
-def ag_ui_tools_from_state(state: Mapping[str, object]) -> list[dict[str, object]]:
+def ag_ui_tools_from_state(state: Mapping[str, object]) -> list[ObjectDict]:
     ag_ui_input = ag_ui_input_from_state(state)
     if ag_ui_input is None:
         return []
@@ -81,7 +88,11 @@ def ag_ui_tools_from_state(state: Mapping[str, object]) -> list[dict[str, object
     raw_tools = ag_ui_input.get(_TOOLS_FIELD)
     if not isinstance(raw_tools, list):
         return []
-    return [dict(tool) for tool in raw_tools if isinstance(tool, Mapping)]
+    tools: list[ObjectDict] = []
+    for raw_tool in raw_tools:
+        if (tool := copy_str_mapping(raw_tool)) is not None:
+            tools.append(tool)
+    return tools
 
 
 def langchain_messages_from_state(state: Mapping[str, object]) -> list[BaseMessage]:
@@ -95,21 +106,22 @@ def langchain_messages_from_state(state: Mapping[str, object]) -> list[BaseMessa
     return ag_ui_messages_to_langchain(raw_messages)
 
 
-def ag_ui_messages_to_langchain(messages: list[object]) -> list[BaseMessage]:
+def ag_ui_messages_to_langchain(messages: Sequence[object]) -> list[BaseMessage]:
     langchain_messages: list[BaseMessage] = []
     for raw_message in messages:
-        if not isinstance(raw_message, Mapping):
+        message = as_str_mapping(raw_message)
+        if message is None:
             continue
-        role = raw_message.get("role")
+        role = message.get(_ROLE_FIELD)
         if not isinstance(role, str):
             continue
 
         if role in {"reasoning", "developer", "activity"}:
             continue
 
-        message_id = _optional_string(raw_message.get("id"))
-        name = _optional_string(raw_message.get("name"))
-        content = raw_message.get("content")
+        message_id = _optional_string(message.get(_ID_FIELD))
+        name = _optional_string(message.get(_NAME_FIELD))
+        content = message.get(_CONTENT_FIELD)
 
         if role == "user":
             langchain_messages.append(
@@ -127,7 +139,7 @@ def ag_ui_messages_to_langchain(messages: list[object]) -> list[BaseMessage]:
                     id=message_id,
                     name=name,
                     content="" if content is None else str(content),
-                    tool_calls=_assistant_tool_calls_to_langchain(raw_message.get("tool_calls")),
+                    tool_calls=_assistant_tool_calls_to_langchain(message.get("tool_calls")),
                 )
             )
             continue
@@ -143,7 +155,7 @@ def ag_ui_messages_to_langchain(messages: list[object]) -> list[BaseMessage]:
             continue
 
         if role == "tool":
-            tool_call_id = _optional_string(raw_message.get("tool_call_id"))
+            tool_call_id = _optional_string(message.get("tool_call_id"))
             if not tool_call_id:
                 continue
             langchain_messages.append(
@@ -173,45 +185,50 @@ def _optional_string(value: object) -> str | None:
     return text or None
 
 
-def _user_content_to_langchain(content: object) -> str | list[dict[str, Any]]:
+def _user_content_to_langchain(content: object) -> HumanMessageContent:
     if isinstance(content, str):
         return content
     if isinstance(content, list):
-        converted = [_content_part_to_langchain(item) for item in content]
-        return [item for item in converted if item is not None]
+        converted: list[str | dict[str, object]] = []
+        for item in content:
+            if (part := _content_part_to_langchain(item)) is not None:
+                converted.append(part)
+        return converted
     return "" if content is None else str(content)
 
 
-def _content_part_to_langchain(item: object) -> dict[str, Any] | None:
-    if not isinstance(item, Mapping):
+def _content_part_to_langchain(item: object) -> ObjectDict | None:
+    part = as_str_mapping(item)
+    if part is None:
         return None
 
-    part_type = item.get("type")
+    part_type = part.get(_TYPE_FIELD)
     if part_type == "text":
-        text = item.get("text")
-        return {"type": "text", "text": "" if text is None else str(text)}
+        text = part.get(_TEXT_FIELD)
+        return {_TYPE_FIELD: _TEXT_FIELD, _TEXT_FIELD: "" if text is None else str(text)}
 
     if part_type == "binary":
-        url = _binary_item_to_url(item)
+        url = _binary_item_to_url(part)
         if url is None:
             return None
-        return {"type": "image_url", "image_url": {"url": url}}
+        return {_TYPE_FIELD: "image_url", "image_url": {"url": url}}
 
     if part_type in {"image", "audio", "video", "document"}:
-        source = item.get("source")
+        source = part.get("source")
         url = _source_to_url(source)
         if url is None:
             return None
-        return {"type": "image_url", "image_url": {"url": url}}
+        return {_TYPE_FIELD: "image_url", "image_url": {"url": url}}
 
     return None
 
 
 def _source_to_url(source: object) -> str | None:
-    if not isinstance(source, Mapping):
+    source_mapping = as_str_mapping(source)
+    if source_mapping is None:
         return None
-    source_type = source.get("type")
-    value = source.get("value")
+    source_type = source_mapping.get(_TYPE_FIELD)
+    value = source_mapping.get(_VALUE_FIELD)
     if not isinstance(value, str) or not value:
         return None
 
@@ -219,13 +236,13 @@ def _source_to_url(source: object) -> str | None:
         return value
 
     if source_type == "data":
-        mime_type = source.get("mime_type") or source.get("mimeType") or "application/octet-stream"
+        mime_type = source_mapping.get("mime_type") or source_mapping.get("mimeType") or "application/octet-stream"
         return f"data:{mime_type};base64,{value}"
 
     return None
 
 
-def _binary_item_to_url(item: Mapping[str, object]) -> str | None:
+def _binary_item_to_url(item: StrMapping) -> str | None:
     url = item.get("url")
     if isinstance(url, str) and url:
         return url
@@ -247,14 +264,15 @@ def _assistant_tool_calls_to_langchain(raw_tool_calls: object) -> list[dict[str,
 
     tool_calls: list[dict[str, object]] = []
     for raw_tool_call in raw_tool_calls:
-        if not isinstance(raw_tool_call, Mapping):
+        tool_call = as_str_mapping(raw_tool_call)
+        if tool_call is None:
             continue
-        function = raw_tool_call.get("function")
-        if not isinstance(function, Mapping):
+        function = as_str_mapping(tool_call.get("function"))
+        if function is None:
             continue
 
-        call_id = _optional_string(raw_tool_call.get("id"))
-        name = _optional_string(function.get("name"))
+        call_id = _optional_string(tool_call.get(_ID_FIELD))
+        name = _optional_string(function.get(_NAME_FIELD))
         if not call_id or not name:
             continue
 
@@ -278,8 +296,8 @@ def _decode_json_object(value: object) -> object:
             return json.loads(value)
         except json.JSONDecodeError:
             return {}
-    if isinstance(value, Mapping):
-        return dict(value)
+    if (mapping := copy_str_mapping(value)) is not None:
+        return mapping
     return {}
 
 
@@ -291,9 +309,12 @@ def _tool_content_to_text(content: object) -> str:
         for block in content:
             if isinstance(block, str):
                 parts.append(block)
-            elif isinstance(block, Mapping) and block.get("type") == "text":
-                parts.append("" if block.get("text") is None else str(block.get("text")))
-            else:
-                parts.append(json.dumps(block, ensure_ascii=False))
+                continue
+            block_mapping = as_str_mapping(block)
+            if block_mapping is not None and block_mapping.get(_TYPE_FIELD) == _TEXT_FIELD:
+                text = block_mapping.get(_TEXT_FIELD)
+                parts.append("" if text is None else str(text))
+                continue
+            parts.append(json.dumps(block, ensure_ascii=False))
         return "".join(parts)
     return "" if content is None else json.dumps(content, ensure_ascii=False)

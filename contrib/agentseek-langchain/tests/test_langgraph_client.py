@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from agentseek_langchain import LangGraphClientRunnable, messages_spec
+from agentseek_langchain.langgraph_client import LangGraphClientProtocol
 from agentseek_langchain.spec import InvocationContext
 
 
@@ -37,13 +39,13 @@ class _Runs:
         return self.result
 
 
-class _Client:
-    def __init__(self, result: object) -> None:
-        self.runs = _Runs(result)
+@dataclass
+class _Client(LangGraphClientProtocol):
+    runs: _Runs
 
 
 def test_langgraph_client_runnable_uses_thread_and_metadata(tmp_path: Path) -> None:
-    client = _Client({"messages": [{"content": "remote-output"}]})
+    client = _Client(runs=_Runs({"messages": [{"content": "remote-output"}]}))
     runnable = LangGraphClientRunnable(client, assistant_id="agent")
     spec = messages_spec(runnable, include_agents_md=True)
     context = InvocationContext(
@@ -69,7 +71,7 @@ def test_langgraph_client_runnable_uses_thread_and_metadata(tmp_path: Path) -> N
 
 
 def test_langgraph_client_runnable_passes_remaining_configurable_fields() -> None:
-    client = _Client({"messages": [{"content": "ok"}]})
+    client = _Client(runs=_Runs({"messages": [{"content": "ok"}]}))
     runnable = LangGraphClientRunnable(client, assistant_id="agent")
 
     result = asyncio.run(
@@ -94,7 +96,7 @@ def test_langgraph_client_runnable_passes_remaining_configurable_fields() -> Non
 
 
 def test_langgraph_client_runnable_can_run_stateless() -> None:
-    client = _Client({"messages": [{"content": "ok"}]})
+    client = _Client(runs=_Runs({"messages": [{"content": "ok"}]}))
     runnable = LangGraphClientRunnable(client, assistant_id="agent", thread_on_session=False)
 
     asyncio.run(runnable.ainvoke({"messages": []}, config={"configurable": {"thread_id": "ignored"}}))

@@ -5,7 +5,7 @@ import inspect
 from collections.abc import AsyncIterator, Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,6 +23,16 @@ InputBuilder = Callable[[InvocationContext], object]
 OutputParser = Callable[[object], str]
 ConfigBuilder = Callable[[InvocationContext], Mapping[str, object] | None]
 StreamBuilder = Callable[[object, object, Mapping[str, object] | None, InvocationContext], AsyncIterator[str]]
+
+
+@runtime_checkable
+class AsyncRunnable(Protocol):
+    def ainvoke(self, runnable_input: object, /, **kwargs: object) -> object: ...
+
+
+@runtime_checkable
+class SyncRunnable(Protocol):
+    def invoke(self, runnable_input: object, /, **kwargs: object) -> object: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,12 +84,12 @@ async def invoke_runnable(
     *,
     runtime_context: Mapping[str, object] | None = None,
 ) -> object:
-    if hasattr(runnable, "ainvoke"):
+    if isinstance(runnable, AsyncRunnable):
         result = _call_runnable_method(runnable.ainvoke, runnable_input, config, runtime_context)
         if inspect.isawaitable(result):
             return await result
         return result
-    if hasattr(runnable, "invoke"):
+    if isinstance(runnable, SyncRunnable):
         return await asyncio.to_thread(_call_runnable_method, runnable.invoke, runnable_input, config, runtime_context)
     raise TypeError("Runnable object must define invoke() or ainvoke()")
 

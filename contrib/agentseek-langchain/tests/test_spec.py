@@ -6,15 +6,16 @@ from pathlib import Path
 import pytest
 from agentseek_langchain.loader import load_spec_from_path, resolve_spec
 from agentseek_langchain.profiles import messages_spec, text_spec
+from agentseek_langchain.shapes import ObjectDict, copy_str_mapping
 from agentseek_langchain.spec import InvocationContext
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 
 class _MessagesRunnable:
     def __init__(self) -> None:
-        self.calls: list[tuple[object, object]] = []
+        self.calls: list[tuple[ObjectDict, ObjectDict | None]] = []
 
-    async def ainvoke(self, runnable_input: object, config=None) -> dict[str, object]:
+    async def ainvoke(self, runnable_input: ObjectDict, config: ObjectDict | None = None) -> ObjectDict:
         self.calls.append((runnable_input, config))
         return {"messages": [AIMessage(content="agent-output")]}
 
@@ -34,7 +35,12 @@ def test_messages_spec_builds_message_state_and_extracts_output(tmp_path: Path) 
 
     assert result == "agent-output"
     runnable_input, config = runnable.calls[0]
-    assert config["configurable"]["thread_id"] == "session-1"
+    assert config is not None
+    configurable = copy_str_mapping(config.get("configurable"))
+    assert configurable == {
+        "session_id": "session-1",
+        "thread_id": "session-1",
+    }
     assert runnable_input == {
         "messages": [
             SystemMessage(content="project-rules"),

@@ -4,6 +4,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from agentseek_langchain.shapes import as_str_mapping
+
 
 class LangGraphRunsProtocol(Protocol):
     async def wait(
@@ -76,7 +78,4 @@ def _assistant_config_from_config(config: Mapping[str, object] | None) -> dict[s
 def _mapping_or_none(config: Mapping[str, object] | None, key: str) -> Mapping[str, Any] | None:
     if config is None:
         return None
-    value = config.get(key)
-    if isinstance(value, Mapping):
-        return value
-    return None
+    return as_str_mapping(config.get(key))
