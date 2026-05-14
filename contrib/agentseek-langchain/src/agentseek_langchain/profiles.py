@@ -6,6 +6,12 @@ from typing import Any
 
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
+from agentseek_langchain.ag_ui import (
+    ag_ui_tools_from_state,
+    application_state_from_state,
+    copilotkit_state_from_state,
+    langchain_messages_from_state,
+)
 from agentseek_langchain.spec import InvocationContext, RunnableSpec, default_runnable_config
 
 
@@ -17,25 +23,6 @@ def _serialize_structured_value(value: object) -> str:
     if isinstance(value, (dict, list)):
         return json.dumps(value, ensure_ascii=False, default=str)
     return str(value)
-
-
-def _copilotkit_from_ag_ui_state(state: Mapping[str, object]) -> dict[str, Any] | None:
-    items = state.get("ag_ui_context")
-    if not isinstance(items, list) or not items:
-        return None
-    context_items: list[dict[str, Any]] = []
-    for raw in items:
-        if not isinstance(raw, Mapping):
-            continue
-        description = raw.get("description")
-        value = raw.get("value")
-        if not description or value is None:
-            continue
-        value_str = json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else str(value)
-        context_items.append({"description": str(description), "value": value_str})
-    if not context_items:
-        return None
-    return {"actions": [], "context": context_items}
 
 
 def text_spec(
@@ -62,13 +49,14 @@ def messages_spec(
     config_builder=default_runnable_config,
 ) -> RunnableSpec:
     def build_input(context: InvocationContext) -> object:
-        messages: list[BaseMessage] = []
-        if include_agents_md and context.agents_md:
-            messages.append(SystemMessage(content=context.agents_md))
-        messages.append(HumanMessage(content=context.prompt))
+        messages = _build_langchain_messages(context, include_agents_md=include_agents_md)
         if as_state:
-            graph_state: dict[str, Any] = {messages_key: messages}
-            copilotkit = _copilotkit_from_ag_ui_state(context.state)
+            graph_state: dict[str, Any] = application_state_from_state(context.state)
+            graph_state[messages_key] = messages
+            tools = ag_ui_tools_from_state(context.state)
+            if tools:
+                graph_state["tools"] = tools
+            copilotkit = copilotkit_state_from_state(context.state)
             if copilotkit is not None:
                 graph_state["copilotkit"] = copilotkit
             return graph_state
@@ -118,6 +106,24 @@ def _build_text_input(context: InvocationContext) -> str:
     if not isinstance(context.prompt, str):
         raise TypeError("text_spec only supports string prompts; use messages_spec for multimodal or messages input")
     return context.prompt
+
+
+def _build_langchain_messages(
+    context: InvocationContext,
+    *,
+    include_agents_md: bool,
+) -> list[BaseMessage]:
+    messages = langchain_messages_from_state(context.state)
+    if messages:
+        if include_agents_md and context.agents_md:
+            return [SystemMessage(content=context.agents_md), *messages]
+        return messages
+
+    fallback_messages: list[BaseMessage] = []
+    if include_agents_md and context.agents_md:
+        fallback_messages.append(SystemMessage(content=context.agents_md))
+    fallback_messages.append(HumanMessage(content=context.prompt))
+    return fallback_messages
 
 
 def _extract_text_from_messages(messages: object) -> str:

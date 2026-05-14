@@ -7,14 +7,17 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from typing import Any
 
 from langchain.agents.middleware import before_agent, wrap_model_call
 from langchain.agents.structured_output import ProviderStrategy
 
+_DEFAULT_OUTPUT_SCHEMA_TITLE = "structured_response"
+
 
 @wrap_model_call
 async def apply_structured_output_schema(request, handler):
-    schema = None
+    schema: object = None
     runtime = getattr(request, "runtime", None)
     runtime_context = getattr(runtime, "context", None)
 
@@ -29,15 +32,10 @@ async def apply_structured_output_schema(request, handler):
                     schema = item.get("value")
                     break
 
-    if isinstance(schema, str):
-        try:
-            schema = json.loads(schema)
-        except json.JSONDecodeError:
-            schema = None
-
-    if isinstance(schema, dict):
+    normalized_schema = _normalize_output_schema(schema)
+    if normalized_schema is not None:
         request = request.override(
-            response_format=ProviderStrategy(schema=schema, strict=True),
+            response_format=ProviderStrategy(schema=normalized_schema, strict=True),
         )
 
     return await handler(request)
@@ -53,3 +51,20 @@ def normalize_context(state, runtime):
         return {"copilotkit": {**copilotkit_state, "context": normalized}}
 
     return None
+
+
+def _normalize_output_schema(schema: object) -> dict[str, Any] | None:
+    if isinstance(schema, str):
+        try:
+            schema = json.loads(schema)
+        except json.JSONDecodeError:
+            return None
+
+    if not isinstance(schema, Mapping):
+        return None
+
+    normalized = dict(schema)
+    title = normalized.get("title")
+    if not isinstance(title, str) or not title.strip():
+        normalized["title"] = _DEFAULT_OUTPUT_SCHEMA_TITLE
+    return normalized

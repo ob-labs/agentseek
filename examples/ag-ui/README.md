@@ -1,6 +1,16 @@
 # CopilotKit + AG-UI Example (`agentseek-ag-ui`)
 
-This example runs an end-to-end browser chat against `agentseek gateway` with the **AG-UI** channel enabled. The UI is **CopilotKit** (React) talking to a small **Copilot Runtime** (Express) on the machine; the runtime forwards agent runs to the gateway using **`@ag-ui/client` `HttpAgent`**. There is no LangChain stack, no Python `client.py`, and no echo-only model.
+This example runs an end-to-end browser chat against `agentseek gateway` with the **AG-UI** channel enabled. The UI is **CopilotKit** (React) talking to a small **Copilot Runtime** (Express); the runtime forwards runs to the gateway using **`@ag-ui/client` `HttpAgent`**. There is no LangChain layer and no extra Python binding.
+
+## At A Glance
+
+| Field | Value |
+| --- | --- |
+| Stack | CopilotKit frontend + Copilot Runtime + agentseek gateway (`ag-ui` channel) |
+| Frontend | `http://127.0.0.1:5173` |
+| Runtime | `http://127.0.0.1:4000/api/copilotkit` |
+| Gateway | `http://127.0.0.1:8088/agent` |
+| Scope | Pure AG-UI transport demo; no LangChain or structured UI layer |
 
 ## Architecture
 
@@ -20,7 +30,7 @@ During `npm run dev`, **two processes** start via `concurrently`:
 | `tsx server.ts` | `4000` | CopilotKit runtime (`CopilotRuntime` + `createCopilotExpressHandler`). |
 | `vite` | `5173` | React app; proxies `/api/copilotkit` to the runtime. |
 
-The React app uses **`@copilotkit/react-core/v2`** with `runtimeUrl` pointing at `/api/copilotkit` and **`useSingleEndpoint={false}`** so the client hits the multi-route runtime surface (for example `/api/copilotkit/info`), not a legacy single-endpoint POST.
+The React app uses **`@copilotkit/react-core/v2`** with `runtimeUrl=/api/copilotkit` and **`useSingleEndpoint={false}`**, so the client talks to the multi-route runtime surface instead of a legacy single-endpoint POST.
 
 For **CopilotKit + Hashbrown** structured UI on top of the same gateway stack, use the separate app under [`../ag_ui_langchain/frontend`](../ag_ui_langchain/frontend/README.md) (different ports so this demo stays unchanged).
 
@@ -51,6 +61,10 @@ cd examples/ag-ui/frontend
 npm install
 ```
 
+## Configure
+
+This example only needs normal agentseek model configuration plus the runtime / Vite env documented below.
+
 ## Run
 
 **1. Start the gateway** (repository root):
@@ -71,11 +85,11 @@ npm run dev
 
 **3. Open** `http://127.0.0.1:5173` and send a message in the chat.
 
-## Configuration
+## Runtime Config
 
 ### Gateway streaming
 
-Bub uses `BUB_STREAM_OUTPUT` (default `false`). When it stays off, the gateway calls `run_model` and AG-UI mostly gets one assistant payload on `send()`. Turn it on with `AGENTSEEK_STREAM_OUTPUT=true` or `BUB_STREAM_OUTPUT=true` so `run_model_stream` runs and `stream_events()` can emit incremental `TEXT_MESSAGE_CONTENT`. Agentseek maps `AGENTSEEK_STREAM_OUTPUT` → `BUB_STREAM_OUTPUT` only if `BUB_STREAM_OUTPUT` is not already set.
+`BUB_STREAM_OUTPUT` (default `false`) controls whether the gateway uses `run_model_stream`. Turn it on with `AGENTSEEK_STREAM_OUTPUT=true` or `BUB_STREAM_OUTPUT=true` so `stream_events()` can emit incremental `TEXT_MESSAGE_CONTENT`. Agentseek maps `AGENTSEEK_STREAM_OUTPUT` → `BUB_STREAM_OUTPUT` only if `BUB_STREAM_OUTPUT` is not already set.
 
 | Variable | Notes |
 | --- | --- |
@@ -145,6 +159,7 @@ Smoke checks with dev servers running:
 
 - Demo-sized UI and wiring, not a production deployment guide.
 - Requires a working agentseek model configuration; no bundled fake model.
+- This example demonstrates AG-UI transport and streaming, not schema-driven generative UI rendering.
 
 ## Related paths
 

@@ -12,7 +12,7 @@ from bub.channels.message import ChannelMessage
 from republic import StreamEvent
 
 
-def _input(*, state: Any = None) -> RunAgentInput:
+def _input(*, state: Any = None, context: list[Context] | None = None) -> RunAgentInput:
     return RunAgentInput(
         thread_id="thread-1",
         run_id="run-1",
@@ -27,7 +27,7 @@ def _input(*, state: Any = None) -> RunAgentInput:
             )
         ],
         tools=[Tool(name="lookup", description="Lookup data")],
-        context=[Context(description="tenant", value="demo")],
+        context=context if context is not None else [Context(description="tenant", value="demo")],
         forwarded_props={},
     )
 
@@ -113,7 +113,15 @@ def test_plugin_build_prompt_and_save_state() -> None:
 
     prompt = asyncio.run(plugin.build_prompt(message=message, session_id="thread-1", state={}))
     assert prompt == "tenant: demo\ndescribe the image"
-    assert plugin.load_state(message, "thread-1") == {"ag_ui": {"count": 1}}
+    loaded_state = plugin.load_state(message, "thread-1")
+    assert loaded_state["count"] == 1
+    assert loaded_state["_ag_ui"]["context"] == [{"description": "tenant", "value": "demo"}]
+    assert loaded_state["_ag_ui"]["forwarded_props"] == {}
+    assert loaded_state["_ag_ui"]["messages"][0]["id"] == "user-1"
+    assert loaded_state["_ag_ui"]["messages"][0]["role"] == "user"
+    assert loaded_state["_ag_ui"]["messages"][0]["content"] == [{"type": "text", "text": "describe the image"}]
+    assert loaded_state["_ag_ui"]["tools"][0]["name"] == "lookup"
+    assert loaded_state["_ag_ui"]["tools"][0]["description"] == "Lookup data"
 
     asyncio.run(
         plugin.save_state(
@@ -144,6 +152,48 @@ def test_plugin_build_prompt_and_save_state() -> None:
     assert any('"type":"TEXT_MESSAGE_END"' in payload for payload in payloads)
     assert any('"type":"RUN_FINISHED"' in payload for payload in payloads)
     assert sum('"type":"TEXT_MESSAGE_CONTENT"' in payload for payload in payloads) == 1
+
+
+def test_plugin_keeps_output_schema_out_of_prompt_but_in_state() -> None:
+    plugin = AGUIPlugin(framework=None)
+    input_data = _input(
+        state={"count": 1},
+        context=[
+            Context(description="tenant", value="demo"),
+            Context(description="output_schema", value='{"type":"object","properties":{"name":{"type":"string"}}}'),
+        ],
+    )
+    message = plugin._channel.build_message(input_data)
+
+    prompt = asyncio.run(plugin.build_prompt(message=message, session_id="thread-1", state={}))
+    loaded_state = plugin.load_state(message, "thread-1")
+
+    assert prompt == "tenant: demo\ndescribe the image"
+    assert loaded_state["count"] == 1
+    assert loaded_state["_ag_ui"]["context"] == [
+        {"description": "tenant", "value": "demo"},
+        {"description": "output_schema", "value": {"type": "object", "properties": {"name": {"type": "string"}}}},
+    ]
+
+
+def test_plugin_keeps_structured_context_out_of_prompt_but_in_state() -> None:
+    plugin = AGUIPlugin(framework=None)
+    input_data = _input(
+        context=[
+            Context(description="tenant", value="demo"),
+            Context(description="filters", value='{"limit":5,"tags":["ui"]}'),
+        ],
+    )
+    message = plugin._channel.build_message(input_data)
+
+    prompt = asyncio.run(plugin.build_prompt(message=message, session_id="thread-1", state={}))
+    loaded_state = plugin.load_state(message, "thread-1")
+
+    assert prompt == "tenant: demo\ndescribe the image"
+    assert loaded_state["_ag_ui"]["context"] == [
+        {"description": "tenant", "value": "demo"},
+        {"description": "filters", "value": {"limit": 5, "tags": ["ui"]}},
+    ]
 
 
 def test_plugin_on_error_emits_run_error_instead_of_run_finished() -> None:

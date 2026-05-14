@@ -17,6 +17,16 @@ class _AsyncRunnable:
         return self.output
 
 
+class _AsyncRunnableWithContext:
+    def __init__(self, output: str) -> None:
+        self.output = output
+        self.calls: list[tuple[object, object, object]] = []
+
+    async def ainvoke(self, runnable_input: object, config=None, context=None) -> str:
+        self.calls.append((runnable_input, config, context))
+        return self.output
+
+
 def test_plugin_run_model_delegates_to_loaded_spec(monkeypatch, tmp_path) -> None:
     runnable = _AsyncRunnable("delegated-output")
     spec = text_spec(runnable)
@@ -59,6 +69,40 @@ def test_plugin_run_model_stream_wraps_single_result(monkeypatch, tmp_path) -> N
         ("text", {"delta": "streamed-once"}),
         ("final", {"text": "streamed-once", "ok": True}),
     ]
+
+
+def test_plugin_passes_ag_ui_context_as_runtime_context(monkeypatch, tmp_path) -> None:
+    runnable = _AsyncRunnableWithContext("delegated-output")
+    spec = text_spec(runnable)
+
+    monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(SPEC="dummy:SPEC"))
+    monkeypatch.setattr(plugin_module, "load_spec_from_path", lambda path: spec)
+
+    plugin = plugin_module.LangChainRunnablePlugin()
+    result = asyncio.run(
+        plugin.run_model(
+            prompt="hello",
+            session_id="session-1",
+            state={
+                "_runtime_workspace": str(tmp_path),
+                "_ag_ui": {
+                    "context": [
+                        {"description": "tenant", "value": "demo"},
+                        {
+                            "description": "output_schema",
+                            "value": '{"type":"object","properties":{"name":{"type":"string"}}}',
+                        },
+                    ]
+                },
+            },
+        )
+    )
+
+    assert result == "delegated-output"
+    assert runnable.calls[0][2] == {
+        "tenant": "demo",
+        "output_schema": {"type": "object", "properties": {"name": {"type": "string"}}},
+    }
 
 
 async def _collect_events(stream) -> list:

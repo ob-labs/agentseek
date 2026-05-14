@@ -8,6 +8,7 @@ from bub import hookimpl
 from bub.types import State
 from republic import AsyncStreamEvents, StreamEvent, StreamState
 
+from agentseek_langchain.ag_ui import runtime_context_from_state
 from agentseek_langchain.config import get_langchain_settings
 from agentseek_langchain.loader import load_spec_from_path
 from agentseek_langchain.spec import InvocationContext
@@ -28,6 +29,7 @@ class LangChainRunnablePlugin:
             state=state,
             workspace=workspace,
             agents_md=self._read_agents_md(workspace),
+            runtime_context=runtime_context_from_state(state),
         )
 
     @staticmethod

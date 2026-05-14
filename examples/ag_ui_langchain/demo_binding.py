@@ -27,44 +27,55 @@ class AgentContext(TypedDict, total=False):
     output_schema: dict[str, Any]
 
 
-class _LazyCreateAgent:
-    """Defer `create_agent` until first `ainvoke` so missing API keys do not break import."""
+def build_agent() -> Any:
+    """Build the guide-aligned LangChain agent.
+
+    The agent definition intentionally stays close to the LangChain CopilotKit
+    docs. AgentSeek-specific transport concerns live outside this function.
+    """
+
+    settings = get_ag_ui_langchain_demo_settings()
+    model = settings.model.strip()
+    if not model:
+        msg = "Set AGENTSEEK_MODEL (e.g. openai:gpt-4o-mini) for the LangChain demo agent."
+        raise RuntimeError(msg)
+    settings.apply_openai_env_bridge()
+    return create_agent(
+        model=model,
+        tools=[],
+        middleware=[
+            normalize_context,
+            CopilotKitMiddleware(),
+            apply_structured_output_schema,
+        ],
+        context_schema=AgentContext,
+        state_schema=AgentState,
+        system_prompt=("You are a helpful UI assistant. Build visual responses using the available components."),
+    )
+
+
+class _LazyAgentRunnable:
+    """Defer agent creation until first `ainvoke` so imports stay lightweight."""
 
     __slots__ = ("_compiled",)
 
     def __init__(self) -> None:
         self._compiled: Any = None
 
-    def _graph(self) -> Any:
+    def _agent(self) -> Any:
         if self._compiled is None:
-            settings = get_ag_ui_langchain_demo_settings()
-            model = settings.model.strip()
-            if not model:
-                msg = "Set AGENTSEEK_MODEL (e.g. openai:gpt-4o-mini) for the LangChain demo agent."
-                raise RuntimeError(msg)
-            settings.apply_openai_env_bridge()
-            self._compiled = create_agent(
-                model=model,
-                tools=[],
-                middleware=[
-                    normalize_context,
-                    CopilotKitMiddleware(),
-                    apply_structured_output_schema,
-                ],
-                context_schema=AgentContext,
-                state_schema=AgentState,
-                system_prompt=(
-                    "You are a helpful UI assistant. Build visual responses using the available components."
-                ),
-            )
+            self._compiled = build_agent()
         return self._compiled
 
-    async def ainvoke(self, runnable_input: object, config: Any = None) -> object:
+    async def ainvoke(self, runnable_input: object, config: Any = None, context: Any = None) -> object:
+        kwargs: dict[str, Any] = {}
         if config is not None:
-            return await self._graph().ainvoke(runnable_input, config=config)
-        return await self._graph().ainvoke(runnable_input)
+            kwargs["config"] = config
+        if context is not None:
+            kwargs["context"] = context
+        return await self._agent().ainvoke(runnable_input, **kwargs)
 
 
 def build_spec():
     """Return a `RunnableSpec` (``BUB_LANGCHAIN_SPEC`` / ``AGENTSEEK_LANGCHAIN_SPEC``)."""
-    return messages_spec(_LazyCreateAgent(), include_agents_md=True)
+    return messages_spec(_LazyAgentRunnable(), include_agents_md=True)
