@@ -1,4 +1,5 @@
 site_name: agentseek
+site_url: https://ob-labs.github.io/agentseek/
 repo_url: https://github.com/ob-labs/agentseek
 site_description: A database-native Agent Harness for runtime data workflows, powered by Bub
 edit_uri: edit/main/docs/
