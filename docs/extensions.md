@@ -53,6 +53,7 @@ Use `bub install …` instead if you prefer the upstream Bub entry point; behavi
 
 Contrib packages live outside the built-in `src/agentseek` documentation scope. Their README files are the source of truth for install commands, environment variables, plugin entry points, and examples:
 
+- [agentseek-observability](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-observability)
 - [agentseek-tapestore-oceanbase](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-tapestore-oceanbase)
 - [agentseek-langchain](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-langchain)
 - [agentseek-schedule-sqlalchemy](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-schedule-sqlalchemy)

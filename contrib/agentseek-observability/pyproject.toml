@@ -1,0 +1,24 @@
+[project]
+name = "agentseek-observability"
+version = "0.1.0"
+description = "Observability plugin for the any-llm -> republic -> bub runtime stack, backed by Logfire"
+readme = "README.md"
+authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
+requires-python = ">=3.12"
+dependencies = [
+    "any-llm-sdk",
+    "bub>=0.3.7",
+    "logfire>=4.33.0",
+    "republic>=0.5.7",
+]
+
+[project.entry-points.bub]
+observability = "agentseek_observability.plugin:main"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.build]
+package-dir = "src"
+includes = ["src/agentseek_observability"]

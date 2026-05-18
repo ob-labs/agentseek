@@ -12,6 +12,17 @@ apply_agentseek_env_aliases()
 apply_agentseek_cli_overrides()
 
 
+def _maybe_enable_observability() -> None:
+    try:
+        observability = importlib.import_module("agentseek_observability.plugin")
+    except ModuleNotFoundError:
+        return
+
+    instrument = getattr(observability, "instrument_agentseek_observability", None)
+    if callable(instrument):
+        instrument()
+
+
 def _instrument_agentseek() -> None:
     from loguru import logger
 
@@ -20,11 +31,13 @@ def _instrument_agentseek() -> None:
 
     try:
         logfire = importlib.import_module("logfire")
+        logfire_loguru = importlib.import_module("logfire.integrations.loguru")
     except ModuleNotFoundError:
         pass
     else:
         logfire.configure()
-        logger.add(logfire.loguru_handler())
+        logger.add(logfire_loguru.LogfireHandler(), format="{message}")
+        _maybe_enable_observability()
 
 
 def create_cli_app() -> typer.Typer:

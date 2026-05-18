@@ -51,6 +51,7 @@ In Docker Compose, the repository or selected host workspace is mounted at `/wor
 
 Contrib packages keep their full setup and usage references in their own README files:
 
+- [agentseek-observability](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-observability): Logfire-backed spans across any-llm, Republic, and Bub.
 - [agentseek-tapestore-oceanbase](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-tapestore-oceanbase): SQLAlchemy tape storage, OceanBase compatibility, and optional vector retrieval.
 - [agentseek-langchain](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-langchain): routing Bub model calls through a LangChain `Runnable`.
 - [agentseek-schedule-sqlalchemy](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-schedule-sqlalchemy): SQLAlchemy-backed APScheduler persistence.

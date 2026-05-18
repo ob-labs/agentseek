@@ -69,6 +69,7 @@ The main documentation describes the built-in agentseek distribution layer:
 
 Contrib packages document their complete setup in their own README files:
 
+- [agentseek-observability](contrib/agentseek-observability/README.md)
 - [agentseek-tapestore-oceanbase](contrib/agentseek-tapestore-oceanbase/README.md)
 - [agentseek-langchain](contrib/agentseek-langchain/README.md)
 - [agentseek-schedule-sqlalchemy](contrib/agentseek-schedule-sqlalchemy/README.md)

@@ -30,6 +30,9 @@ ag-ui = [
 langchain = [
     "agentseek-langchain",
 ]
+observability = [
+    "agentseek-observability",
+]
 oceanbase = [
     "agentseek-tapestore-oceanbase",
 ]
@@ -81,6 +84,7 @@ bub-mcp = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main"
 bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-tapestore-sqlalchemy" }
 agentseek-tapestore-oceanbase = { workspace = true }
 agentseek-langchain = { workspace = true }
+agentseek-observability = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }
 agentseek-ag-ui = { workspace = true }
 
@@ -88,6 +92,7 @@ agentseek-ag-ui = { workspace = true }
 members = [
     "contrib/agentseek-ag-ui",
     "contrib/agentseek-langchain",
+    "contrib/agentseek-observability",
     "contrib/agentseek-schedule-sqlalchemy",
     "contrib/agentseek-tapestore-oceanbase",
 ]

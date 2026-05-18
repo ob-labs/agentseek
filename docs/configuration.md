@@ -86,6 +86,7 @@ Installed Bub plugins can contribute onboarding prompts and write their own conf
 
 Configuration for contrib integrations is documented with each package:
 
+- [agentseek-observability](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-observability): Logfire and OTLP setup for the runtime trace stack.
 - [agentseek-tapestore-oceanbase](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-tapestore-oceanbase): SQLAlchemy tape storage, OceanBase URL compatibility, and vector settings.
 - [agentseek-langchain](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-langchain): LangChain factory, tool bridging, and tape recording settings.
 - [agentseek-schedule-sqlalchemy](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-schedule-sqlalchemy): scheduler database URL, table name, and fallback behavior.
