@@ -17,9 +17,12 @@
 {% elif item.path %}
           <p class="hub-card-meta">Path: <code>{{ item.path }}</code></p>
 {% endif %}
-{% if item.install %}
+{% set has_bundled_badge = (item.badges | default([]) | selectattr('label', 'equalto', 'bundled') | list | length) > 0 %}
+{% if item.install and not has_bundled_badge %}
           <div class="hub-install">
-            <code>{{ item.install }}</code>
+            <div class="hub-install-cmd" tabindex="0" role="group" aria-label="Install command">
+              <code>{{ item.install }}</code>
+            </div>
             <button type="button" class="hub-copy-btn" data-copy-cmd="{{ item.install }}">Copy</button>
           </div>
 {% endif %}

@@ -43,7 +43,7 @@ uv run agentseek chat
   </div>
   <div class="terminal-card">
     <h3><a href="hub/">Hub</a></h3>
-    <p>Browse the repository inventory of contrib packages and skills.</p>
+    <p>Browse plugins, skills, and a small friends list for this repo and the wider Bub ecosystem.</p>
   </div>
   <div class="terminal-card">
     <h3><a href="blog/">Blog</a></h3>

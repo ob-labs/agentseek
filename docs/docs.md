@@ -1,9 +1,6 @@
 # Docs
 
-This section is the core documentation for the built-in `agentseek` distribution layer.
-
-Use it when you want the shortest path from "what is this project?" to "how do I run it and extend
-it in a real workspace?"
+Run agentseek, look up settings, and extend your project.
 
 ## Read by goal
 
@@ -22,14 +19,12 @@ it in a real workspace?"
   </div>
 </div>
 
-## Documentation boundary
+## What these pages cover
 
-The `Docs` section focuses on what ships as the main distribution:
-
-- the `agentseek` CLI entry point
-- project-local runtime defaults such as `.agentseek`
-- `AGENTSEEK_*` aliases for Bub-compatible settings
+- the `agentseek` CLI
+- project defaults under `.agentseek`
+- `AGENTSEEK_*` aliases (Bub-compatible)
 - bundled skills under `src/skills`
 
-Larger integrations keep their complete setup and runtime details next to their code under
-`contrib/`. Use [Hub](hub.md) when you want a repository-wide inventory instead of product docs.
+Optional integrations under `contrib/` each ship their own README. For a single place that lists
+plugins, skills, and related links, use [Hub](hub.md).

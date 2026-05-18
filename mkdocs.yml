@@ -13,6 +13,7 @@ nav:
       - Extensions: extensions.md
   - Blog:
       - Intro: blog/index.md
+      - Introducing agentseek: blog/introducing-agentseek.md
   - Hub: hub.md
 
 hooks:

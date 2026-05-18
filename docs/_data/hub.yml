@@ -39,7 +39,6 @@ categories:
       - name: agentseek-schedule-sqlalchemy
         description: SQLAlchemy-backed APScheduler job persistence exposed as the Bub `schedule` plugin.
         entry_point: schedule
-        install: uv sync
         repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-schedule-sqlalchemy
         readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-schedule-sqlalchemy/README.md
         badges:
@@ -138,6 +137,21 @@ categories:
           - smoke-test
           - workspace
           - greeting
+
+      - name: documentation-writer
+        description: Diátaxis-oriented technical writing skill (from awesome-copilot) for drafting and reviewing docs.
+        path: .agents/skills/documentation-writer
+        skill_url: https://github.com/ob-labs/agentseek/blob/main/.agents/skills/documentation-writer/SKILL.md
+        badges:
+          - label: skill
+            class: skill
+          - label: local
+            class: subtle
+        tags:
+          - documentation
+          - diataxis
+          - writing
+          - awesome-copilot
 
   - name: Friends
     items:
