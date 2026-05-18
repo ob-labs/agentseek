@@ -1,0 +1,156 @@
+categories:
+  - name: Plugins
+    items:
+      - name: agentseek-ag-ui
+        description: AG-UI channel adapter for `agentseek gateway`, translating Bub stream events into AG-UI SSE events.
+        entry_point: ag-ui
+        install: uv sync --extra ag-ui
+        repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-ag-ui
+        readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-ag-ui/README.md
+        badges:
+          - label: plugin
+        tags:
+          - ag-ui
+          - channel
+          - gateway
+          - fastapi
+          - sse
+          - frontend
+          - ui
+
+      - name: agentseek-observability
+        description: Logfire-backed tracing that follows the `any-llm -> republic -> bub` runtime path.
+        entry_point: observability
+        install: uv sync --extra observability
+        repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-observability
+        readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-observability/README.md
+        badges:
+          - label: plugin
+        tags:
+          - observability
+          - logfire
+          - telemetry
+          - tracing
+          - otel
+          - any-llm
+          - republic
+          - bub
+
+      - name: agentseek-schedule-sqlalchemy
+        description: SQLAlchemy-backed APScheduler job persistence exposed as the Bub `schedule` plugin.
+        entry_point: schedule
+        install: uv sync
+        repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-schedule-sqlalchemy
+        readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-schedule-sqlalchemy/README.md
+        badges:
+          - label: plugin
+          - label: bundled
+            class: subtle
+        tags:
+          - scheduler
+          - apscheduler
+          - sqlalchemy
+          - jobs
+          - persistence
+          - schedule
+
+      - name: agentseek-tapestore-oceanbase
+        description: SQLAlchemy tape storage with OceanBase compatibility and optional vector retrieval.
+        entry_point: tapestore-oceanbase
+        install: uv sync --extra oceanbase
+        repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-tapestore-oceanbase
+        readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-tapestore-oceanbase/README.md
+        badges:
+          - label: plugin
+        tags:
+          - tape
+          - store
+          - sqlalchemy
+          - oceanbase
+          - vector
+          - retrieval
+          - embeddings
+
+      - name: agentseek-langchain
+        description: Delegates Bub model turns to a LangChain `Runnable` while keeping agentseek transport and persistence in place.
+        entry_point: langchain
+        install: uv sync --extra langchain
+        repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-langchain
+        readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-langchain/README.md
+        badges:
+          - label: plugin
+        tags:
+          - langchain
+          - runnable
+          - agent
+          - graph
+          - routing
+          - model
+
+  - name: Skills
+    items:
+      - name: plugin-creator
+        description: Create or update agentseek/Bub plugins while following this repository's contrib layout and packaging conventions.
+        path: src/skills/plugin-creator
+        skill_url: https://github.com/ob-labs/agentseek/blob/main/src/skills/plugin-creator/SKILL.md
+        badges:
+          - label: skill
+            class: skill
+          - label: bundled
+            class: subtle
+        tags:
+          - bundled
+          - bub
+          - plugin
+          - scaffold
+          - contrib
+          - packaging
+          - hooks
+          - entry-point
+
+      - name: github-repo-cards
+        description: Fetch GitHub repository or trending data through `gh`, then render SVG or PNG repo cards.
+        path: skills/github-repo-cards
+        skill_url: https://github.com/ob-labs/agentseek/blob/main/skills/github-repo-cards/SKILL.md
+        badges:
+          - label: skill
+            class: skill
+        tags:
+          - github
+          - repo
+          - trending
+          - card
+          - svg
+          - png
+          - gh
+
+      - name: local-greeting
+        description: Minimal local skill used to smoke-test workspace skill loading and runtime mounts during development.
+        path: .agents/skills/local-greeting
+        skill_url: https://github.com/ob-labs/agentseek/blob/main/.agents/skills/local-greeting/SKILL.md
+        badges:
+          - label: skill
+            class: skill
+          - label: local
+            class: subtle
+        tags:
+          - local
+          - smoke-test
+          - workspace
+          - greeting
+
+  - name: Friends
+    items:
+      - name: bub
+        description: The core Bub runtime that agentseek packages and extends. For the broader ecosystem, start here.
+        repo_url: https://github.com/bubbuild/bub
+        readme_url: https://github.com/bubbuild/bub/blob/main/README.md
+        badges:
+          - label: friend
+        tags:
+          - bub
+          - runtime
+          - hooks
+          - channels
+          - skills
+          - ecosystem

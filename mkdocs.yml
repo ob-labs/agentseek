@@ -6,9 +6,17 @@ repo_name: ob-labs/agentseek
 
 nav:
   - Home: index.md
-  - Getting started: getting-started.md
-  - Configuration: configuration.md
-  - Extensions: extensions.md
+  - Docs:
+      - Overview: docs.md
+      - Getting started: getting-started.md
+      - Configuration: configuration.md
+      - Extensions: extensions.md
+  - Blog:
+      - Intro: blog/index.md
+  - Hub: hub.md
+
+hooks:
+  - docs/hooks.py
 plugins:
   - search
   - mkdocstrings:
@@ -16,26 +24,8 @@ plugins:
         python:
           paths: ["src/agentseek"]
 theme:
-  name: material
-  feature:
-    tabs: true
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: white
-      accent: deep orange
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: black
-      accent: deep orange
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-  icon:
-    repo: fontawesome/brands/github
+  name: terminal
+  custom_dir: docs/overrides
 
 extra:
   social:
@@ -49,3 +39,10 @@ markdown_extensions:
       permalink: true
   - pymdownx.arithmatex:
       generic: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/hub.js
+  - javascripts/theme.js

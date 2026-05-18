@@ -48,15 +48,13 @@ dev = [
     "pytest>=9.0.2",
     "pre-commit>=4.5.1",
     "tox-uv>=1.29.0",
-
     "ty>=0.0.14",
-
     "ruff>=0.14.14",
     "mkdocs>=1.6.1",
-    "mkdocs-material>=9.7.1",
     "mkdocstrings[python]>=1.0.2",
     "deepagents>=0.5.3",
     "langchain-openai>=0.3.0",
+    "mkdocs-terminal>=4.8.0",
 ]
 
 [build-system]

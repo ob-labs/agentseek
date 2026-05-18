@@ -1,0 +1,21 @@
+{%- set active_section = namespace(item=None) -%}
+{%- for top_item in nav -%}
+  {%- if top_item.is_section and top_item.active -%}
+    {%- set active_section.item = top_item -%}
+  {%- endif -%}
+{%- endfor -%}
+<nav>
+  {%- if active_section.item and active_section.item.children|length > 0 %}
+    <ul class="terminal-mkdocs-side-nav-items">
+        {% for nav_item in active_section.item.children %}
+          {% include "partials/side-nav/side-nav-item.html" %}
+        {% endfor %}
+    </ul>
+  {%- elif nav|length > 1 %}
+    <ul class="terminal-mkdocs-side-nav-items">
+        {% for nav_item in nav %}
+          {% include "partials/side-nav/side-nav-item.html" %}
+        {% endfor %}
+    </ul>
+  {%- endif %}
+</nav>

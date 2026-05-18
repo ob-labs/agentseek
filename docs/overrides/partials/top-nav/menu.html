@@ -1,0 +1,58 @@
+{% set top_nav_ns = namespace(item_count=0) %}
+        <nav class="terminal-menu">
+            {% if nav|length > 1 %}
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                {% for nav_item in nav %}
+                {% set link_url = none %}
+                {% if nav_item.is_section and nav_item.children %}
+                    {% set first_child = nav_item.children[0] %}
+                    {% if not first_child.is_section %}
+                        {% set link_url = first_child.url|url %}
+                    {% endif %}
+                {% elif not nav_item.is_section %}
+                    {% set link_url = nav_item.url|url %}
+                {% endif %}
+                {% if link_url %}
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="{{ link_url }}" class="menu-item {% if nav_item.active %}active{% endif %}" property="item" typeof="WebPage">
+                        <span property="name">{{ nav_item.title }}</span>
+                    </a>
+                    <meta property="position" content="{{ top_nav_ns.item_count }}">
+                </li>
+                {%- set top_nav_ns.item_count = top_nav_ns.item_count + 1 -%}
+                {% endif %}
+                {% endfor %}
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="{{ config.repo_url }}" class="menu-item" property="item" typeof="WebPage" target="_blank" rel="noopener">
+                        <span property="name">Repo</span>
+                    </a>
+                    <meta property="position" content="{{ top_nav_ns.item_count }}">
+                </li>
+                {%- set top_nav_ns.item_count = top_nav_ns.item_count + 1 -%}
+                <li>
+                    <button type="button" class="menu-item theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                        <svg class="theme-toggle-icon theme-toggle-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 2v2"></path>
+                            <path d="M12 20v2"></path>
+                            <path d="M4.93 4.93l1.41 1.41"></path>
+                            <path d="M17.66 17.66l1.41 1.41"></path>
+                            <path d="M2 12h2"></path>
+                            <path d="M20 12h2"></path>
+                            <path d="M4.93 19.07l1.41-1.41"></path>
+                            <path d="M17.66 6.34l1.41-1.41"></path>
+                        </svg>
+                        <svg class="theme-toggle-icon theme-toggle-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"></path>
+                        </svg>
+                        <span class="visually-hidden theme-toggle-label">Toggle theme</span>
+                    </button>
+                </li>
+                {%- block search_button %}
+                    {% with button_idx=top_nav_ns.item_count %}
+                    {% include "partials/top-nav/search-button.html" %}
+                    {% endwith %}
+                {%- endblock search_button %}
+            </ul>
+            {% endif %}
+        </nav>

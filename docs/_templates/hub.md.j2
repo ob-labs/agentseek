@@ -1,0 +1,57 @@
+---
+hide_sidebar: true
+---
+
+<!-- Generated from docs/_templates/hub.md.j2 and docs/_data/hub.yml. -->
+
+# Hub
+
+This page is the repository inventory for plugins, skills, and close ecosystem references.
+
+<div class="hub-page">
+  <div class="hub-intro terminal-card">
+    <p class="landing-kicker">$ repo hub</p>
+    <p>
+      Browse what exists in this repository today, then jump straight to a package README or
+      `SKILL.md`. The page is generated from a shared template plus YAML data so the catalog can stay
+      tidy as the repo evolves. For the broader Bub ecosystem, also check
+      <a href="https://hub.bub.build">hub.bub.build</a>.
+    </p>
+  </div>
+
+  <div class="hub-controls">
+    <div class="hub-search-wrap">
+      <input
+        class="hub-search"
+        type="text"
+        placeholder="Search plugins, skills, and friends..."
+        autocomplete="off"
+        data-hub-search
+      />
+    </div>
+    <div class="hub-tabs">
+      <button class="hub-tab active" type="button" data-hub-tab="all">All</button>
+{% for category in categories %}
+      <button class="hub-tab" type="button" data-hub-tab="{{ category.name }}">{{ category.name }}</button>
+{% endfor %}
+    </div>
+    <p class="hub-results">
+      Showing <span data-hub-shown>0</span> of <span data-hub-total>0</span> items
+    </p>
+  </div>
+
+{% for category in categories %}
+  <section class="hub-section" data-hub-category="{{ category.name }}">
+    <h2>{{ category.name }}</h2>
+    <div class="hub-grid">
+{% for item in category["items"] %}
+{% include "partials/hub_card.md.j2" %}
+{% endfor %}
+    </div>
+  </section>
+{% endfor %}
+
+  <div class="hub-empty" hidden data-hub-empty>
+    No items match the current filter.
+  </div>
+</div>

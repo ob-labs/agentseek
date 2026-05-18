@@ -1,0 +1,36 @@
+        <article class="hub-card" data-search="{{ [category.name, item.name, item.description, (item.tags | default([]) | join(' '))] | join(' ') | lower }}">
+          <div class="hub-card-header">
+{% if item.repo_url %}
+            <a class="hub-card-name" href="{{ item.repo_url }}">{{ item.name }}</a>
+{% elif item.skill_url %}
+            <a class="hub-card-name" href="{{ item.skill_url }}">{{ item.name }}</a>
+{% else %}
+            <span class="hub-card-name">{{ item.name }}</span>
+{% endif %}
+{% for badge in item.badges | default([]) %}
+            <span class="hub-badge{% if badge.class %} {{ badge.class }}{% endif %}">{{ badge.label }}</span>
+{% endfor %}
+          </div>
+          <p class="hub-card-desc">{{ item.description }}</p>
+{% if item.entry_point %}
+          <p class="hub-card-meta">Entry point: <code>{{ item.entry_point }}</code></p>
+{% elif item.path %}
+          <p class="hub-card-meta">Path: <code>{{ item.path }}</code></p>
+{% endif %}
+{% if item.install %}
+          <div class="hub-install">
+            <code>{{ item.install }}</code>
+            <button type="button" class="hub-copy-btn" data-copy-cmd="{{ item.install }}">Copy</button>
+          </div>
+{% endif %}
+{% if item.readme_url or item.skill_url %}
+          <div class="hub-links">
+{% if item.readme_url %}
+            <a href="{{ item.readme_url }}">README</a>
+{% endif %}
+{% if item.skill_url %}
+            <a href="{{ item.skill_url }}">SKILL.md</a>
+{% endif %}
+          </div>
+{% endif %}
+        </article>
