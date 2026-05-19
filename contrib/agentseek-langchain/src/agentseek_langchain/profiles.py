@@ -84,7 +84,7 @@ def parse_text_output(result: object) -> str:
         structured = mapping.get("structured_response")
         if structured is not None:
             return _serialize_structured_value(structured)
-        for key in ("output", "result", "text", "final_output"):
+        for key in ("output", "result", "text", "final_output", "final_text"):
             if key in mapping:
                 return parse_text_output(mapping[key])
         if "messages" in mapping:

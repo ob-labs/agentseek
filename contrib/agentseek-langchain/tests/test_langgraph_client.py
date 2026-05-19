@@ -104,3 +104,20 @@ def test_langgraph_client_runnable_can_run_stateless() -> None:
     call = client.runs.calls[0]
     assert call["thread_id"] is None
     assert call["if_not_exists"] is None
+
+
+def test_langgraph_client_runnable_parses_remote_final_text(tmp_path: Path) -> None:
+    client = _Client(runs=_Runs({"output": {"final_text": "remote-output"}}))
+    runnable = LangGraphClientRunnable(client, assistant_id="agent")
+    spec = messages_spec(runnable)
+    context = InvocationContext(
+        prompt="hello",
+        session_id="session-1",
+        state={},
+        workspace=tmp_path,
+        agents_md=None,
+    )
+
+    result = asyncio.run(spec.invoke(context))
+
+    assert result == "remote-output"
