@@ -10,7 +10,7 @@ hide_sidebar: true
     a workspace-first runtime layout.
   </p>
   <div class="landing-actions">
-    <a class="terminal-button primary" href="getting-started/">Get started</a>
+    <a class="terminal-button primary" href="docs/getting-started/">Get started</a>
     <a class="terminal-button" href="docs/">Read docs</a>
     <a class="terminal-button" href="hub/">Explore hub</a>
   </div>

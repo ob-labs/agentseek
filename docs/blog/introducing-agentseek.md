@@ -37,6 +37,6 @@ The post [Why we rewrote Bub](https://bub.build/posts/why-rewrite-bub/) explains
 
 ## Where to start
 
-- **Hands-on:** [Getting started](../getting-started.md).
+- **Hands-on:** [Getting started](../docs/getting-started.md).
 - **Repository:** [ob-labs/agentseek on GitHub](https://github.com/ob-labs/agentseek).
 - **Catalogue:** plugins and skills on this site’s [Hub](../hub.md); the wider Bub ecosystem at [hub.bub.build](https://hub.bub.build).

@@ -27,4 +27,4 @@ Run agentseek, look up settings, and extend your project.
 - bundled skills under `src/skills`
 
 Optional integrations under `contrib/` each ship their own README. For a single place that lists
-plugins, skills, and related links, use [Hub](hub.md).
+plugins, skills, and related links, use [Hub](../hub.md).
