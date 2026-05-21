@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html {% block site_lang %}lang="en"{% endblock site_lang %}>
+<html {% block site_lang %}lang="{{ i18n_page_locale|default('en') }}"{% endblock site_lang %}>
 <head>
     {% set features = config.theme.features or [] %}
     {%- block site_meta %}
@@ -49,7 +49,7 @@
     {% block analytics %}{% endblock analytics %}
 </head>
 
-<body class="terminal{% if page.meta and page.meta.hide_sidebar %} no-sidebar{% endif %}">
+<body class="terminal{% if page.meta and page.meta.hide_sidebar %} no-sidebar{% endif %}" data-locale="{{ i18n_page_locale|default('en') }}">
     {%- block top_nav %}{% include "partials/top-nav/top.html" %}{%- endblock top_nav %}
 
     <div class="container">

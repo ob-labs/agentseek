@@ -20,6 +20,39 @@ nav:
 hooks:
   - docs/hooks.py
 plugins:
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: false
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+          nav_translations:
+            Home: Home
+            Docs: Docs
+            Overview: Overview
+            Getting started: Getting started
+            Configuration: Configuration
+            Extensions: Extensions
+            Blog: Blog
+            Intro: Intro
+            Introducing agentseek: Introducing agentseek
+            Hub: Hub
+        - locale: zh
+          name: 中文
+          build: true
+          nav_translations:
+            Home: 首页
+            Docs: 文档
+            Overview: 总览
+            Getting started: 快速开始
+            Configuration: 配置
+            Extensions: 扩展
+            Blog: 博客
+            Intro: 介绍
+            Introducing agentseek: 认识 agentseek
+            Hub: 目录
   - search
   - mkdocstrings:
       handlers:

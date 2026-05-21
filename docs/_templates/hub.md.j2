@@ -2,17 +2,14 @@
 hide_sidebar: true
 ---
 
-# Hub
+# {{ ui.title }}
 
-Plugins, skills, and a few ecosystem links that live in or next to this repository.
+{{ ui.summary }}
 
 <div class="hub-page">
   <div class="hub-intro terminal-card">
-    <p class="landing-kicker">$ repo hub</p>
-    <p>
-      Jump to each README or <code>SKILL.md</code>. For the wider Bub ecosystem, see
-      <a href="https://hub.bub.build">hub.bub.build</a>.
-    </p>
+    <p class="landing-kicker">{{ ui.intro_kicker }}</p>
+    <p>{{ ui.intro_body | safe }}</p>
   </div>
 
   <div class="hub-controls">
@@ -20,25 +17,25 @@ Plugins, skills, and a few ecosystem links that live in or next to this reposito
       <input
         class="hub-search"
         type="text"
-        placeholder="Search plugins, skills, and friends..."
+        placeholder="{{ ui.search_placeholder }}"
         autocomplete="off"
         data-hub-search
       />
     </div>
     <div class="hub-tabs">
-      <button class="hub-tab active" type="button" data-hub-tab="all">All</button>
+      <button class="hub-tab active" type="button" data-hub-tab="all">{{ ui.all_label }}</button>
 {% for category in categories %}
-      <button class="hub-tab" type="button" data-hub-tab="{{ category.name }}">{{ category.name }}</button>
+      <button class="hub-tab" type="button" data-hub-tab="{{ category.name }}">{{ ui.category_labels.get(category.name, category.name) }}</button>
 {% endfor %}
     </div>
     <p class="hub-results">
-      Showing <span data-hub-shown>0</span> of <span data-hub-total>0</span> items
+      {{ ui.showing_label }} <span data-hub-shown>0</span> {{ ui.of_label }} <span data-hub-total>0</span> {{ ui.items_label }}
     </p>
   </div>
 
 {% for category in categories %}
   <section class="hub-section" data-hub-category="{{ category.name }}">
-    <h2>{{ category.name }}</h2>
+    <h2>{{ ui.category_labels.get(category.name, category.name) }}</h2>
     <div class="hub-grid">
 {% for item in category["items"] %}
 {% include "partials/hub_card.md.j2" %}
@@ -48,6 +45,6 @@ Plugins, skills, and a few ecosystem links that live in or next to this reposito
 {% endfor %}
 
   <div class="hub-empty" hidden data-hub-empty>
-    No items match the current filter.
+    {{ ui.empty_label }}
   </div>
 </div>

@@ -116,6 +116,10 @@ body.no-sidebar .terminal-mkdocs-main-grid {
   box-shadow: none;
 }
 
+.terminal-menu .language-toggle {
+  text-decoration: none;
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;

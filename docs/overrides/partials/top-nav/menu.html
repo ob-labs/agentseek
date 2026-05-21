@@ -1,3 +1,19 @@
+{% set current_locale = i18n_page_locale|default('en') %}
+{% set is_zh = current_locale == 'zh' %}
+{% set raw_page_url = page.url if page and page.url else '' %}
+{% if is_zh %}
+    {% set switch_url = base_url ~ '/' ~ (raw_page_url|replace('zh/', '', 1)) %}
+    {% set switch_label = 'English' %}
+    {% set repo_label = '仓库' %}
+    {% set search_label = '搜索' %}
+    {% set theme_label = '切换主题' %}
+{% else %}
+    {% set switch_url = base_url ~ '/zh/' ~ raw_page_url %}
+    {% set switch_label = '中文' %}
+    {% set repo_label = 'Repo' %}
+    {% set search_label = 'Search' %}
+    {% set theme_label = 'Toggle theme' %}
+{% endif %}
 {% set top_nav_ns = namespace(item_count=0) %}
         <nav class="terminal-menu">
             {% if nav|length > 1 %}
@@ -24,11 +40,16 @@
                 {% endfor %}
                 <li property="itemListElement" typeof="ListItem">
                     <a href="{{ config.repo_url }}" class="menu-item" property="item" typeof="WebPage" target="_blank" rel="noopener">
-                        <span property="name">Repo</span>
+                        <span property="name">{{ repo_label }}</span>
                     </a>
                     <meta property="position" content="{{ top_nav_ns.item_count }}">
                 </li>
                 {%- set top_nav_ns.item_count = top_nav_ns.item_count + 1 -%}
+                <li>
+                    <a href="{{ switch_url }}" class="menu-item language-toggle" lang="{{ 'en' if is_zh else 'zh' }}">
+                        <span>{{ switch_label }}</span>
+                    </a>
+                </li>
                 <li>
                     <button type="button" class="menu-item theme-toggle" id="theme-toggle" aria-label="Toggle theme">
                         <svg class="theme-toggle-icon theme-toggle-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
@@ -45,14 +66,15 @@
                         <svg class="theme-toggle-icon theme-toggle-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"></path>
                         </svg>
-                        <span class="visually-hidden theme-toggle-label">Toggle theme</span>
+                        <span class="visually-hidden theme-toggle-label">{{ theme_label }}</span>
                     </button>
                 </li>
-                {%- block search_button %}
-                    {% with button_idx=top_nav_ns.item_count %}
-                    {% include "partials/top-nav/search-button.html" %}
-                    {% endwith %}
-                {%- endblock search_button %}
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">{{ search_label }}</span>
+                    </a>
+                    <meta property="position" content="{{ top_nav_ns.item_count }}">
+                </li>
             </ul>
             {% endif %}
         </nav>

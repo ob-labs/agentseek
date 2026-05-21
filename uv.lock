@@ -59,6 +59,7 @@ dev = [
     { name = "deepagents" },
     { name = "langchain-openai" },
     { name = "mkdocs" },
+    { name = "mkdocs-static-i18n" },
     { name = "mkdocs-terminal" },
     { name = "mkdocstrings", extra = ["python"] },
     { name = "pre-commit" },
@@ -87,6 +88,7 @@ dev = [
     { name = "deepagents", specifier = ">=0.5.3" },
     { name = "langchain-openai", specifier = ">=0.3.0" },
     { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-static-i18n", specifier = ">=1.3.0" },
     { name = "mkdocs-terminal", specifier = ">=4.8.0" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=1.0.2" },
     { name = "pre-commit", specifier = ">=4.5.1" },
@@ -1882,6 +1884,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ce/25/b3cccb187655b9393572bde9b09261d267c3bf2f2cdabe347673be5976a6/mkdocs_get_deps-0.2.2.tar.gz", hash = "sha256:8ee8d5f316cdbbb2834bc1df6e69c08fe769a83e040060de26d3c19fad3599a1", size = 11047, upload-time = "2026-03-10T02:46:33.632Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/29/744136411e785c4b0b744d5413e56555265939ab3a104c6a4b719dad33fd/mkdocs_get_deps-0.2.2-py3-none-any.whl", hash = "sha256:e7878cbeac04860b8b5e0ca31d3abad3df9411a75a32cde82f8e44b6c16ff650", size = 9555, upload-time = "2026-03-10T02:46:32.256Z" },
+]
+
+[[package]]
+name = "mkdocs-static-i18n"
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mkdocs" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ce/f9/51e2ffda9c7210bc35a24f3717b08c052cd4b728dfa87f901c00d8005259/mkdocs_static_i18n-1.3.1.tar.gz", hash = "sha256:a6125ea7db6cc1a900d76a967f262535af09831160a93c56d7f0d522a79b5faf", size = 1371325, upload-time = "2026-02-20T10:42:41.835Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6a/0b/43ff4afb6b438d47718b1959a22075ed95d8460d8c47381878b37a40de63/mkdocs_static_i18n-1.3.1-py3-none-any.whl", hash = "sha256:4036e24795a150c9c4d4b001ed24a43aec01335f76188dbe5a5d8fb4a27eba65", size = 21853, upload-time = "2026-02-20T10:42:40.551Z" },
 ]
 
 [[package]]

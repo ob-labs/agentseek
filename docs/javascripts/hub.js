@@ -76,8 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       await navigator.clipboard.writeText(command);
-      const originalText = button.textContent;
-      button.textContent = "Copied";
+      const originalText = button.getAttribute("data-copy-label") || button.textContent || "";
+      const copiedText = button.getAttribute("data-copied-label") || "Copied";
+      button.textContent = copiedText;
       window.setTimeout(() => {
         button.textContent = originalText;
       }, 1200);
