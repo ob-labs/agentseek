@@ -1,5 +1,7 @@
 # agentseek
 
+[中文](README.zh.md) | English
+
 [![License](https://img.shields.io/github/license/ob-labs/agentseek.svg)](LICENSE)
 [![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
 
@@ -65,9 +67,9 @@ The main documentation describes the built-in agentseek distribution layer:
 - [Overview](docs/index.md): what agentseek is, where it fits, and how the docs are structured.
 - [Blog intro](docs/blog/index.md): release notes, migrations, and longer-form posts.
 - [Introducing agentseek](docs/blog/introducing-agentseek.md): lineage from bubseek, database-native harness, and Bub/tape context.
-- [Getting started](docs/getting-started.md): a tutorial for running agentseek locally or with Docker Compose.
-- [Configuration](docs/configuration.md): reference for agentseek environment aliases, local runtime paths, and Docker defaults.
-- [Extensions](docs/extensions.md): how to add project instructions, skills, MCP config, and Bub-compatible plugins.
+- [Getting started](docs/docs/getting-started.md): a tutorial for running agentseek locally or with Docker Compose.
+- [Configuration](docs/docs/configuration.md): reference for agentseek environment aliases, local runtime paths, and Docker defaults.
+- [Extensions](docs/docs/extensions.md): how to add project instructions, skills, MCP config, and Bub-compatible plugins.
 
 Contrib packages document their complete setup in their own README files:
 
