@@ -104,8 +104,13 @@ agentseek create langchain --list-templates       # list templates under a type
 agentseek create --list-templates                 # list every bundled template
 agentseek create bub --template default --no-input
 
+# run — start the project locally and open the frontend
+agentseek run                                     # auto-detect compose / python entry
+agentseek run --no-browser                        # skip opening a browser tab
+agentseek run --mode compose --port 8080          # explicit mode override
+agentseek run --wait-timeout 60                   # extend readiness budget
+
 # stubs (surface only in v1)
-agentseek run
 agentseek build
 agentseek deploy --dry-run --mode docker-compose
 ```
@@ -134,9 +139,21 @@ agentseek deploy --dry-run --mode docker-compose
   duck-typing forwards `dev / serve / dockerfile / build / up / version`
   to `agentseek_api.cli.main(argv, prog, cwd)`. A missing dependency
   exits with `1` and a clear install hint instead of a traceback.
-- **Stubs exit cleanly.** `run / build / deploy` accept
+- **Stubs exit cleanly.** `build / deploy` accept
   the documented arguments and exit with code 0 (`deploy` exits with 2
   when called without `--dry-run`, since v1 only supports dry-run mode).
+- **`run` auto-detects launch mode.** The presence of
+  `docker-compose.yml` / `compose.yaml` selects compose mode; otherwise
+  the command looks for `pyproject.toml` plus an `app.py` / `main.py`
+  entry or a `serve` / `dev` script. `--mode compose|python` overrides
+  detection. The frontend URL is built from `--host` (default
+  `127.0.0.1`) and `--port` (defaults to `PORT` from `.env`, then
+  `3000`); `agentseek run` polls it once per second until the readiness
+  timeout (`--wait-timeout`, default `30s`) and then opens the default
+  browser unless `--no-browser` is passed. On exit (Ctrl-C or child
+  termination) the spawned process is `terminate()`d with a
+  5-second grace period before `kill()`, and compose mode runs
+  `docker compose down` for cleanup.
 
 ## Verify
 
@@ -172,7 +189,7 @@ uvx --from contrib/agentseek-cli/dist/agentseek_cli-0.1.0-*.whl agentseek --help
   `./.codex/skills/`) and global skills in `~/<agent>/skills/`.
   AgentSeek does not rewrite those paths. `--dir <path>` only controls
   the working directory `uvx npx-skills` runs in.
-- **`run / build / deploy` are surface-only in v1.** The
+- **`build / deploy` are surface-only in v1.** The
   flags and help text are stable; the implementations land in follow-up
   PRs (container build, manifest rendering).
 - **`create` ships bundled templates.** Templates live under
