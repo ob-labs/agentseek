@@ -117,8 +117,11 @@ agentseek build --platform linux/amd64,linux/arm64 --tag myproj:multi  # uses bu
 agentseek build --build-arg PYTHON_VERSION=3.12 --push
 agentseek build --dry-run                         # print resolved docker command
 
-# stubs (surface only in v1)
-agentseek deploy --dry-run --mode docker-compose
+# deploy — render docker-compose / k8s manifests (dry-run only in v1)
+agentseek deploy --dry-run                                # both, ./deploy/
+agentseek deploy --dry-run --mode docker-compose --output ./deploy --image myproj:1.0
+agentseek deploy --dry-run --mode k8s --replicas 3 --namespace platform
+agentseek deploy --dry-run --mode both --slug myproj --port 9000
 ```
 
 ## Runtime Behavior
@@ -145,9 +148,16 @@ agentseek deploy --dry-run --mode docker-compose
   duck-typing forwards `dev / serve / dockerfile / build / up / version`
   to `agentseek_api.cli.main(argv, prog, cwd)`. A missing dependency
   exits with `1` and a clear install hint instead of a traceback.
-- **Stubs exit cleanly.** `deploy` accepts the documented arguments and
-  exits with code 0 (`deploy` exits with 2 when called without
-  `--dry-run`, since v1 only supports dry-run mode).
+- **Stubs exit cleanly.** All commands accept the documented arguments;
+  `deploy` exits with 2 when called without `--dry-run`, since v1 only
+  supports dry-run mode.
+- **`deploy` renders inline templates.** v1 emits
+  `docker-compose.yaml` and/or `k8s/deployment.yaml` + `k8s/service.yaml`
+  under `--output` (default `./deploy`). The slug defaults to a
+  docker-friendly form of the cwd directory name; `--image` overrides
+  the default `<slug>:latest`. Existing files are listed before they are
+  overwritten so manual edits are not lost silently. Real cluster /
+  registry interaction lands in a follow-up PR.
 - **`build` wraps docker.** `agentseek build` shells out to
   `docker build` (single platform / no `--platform`) or
   `docker buildx build` (multi-platform). The default tag is
@@ -203,8 +213,10 @@ uvx --from contrib/agentseek-cli/dist/agentseek_cli-0.1.0-*.whl agentseek --help
   `./.codex/skills/`) and global skills in `~/<agent>/skills/`.
   AgentSeek does not rewrite those paths. `--dir <path>` only controls
   the working directory `uvx npx-skills` runs in.
-- **`deploy` is surface-only in v1.** The flags and help text are
-  stable; the manifest renderer lands in a follow-up PR.
+- **`deploy` is dry-run only in v1.** The flags and rendered manifest
+  shape are stable; future versions will add `--apply` (kubectl apply /
+  docker compose up) and registry interaction. For now, generate the
+  YAML, review/commit it, and apply it with your existing toolchain.
 - **`create` ships bundled templates.** Templates live under
   `agentseek_cli/templates/<type>/<name>/` and are listed by directory
   scan; add new templates by dropping a folder with a `cookiecutter.json`.

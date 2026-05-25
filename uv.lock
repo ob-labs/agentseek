@@ -132,6 +132,7 @@ source = { editable = "contrib/agentseek-cli" }
 dependencies = [
     { name = "bub" },
     { name = "cookiecutter" },
+    { name = "jinja2" },
     { name = "python-dotenv" },
     { name = "typer" },
 ]
@@ -140,6 +141,7 @@ dependencies = [
 requires-dist = [
     { name = "bub", specifier = ">=0.3.7" },
     { name = "cookiecutter", specifier = ">=2.5" },
+    { name = "jinja2", specifier = ">=3.1" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "typer", specifier = ">=0.12" },
 ]
