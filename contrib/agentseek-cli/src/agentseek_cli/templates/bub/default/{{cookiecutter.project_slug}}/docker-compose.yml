@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  gateway:
+    image: {{ cookiecutter.project_slug }}:latest
+    env_file: .env
+    ports:
+      - "{{ cookiecutter.gateway_port }}:{{ cookiecutter.gateway_port }}"

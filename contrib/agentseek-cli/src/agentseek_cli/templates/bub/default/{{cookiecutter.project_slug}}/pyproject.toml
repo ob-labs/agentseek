@@ -1,0 +1,9 @@
+[project]
+name = "{{ cookiecutter.project_slug }}"
+version = "0.1.0"
+description = "{{ cookiecutter.project_name }} — Bub-flavored AG-UI agent."
+authors = [{ name = "{{ cookiecutter.author }}" }]
+requires-python = ">=3.12"
+dependencies = [
+    "agentseek[ag-ui]",
+]

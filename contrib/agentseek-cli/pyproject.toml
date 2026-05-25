@@ -1,0 +1,26 @@
+[project]
+name = "agentseek-cli"
+version = "0.1.0"
+description = "Project-lifecycle CLI for AgentSeek (scaffold, run, build, deploy, skills, api)"
+readme = "README.md"
+authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
+requires-python = ">=3.12"
+dependencies = [
+    "bub>=0.3.7",
+    "cookiecutter>=2.5",
+    "typer>=0.12",
+]
+
+[project.scripts]
+agentseek = "agentseek_cli.standalone:app"
+
+[project.entry-points.bub]
+cli = "agentseek_cli.plugin:main"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.build]
+package-dir = "src"
+includes = ["src/agentseek_cli", "src/agentseek_cli/templates/**/*"]
