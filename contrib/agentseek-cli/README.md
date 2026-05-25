@@ -110,8 +110,14 @@ agentseek run --no-browser                        # skip opening a browser tab
 agentseek run --mode compose --port 8080          # explicit mode override
 agentseek run --wait-timeout 60                   # extend readiness budget
 
+# build — package the project into a Docker image
+agentseek build                                   # default tag: <cwd-slug>:latest
+agentseek build --tag myproj:1.0 --no-cache
+agentseek build --platform linux/amd64,linux/arm64 --tag myproj:multi  # uses buildx
+agentseek build --build-arg PYTHON_VERSION=3.12 --push
+agentseek build --dry-run                         # print resolved docker command
+
 # stubs (surface only in v1)
-agentseek build
 agentseek deploy --dry-run --mode docker-compose
 ```
 
@@ -139,9 +145,17 @@ agentseek deploy --dry-run --mode docker-compose
   duck-typing forwards `dev / serve / dockerfile / build / up / version`
   to `agentseek_api.cli.main(argv, prog, cwd)`. A missing dependency
   exits with `1` and a clear install hint instead of a traceback.
-- **Stubs exit cleanly.** `build / deploy` accept
-  the documented arguments and exit with code 0 (`deploy` exits with 2
-  when called without `--dry-run`, since v1 only supports dry-run mode).
+- **Stubs exit cleanly.** `deploy` accepts the documented arguments and
+  exits with code 0 (`deploy` exits with 2 when called without
+  `--dry-run`, since v1 only supports dry-run mode).
+- **`build` wraps docker.** `agentseek build` shells out to
+  `docker build` (single platform / no `--platform`) or
+  `docker buildx build` (multi-platform). The default tag is
+  `<cwd-slug>:latest`; `--push` runs `docker push <tag>` after a
+  successful build; `--dry-run` prints the resolved command(s) without
+  invoking docker. Missing `docker` exits with `1` and a clear install
+  hint; a missing `Dockerfile` exits with `2` and points at
+  `agentseek create`.
 - **`run` auto-detects launch mode.** The presence of
   `docker-compose.yml` / `compose.yaml` selects compose mode; otherwise
   the command looks for `pyproject.toml` plus an `app.py` / `main.py`
@@ -189,9 +203,8 @@ uvx --from contrib/agentseek-cli/dist/agentseek_cli-0.1.0-*.whl agentseek --help
   `./.codex/skills/`) and global skills in `~/<agent>/skills/`.
   AgentSeek does not rewrite those paths. `--dir <path>` only controls
   the working directory `uvx npx-skills` runs in.
-- **`build / deploy` are surface-only in v1.** The
-  flags and help text are stable; the implementations land in follow-up
-  PRs (container build, manifest rendering).
+- **`deploy` is surface-only in v1.** The flags and help text are
+  stable; the manifest renderer lands in a follow-up PR.
 - **`create` ships bundled templates.** Templates live under
   `agentseek_cli/templates/<type>/<name>/` and are listed by directory
   scan; add new templates by dropping a folder with a `cookiecutter.json`.
