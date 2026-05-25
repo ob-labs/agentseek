@@ -89,4 +89,6 @@ def test_skills_passes_all_documented_subcommands(monkeypatch) -> None:
     for sub in skills_module.SKILLS_COMMANDS:
         result = runner.invoke(build_app(), ["skills", sub])
         assert result.exit_code == 0, sub
-        assert captured["cmd"][2] == sub
+        cmd = captured["cmd"]
+        assert isinstance(cmd, list)
+        assert cmd[2] == sub

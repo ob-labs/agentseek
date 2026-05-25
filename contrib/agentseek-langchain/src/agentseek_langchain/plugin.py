@@ -3,14 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import typer
 from bub import hookimpl
 from bub.types import State
 from loguru import logger
 from republic import AsyncStreamEvents, StreamEvent, StreamState
 
 from agentseek_langchain.ag_ui import runtime_context_from_state
-from agentseek_langchain.api_cli import register_api_commands
 from agentseek_langchain.config import get_langchain_settings
 from agentseek_langchain.loader import load_spec_from_path
 from agentseek_langchain.spec import InvocationContext
@@ -88,10 +86,6 @@ class LangChainRunnablePlugin:
             yield StreamEvent("final", {"text": "".join(chunks), "ok": True})
 
         return AsyncStreamEvents(iterator(), state=stream_state)
-
-    @hookimpl
-    def register_cli_commands(self, app: typer.Typer) -> None:
-        register_api_commands(app)
 
 
 main = LangChainRunnablePlugin()

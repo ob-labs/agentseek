@@ -15,6 +15,7 @@ The launch surface intentionally avoids global state mutation (e.g. it does
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 import signal
@@ -275,18 +276,14 @@ def _wait_for_exit(proc: subprocess.Popen[bytes]) -> int:
 
 def _shutdown(proc: subprocess.Popen[bytes], mode: RunMode, cwd: Path) -> None:
     if proc.poll() is None:
-        try:
+        with contextlib.suppress(ProcessLookupError):
             proc.terminate()
-        except ProcessLookupError:
-            pass
         try:
             proc.wait(timeout=TERMINATE_GRACE_SECONDS)
         except subprocess.TimeoutExpired:
             proc.kill()
-            try:
+            with contextlib.suppress(subprocess.TimeoutExpired):
                 proc.wait(timeout=TERMINATE_GRACE_SECONDS)
-            except subprocess.TimeoutExpired:
-                pass
     if mode is RunMode.COMPOSE:
         _compose_down(cwd)
 
@@ -295,23 +292,19 @@ def _compose_down(cwd: Path) -> None:
     docker = shutil.which("docker")
     if docker is None:
         return
-    try:
+    with contextlib.suppress(subprocess.TimeoutExpired, OSError):
         subprocess.run(  # noqa: S603
             [docker, "compose", "down"],
             cwd=str(cwd),
             check=False,
             timeout=30,
         )
-    except (subprocess.TimeoutExpired, OSError):
-        pass
 
 
 def _install_signal_handlers(proc: subprocess.Popen[bytes]) -> None:
     def _handler(signum: int, _frame: object) -> None:
-        try:
+        with contextlib.suppress(ProcessLookupError):
             proc.send_signal(signal.SIGTERM)
-        except ProcessLookupError:
-            pass
 
     for sig in (signal.SIGINT, signal.SIGTERM):
         try:

@@ -19,7 +19,7 @@ from typer.testing import CliRunner
 
 
 def _ctx(**overrides: object) -> DeployContext:
-    base = {
+    base: dict[str, object] = {
         "slug": "demo",
         "image": "demo:latest",
         "port": 8000,
@@ -158,7 +158,7 @@ def test_slug_inferred_from_cwd(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_resolve_slug_uses_override() -> None:
-    assert _resolve_slug(Path("/tmp/whatever"), "Override Name") == "override-name"
+    assert _resolve_slug(Path("/tmp/whatever"), "Override Name") == "override-name"  # noqa: S108
 
 
 def test_resolve_image_defaults_to_latest() -> None:

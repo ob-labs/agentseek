@@ -120,7 +120,7 @@ class DeployContext:
 
 def _render(template_source: str, ctx: DeployContext) -> str:
     # YAML is plain text; HTML autoescaping would corrupt the manifest.
-    template = jinja2.Template(template_source, autoescape=False, keep_trailing_newline=True)  # noqa: S701
+    template = jinja2.Template(template_source, autoescape=False, keep_trailing_newline=True)
     return template.render(**ctx.as_dict())
 
 

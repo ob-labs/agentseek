@@ -82,8 +82,8 @@ def _raise_missing_docker() -> NoReturn:
 
 
 def _ensure_buildx() -> None:
-    completed = subprocess.run(  # noqa: S603, S607
-        ["docker", "buildx", "version"],
+    completed = subprocess.run(
+        ["docker", "buildx", "version"],  # noqa: S607
         capture_output=True,
         check=False,
     )

@@ -1,7 +1,7 @@
 {
-    "project_name": "My LangChain Agent",
-    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
-    "author": "Your Name",
-    "system_prompt": "You are a helpful UI assistant. Build visual responses using the available components.",
-    "default_model": "openai:gpt-4o-mini"
+  "project_name": "My LangChain Agent",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "author": "Your Name",
+  "system_prompt": "You are a helpful UI assistant. Build visual responses using the available components.",
+  "default_model": "openai:gpt-4o-mini"
 }

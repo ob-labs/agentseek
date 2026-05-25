@@ -9,7 +9,6 @@ from agentseek_cli.app import build_app
 from agentseek_cli.commands import run as run_module
 from typer.testing import CliRunner
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -40,7 +39,7 @@ class _FakePopen:
         self.killed = True
         self._stays_alive = False
 
-    def send_signal(self, signum: int) -> None:  # noqa: ARG002
+    def send_signal(self, signum: int) -> None:
         self.terminated = True
         self._stays_alive = False
 
@@ -98,7 +97,7 @@ def test_no_browser_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     fake = _FakePopen(returncode=0, stays_alive=False)
     captured: dict[str, Any] = {}
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:  # noqa: ARG001
+    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
         captured["cmd"] = cmd
         return fake
 
@@ -132,7 +131,7 @@ def test_compose_mode_invokes_compose_up(tmp_path: Path, monkeypatch: pytest.Mon
     captured: dict[str, Any] = {}
     fake = _FakePopen(returncode=0, stays_alive=False)
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:  # noqa: ARG001
+    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
         captured["cmd"] = cmd
         return fake
 
@@ -161,7 +160,7 @@ def test_wait_ready_timeout_exits_nonzero(tmp_path: Path, monkeypatch: pytest.Mo
 
     fake = _FakePopen(returncode=0, stays_alive=True)
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:  # noqa: ARG001
+    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
         return fake
 
     monkeypatch.setattr(run_module, "_spawn", fake_spawn)
@@ -193,7 +192,7 @@ def test_python_mode_picks_app_py_entry(tmp_path: Path, monkeypatch: pytest.Monk
     captured: dict[str, Any] = {}
     fake = _FakePopen(returncode=0, stays_alive=False)
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:  # noqa: ARG001
+    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
         captured["cmd"] = cmd
         return fake
 

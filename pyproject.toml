@@ -28,6 +28,9 @@ dependencies = [
 ag-ui = [
     "agentseek-ag-ui",
 ]
+cli = [
+    "agentseek-cli",
+]
 langchain = [
     "agentseek-langchain",
 ]
@@ -87,10 +90,12 @@ agentseek-langchain = { workspace = true }
 agentseek-observability = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }
 agentseek-ag-ui = { workspace = true }
+agentseek-cli = { workspace = true }
 
 [tool.uv.workspace]
 members = [
     "contrib/agentseek-ag-ui",
+    "contrib/agentseek-cli",
     "contrib/agentseek-langchain",
     "contrib/agentseek-observability",
     "contrib/agentseek-schedule-sqlalchemy",
@@ -108,7 +113,11 @@ allowed-unresolved-imports = ["deepagents.**"]
 
 [tool.ty.src]
 # references/ = third-party or example code.
-exclude = ["references"]
+# templates/ = cookiecutter sources containing jinja2 placeholders, not real Python.
+exclude = [
+    "references",
+    "contrib/agentseek-cli/src/agentseek_cli/templates",
+]
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -119,6 +128,9 @@ testpaths = [
 target-version = "py312"
 line-length = 120
 fix = true
+extend-exclude = [
+    "contrib/agentseek-cli/src/agentseek_cli/templates",
+]
 
 [tool.ruff.lint]
 select = [

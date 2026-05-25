@@ -1,8 +1,8 @@
 {
-    "project_name": "My Bub Agent",
-    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
-    "author": "Your Name",
-    "default_model": "openai:gpt-4o-mini",
-    "gateway_port": "8088",
-    "frontend_port": "5173"
+  "project_name": "My Bub Agent",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "author": "Your Name",
+  "default_model": "openai:gpt-4o-mini",
+  "gateway_port": "8088",
+  "frontend_port": "5173"
 }

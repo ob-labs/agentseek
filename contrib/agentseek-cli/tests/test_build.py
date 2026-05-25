@@ -93,7 +93,7 @@ def test_dry_run_prints_command_no_subprocess(
 
     def _fail(*args: object, **kwargs: object) -> None:
         called["ran"] = True
-        raise AssertionError("subprocess.run should not be called in dry-run")
+        raise AssertionError("subprocess.run should not be called in dry-run")  # noqa: TRY003
 
     monkeypatch.setattr(subprocess, "run", _fail)
 
@@ -179,7 +179,7 @@ def test_real_subprocess_invocation_returncode_propagates(
         def __init__(self, returncode: int) -> None:
             self.returncode = returncode
 
-    def _fake_run(cmd, check=False):  # noqa: ANN001 - matches subprocess.run signature loosely
+    def _fake_run(cmd, check=False):
         captured["cmd"] = list(cmd)
         return _CP(7)
 

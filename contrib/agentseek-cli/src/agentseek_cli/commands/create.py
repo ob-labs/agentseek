@@ -207,52 +207,71 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
 def create(ctx: typer.Context) -> None:
     """Create a new agent project from a pre-built template."""
 
-    try:
-        args = _parse_argv(list(ctx.args))
-    except SystemExit as exc:
-        # argparse already wrote its error to stderr; preserve its exit code.
-        raise typer.Exit(int(exc.code or 2)) from exc
-
-    project_type = args.type
-    if project_type is None and not args.list_templates:
-        project_type = _prompt_project_type()
-
-    if project_type is not None and project_type not in KNOWN_TYPES:
-        typer.echo(
-            f"Unknown framework type {project_type!r}. Expected one of: {', '.join(KNOWN_TYPES)}.",
-            err=True,
-        )
-        raise typer.Exit(2)
+    args = _parse_create_args(ctx)
+    project_type = _resolve_project_type(args)
 
     if args.list_templates:
-        if project_type is None:
-            for known in KNOWN_TYPES:
-                _print_templates_table(known, _list_templates(known))
-            return
-        _print_templates_table(project_type, _list_templates(project_type))
+        _show_templates(project_type)
         return
 
-    assert project_type is not None  # narrowed above
+    if project_type is None:
+        # Defensive: _resolve_project_type returned None only when list_templates is True.
+        raise typer.Exit(2)
 
     available = _list_templates(project_type)
     if not available:
         typer.echo(f"No templates bundled for type {project_type!r}.", err=True)
         raise typer.Exit(2)
 
-    template = args.template
-    if not template:
-        if len(available) == 1 or args.no_input:
-            template = available[0] if "default" not in available else "default"
-        else:
-            template = _prompt_template_name(project_type, available)
+    template = _resolve_template_name(args, project_type, available)
+    template_path = _safely_resolve_template(project_type, template)
+    _run_cookiecutter(template_path, output_dir=Path.cwd(), no_input=args.no_input)
 
+
+def _parse_create_args(ctx: typer.Context) -> argparse.Namespace:
     try:
-        template_path = _resolve_template(project_type, template)
+        return _parse_argv(list(ctx.args))
+    except SystemExit as exc:
+        # argparse already wrote its error to stderr; preserve its exit code.
+        raise typer.Exit(int(exc.code or 2)) from exc
+
+
+def _resolve_project_type(args: argparse.Namespace) -> str | None:
+    project_type = args.type
+    if project_type is None and not args.list_templates:
+        project_type = _prompt_project_type()
+    if project_type is not None and project_type not in KNOWN_TYPES:
+        typer.echo(
+            f"Unknown framework type {project_type!r}. Expected one of: {', '.join(KNOWN_TYPES)}.",
+            err=True,
+        )
+        raise typer.Exit(2)
+    return project_type
+
+
+def _show_templates(project_type: str | None) -> None:
+    if project_type is None:
+        for known in KNOWN_TYPES:
+            _print_templates_table(known, _list_templates(known))
+        return
+    _print_templates_table(project_type, _list_templates(project_type))
+
+
+def _resolve_template_name(args: argparse.Namespace, project_type: str, available: list[str]) -> str:
+    template = args.template
+    if template:
+        return template
+    if len(available) == 1 or args.no_input:
+        return available[0] if "default" not in available else "default"
+    return _prompt_template_name(project_type, available)
+
+
+def _safely_resolve_template(project_type: str, template: str) -> Path:
+    try:
+        return _resolve_template(project_type, template)
     except FileNotFoundError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(2) from exc
-
-    _run_cookiecutter(template_path, output_dir=Path.cwd(), no_input=args.no_input)
 
 
 __all__ = ["DEFAULT_TYPE", "KNOWN_TYPES", "app"]

@@ -1,6 +1,6 @@
 {
-    "deepagents/default": "Local create_deep_agent runnable bound to agentseek-langchain.",
-    "langchain/default": "LangChain create_agent + CopilotKit middleware over agentseek-langchain.",
-    "langchain/cli-remote": "Remote LangGraph CLI agent bridged via LangGraphClientRunnable.",
-    "bub/default": "Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain."
+  "deepagents/default": "Local create_deep_agent runnable bound to agentseek-langchain.",
+  "langchain/default": "LangChain create_agent + CopilotKit middleware over agentseek-langchain.",
+  "langchain/cli-remote": "Remote LangGraph CLI agent bridged via LangGraphClientRunnable.",
+  "bub/default": "Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain."
 }
