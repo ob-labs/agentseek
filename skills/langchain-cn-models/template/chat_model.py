@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from json import JSONDecodeError
-from typing import Any, Optional, cast
+from typing import Any, Self, cast
 
 import openai
 from langchain_core.language_models import (
@@ -14,12 +14,16 @@ from langchain_core.outputs import ChatGenerationChunk, ChatResult
 from langchain_core.utils import from_env, secret_from_env
 from langchain_openai.chat_models.base import BaseChatOpenAI, _convert_message_to_dict
 from pydantic import Field, SecretStr, model_validator
-from typing_extensions import Self
+
+_INVALID_RESPONSE_ERROR_MSG = (
+    "Provider API returned an invalid response. "
+    "Please check your API key, network connection, or API base URL."
+)
 
 
 def _get_default_model_profile(model_name: str) -> ModelProfile:
     try:
-        from .data._profiles import _PROFILES  # type: ignore
+        from .data._profiles import _PROFILES  # type: ignore[import-untyped]
     except ImportError:
         return {}
 
@@ -29,7 +33,7 @@ def _get_default_model_profile(model_name: str) -> ModelProfile:
 
 
 class ChatModel(BaseChatOpenAI):
-    api_key: Optional[SecretStr] = Field(
+    api_key: SecretStr | None = Field(
         default_factory=secret_from_env("PROVIDER_API_KEY", default=None),
     )
     api_base: str = Field(
@@ -50,7 +54,8 @@ class ChatModel(BaseChatOpenAI):
     @model_validator(mode="after")
     def validate_environment(self) -> Self:
         if not (self.api_key and self.api_key.get_secret_value()):
-            raise ValueError("PROVIDER_API_KEY must be set.")
+            msg = "PROVIDER_API_KEY must be set."
+            raise ValueError(msg)
         client_params: dict = {
             "api_key": self.api_key.get_secret_value() if self.api_key else None,
             "base_url": self.api_base,
@@ -67,7 +72,7 @@ class ChatModel(BaseChatOpenAI):
         if not (self.async_client or None):
             async_specific: dict = {"http_client": self.http_async_client}
             self.root_async_client = openai.AsyncOpenAI(
-                **client_params, **async_specific
+                **client_params, **async_specific,
             )
             self.async_client = self.root_async_client.chat.completions
         return self
@@ -90,7 +95,7 @@ class ChatModel(BaseChatOpenAI):
                 msg_dict = _convert_message_to_dict(m)
                 if m.additional_kwargs.get("reasoning_content"):
                     msg_dict["reasoning_content"] = m.additional_kwargs.get(
-                        "reasoning_content"
+                        "reasoning_content",
                     )
                 payload_messages.append(msg_dict)
             else:
@@ -103,14 +108,14 @@ class ChatModel(BaseChatOpenAI):
     def _create_chat_result(
         self,
         response: dict | openai.BaseModel,
-        generation_info: Optional[dict] = None,
+        generation_info: dict | None = None,
     ) -> ChatResult:
         rtn = super()._create_chat_result(response, generation_info)
         if isinstance(response, openai.BaseModel):
             choices = getattr(response, "choices", None)
             if choices and hasattr(choices[0].message, "reasoning_content"):
                 rtn.generations[0].message.additional_kwargs["reasoning_content"] = (
-                    getattr(choices[0].message, "reasoning_content")
+                    choices[0].message.reasoning_content
                 )
         return rtn
 
@@ -118,8 +123,8 @@ class ChatModel(BaseChatOpenAI):
         self,
         chunk: dict,
         default_chunk_class: type,
-        base_generation_info: Optional[dict],
-    ) -> Optional[ChatGenerationChunk]:
+        base_generation_info: dict | None,
+    ) -> ChatGenerationChunk | None:
         generation_chunk = super()._convert_chunk_to_generation_chunk(
             chunk,
             default_chunk_class,
@@ -127,26 +132,23 @@ class ChatModel(BaseChatOpenAI):
         )
         if (choices := chunk.get("choices")) and generation_chunk:
             top = choices[0]
-            if isinstance(generation_chunk.message, AIMessageChunk):
-                if (
-                    reasoning_content := top.get("delta", {}).get("reasoning_content")
-                ) is not None:
-                    generation_chunk.message.additional_kwargs["reasoning_content"] = (
-                        reasoning_content
-                    )
+            if isinstance(generation_chunk.message, AIMessageChunk) and (
+                reasoning_content := top.get("delta", {}).get("reasoning_content")
+            ) is not None:
+                generation_chunk.message.additional_kwargs["reasoning_content"] = (
+                    reasoning_content
+                )
         return generation_chunk
 
     def _stream(self, messages, stop=None, run_manager=None, **kwargs):
         kwargs["stream_options"] = {"include_usage": True}
         try:
-            for chunk in super()._stream(
-                messages, stop=stop, run_manager=run_manager, **kwargs
-            ):
-                yield chunk
+            yield from super()._stream(
+                messages, stop=stop, run_manager=run_manager, **kwargs,
+            )
         except JSONDecodeError as e:
             raise JSONDecodeError(
-                "Provider API returned an invalid response. "
-                "Please check your API key, network connection, or API base URL.",
+                _INVALID_RESPONSE_ERROR_MSG,
                 e.doc,
                 e.pos,
             ) from e
@@ -155,13 +157,12 @@ class ChatModel(BaseChatOpenAI):
         kwargs["stream_options"] = {"include_usage": True}
         try:
             async for chunk in super()._astream(
-                messages, stop=stop, run_manager=run_manager, **kwargs
+                messages, stop=stop, run_manager=run_manager, **kwargs,
             ):
                 yield chunk
         except JSONDecodeError as e:
             raise JSONDecodeError(
-                "Provider API returned an invalid response. "
-                "Please check your API key, network connection, or API base URL.",
+                _INVALID_RESPONSE_ERROR_MSG,
                 e.doc,
                 e.pos,
             ) from e
@@ -169,12 +170,11 @@ class ChatModel(BaseChatOpenAI):
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
         try:
             return super()._generate(
-                messages, stop=stop, run_manager=run_manager, **kwargs
+                messages, stop=stop, run_manager=run_manager, **kwargs,
             )
         except JSONDecodeError as e:
             raise JSONDecodeError(
-                "Provider API returned an invalid response. "
-                "Please check your API key, network connection, or API base URL.",
+                _INVALID_RESPONSE_ERROR_MSG,
                 e.doc,
                 e.pos,
             ) from e
@@ -182,12 +182,11 @@ class ChatModel(BaseChatOpenAI):
     async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
         try:
             return await super()._agenerate(
-                messages, stop=stop, run_manager=run_manager, **kwargs
+                messages, stop=stop, run_manager=run_manager, **kwargs,
             )
         except JSONDecodeError as e:
             raise JSONDecodeError(
-                "Provider API returned an invalid response. "
-                "Please check your API key, network connection, or API base URL.",
+                _INVALID_RESPONSE_ERROR_MSG,
                 e.doc,
                 e.pos,
             ) from e

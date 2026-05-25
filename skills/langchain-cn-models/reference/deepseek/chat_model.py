@@ -1,10 +1,14 @@
+"""Custom DeepSeek chat model with reasoning_content preservation."""
+
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from langchain_core.language_models import LanguageModelInput
 from langchain_core.messages import AIMessage
 from langchain_deepseek import ChatDeepSeek as _ChatDeepSeek
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import LanguageModelInput
 
 
 class ChatDeepSeek(_ChatDeepSeek):
@@ -25,9 +29,9 @@ class ChatDeepSeek(_ChatDeepSeek):
     ) -> dict:
         payload = super()._get_request_payload(input_, stop=stop, **kwargs)
         messages = self._convert_input(input_).to_messages()
-        for msg_dict, orig_msg in zip(payload["messages"], messages):
+        for msg_dict, orig_msg in zip(payload["messages"], messages, strict=True):
             if isinstance(orig_msg, AIMessage) and orig_msg.additional_kwargs.get(
-                "reasoning_content"
+                "reasoning_content",
             ):
                 msg_dict["reasoning_content"] = orig_msg.additional_kwargs[
                     "reasoning_content"
