@@ -95,6 +95,14 @@ def apply_agentseek_install_project_defaults() -> None:
     import bub.builtin.cli as bub_cli
 
     def _ensure_plugin_sandbox(project: Path) -> None:
+        # Bub's own ``_default_project`` factory mkdir's the sandbox before
+        # returning the path. When ``BUB_PROJECT`` is supplied through the
+        # environment (which is what ``apply_agentseek_env_aliases`` does for
+        # ``.agentseek/agentseek-project``), that factory is bypassed and the
+        # directory may not exist yet — ``_uv(... cwd=project)`` would then
+        # raise ``FileNotFoundError`` from ``subprocess.run``. Mirror Bub's
+        # invariant here so ``agentseek install`` works in a fresh workspace.
+        project.mkdir(parents=True, exist_ok=True)
         if (project / "pyproject.toml").is_file():
             return
         bub_cli._uv("init", "--bare", "--name", DEFAULT_PLUGIN_SANDBOX, "--app", cwd=project)

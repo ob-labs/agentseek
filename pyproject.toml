@@ -94,6 +94,7 @@ members = [
     "contrib/agentseek-observability",
     "contrib/agentseek-schedule-sqlalchemy",
     "contrib/agentseek-tapestore-oceanbase",
+    ".agentseek/agentseek-project",
 ]
 
 [tool.ty.environment]

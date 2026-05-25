@@ -208,3 +208,36 @@ def test_install_project_defaults_skips_uv_when_pyproject_exists(monkeypatch, tm
         object.__setattr__(bub_cli, "_ensure_project", original)
 
     assert captured == []
+
+
+def test_install_project_defaults_creates_sandbox_when_missing(monkeypatch, tmp_path) -> None:
+    """``BUB_PROJECT`` may point at a path that does not exist yet (the default
+    ``.agentseek/agentseek-project`` sandbox). The override must mkdir before
+    invoking ``uv``, otherwise ``subprocess.run`` raises ``FileNotFoundError``.
+    """
+    import bub.builtin.cli as bub_cli
+
+    cwds: list[Path] = []
+
+    def fake_uv(*args: str, cwd: Path) -> None:
+        # If the override forgot to mkdir, this would mirror the real
+        # subprocess failure.
+        if not cwd.is_dir():
+            raise FileNotFoundError(cwd)
+        cwds.append(cwd)
+
+    monkeypatch.setattr(bub_cli, "_uv", fake_uv)
+    monkeypatch.setattr(bub_cli, "_build_bub_requirement", lambda: ["bub"])
+
+    sandbox = tmp_path / "missing-sandbox"
+    assert not sandbox.exists()
+
+    original = bub_cli._ensure_project
+    try:
+        apply_agentseek_install_project_defaults()
+        bub_cli._ensure_project(sandbox)
+    finally:
+        object.__setattr__(bub_cli, "_ensure_project", original)
+
+    assert sandbox.is_dir()
+    assert cwds == [sandbox, sandbox]

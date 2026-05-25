@@ -12,6 +12,7 @@ members = [
     "agentseek-ag-ui",
     "agentseek-langchain",
     "agentseek-observability",
+    "agentseek-project",
     "agentseek-schedule-sqlalchemy",
     "agentseek-tapestore-oceanbase",
 ]
@@ -154,6 +155,17 @@ requires-dist = [
     { name = "logfire", specifier = ">=4.33.0" },
     { name = "republic", specifier = ">=0.5.7" },
 ]
+
+[[package]]
+name = "agentseek-project"
+version = "0.1.0"
+source = { virtual = ".agentseek/agentseek-project" }
+dependencies = [
+    { name = "bub" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "bub", specifier = ">=0.3.7" }]
 
 [[package]]
 name = "agentseek-schedule-sqlalchemy"
