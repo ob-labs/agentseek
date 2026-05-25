@@ -6,7 +6,11 @@ import sys
 import typer
 
 from agentseek.cli import apply_agentseek_cli_overrides
-from agentseek.env import agentseek_config_file, apply_agentseek_env_aliases
+from agentseek.env import (
+    agentseek_config_file,
+    apply_agentseek_env_aliases,
+    get_observability_settings,
+)
 
 apply_agentseek_env_aliases()
 apply_agentseek_cli_overrides()
@@ -33,11 +37,15 @@ def _instrument_agentseek() -> None:
         logfire = importlib.import_module("logfire")
         logfire_loguru = importlib.import_module("logfire.integrations.loguru")
     except ModuleNotFoundError:
-        pass
-    else:
-        logfire.configure()
-        logger.add(logfire_loguru.LogfireHandler(), format="{message}")
-        _maybe_enable_observability()
+        return
+
+    # Default to local-only spans. Opt into the hosted Logfire backend by
+    # exporting ``AGENTSEEK_SEND_TO_LOGFIRE=true`` (see
+    # ``AgentseekObservabilitySettings``).
+    settings = get_observability_settings()
+    logfire.configure(send_to_logfire=settings.send_to_logfire)
+    logger.add(logfire_loguru.LogfireHandler(), format="{message}")
+    _maybe_enable_observability()
 
 
 def create_cli_app() -> typer.Typer:

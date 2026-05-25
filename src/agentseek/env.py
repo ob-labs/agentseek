@@ -65,6 +65,32 @@ class AgentseekEnvironmentSettings(BaseSettings):
         return (AgentseekAliasSource(settings_cls),)
 
 
+class AgentseekObservabilitySettings(BaseSettings):
+    """Runtime knobs for the optional Logfire instrumentation pipeline.
+
+    Defaults are conservative: spans stay local-only unless the user
+    explicitly opts into the hosted Logfire backend by exporting
+    ``AGENTSEEK_SEND_TO_LOGFIRE=true`` (or the equivalent ``BUB_*`` /
+    ``LOGFIRE_*`` aliases that ``logfire`` itself recognises).
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix=AGENTSEEK_ENV_PREFIX,
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_ignore_empty=True,
+        extra="ignore",
+    )
+
+    send_to_logfire: bool = Field(default=False)
+
+
+def get_observability_settings() -> AgentseekObservabilitySettings:
+    """Resolve observability settings from the current process environment."""
+    return AgentseekObservabilitySettings()
+
+
 def apply_agentseek_env_aliases(environ: MutableMapping[str, str] | None = None) -> None:
     """Let AGENTSEEK_* variables act as fallbacks for BUB_* variables.
 
