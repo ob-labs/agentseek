@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+from typing import TYPE_CHECKING, Literal
 
 import typer
 
@@ -11,6 +12,9 @@ from agentseek.env import (
     apply_agentseek_env_aliases,
     get_agentseek_settings,
 )
+
+if TYPE_CHECKING:
+    from logfire import ConsoleOptions
 
 apply_agentseek_env_aliases()
 apply_agentseek_cli_overrides()
@@ -27,6 +31,14 @@ def _maybe_enable_observability() -> None:
         instrument()
 
 
+def _logfire_console_config(enabled: bool) -> ConsoleOptions | Literal[False]:
+    if not enabled:
+        return False
+
+    logfire = importlib.import_module("logfire")
+    return logfire.ConsoleOptions()
+
+
 def _instrument_agentseek() -> None:
     from loguru import logger
 
@@ -40,7 +52,7 @@ def _instrument_agentseek() -> None:
         return
 
     settings = get_agentseek_settings()
-    logfire.configure(send_to_logfire=False, console=settings.console)
+    logfire.configure(send_to_logfire=False, console=_logfire_console_config(settings.console))
     logger.add(logfire_loguru.LogfireHandler(), format="{message}")
     _maybe_enable_observability()
 

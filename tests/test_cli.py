@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import asyncio
 import importlib
+from collections.abc import AsyncIterable
 from pathlib import Path
-from typing import cast
 
 import typer
+from bub.channels.base import Channel
+from bub.channels.message import ChannelMessage
+from bub.framework import BubFramework
+from click import Command
+from republic import StreamEvent
+from rich.console import Console
 from typer.testing import CliRunner
 
 from agentseek.cli import (
@@ -22,6 +29,20 @@ from agentseek.cli import (
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
 
 runner = CliRunner()
+
+
+class _DummyChannel(Channel):
+    name = "dummy"
+
+    async def start(self, stop_event: asyncio.Event) -> None:
+        del stop_event
+
+    async def stop(self) -> None:
+        return
+
+    def stream_events(self, message: ChannelMessage, stream: AsyncIterable[StreamEvent]) -> AsyncIterable[StreamEvent]:
+        del message
+        return stream
 
 
 def test_agentseek_onboard_branding_replaces_bub_banner(monkeypatch) -> None:
@@ -73,13 +94,17 @@ def test_apply_agentseek_cli_overrides_runs_onboard_then_install(monkeypatch) ->
     assert order == ["onboard", "chat", "install"]
 
 
-class _FakeFramework:
-    def get_channels(self, _message_handler):
+class _FakeFramework(BubFramework):
+    def __init__(self) -> None:
+        pass
+
+    def get_channels(self, message_handler) -> dict[str, Channel]:
+        del message_handler
         return {
-            "cli": object(),
-            "mcp.lifecycle": object(),
-            "skills.lifecycle": object(),
-            "telegram": object(),
+            "cli": _DummyChannel(),
+            "mcp.lifecycle": _DummyChannel(),
+            "skills.lifecycle": _DummyChannel(),
+            "telegram": _DummyChannel(),
         }
 
 
@@ -130,13 +155,6 @@ def test_apply_agentseek_chat_channel_defaults_enables_lifecycle_channels(monkey
             captured["listen_called"] = True
             return "ok"
 
-    class FakeContext:
-        def __init__(self, framework) -> None:
-            self.framework = framework
-
-        def ensure_object(self, _cls):
-            return self.framework
-
     def fake_asyncio_run(coro):
         loop = asyncio.new_event_loop()
         try:
@@ -150,7 +168,7 @@ def test_apply_agentseek_chat_channel_defaults_enables_lifecycle_channels(monkey
 
     try:
         apply_agentseek_chat_channel_defaults()
-        fake_ctx = cast(typer.Context, FakeContext(_FakeFramework()))
+        fake_ctx = typer.Context(Command("chat"), obj=_FakeFramework())
         bub_cli.chat(fake_ctx, chat_id="chat-1", session_id="session-1")
     finally:
         object.__setattr__(bub_cli, "chat", original)
@@ -159,12 +177,14 @@ def test_apply_agentseek_chat_channel_defaults_enables_lifecycle_channels(monkey
     assert captured["stream_output"] is True
     assert captured["channel_name"] == "cli"
     assert captured["listen_called"] is True
-    channel = cast(FakeChannel, captured["channel"])
+    channel = captured["channel"]
+    assert isinstance(channel, FakeChannel)
     assert channel.metadata == {"chat_id": "chat-1", "session_id": "session-1"}
 
 
 def test_install_single_cli_log_sink_replaces_existing_sinks(monkeypatch) -> None:
     import loguru
+    from bub.channels.cli import CliChannel
 
     removed: list[tuple[tuple[object, ...], dict[str, object]]] = []
     added: list[tuple[object, dict[str, object]]] = []
@@ -172,7 +192,8 @@ def test_install_single_cli_log_sink_replaces_existing_sinks(monkeypatch) -> Non
     monkeypatch.setattr(loguru.logger, "remove", lambda *args, **kwargs: removed.append((args, kwargs)))
     monkeypatch.setattr(loguru.logger, "add", lambda sink, **kwargs: added.append((sink, kwargs)) or 7)
 
-    channel = type("FakeChannel", (), {"_renderer": type("Renderer", (), {"log": object()})()})()
+    channel = CliChannel.__new__(CliChannel)
+    channel._renderer = type("Renderer", (), {"log": object()})()
 
     handler_id = _install_single_cli_log_sink(channel)
 
@@ -182,6 +203,8 @@ def test_install_single_cli_log_sink_replaces_existing_sinks(monkeypatch) -> Non
 
 
 def test_finish_cli_stream_once_stops_without_extra_update() -> None:
+    from bub.channels.cli.renderer import CliRenderer
+
     calls: list[str] = []
 
     class FakeLive:
@@ -192,7 +215,7 @@ def test_finish_cli_stream_once_stops_without_extra_update() -> None:
             del args, kwargs
             calls.append("update")
 
-    _finish_cli_stream_once(object(), FakeLive(), kind="normal", text="hello")
+    _finish_cli_stream_once(CliRenderer(Console()), FakeLive(), kind="normal", text="hello")
 
     assert calls == ["stop"]
 

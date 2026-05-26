@@ -8,10 +8,17 @@ from collections.abc import Iterable
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
+
+if TYPE_CHECKING:
+    from bub.channels.cli import CliChannel
+    from bub.channels.cli.renderer import CliRenderer
+    from bub.channels.message import MessageKind
+    from rich.live import Live
 
 AGENTSEEK_ONBOARD_BANNER = r"""
     _                    _                 _
@@ -50,7 +57,7 @@ def resolve_enabled_channels(framework, primary_channels: Iterable[str]) -> list
     return enabled
 
 
-def _install_single_cli_log_sink(self) -> int:
+def _install_single_cli_log_sink(self: CliChannel) -> int:
     from loguru import logger
 
     with contextlib.suppress(ValueError):
@@ -58,7 +65,8 @@ def _install_single_cli_log_sink(self) -> int:
     return logger.add(self._renderer.log, colorize=False, format="{level:<8} | {message}")
 
 
-def _finish_cli_stream_once(self, live, *, kind, text: str) -> None:
+def _finish_cli_stream_once(self: CliRenderer, live: Live, *, kind: MessageKind, text: str) -> None:
+    del self
     del kind, text
     live.stop()
 
@@ -80,8 +88,8 @@ def apply_agentseek_chat_channel_defaults() -> None:
     from bub.channels.manager import ChannelManager
     from bub.framework import BubFramework
 
-    CliChannel._install_log_sink = _install_single_cli_log_sink
-    CliRenderer.finish_stream = _finish_cli_stream_once
+    type.__setattr__(CliChannel, "_install_log_sink", _install_single_cli_log_sink)
+    type.__setattr__(CliRenderer, "finish_stream", _finish_cli_stream_once)
 
     def chat(
         ctx: typer.Context,

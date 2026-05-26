@@ -42,3 +42,16 @@ def test_agentseek_bootstrap_skips_missing_observability(monkeypatch) -> None:
     )
 
     entrypoint._maybe_enable_observability()
+
+
+def test_logfire_console_config_maps_bool_to_runtime_config() -> None:
+    from logfire import ConsoleOptions
+
+    import agentseek.__main__ as entrypoint
+
+    disabled = entrypoint._logfire_console_config(False)
+    enabled = entrypoint._logfire_console_config(True)
+
+    assert disabled is False
+    assert isinstance(enabled, ConsoleOptions)
+    assert enabled.verbose is False
