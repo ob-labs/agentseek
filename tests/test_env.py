@@ -8,6 +8,7 @@ from agentseek.env import (
     DEFAULT_PLUGIN_SANDBOX,
     agentseek_config_file,
     apply_agentseek_env_aliases,
+    get_agentseek_settings,
 )
 
 
@@ -99,3 +100,25 @@ def test_agentseek_dotenv_fills_missing_bub_env(monkeypatch, tmp_path) -> None:
     finally:
         # apply_agentseek_env_aliases uses setdefault on os.environ; pytest does not undo that.
         os.environ.pop("BUB_TAPESTORE_SQLALCHEMY_URL", None)
+
+
+def test_agentseek_settings_default_send_to_logfire_false(monkeypatch) -> None:
+    monkeypatch.delenv("AGENTSEEK_SEND_TO_LOGFIRE", raising=False)
+
+    assert get_agentseek_settings().send_to_logfire is False
+
+
+def test_agentseek_settings_reads_send_to_logfire_from_env(monkeypatch) -> None:
+    monkeypatch.setenv("AGENTSEEK_SEND_TO_LOGFIRE", "true")
+
+    assert get_agentseek_settings().send_to_logfire is True
+
+
+def test_apply_agentseek_env_aliases_updates_supplied_mapping(monkeypatch, tmp_path) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("AGENTSEEK_MODEL", "openai:test-model")
+    target_environ: dict[str, str] = {}
+
+    apply_agentseek_env_aliases(target_environ)
+
+    assert target_environ["BUB_MODEL"] == "openai:test-model"

@@ -9,7 +9,7 @@ from agentseek.cli import apply_agentseek_cli_overrides
 from agentseek.env import (
     agentseek_config_file,
     apply_agentseek_env_aliases,
-    get_observability_settings,
+    get_agentseek_settings,
 )
 
 apply_agentseek_env_aliases()
@@ -41,8 +41,8 @@ def _instrument_agentseek() -> None:
 
     # Default to local-only spans. Opt into the hosted Logfire backend by
     # exporting ``AGENTSEEK_SEND_TO_LOGFIRE=true`` (see
-    # ``AgentseekObservabilitySettings``).
-    settings = get_observability_settings()
+    # ``AgentseekSettings``).
+    settings = get_agentseek_settings()
     logfire.configure(send_to_logfire=settings.send_to_logfire)
     logger.add(logfire_loguru.LogfireHandler(), format="{message}")
     _maybe_enable_observability()
