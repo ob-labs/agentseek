@@ -39,11 +39,8 @@ def _instrument_agentseek() -> None:
     except ModuleNotFoundError:
         return
 
-    # Default to local-only spans. Opt into the hosted Logfire backend by
-    # exporting ``AGENTSEEK_SEND_TO_LOGFIRE=true`` (see
-    # ``AgentseekSettings``).
     settings = get_agentseek_settings()
-    logfire.configure(send_to_logfire=settings.send_to_logfire)
+    logfire.configure(send_to_logfire=False, console=settings.console)
     logger.add(logfire_loguru.LogfireHandler(), format="{message}")
     _maybe_enable_observability()
 

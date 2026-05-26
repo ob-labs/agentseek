@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from collections.abc import Iterable
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
@@ -49,6 +50,19 @@ def resolve_enabled_channels(framework, primary_channels: Iterable[str]) -> list
     return enabled
 
 
+def _install_single_cli_log_sink(self) -> int:
+    from loguru import logger
+
+    with contextlib.suppress(ValueError):
+        logger.remove()
+    return logger.add(self._renderer.log, colorize=False, format="{level:<8} | {message}")
+
+
+def _finish_cli_stream_once(self, live, *, kind, text: str) -> None:
+    del kind, text
+    live.stop()
+
+
 def apply_agentseek_onboard_branding() -> None:
     """Replace Bub's onboard banner and copy without changing the onboard workflow."""
     from bub.builtin import cli
@@ -62,8 +76,12 @@ def apply_agentseek_chat_channel_defaults() -> None:
     """Include lifecycle channels in chat mode so MCP and similar helpers can boot."""
     import bub.builtin.cli as bub_cli
     from bub.channels.cli import CliChannel
+    from bub.channels.cli.renderer import CliRenderer
     from bub.channels.manager import ChannelManager
     from bub.framework import BubFramework
+
+    CliChannel._install_log_sink = _install_single_cli_log_sink
+    CliRenderer.finish_stream = _finish_cli_stream_once
 
     def chat(
         ctx: typer.Context,

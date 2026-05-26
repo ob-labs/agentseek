@@ -33,13 +33,7 @@ class _AgentseekAliasProbeSettings(BaseSettings):
 
 
 class AgentseekSettings(BaseSettings):
-    """Runtime knobs resolved from the AGENTSEEK_* namespace.
-
-    Defaults are conservative: spans stay local-only unless the user
-    explicitly opts into the hosted Logfire backend by exporting
-    ``AGENTSEEK_SEND_TO_LOGFIRE=true`` (or the equivalent ``BUB_*`` /
-    ``LOGFIRE_*`` aliases that ``logfire`` itself recognises).
-    """
+    """Runtime knobs resolved from the AGENTSEEK_* namespace."""
 
     model_config = SettingsConfigDict(
         env_prefix=AGENTSEEK_ENV_PREFIX,
@@ -50,7 +44,8 @@ class AgentseekSettings(BaseSettings):
         extra="ignore",
     )
 
-    send_to_logfire: bool = Field(default=False)
+    # Enable local Logfire console rendering for spans/events.
+    console: bool = Field(default=False)
 
 
 def get_agentseek_settings() -> AgentseekSettings:

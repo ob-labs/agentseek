@@ -102,16 +102,16 @@ def test_agentseek_dotenv_fills_missing_bub_env(monkeypatch, tmp_path) -> None:
         os.environ.pop("BUB_TAPESTORE_SQLALCHEMY_URL", None)
 
 
-def test_agentseek_settings_default_send_to_logfire_false(monkeypatch) -> None:
-    monkeypatch.delenv("AGENTSEEK_SEND_TO_LOGFIRE", raising=False)
+def test_agentseek_settings_default_console_false(monkeypatch) -> None:
+    monkeypatch.delenv("AGENTSEEK_CONSOLE", raising=False)
 
-    assert get_agentseek_settings().send_to_logfire is False
+    assert get_agentseek_settings().console is False
 
 
-def test_agentseek_settings_reads_send_to_logfire_from_env(monkeypatch) -> None:
-    monkeypatch.setenv("AGENTSEEK_SEND_TO_LOGFIRE", "true")
+def test_agentseek_settings_reads_console_from_env(monkeypatch) -> None:
+    monkeypatch.setenv("AGENTSEEK_CONSOLE", "true")
 
-    assert get_agentseek_settings().send_to_logfire is True
+    assert get_agentseek_settings().console is True
 
 
 def test_apply_agentseek_env_aliases_updates_supplied_mapping(monkeypatch, tmp_path) -> None:
