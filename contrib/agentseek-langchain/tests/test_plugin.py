@@ -58,9 +58,11 @@ class _FakeAgentSeekApiCliModule:
 def test_plugin_run_model_delegates_to_loaded_spec(monkeypatch, tmp_path) -> None:
     runnable = _AsyncRunnable("delegated-output")
     spec = text_spec(runnable)
+    info_messages: list[str] = []
 
     monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(SPEC="dummy:SPEC"))
     monkeypatch.setattr(plugin_module, "load_spec_from_path", lambda path: spec)
+    monkeypatch.setattr(plugin_module.logger, "info", info_messages.append)
 
     plugin = plugin_module.LangChainRunnablePlugin()
     result = asyncio.run(
@@ -78,6 +80,7 @@ def test_plugin_run_model_delegates_to_loaded_spec(monkeypatch, tmp_path) -> Non
         "session_id": "session-1",
         "workspace": str(tmp_path),
     }
+    assert info_messages == ["Using LangChain spec entrypoint: dummy:SPEC"]
 
 
 def test_plugin_run_model_stream_wraps_single_result(monkeypatch, tmp_path) -> None:
@@ -135,6 +138,37 @@ def test_plugin_passes_ag_ui_context_as_runtime_context(monkeypatch, tmp_path) -
         "tenant": "demo",
         "output_schema": {"type": "object", "properties": {"name": {"type": "string"}}},
     }
+
+
+def test_plugin_falls_back_to_default_model_entrypoint_without_spec(monkeypatch, tmp_path) -> None:
+    warning_messages: list[str] = []
+    load_calls: list[str] = []
+
+    monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(SPEC="   "))
+    monkeypatch.setattr(plugin_module, "load_spec_from_path", load_calls.append)
+    monkeypatch.setattr(plugin_module.logger, "warning", warning_messages.append)
+
+    plugin = plugin_module.LangChainRunnablePlugin()
+
+    result = asyncio.run(
+        plugin.run_model(
+            prompt="hello",
+            session_id="session-1",
+            state={"_runtime_workspace": str(tmp_path)},
+        )
+    )
+    stream = asyncio.run(
+        plugin.run_model_stream(
+            prompt="hello",
+            session_id="session-1",
+            state={"_runtime_workspace": str(tmp_path)},
+        )
+    )
+
+    assert result is None
+    assert stream is None
+    assert load_calls == []
+    assert warning_messages == ["LangChain spec not configured; falling back to the default model entrypoint."]
 
 
 async def _collect_events(stream) -> list:

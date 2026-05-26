@@ -162,7 +162,9 @@ LangChain execution hooks are actually used.
 
 ## Runtime Behavior
 
-- When this plugin loads successfully, `run_model` / `run_model_stream` register with `tryfirst=True`, so the LangChain spec runs before Bub’s built-in model agent.
+- `run_model` / `run_model_stream` register with `tryfirst=True`, so a configured LangChain spec runs before Bub’s built-in model agent.
+- If `AGENTSEEK_LANGCHAIN_SPEC` / `BUB_LANGCHAIN_SPEC` is unset or blank, the plugin logs a warning once and yields back to the default Bub model entrypoint instead of aborting the turn.
+- When a LangChain spec is configured and loaded successfully, the plugin logs which spec entrypoint it is using.
 - For AG-UI turns, the plugin rebuilds LangChain messages, frontend-declared tools, and CopilotKit context from the private `_ag_ui` state staged by `agentseek-ag-ui`.
 - If your runnable supports LangChain runtime `context=...` (for example `create_agent(..., context_schema=...)`), AG-UI context is forwarded there automatically.
 - If the runnable returns `structured_response`, the package serializes it into JSON text so the surrounding transport can decide how to render it.
