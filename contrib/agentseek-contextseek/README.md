@@ -91,7 +91,7 @@ agentseek ctx sync --scope acme/db/eng --dry-run
 
 The Bub plugin registers two hooks:
 
-- **`before_model` (`trylast`)**: calls `ctx.retrieve(prompt, scope, k=5)` and injects a `[SeekContext]` block into the system prompt.
+- **`before_model` (`trylast`)**: calls `ctx.retrieve(prompt, scope, k=5)` and injects a `[ContextSeek]` block into the system prompt.
 - **`after_model`**: calls `ctx.add(response, scope, stage=raw)` to feed the model's response into the contextseek evolution pipeline.
 
 Scope is derived from Bub state as `{AGENTSEEK_CTX_TENANT}/{chat_id}/{session_id}`.

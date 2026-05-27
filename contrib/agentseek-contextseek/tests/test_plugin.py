@@ -28,8 +28,9 @@ def test_extract_text_returns_empty_when_no_user():
 
 
 def test_inject_context_into_string_prompt():
-    result = _inject_context("user query", "[SeekContext]\n- fact")
-    assert result.startswith("[SeekContext]")
+    result = _inject_context("user query", "[ContextSeek]\n- fact")
+    assert isinstance(result, str)
+    assert result.startswith("[ContextSeek]")
     assert "user query" in result
 
 
@@ -53,7 +54,7 @@ def test_format_context_block():
     hit.item.stage.value = "knowledge"
     hit.item.summary = "distributed DB fact"
     block = _format_context_block([hit])
-    assert "[SeekContext]" in block
+    assert "[ContextSeek]" in block
     assert "distributed DB fact" in block
 
 

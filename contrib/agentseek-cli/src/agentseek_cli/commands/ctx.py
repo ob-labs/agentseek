@@ -52,7 +52,7 @@ _PASSTHROUGH = {
 
 app = typer.Typer(
     name="ctx",
-    help="SeekContext — semantic context layer: write, retrieve, evolve, and serve.",
+    help="ContextSeek — semantic context layer: write, retrieve, evolve, and serve.",
     add_completion=False,
     no_args_is_help=True,
 )

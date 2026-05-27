@@ -102,7 +102,7 @@ def _extract_text(messages: list[dict[str, Any]]) -> str:
 
 
 def _format_context_block(hits: Any) -> str:
-    lines = ["[SeekContext]"]
+    lines = ["[ContextSeek]"]
     for h in hits:
         lines.append(f"- [{h.item.stage.value}] {h.item.summary or h.item.content_text[:120]}")
     return "\n".join(lines)
