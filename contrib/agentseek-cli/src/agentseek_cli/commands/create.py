@@ -260,18 +260,14 @@ def _run_cookiecutter(
     from cookiecutter.exceptions import OutputDirExistsException
     from cookiecutter.main import cookiecutter
 
-    kwargs: dict[str, object] = {
-        "template": source.template,
-        "output_dir": str(output_dir),
-        "no_input": no_input,
-    }
-    if source.directory is not None:
-        kwargs["directory"] = source.directory
-    if source.checkout is not None:
-        kwargs["checkout"] = source.checkout
-
     try:
-        cookiecutter(**kwargs)
+        cookiecutter(
+            template=source.template,
+            output_dir=str(output_dir),
+            no_input=no_input,
+            directory=source.directory,
+            checkout=source.checkout,
+        )
     except OutputDirExistsException:
         typer.echo(
             "Target directory already exists. Remove it first or choose a different location.",
