@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import typer
 from agentseek_cli.app import build_app, iter_command_groups
-from agentseek_cli.plugin import FRAMEWORK_OWNED_NAMES, AgentSeekCliPlugin
+from agentseek_cli.plugin import AgentSeekCliPlugin
 from typer.testing import CliRunner
 
 EXPECTED_GROUPS = ("create", "run", "build", "deploy", "api", "skills")
-PLUGIN_MOUNTED_GROUPS = tuple(name for name in EXPECTED_GROUPS if name not in FRAMEWORK_OWNED_NAMES)
 
 
 def test_build_app_registers_every_documented_group() -> None:
-    """Standalone (uvx) shape: all documented groups present, including framework-owned names."""
+    """Standalone (uvx) shape: all documented groups present."""
     app = build_app()
     names = [group.name for group in app.registered_groups]
     assert set(names) == set(EXPECTED_GROUPS)
@@ -23,14 +22,31 @@ def test_build_app_help_lists_groups() -> None:
         assert name in result.stdout
 
 
-def test_plugin_register_cli_commands_skips_framework_owned_names() -> None:
-    """Plugin shape: skip names the framework's own plugins already provide (e.g. `run`)."""
+def test_plugin_register_cli_commands_overrides_framework_run() -> None:
+    """Plugin shape: cli's ``run`` replaces any pre-existing ``run`` command."""
+    from agentseek_cli.commands.run import app as cli_run_app
+
+    # Simulate a pre-existing framework ``run`` command.
+    app = typer.Typer()
+    dummy_run = typer.Typer(name="run", help="Framework run (should be replaced).")
+    app.add_typer(dummy_run, name="run")
+
+    AgentSeekCliPlugin().register_cli_commands(app)
+    names = [group.name for group in app.registered_groups]
+    assert names.count("run") == 1
+
+    # Verify it's the cli's run, not the dummy.
+    run_groups = [g for g in app.registered_groups if g.name == "run"]
+    assert len(run_groups) == 1
+    assert run_groups[0].typer_instance is cli_run_app
+
+
+def test_plugin_register_cli_commands_mounts_all_groups() -> None:
+    """Plugin shape: all expected groups are mounted."""
     app = typer.Typer()
     AgentSeekCliPlugin().register_cli_commands(app)
     names = [group.name for group in app.registered_groups]
-    assert set(names) == set(PLUGIN_MOUNTED_GROUPS)
-    for skipped in FRAMEWORK_OWNED_NAMES:
-        assert skipped not in names
+    assert set(names) == set(EXPECTED_GROUPS)
 
 
 def test_plugin_register_cli_commands_is_idempotent() -> None:
@@ -39,7 +55,7 @@ def test_plugin_register_cli_commands_is_idempotent() -> None:
     plugin.register_cli_commands(app)
     plugin.register_cli_commands(app)
     names = [group.name for group in app.registered_groups]
-    for expected in PLUGIN_MOUNTED_GROUPS:
+    for expected in EXPECTED_GROUPS:
         assert names.count(expected) == 1
 
 

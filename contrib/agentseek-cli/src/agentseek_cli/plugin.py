@@ -2,13 +2,14 @@
 
 When the main ``agentseek`` package's CLI bootstraps Bub and loads plugins,
 ``register_cli_commands`` is called with the root Typer app. We attach every
-top-level group from :func:`agentseek_cli.app.iter_command_groups`, skipping:
+top-level group from :func:`agentseek_cli.app.iter_command_groups`.
 
-* any group already present (idempotent re-registration); and
-* names in :data:`FRAMEWORK_OWNED_NAMES` that the main ``agentseek`` framework
-  already provides through Bub's built-in plugins. Typer's ``add_typer``
-  silently overwrites on duplicate names, so without this skip our stub
-  groups would shadow first-class framework commands like ``run``.
+Names listed in :data:`CLI_OVERRIDE_NAMES` will **replace** any same-named
+command already registered by the framework (e.g. Bub's built-in ``run``
+which dispatches a single message is replaced by the CLI's ``run`` which
+starts project services locally).
+
+Other groups skip registration if the name is already present (idempotent).
 """
 
 from __future__ import annotations
@@ -18,10 +19,10 @@ from bub import hookimpl
 
 from agentseek_cli.app import iter_command_groups
 
-# Names owned by the main `agentseek` framework's built-in plugins. We never
-# mount these as our own when running as a Bub plugin — the standalone uvx
-# entrypoint still exposes them via `agentseek_cli.app.build_app()`.
-FRAMEWORK_OWNED_NAMES: frozenset[str] = frozenset({"run"})
+# Names where agentseek-cli intentionally overrides the framework's built-in
+# command. When ``run`` is encountered, we remove the existing registration
+# and mount our own.
+CLI_OVERRIDE_NAMES: frozenset[str] = frozenset({"run"})
 
 
 class AgentSeekCliPlugin:
@@ -30,7 +31,12 @@ class AgentSeekCliPlugin:
         registered = {group.name for group in app.registered_groups}
         for sub in iter_command_groups():
             name = sub.info.name
-            if name in registered or name in FRAMEWORK_OWNED_NAMES:
+            if name in CLI_OVERRIDE_NAMES and name in registered:
+                # Remove the existing command/group so ours takes precedence.
+                app.registered_groups[:] = [g for g in app.registered_groups if g.name != name]
+                app.registered_commands[:] = [c for c in app.registered_commands if getattr(c, "name", None) != name]
+                registered.discard(name)
+            if name in registered:
                 continue
             app.add_typer(sub, name=name)
             registered.add(name)
@@ -38,4 +44,4 @@ class AgentSeekCliPlugin:
 
 main = AgentSeekCliPlugin()
 
-__all__ = ["FRAMEWORK_OWNED_NAMES", "AgentSeekCliPlugin", "main"]
+__all__ = ["CLI_OVERRIDE_NAMES", "AgentSeekCliPlugin", "main"]

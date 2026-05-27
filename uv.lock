@@ -133,6 +133,7 @@ dependencies = [
     { name = "bub" },
     { name = "cookiecutter" },
     { name = "jinja2" },
+    { name = "npx-skills" },
     { name = "python-dotenv" },
     { name = "typer" },
 ]
@@ -142,6 +143,7 @@ requires-dist = [
     { name = "bub", specifier = ">=0.3.7" },
     { name = "cookiecutter", specifier = ">=2.5" },
     { name = "jinja2", specifier = ">=3.1" },
+    { name = "npx-skills", specifier = ">=1.5" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "typer", specifier = ">=0.12" },
 ]
@@ -2146,6 +2148,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/24/bf/d1bda4f6168e0b2e9e5958945e01910052158313224ada5ce1fb2e1113b8/nodeenv-1.10.0.tar.gz", hash = "sha256:996c191ad80897d076bdfba80a41994c2b47c68e224c542b48feba42ba00f8bb", size = 55611, upload-time = "2025-12-20T14:08:54.006Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/b2/d0896bdcdc8d28a7fc5717c305f1a861c26e18c05047949fb371034d98bd/nodeenv-1.10.0-py2.py3-none-any.whl", hash = "sha256:5bb13e3eed2923615535339b3c620e76779af4cb4c6a90deccc9e36b274d3827", size = 23438, upload-time = "2025-12-20T14:08:52.782Z" },
+]
+
+[[package]]
+name = "npx-skills"
+version = "1.5.6"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6d/17/3fdbc5f0be5540f2306ce1b5cee35919197b0dc896ad32bf8a20f92c23b8/npx_skills-1.5.6-py3-none-macosx_10_13_universal2.whl", hash = "sha256:aa0a8b48a92f2c5cdc719e123d381ef37739d9797f536bea216bf5dd3dbc64c5", size = 39030510, upload-time = "2026-05-09T08:11:59.441Z" },
+    { url = "https://files.pythonhosted.org/packages/16/f7/6466be6fcc4863390bc64cdedbe486af831367b3f34c354d8e743b85355c/npx_skills-1.5.6-py3-none-macosx_15_0_arm64.whl", hash = "sha256:37313d94434e0daa406f43a17939d6d7f54ccfa0683c0e874166796d17e18691", size = 37311258, upload-time = "2026-05-09T08:12:09.35Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/97/48516b85bcff453ed2f1bd10b563bf08738932f539b5c7636d703db10e11/npx_skills-1.5.6-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:fad247f9cd516c2c762aafc60addba044780f700b4fce6cdac3278f98da5a476", size = 44662077, upload-time = "2026-05-09T08:11:52.852Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/8a/16d7c220e16fe54f68b3c406a3dc9a284dc756467c3a99684f8c39edd615/npx_skills-1.5.6-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:7600ddce6bcfa20f4efdd5429efda97702cfc79503e409f7d5313a3ecd3a5879", size = 45470644, upload-time = "2026-05-09T08:12:02.906Z" },
+    { url = "https://files.pythonhosted.org/packages/39/52/24bc93829b53943efd2ca3d30a2a71564ad413d7a94b0c96ffbc9516f325/npx_skills-1.5.6-py3-none-win_amd64.whl", hash = "sha256:320b24b748de0677725f5bc8fffd0ec5d5063e9fcb7771033cddf2e22a142977", size = 33659276, upload-time = "2026-05-09T08:12:06.062Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/a1/5e08d05ac9f8fcd4a578e9db4c6584350aa9101f720352f985565a998da7/npx_skills-1.5.6-py3-none-win_arm64.whl", hash = "sha256:fc47f997d1382e0dc9f5b9b9633eb375e96415d5aefd0418938ebec3d705373f", size = 30138087, upload-time = "2026-05-09T08:11:56.181Z" },
 ]
 
 [[package]]

@@ -165,9 +165,17 @@ def _prompt_template_name(project_type: str, templates: list[str]) -> str:
 
 def _run_cookiecutter(template_path: Path, *, output_dir: Path, no_input: bool) -> None:
     """Invoke cookiecutter; isolated so tests can monkeypatch."""
+    from cookiecutter.exceptions import OutputDirExistsException
     from cookiecutter.main import cookiecutter
 
-    cookiecutter(str(template_path), output_dir=str(output_dir), no_input=no_input)
+    try:
+        cookiecutter(str(template_path), output_dir=str(output_dir), no_input=no_input)
+    except OutputDirExistsException:
+        typer.echo(
+            "Target directory already exists. Remove it first or choose a different location.",
+            err=True,
+        )
+        raise typer.Exit(1) from None
 
 
 def _parse_argv(argv: list[str]) -> argparse.Namespace:
@@ -179,7 +187,7 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(
         prog="agentseek create",
-        add_help=False,
+        add_help=True,
         description="Create a new agent project from a pre-built template.",
     )
     parser.add_argument(

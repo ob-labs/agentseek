@@ -1,11 +1,10 @@
-"""``agentseek skills`` — thin wrapper around ``npx-skills`` via ``uvx``.
+"""``agentseek skills`` — thin wrapper around the ``npx-skills`` CLI.
 
-`npx-skills <https://pypi.org/project/npx-skills/>`_ is a ``uv``-installable
-Python wrapper around the upstream ``vercel-labs/skills`` CLI (ships its own
-Node runtime). We expose its subcommands verbatim — ``add``, ``list``,
-``find``, ``update``, ``remove``, ``init`` — and forward every flag through,
-including those we don't know about. This keeps AgentSeek aligned with
-whatever the upstream CLI adds without us re-issuing patches.
+`npx-skills <https://pypi.org/project/npx-skills/>`_ is bundled as a direct
+dependency of ``agentseek-cli``. We expose its subcommands verbatim — ``add``,
+``list``, ``find``, ``update``, ``remove``, ``init`` — and forward every flag
+through, including those we don't know about. This keeps AgentSeek aligned
+with whatever the upstream CLI adds without us re-issuing patches.
 
 Install paths follow upstream conventions: project-scope skills land in
 ``./<agent>/skills/`` (e.g. ``./.claude/skills/``), global skills in
@@ -15,14 +14,13 @@ Install paths follow upstream conventions: project-scope skills land in
 
 from __future__ import annotations
 
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
-from agentseek_cli._proc import run_uvx
-
-NPX_SKILLS_DIST = "npx-skills"
 SKILLS_COMMANDS: tuple[str, ...] = ("add", "list", "find", "update", "remove", "init")
 
 _PASSTHROUGH_CONTEXT_SETTINGS = {
@@ -33,7 +31,7 @@ _PASSTHROUGH_CONTEXT_SETTINGS = {
 
 app = typer.Typer(
     name="skills",
-    help=("Manage agent skills via the upstream `vercel-labs/skills` CLI (invoked through `uvx npx-skills`)."),
+    help="Manage agent skills via the upstream `vercel-labs/skills` CLI.",
     add_completion=False,
     no_args_is_help=True,
 )
@@ -55,10 +53,26 @@ def _skills_root(
     ctx.ensure_object(dict)["cwd"] = resolved
 
 
+def _find_npx_skills() -> str:
+    """Return the resolved ``npx-skills`` executable path or raise a friendly error."""
+    path = shutil.which("npx-skills")
+    if path is None:
+        typer.echo(
+            "`npx-skills` was not found on PATH. "
+            "It should be installed as a dependency of agentseek-cli.\n"
+            "Try: `uv pip install npx-skills` or reinstall agentseek-cli.",
+            err=True,
+        )
+        raise typer.Exit(1)
+    return path
+
+
 def _forward(ctx: typer.Context, command: str) -> None:
     cwd = ctx.ensure_object(dict).get("cwd", Path.cwd())
-    exit_code = run_uvx(NPX_SKILLS_DIST, [command, *list(ctx.args)], cwd=cwd)
-    raise typer.Exit(exit_code)
+    npx_skills = _find_npx_skills()
+    cmd = [npx_skills, command, *list(ctx.args)]
+    completed = subprocess.run(cmd, cwd=str(cwd), check=False)  # noqa: S603
+    raise typer.Exit(completed.returncode)
 
 
 def _passthrough(command: str):
@@ -74,4 +88,4 @@ for _command_name in SKILLS_COMMANDS:
     app.command(_command_name, context_settings=_PASSTHROUGH_CONTEXT_SETTINGS)(_passthrough(_command_name))
 
 
-__all__ = ["NPX_SKILLS_DIST", "SKILLS_COMMANDS", "app"]
+__all__ = ["SKILLS_COMMANDS", "app"]
