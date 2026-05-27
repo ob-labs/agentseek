@@ -4,8 +4,7 @@ When the main ``agentseek`` package's CLI bootstraps Bub and loads plugins,
 ``register_cli_commands`` is called with the root Typer app. We attach every
 top-level group from :func:`agentseek_cli.app.iter_command_groups`, skipping:
 
-* any group already present (idempotent re-registration, matching the
-  existing pattern from ``agentseek-langchain/.../api_cli.py``); and
+* any group already present (idempotent re-registration); and
 * names in :data:`FRAMEWORK_OWNED_NAMES` that the main ``agentseek`` framework
   already provides through Bub's built-in plugins. Typer's ``add_typer``
   silently overwrites on duplicate names, so without this skip our stub
