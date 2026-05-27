@@ -26,4 +26,4 @@ build-backend = "pdm.backend"
 
 [tool.pdm.build]
 package-dir = "src"
-includes = ["src/agentseek_cli", "src/agentseek_cli/templates/**/*"]
+includes = ["src/agentseek_cli"]

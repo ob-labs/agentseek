@@ -198,6 +198,4 @@ def test_template_constants_have_no_unrendered_placeholders() -> None:
     # this catches it without needing the CLI path.
     rendered = _render_compose(_ctx())
     assert "{{" not in rendered
-    assert "{{" not in _COMPOSE_TEMPLATE.replace("{{ slug }}", "").replace("{{ image }}", "").replace(
-        "{{ port }}", ""
-    )
+    assert "{{" not in _COMPOSE_TEMPLATE.replace("{{ slug }}", "").replace("{{ image }}", "").replace("{{ port }}", "")

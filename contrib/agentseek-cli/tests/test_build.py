@@ -86,9 +86,7 @@ def test_no_dockerfile_exits_2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     assert "Dockerfile" in result.stderr
 
 
-def test_dry_run_prints_command_no_subprocess(
-    project: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_dry_run_prints_command_no_subprocess(project: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     called: dict[str, object] = {"ran": False}
 
     def _fail(*args: object, **kwargs: object) -> None:
@@ -155,9 +153,7 @@ def test_push_flag_invokes_push_after_build(project: Path) -> None:
     assert any(line.startswith("docker push demo:1.0") for line in lines)
 
 
-def test_missing_docker_exits_1(
-    project: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_missing_docker_exits_1(project: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     import shutil as _shutil
 
     monkeypatch.setattr(_shutil, "which", lambda _name: None)
@@ -170,9 +166,7 @@ def test_missing_docker_exits_1(
     assert "docker" in result.stderr.lower()
 
 
-def test_real_subprocess_invocation_returncode_propagates(
-    project: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_real_subprocess_invocation_returncode_propagates(project: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, Sequence[str]] = {}
 
     class _CP:

@@ -116,7 +116,7 @@ allowed-unresolved-imports = ["deepagents.**"]
 # templates/ = cookiecutter sources containing jinja2 placeholders, not real Python.
 exclude = [
     "references",
-    "contrib/agentseek-cli/src/agentseek_cli/templates",
+    "templates",
 ]
 
 [tool.pytest.ini_options]
@@ -129,7 +129,7 @@ target-version = "py312"
 line-length = 120
 fix = true
 extend-exclude = [
-    "contrib/agentseek-cli/src/agentseek_cli/templates",
+    "templates",
 ]
 
 [tool.ruff.lint]
