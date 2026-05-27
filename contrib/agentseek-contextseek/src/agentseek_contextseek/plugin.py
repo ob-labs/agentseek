@@ -92,6 +92,7 @@ class ContextSeekPlugin:
         except Exception as exc:
             logger.debug(f"ContextSeek add skipped: {exc}")
 
+
 def _extract_text(messages: list[dict[str, Any]]) -> str:
     for m in reversed(messages):
         if m.get("role") == "user":

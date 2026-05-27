@@ -3,9 +3,8 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-from typer.testing import CliRunner
-
 from agentseek_cli.commands.ctx import CTX_PASSTHROUGH_COMMANDS, app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

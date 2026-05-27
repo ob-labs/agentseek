@@ -135,7 +135,7 @@ def cmd_serve(
         import threading
 
         try:
-            from contextseek.mcp.server import create_sse_app
+            from contextseek.mcp import create_sse_app
         except ModuleNotFoundError as exc:
             msg = "contextseek MCP server not available. Make sure contextseek[mcp] is installed."
             raise SystemExit(msg) from exc
@@ -212,8 +212,9 @@ def cmd_sync(
             total += count
         else:
             imported = ctx.plug(plug, scope=scope)
-            typer.echo(f"{source_name}: imported {imported} items into {scope}")
-            total += imported
+            imported_count = imported if imported is not None else 0
+            typer.echo(f"{source_name}: imported {imported_count} items into {scope}")
+            total += imported_count
 
     if dry_run:
         typer.echo(f"[dry-run] total: {total} items")

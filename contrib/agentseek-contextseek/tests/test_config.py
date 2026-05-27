@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from agentseek_contextseek.config import AGENTSEEK_CTX_PREFIX, _ALIASES, apply_contextseek_env_aliases
+from agentseek_contextseek.config import _ALIASES, AGENTSEEK_CTX_PREFIX, apply_contextseek_env_aliases
 
 
 def test_alias_is_applied_as_fallback():

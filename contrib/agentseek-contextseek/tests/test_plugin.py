@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from agentseek_contextseek.plugin import (
     ContextSeekPlugin,
     _extract_text,
@@ -12,10 +10,10 @@ from agentseek_contextseek.plugin import (
     _inject_context,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helper utilities
 # ---------------------------------------------------------------------------
+
 
 def test_extract_text_from_messages():
     messages = [
@@ -63,6 +61,7 @@ def test_format_context_block():
 # Plugin lifecycle
 # ---------------------------------------------------------------------------
 
+
 def test_plugin_init_applies_env_aliases():
     with patch("agentseek_contextseek.plugin.apply_contextseek_env_aliases") as mock_apply:
         ContextSeekPlugin()
@@ -100,6 +99,7 @@ def test_scope_from_state():
 # before_model hook
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_before_model_injects_context():
     plugin = ContextSeekPlugin()
@@ -129,9 +129,7 @@ async def test_before_model_returns_none_on_no_hits():
     plugin._client = mock_client
     plugin._client_initialized = True
 
-    result = await plugin.before_model(
-        prompt="hi", session_id="s1", state={}
-    )
+    result = await plugin.before_model(prompt="hi", session_id="s1", state={})
     assert result is None
 
 
@@ -141,15 +139,14 @@ async def test_before_model_returns_none_when_client_unavailable():
     plugin._client = None
     plugin._client_initialized = True
 
-    result = await plugin.before_model(
-        prompt="hi", session_id="s1", state={}
-    )
+    result = await plugin.before_model(prompt="hi", session_id="s1", state={})
     assert result is None
 
 
 # ---------------------------------------------------------------------------
 # after_model hook
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_after_model_calls_add():
@@ -158,9 +155,7 @@ async def test_after_model_calls_add():
     plugin._client = mock_client
     plugin._client_initialized = True
 
-    await plugin.after_model(
-        prompt="q", response="answer text", session_id="s1", state={"chat_id": "c1"}
-    )
+    await plugin.after_model(prompt="q", response="answer text", session_id="s1", state={"chat_id": "c1"})
     mock_client.add.assert_called_once()
     call_kwargs = mock_client.add.call_args
     assert "agent-response" in call_kwargs.kwargs.get("tags", [])
@@ -173,7 +168,5 @@ async def test_after_model_skips_empty_response():
     plugin._client = mock_client
     plugin._client_initialized = True
 
-    await plugin.after_model(
-        prompt="q", response="", session_id="s1", state={}
-    )
+    await plugin.after_model(prompt="q", response="", session_id="s1", state={})
     mock_client.add.assert_not_called()
