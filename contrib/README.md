@@ -21,6 +21,7 @@ agentseek follows Bub's extension conventions. `AGENTSEEK_*` environment variabl
 | Package | Bub entry point | Purpose |
 | --- | --- | --- |
 | [agentseek-ag-ui](agentseek-ag-ui/README.md) | n/a | AG-UI protocol adapter and FastAPI endpoint helpers for Bub/agentseek runtimes. |
+| [agentseek-cli](agentseek-cli/README.md) | `cli` | Project-lifecycle CLI (`create / run / build / deploy / api / skills`); installable standalone via `uvx` or mounted onto the main `agentseek` CLI as a Bub plugin. |
 | [agentseek-observability](agentseek-observability/README.md) | `observability` | Logfire-backed spans across the any-llm, Republic, and Bub runtime stack. |
 | [agentseek-tapestore-oceanbase](agentseek-tapestore-oceanbase/README.md) | `tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility and optional vector retrieval. |
 | [agentseek-langchain](agentseek-langchain/README.md) | `langchain` | Route Bub model turns through a user-provided LangChain `Runnable` or agent. |

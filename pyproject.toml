@@ -28,6 +28,9 @@ dependencies = [
 ag-ui = [
     "agentseek-ag-ui",
 ]
+cli = [
+    "agentseek-cli",
+]
 langchain = [
     "agentseek-langchain",
 ]
@@ -81,20 +84,22 @@ skills = [
 index-url = "https://pypi.org/simple"
 
 [tool.uv.sources]
-# bub-contrib: branch=main so bundled runtime packages exist at resolve time; uv.lock pins the exact commit.
-bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-feishu" }
-bub-mcp = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-mcp" }
-bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", branch = "main", subdirectory = "packages/bub-tapestore-sqlalchemy" }
+# bub-contrib: pin to a specific commit so resolves are reproducible across environments.
+bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-feishu" }
+bub-mcp = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-mcp" }
+bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-tapestore-sqlalchemy" }
 agentseek-tapestore-oceanbase = { workspace = true }
 agentseek-langchain = { workspace = true }
 agentseek-observability = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }
 agentseek-ag-ui = { workspace = true }
 agentseek-contextseek = { workspace = true }
+agentseek-cli = { workspace = true }
 
 [tool.uv.workspace]
 members = [
     "contrib/agentseek-ag-ui",
+    "contrib/agentseek-cli",
     "contrib/agentseek-langchain",
     "contrib/agentseek-observability",
     "contrib/agentseek-schedule-sqlalchemy",
@@ -113,7 +118,11 @@ allowed-unresolved-imports = ["deepagents.**"]
 
 [tool.ty.src]
 # references/ = third-party or example code.
-exclude = ["references"]
+# templates/ = cookiecutter sources containing jinja2 placeholders, not real Python.
+exclude = [
+    "references",
+    "templates",
+]
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -124,6 +133,9 @@ testpaths = [
 target-version = "py312"
 line-length = 120
 fix = true
+extend-exclude = [
+    "templates",
+]
 
 [tool.ruff.lint]
 select = [

@@ -1,3 +1,10 @@
+"""``agentseek api`` — passthrough to the optional ``agentseek-api`` package.
+
+Originally lived in ``agentseek-langchain``; migrated here because the
+``api`` group is framework-agnostic. When ``agentseek-api`` is not installed
+we exit with a clear instruction to install it.
+"""
+
 from __future__ import annotations
 
 import importlib
@@ -7,7 +14,8 @@ from typing import NoReturn, Protocol, runtime_checkable
 
 import typer
 
-API_COMMANDS = ("dev", "serve", "dockerfile", "build", "up", "version")
+API_COMMANDS: tuple[str, ...] = ("dev", "serve", "dockerfile", "build", "up", "version")
+
 _PASSTHROUGH_CONTEXT_SETTINGS = {
     "allow_extra_args": True,
     "ignore_unknown_options": True,
@@ -16,7 +24,7 @@ _PASSTHROUGH_CONTEXT_SETTINGS = {
 
 app = typer.Typer(
     name="api",
-    help="Forward LangChain API runtime commands to `agentseek-api` when it is installed.",
+    help="Forward API runtime commands to `agentseek-api` when it is installed.",
     add_completion=False,
     no_args_is_help=True,
 )
@@ -31,13 +39,6 @@ class AgentSeekApiCliModule(Protocol):
         prog: str | None = None,
         cwd: str | Path | None = None,
     ) -> int: ...
-
-
-def register_api_commands(target: typer.Typer) -> None:
-    """Attach the passthrough `api` command group onto a root Typer app."""
-    if any(group.name == app.info.name for group in target.registered_groups):
-        return
-    target.add_typer(app, name="api")
 
 
 def _load_agentseek_api_cli() -> AgentSeekApiCliModule:
@@ -97,4 +98,4 @@ def _raise_invalid_agentseek_api_dependency() -> NoReturn:
     raise typer.Exit(1)
 
 
-__all__ = ["API_COMMANDS", "app", "register_api_commands"]
+__all__ = ["API_COMMANDS", "AgentSeekApiCliModule", "app"]

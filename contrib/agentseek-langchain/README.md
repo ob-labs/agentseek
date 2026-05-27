@@ -134,31 +134,10 @@ SPEC = messages_spec(runnable)
 
 ## API Commands
 
-When `agentseek-langchain` is installed, it also registers an `api` command group onto the root
-`agentseek` CLI:
-
-```bash
-uv run agentseek api dev
-uv run agentseek api serve --config ./langgraph.json --port 8080
-uv run agentseek api dockerfile ./Dockerfile.agentseek
-uv run agentseek api build --config ./langgraph.json -t agentseek-api:dev
-uv run agentseek api up --config ./langgraph.json --port 8123 --wait
-uv run agentseek api version
-```
-
-This command group is a thin passthrough to `agentseek-api`. `agentseek-langchain` does not
-reimplement that CLI; it forwards the selected verb and raw arguments into `agentseek_api.cli`.
-
-You still need `agentseek-api` installed in the same Python environment before these commands can
-run. In this repository, one straightforward setup is:
-
-```bash
-uv pip install -e references/agentseek-api
-```
-
-Unlike `agentseek run` / `agentseek gateway`, this `api` command group does not require
-`AGENTSEEK_LANGCHAIN_SPEC` to be set first. The runtime spec is loaded lazily only when the
-LangChain execution hooks are actually used.
+The `agentseek api` command group is now provided by
+[`agentseek-cli`](../agentseek-cli/README.md). Install that contrib package
+to forward `agentseek api dev | serve | build | ...` into the optional
+`agentseek-api` runtime.
 
 ## Runtime Behavior
 
