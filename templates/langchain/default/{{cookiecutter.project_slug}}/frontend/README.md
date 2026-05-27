@@ -1,7 +1,8 @@
 # Frontend — {{ cookiecutter.project_name }}
 
-CopilotKit + Vite frontend. Talks to the agentseek gateway over AG-UI
-through a small Copilot Runtime (Express).
+This frontend mirrors the repository's LangChain + AG-UI example: CopilotKit,
+Hashbrown, a small Copilot Runtime, and a Vite app that talks to
+`agentseek gateway --enable-channel ag-ui`.
 
 ## Run
 

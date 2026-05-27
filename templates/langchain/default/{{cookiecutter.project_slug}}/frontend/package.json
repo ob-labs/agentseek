@@ -1,7 +1,7 @@
 {
   "name": "{{ cookiecutter.project_slug }}-frontend",
-  "private": true,
   "version": "0.1.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n runtime,web \"npm:dev:runtime\" \"npm:dev:web\"",
@@ -16,6 +16,8 @@
     "@copilotkit/react-core": "^1.57.1",
     "@copilotkit/react-ui": "^1.57.1",
     "@copilotkit/runtime": "^1.57.1",
+    "@hashbrownai/core": "^0.5.0-beta.4",
+    "@hashbrownai/react": "^0.5.0-beta.4",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "react": "^19.2.6",

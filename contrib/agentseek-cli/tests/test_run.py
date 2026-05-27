@@ -205,3 +205,30 @@ def test_python_mode_picks_app_py_entry(tmp_path: Path, monkeypatch: pytest.Monk
 
     assert result.exit_code == 0, result.stderr
     assert captured["cmd"] == [sys.executable, "app.py"]
+
+
+def test_auto_mode_detects_project_script_entry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _write_env(tmp_path)
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n[project.scripts]\nserve = "demo.dev:main"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    captured: dict[str, Any] = {}
+    fake = _FakePopen(returncode=0, stays_alive=False)
+
+    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
+        captured["cmd"] = cmd
+        return fake
+
+    monkeypatch.setattr(run_module, "_spawn", fake_spawn)
+    monkeypatch.setattr(run_module.shutil, "which", lambda name: None)
+    monkeypatch.setattr(run_module, "_probe", lambda url: True)
+    monkeypatch.setattr(run_module.webbrowser, "open", lambda url: None)
+    _patch_no_signal(monkeypatch)
+
+    result = CliRunner().invoke(build_app(), ["run", "--no-browser"])
+
+    assert result.exit_code == 0, result.stderr
+    assert captured["cmd"] == [sys.executable, "serve"]

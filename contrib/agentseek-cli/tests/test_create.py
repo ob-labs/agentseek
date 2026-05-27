@@ -216,3 +216,42 @@ def test_create_real_cookiecutter_generates_files(tmp_path: Path) -> None:
     assert settings_py.is_file()
     content = settings_py.read_text(encoding="utf-8")
     assert "AGENTSEEK_MODEL" in content
+
+
+@pytest.mark.parametrize(
+    ("project_type", "template_name"),
+    [
+        ("bub", "default"),
+        ("langchain", "default"),
+    ],
+)
+def test_ag_ui_templates_generate_frontend_and_serve_script(
+    tmp_path: Path,
+    project_type: str,
+    template_name: str,
+) -> None:
+    """AG-UI templates should ship a runnable frontend and a `serve` entry point."""
+    pytest.importorskip("cookiecutter")
+    from cookiecutter.main import cookiecutter
+
+    local_root = create_module._local_templates_root()
+    assert local_root is not None, "Tests must run from a git checkout"
+    template_path = local_root / project_type / template_name
+    assert (template_path / "cookiecutter.json").is_file()
+
+    output = cookiecutter(str(template_path), output_dir=str(tmp_path), no_input=True)
+    generated = Path(output)
+
+    pyproject = generated / "pyproject.toml"
+    frontend = generated / "frontend"
+    frontend_package = frontend / "package.json"
+    frontend_app = frontend / "src" / "App.tsx"
+    frontend_main = frontend / "src" / "main.tsx"
+    env_example = generated / ".env.example"
+
+    assert pyproject.is_file()
+    assert 'serve = "my_' in pyproject.read_text(encoding="utf-8")
+    assert frontend_package.is_file()
+    assert frontend_app.is_file()
+    assert frontend_main.is_file()
+    assert "FRONTEND_PORT" in env_example.read_text(encoding="utf-8")

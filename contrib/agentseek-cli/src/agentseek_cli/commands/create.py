@@ -69,6 +69,7 @@ DEFAULT_TYPE = "deepagents"
 
 # The canonical GitHub repo URL used when templates are not found locally.
 REPO_URL = "https://github.com/ob-labs/agentseek"
+REPO_GIT_URL = f"{REPO_URL}.git"
 # The directory inside the repo that holds all cookiecutter templates.
 TEMPLATES_DIR = "templates"
 
@@ -85,6 +86,8 @@ class TemplateSource:
     template: str  # local path or remote URL
     directory: str | None = None  # cookiecutter ``directory`` kwarg (monorepo subdir)
     checkout: str | None = None  # cookiecutter ``checkout`` kwarg (branch / tag)
+    install_source_path: str | None = None  # local monorepo path for generated project deps
+    install_source_url: str | None = None  # remote repo URL for generated project deps
 
 
 def _git_toplevel() -> Path | None:
@@ -140,9 +143,16 @@ def _resolve_type_template(project_type: str, template_name: str) -> TemplateSou
     if local_root is not None:
         local_path = local_root / project_type / template_name
         if (local_path / "cookiecutter.json").is_file():
-            return TemplateSource(template=str(local_path))
+            return TemplateSource(
+                template=str(local_path),
+                install_source_path=str(local_root.parent),
+            )
     # Fall back to remote.
-    return TemplateSource(template=REPO_URL, directory=subdir)
+    return TemplateSource(
+        template=REPO_URL,
+        directory=subdir,
+        install_source_url=REPO_GIT_URL,
+    )
 
 
 def _is_external_spec(spec: str) -> bool:
@@ -267,6 +277,10 @@ def _run_cookiecutter(
             no_input=no_input,
             directory=source.directory,
             checkout=source.checkout,
+            extra_context={
+                "_agentseek_source_path": source.install_source_path or "",
+                "_agentseek_source_url": source.install_source_url or REPO_GIT_URL,
+            },
         )
     except OutputDirExistsException:
         typer.echo(

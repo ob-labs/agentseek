@@ -6,18 +6,17 @@ frontend, no LangChain layer.
 ## Quickstart
 
 ```bash
-# Start the gateway
-uv sync --extra ag-ui
-export AGENTSEEK_STREAM_OUTPUT=true
-uv run agentseek gateway --enable-channel ag-ui
+uv sync
+npm install --prefix frontend
 
-# Start the frontend (separate terminal)
-cd frontend
-npm install
-npm run dev
+cp .env.example .env
+# Optionally merge in the model credentials from your existing repository root `.env`.
+
+uv run agentseek run --no-browser
 ```
 
 The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`,
-the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`.
+the CopilotKit runtime to `http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit`,
+and the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`.
 
 Author: {{ cookiecutter.author }}

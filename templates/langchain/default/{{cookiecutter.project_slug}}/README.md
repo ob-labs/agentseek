@@ -6,14 +6,17 @@ agentseek through `agentseek-langchain`.
 ## Quickstart
 
 ```bash
-uv sync --extra ag-ui --extra langchain
-uv pip install -r requirements.txt
+uv sync
+npm install --prefix frontend
 
 cp .env.example .env
-export PYTHONPATH=src
-export AGENTSEEK_LANGCHAIN_SPEC={{ cookiecutter.project_slug }}.demo_binding:build_spec
+# Optionally merge in the model credentials from your existing repository root `.env`.
 
-uv run --no-sync --no-env-file agentseek gateway --enable-channel ag-ui
+uv run agentseek run --no-browser
 ```
+
+The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`,
+the CopilotKit runtime to `http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit`,
+and the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`.
 
 Author: {{ cookiecutter.author }}

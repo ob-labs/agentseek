@@ -2,12 +2,13 @@ FROM python:3.12-slim AS base
 
 WORKDIR /app
 
-COPY pyproject.toml requirements.txt* ./
-RUN pip install --no-cache-dir -r requirements.txt 2>/dev/null \
-    || pip install --no-cache-dir .
+COPY pyproject.toml requirements.txt README.md ./
+COPY src ./src
+RUN pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir .
 
-COPY . .
+ENV AGENTSEEK_LANGCHAIN_SPEC={{ cookiecutter.project_slug }}.demo_binding:build_spec
+ENV AGENTSEEK_STREAM_OUTPUT=true
 
-EXPOSE 8000
+EXPOSE {{ cookiecutter.gateway_port }}
 
-CMD ["python", "-m", "{{ cookiecutter.project_slug }}"]
+CMD ["agentseek", "gateway", "--enable-channel", "ag-ui"]

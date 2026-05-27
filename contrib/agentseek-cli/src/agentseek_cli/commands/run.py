@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -177,7 +178,16 @@ def _has_script_hint(pyproject: Path) -> bool:
         content = pyproject.read_text(encoding="utf-8")
     except OSError:
         return False
-    return any(f'"{name}"' in content or f"'{name}'" in content for name in PYTHON_SCRIPT_HINTS)
+    return _find_script_hint(content) is not None
+
+
+def _find_script_hint(content: str) -> str | None:
+    for hint in PYTHON_SCRIPT_HINTS:
+        if re.search(rf"(?m)^\s*{re.escape(hint)}\s*=", content):
+            return hint
+        if f'"{hint}"' in content or f"'{hint}'" in content:
+            return hint
+    return None
 
 
 def _start_service(mode: RunMode, cwd: Path, env: Mapping[str, str]) -> subprocess.Popen[bytes]:
@@ -217,11 +227,9 @@ def _python_target(cwd: Path) -> list[str]:
         if (cwd / name).is_file():
             return [name]
     if _has_script_hint(cwd / "pyproject.toml"):
-        # Prefer `serve` if it exists in pyproject content; otherwise `dev`.
         content = (cwd / "pyproject.toml").read_text(encoding="utf-8")
-        for hint in PYTHON_SCRIPT_HINTS:
-            if f'"{hint}"' in content or f"'{hint}'" in content:
-                return [hint]
+        if hint := _find_script_hint(content):
+            return [hint]
     msg = "No Python entry point detected."
     raise RuntimeError(msg)
 
