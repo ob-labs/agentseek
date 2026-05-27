@@ -101,7 +101,7 @@ def test_scope_from_state():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_before_model_injects_context():
     plugin = ContextSeekPlugin()
     hit = MagicMock()
@@ -122,7 +122,7 @@ async def test_before_model_injects_context():
     assert "a relevant fact" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_before_model_returns_none_on_no_hits():
     plugin = ContextSeekPlugin()
     mock_client = MagicMock()
@@ -134,7 +134,7 @@ async def test_before_model_returns_none_on_no_hits():
     assert result is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_before_model_returns_none_when_client_unavailable():
     plugin = ContextSeekPlugin()
     plugin._client = None
@@ -149,7 +149,7 @@ async def test_before_model_returns_none_when_client_unavailable():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_after_model_calls_add():
     plugin = ContextSeekPlugin()
     mock_client = MagicMock()
@@ -162,7 +162,7 @@ async def test_after_model_calls_add():
     assert "agent-response" in call_kwargs.kwargs.get("tags", [])
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_after_model_skips_empty_response():
     plugin = ContextSeekPlugin()
     mock_client = MagicMock()
