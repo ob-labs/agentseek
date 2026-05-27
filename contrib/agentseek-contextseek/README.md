@@ -8,7 +8,7 @@
 | Python package | `agentseek_contextseek` |
 | Bub entry point | `contextseek` |
 | Config surface | `AGENTSEEK_CTX_*` env vars |
-| Install path | `uv pip install 'agentseek[context]'` |
+| Install path | `uv sync --extra context` or `uv pip install 'agentseek[context]'` |
 | Test target | `contrib/agentseek-contextseek/tests/` |
 
 ## When To Use It
@@ -31,6 +31,13 @@ Standalone from workspace:
 uv pip install './contrib/agentseek-contextseek'
 ```
 
+CLI note: `agentseek ctx ...` commands are provided by
+[`agentseek-cli`](../agentseek-cli/README.md). In workspace/dev installs, use:
+
+```bash
+uv sync --extra context
+```
+
 ## Configure
 
 All contextseek env vars can be set with the `AGENTSEEK_CTX_` prefix. These act as fallbacks — if you have already set a raw contextseek variable (e.g. `STORAGE_BACKEND`), it takes precedence.
@@ -51,7 +58,7 @@ See `.env.example` in the repo root for a full list of supported variables.
 
 ## Run
 
-Initialize a project:
+Initialize a project (through `agentseek-cli`):
 
 ```bash
 agentseek ctx init --backend memory

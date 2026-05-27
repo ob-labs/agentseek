@@ -41,6 +41,7 @@ oceanbase = [
     "agentseek-tapestore-oceanbase",
 ]
 context = [
+    "agentseek-cli",
     "agentseek-contextseek",
 ]
 

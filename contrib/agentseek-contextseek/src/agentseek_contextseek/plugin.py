@@ -5,13 +5,11 @@ import importlib
 import os
 from typing import Any
 
-import typer
 from bub import hookimpl
 from bub.types import State
 from loguru import logger
 
 from agentseek_contextseek.config import apply_contextseek_env_aliases
-from agentseek_contextseek.ctx_cli import register_ctx_commands
 
 
 class ContextSeekPlugin:
@@ -93,11 +91,6 @@ class ContextSeekPlugin:
             )
         except Exception as exc:
             logger.debug(f"ContextSeek add skipped: {exc}")
-
-    @hookimpl
-    def register_cli_commands(self, app: typer.Typer) -> None:
-        register_ctx_commands(app)
-
 
 def _extract_text(messages: list[dict[str, Any]]) -> str:
     for m in reversed(messages):

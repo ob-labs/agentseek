@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import typer
 
-from agentseek_cli.commands import api, build, create, deploy, run, skills
+from agentseek_cli.commands import api, build, create, ctx, deploy, run, skills
 
-CLI_HELP = "AgentSeek project-lifecycle CLI. Scaffold, run, build, deploy, and manage skills and API services."
+CLI_HELP = "AgentSeek project-lifecycle CLI. Scaffold, run, build, deploy, manage API services, skills, and context."
 
 
 def iter_command_groups() -> tuple[typer.Typer, ...]:
@@ -25,6 +25,7 @@ def iter_command_groups() -> tuple[typer.Typer, ...]:
         build.app,
         deploy.app,
         api.app,
+        ctx.app,
         skills.app,
     )
 
