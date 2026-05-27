@@ -80,10 +80,12 @@ def build_agent():
 # --- agentseek binding ------------------------------------------------------
 # build_spec() is what AGENTSEEK_LANGCHAIN_SPEC loads. Delete this block and
 # you have a vanilla DeepAgents project.
-from agentseek_langchain import messages_spec
+from agentseek_langchain import messages_spec  # noqa: E402
 def build_spec():
     return messages_spec(build_agent(), include_agents_md=True)
 ```
+
+The `# noqa: E402` suppresses ruff's "module-level import not at top of file" warning — the late import is intentional so the binding can be deleted as a single block to recover a vanilla project.
 
 The wrapped template's README must include a **"What's different vs. pure"** section listing exactly the lines that differ (typically: two added imports, one factory, one dependency in `pyproject.toml`).
 
