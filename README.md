@@ -65,11 +65,12 @@ To mount a different host directory as the workspace, set `AGENTSEEK_DOCKER_WORK
 The main documentation describes the built-in agentseek distribution layer:
 
 - [Overview](docs/index.md): what agentseek is, where it fits, and how the docs are structured.
+- [Tutorials](docs/tutorials/index.md): start here — quick CLI demo, first harness app, adding a skill and MCP.
+- [How-to guides](docs/how-to/index.md): task-focused recipes for configuring models, installing plugins, running, and deploying.
+- [Reference](docs/reference/index.md): environment variables, CLI commands, packages, file layout, templates, Docker.
+- [Explanation](docs/explanation/index.md): what agentseek is, how it relates to Bub, runtime data model, extension model.
 - [Blog intro](docs/blog/index.md): release notes, migrations, and longer-form posts.
 - [Introducing agentseek](docs/blog/introducing-agentseek.md): lineage from bubseek, database-native harness, and Bub/tape context.
-- [Getting started](docs/docs/getting-started.md): a tutorial for running agentseek locally or with Docker Compose.
-- [Configuration](docs/docs/configuration.md): reference for agentseek environment aliases, local runtime paths, and Docker defaults.
-- [Extensions](docs/docs/extensions.md): how to add project instructions, skills, MCP config, and Bub-compatible plugins.
 
 Contrib packages document their complete setup in their own README files:
 

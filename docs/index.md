@@ -1,52 +1,56 @@
 ---
-hide_sidebar: true
+title: agentseek documentation
+type: explanation
+audience: [A1, A2, A3, A4, A5]
+runs: no
+verified_on: 2026-05-28
+sources:
+  - README.md
+  - src/agentseek/env.py
+  - pyproject.toml
 ---
 
-<div class="landing-hero">
-  <p class="landing-kicker">$ agentseek</p>
-  <h1>Database-native agent runtime, packaged for real projects</h1>
-  <p class="landing-lead">
-    agentseek packages Bub with project-local defaults, `AGENTSEEK_*` aliases, bundled skills, and
-    a workspace-first runtime layout.
-  </p>
-  <div class="landing-actions">
-    <a class="terminal-button primary" href="docs/getting-started/">Get started</a>
-    <a class="terminal-button" href="docs/">Read docs</a>
-    <a class="terminal-button" href="hub/">Explore hub</a>
-  </div>
-</div>
+# agentseek
 
-## Quick Start
+agentseek is a **database-native Agent Harness**: a Bub-compatible runtime distribution you
+**embed in your own application** so context, tool calls, traces, and feedback land in one
+durable, queryable substrate from the first turn.
 
-```bash
-git clone https://github.com/ob-labs/agentseek.git
-cd agentseek
-uv sync
-uv run agentseek --help
-```
+The harness/library form is the main thread of these docs. The `agentseek` CLI exists to
+prove the project works on your machine in five minutes; it is not the product surface.
 
-Configure a model, then start a local session:
+## Start here
 
-```bash
-export AGENTSEEK_MODEL=openrouter:free
-export AGENTSEEK_API_KEY=sk-or-v1-your-key
-export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
-uv run agentseek chat
-```
+- **Try the CLI demo (5 min)** — clone, install, and run one chat turn against a free model.
+  See [`tutorials/01-quick-demo-cli.md`](tutorials/01-quick-demo-cli.md).
+- **Embed in your app (15 min)** — scaffold a project from a template, route a turn through
+  your own code, and keep the harness in charge of state.
+  See [`tutorials/02-first-harness-app.md`](tutorials/02-first-harness-app.md).
 
-## Explore
+If you are not sure which you are, read
+[`explanation/what-agentseek-is.md`](explanation/what-agentseek-is.md) first.
 
-<div class="terminal-grid terminal-grid-2">
-  <div class="terminal-card">
-    <h3><a href="docs/">Docs</a></h3>
-    <p>Read setup, configuration, and extension guidance for the main distribution.</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="hub/">Hub</a></h3>
-    <p>Browse plugins, skills, and a small friends list for this repo and the wider Bub ecosystem.</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="blog/">Blog</a></h3>
-    <p>Read introductions, migration notes, and workflow stories around the project.</p>
-  </div>
-</div>
+## Read by quadrant
+
+The documentation follows the [Diátaxis framework](https://diataxis.fr/). Each page belongs
+to exactly one of these four groups. Pick the one that matches what you are doing right now.
+
+| Quadrant | When to use it | Index |
+| --- | --- | --- |
+| **Tutorials** — learn by doing | You are new and want a guided run that ends in a working setup. | [`tutorials/index.md`](tutorials/index.md) |
+| **How-to** — solve a specific task | You already know the system and need the shortest path to an outcome. | [`how-to/index.md`](how-to/index.md) |
+| **Reference** — look up exact facts | You need the canonical list of env vars, CLI flags, file paths, or extras. | [`reference/index.md`](reference/index.md) |
+| **Explanation** — understand the design | You want to know *why* agentseek looks like this and where it fits next to Bub. | [`explanation/index.md`](explanation/index.md) |
+
+## Where the project lives
+
+agentseek is a monorepo. The core distribution sits under `src/agentseek/`; larger
+integrations live under `contrib/` and own their own READMEs; runnable end-to-end examples
+live under `examples/`. The annotated map is in
+[`explanation/where-things-live.md`](explanation/where-things-live.md).
+
+External references:
+
+- Upstream runtime: <https://github.com/bubbuild/bub>
+- Wider ecosystem catalogue: <https://hub.bub.build>
+- Project background: [`blog/introducing-agentseek.md`](blog/introducing-agentseek.md)
