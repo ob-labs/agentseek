@@ -35,6 +35,7 @@ def test_list_templates_for_type_prints_bundled_names() -> None:
     assert "Available langchain templates" in result.output
     assert "default" in result.output
     assert "cli-remote" in result.output
+    assert "markdown-messages" in result.output
 
 
 def test_list_templates_without_type_lists_all_known_types() -> None:
@@ -69,6 +70,7 @@ def test_list_templates_returns_names() -> None:
     templates = create_module._list_templates("langchain")
     assert "default" in templates
     assert "cli-remote" in templates
+    assert "markdown-messages" in templates
 
 
 def test_list_templates_unknown_type_returns_empty() -> None:
@@ -221,6 +223,74 @@ def test_create_real_cookiecutter_generates_files(tmp_path: Path) -> None:
     assert settings_py.is_file()
     content = settings_py.read_text(encoding="utf-8")
     assert "AGENTSEEK_MODEL" in content
+
+
+def test_markdown_messages_template_metadata_and_docs_exist() -> None:
+    """The pure markdown-messages template should be listed and documented."""
+    local_root = create_module._local_templates_root()
+    assert local_root is not None, "Tests must run from a git checkout"
+
+    template_path = local_root / "langchain" / "markdown-messages"
+    assert (template_path / "cookiecutter.json").is_file()
+    assert (template_path / "README.md").is_file()
+    cookiecutter_data = json.loads((template_path / "cookiecutter.json").read_text(encoding="utf-8"))
+    assert cookiecutter_data["default_model"] == "deepseek-ai/DeepSeek-V3"
+
+    templates_index = local_root / "index.json"
+    data = json.loads(templates_index.read_text(encoding="utf-8"))
+    assert "langchain/markdown-messages" in data
+
+
+def test_markdown_messages_template_renders_backend_and_frontend(tmp_path: Path) -> None:
+    """Rendered markdown-messages project should include the stream-ready files."""
+    pytest.importorskip("cookiecutter")
+    from cookiecutter.main import cookiecutter
+
+    local_root = create_module._local_templates_root()
+    assert local_root is not None, "Tests must run from a git checkout"
+    template_path = local_root / "langchain" / "markdown-messages"
+    assert (template_path / "cookiecutter.json").is_file()
+
+    output = cookiecutter(str(template_path), output_dir=str(tmp_path), no_input=True)
+    generated = Path(output)
+
+    readme = generated / "README.md"
+    pyproject = generated / "pyproject.toml"
+    langgraph_json = generated / "langgraph.json"
+    frontend = generated / "frontend"
+    frontend_package = frontend / "package.json"
+    frontend_app = frontend / "src" / "App.tsx"
+    agent_py = generated / "src" / "markdown_messages_agent" / "agent.py"
+    env_example = generated / ".env.example"
+
+    assert readme.is_file()
+    readme_text = readme.read_text(encoding="utf-8")
+    assert "## Setup" in readme_text
+    assert "## Run" in readme_text
+    assert "## Smoke test" in readme_text
+
+    assert pyproject.is_file()
+    pyproject_text = pyproject.read_text(encoding="utf-8")
+    assert "agentseek-langchain" not in pyproject_text
+    assert "agentseek-ag-ui" not in pyproject_text
+    assert "langgraph-cli[inmem]>=0.4.26,<0.5" in pyproject_text
+    assert frontend_package.is_file()
+    frontend_package_data = json.loads(frontend_package.read_text(encoding="utf-8"))
+    frontend_dependencies = frontend_package_data["dependencies"]
+    assert "react-markdown" in frontend_dependencies
+    assert "remark-gfm" in frontend_dependencies
+    frontend_package_text = frontend_package.read_text(encoding="utf-8")
+    assert "agentseek-ag-ui" not in frontend_package_text
+    assert frontend_app.is_file()
+    assert agent_py.is_file()
+    agent_text = agent_py.read_text(encoding="utf-8")
+    assert 'model_provider="openai"' in agent_text
+    assert "AGENTSEEK_API_KEY" in env_example.read_text(encoding="utf-8")
+    assert "useStream" in frontend_app.read_text(encoding="utf-8")
+    assert "ReactMarkdown" in frontend_app.read_text(encoding="utf-8")
+    assert langgraph_json.is_file()
+    langgraph_data = json.loads(langgraph_json.read_text(encoding="utf-8"))
+    assert langgraph_data["graphs"]["agent"] == "./src/markdown_messages_agent/agent.py:graph"
 
 
 def test_deepagents_research_template_metadata_and_docs_exist() -> None:
