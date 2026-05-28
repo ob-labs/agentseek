@@ -9,6 +9,7 @@ dependencies = [
     "agentseek-cli",
     "agentseek-ag-ui",
     "agentseek-langchain",
+    "bub-feishu",
     "copilotkit>=0.1.80",
     "langchain>=1.0.0",
     "langchain-openai>=0.3.0",
@@ -17,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 serve = "{{ cookiecutter.project_slug }}.dev:main"
+serve-feishu = "{{ cookiecutter.project_slug }}.feishu:main"
 
 [build-system]
 requires = ["setuptools>=69"]
@@ -34,9 +36,11 @@ agentseek = { path = "{{ cookiecutter._agentseek_source_path }}", editable = tru
 agentseek-cli = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-cli", editable = true }
 agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
 agentseek-langchain = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-langchain", editable = true }
+bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-feishu" }
 {% else %}
 agentseek = { git = "{{ cookiecutter._agentseek_source_url }}" }
 agentseek-cli = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-cli" }
 agentseek-ag-ui = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-ag-ui" }
 agentseek-langchain = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-langchain" }
+bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-feishu" }
 {% endif %}
