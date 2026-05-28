@@ -2,23 +2,26 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-import os
 from typing import Any
 
 from bub import hookimpl
+from bub.envelope import content_of, field_of
+from bub.types import Envelope
 from bub.types import State
 from loguru import logger
 
-from agentseek_contextseek.config import apply_contextseek_env_aliases
+from agentseek_contextseek.config import ContextSeekPluginSettings, apply_contextseek_env_aliases
 
 
 class ContextSeekPlugin:
     """Bub plugin: wires the contextseek semantic layer into the agentseek hook pipeline."""
 
-    def __init__(self) -> None:
+    def __init__(self, framework: object | None = None) -> None:
+        del framework
         self._client = None
         self._client_initialized = False
         apply_contextseek_env_aliases()
+        self._settings = ContextSeekPluginSettings()
 
     def _get_client(self):
         if self._client_initialized:
@@ -32,59 +35,76 @@ class ContextSeekPlugin:
             logger.warning(f"ContextSeek client init failed, semantic context disabled: {exc}")
         return self._client
 
-    def _scope_from_state(self, state: State) -> str:
-        tenant = os.environ.get("AGENTSEEK_CTX_TENANT", "default")
-        chat_id = state.get("chat_id", "local")
-        session_id = state.get("session_id") or "default"
+    def _scope_from_message(self, message: Envelope, session_id: str) -> str:
+        tenant = self._settings.TENANT
+        chat_id = field_of(message, "chat_id", "local")
         return f"{tenant}/{chat_id}/{session_id}"
 
-    @hookimpl(trylast=True)
-    async def before_model(
+    @hookimpl
+    async def load_state(
         self,
-        prompt: str | list[dict[str, Any]],
+        message: Envelope,
         session_id: str,
-        state: State,
-    ) -> str | list[dict[str, Any]] | None:
-        """Retrieve semantic context and inject it into the system prompt."""
+    ) -> State:
+        """Retrieve semantic context and store it for prompt assembly."""
         client = self._get_client()
         if client is None:
-            return None
+            return {}
 
-        query = prompt if isinstance(prompt, str) else _extract_text(prompt)
+        query = content_of(message).strip()
         if not query:
-            return None
+            return {}
 
-        scope = self._scope_from_state(state)
+        scope = self._scope_from_message(message, session_id)
         try:
-            hits = await asyncio.to_thread(client.retrieve, query, scope=scope, k=5)
+            hits = await asyncio.to_thread(client.retrieve, query, scope=scope, k=self._settings.RETRIEVAL_DEFAULT_K)
         except Exception as exc:
             logger.debug(f"ContextSeek retrieve skipped: {exc}")
-            return None
+            return {"_contextseek_scope": scope}
 
         if not hits:
-            return None
+            return {"_contextseek_scope": scope}
 
-        context_block = _format_context_block(hits)
-        return _inject_context(prompt, context_block)
+        return {
+            "_contextseek_scope": scope,
+            "_contextseek_block": _format_context_block(hits),
+        }
 
     @hookimpl
-    async def after_model(
+    async def build_prompt(
         self,
-        prompt: str | list[dict[str, Any]],
-        response: str,
+        message: Envelope,
         session_id: str,
         state: State,
+    ) -> str | None:
+        del session_id
+        context_block = state.get("_contextseek_block")
+        if not isinstance(context_block, str) or not context_block.strip():
+            return None
+
+        text_prompt = content_of(message).strip()
+        if not text_prompt:
+            return None
+        return _inject_context(text_prompt, context_block)
+
+    @hookimpl
+    async def save_state(
+        self,
+        session_id: str,
+        state: State,
+        message: Envelope,
+        model_output: str,
     ) -> None:
         """Write model output into the contextseek evolution pipeline."""
         client = self._get_client()
-        if client is None or not response:
+        if client is None or not model_output:
             return
 
-        scope = self._scope_from_state(state)
+        scope = str(state.get("_contextseek_scope") or self._scope_from_message(message, session_id))
         try:
             await asyncio.to_thread(
                 client.add,
-                response,
+                model_output,
                 scope=scope,
                 source=f"agentseek://session/{session_id}",
                 tags=["agent-response", "execution-trace"],
@@ -109,15 +129,7 @@ def _format_context_block(hits: Any) -> str:
 
 
 def _inject_context(
-    prompt: str | list[dict[str, Any]],
+    prompt: str,
     context_block: str,
-) -> str | list[dict[str, Any]]:
-    if isinstance(prompt, str):
-        return f"{context_block}\n\n{prompt}"
-    result = list(prompt)
-    for i, m in enumerate(result):
-        if m.get("role") == "system":
-            existing = m.get("content", "")
-            result[i] = {**m, "content": f"{existing}\n\n{context_block}"}
-            return result
-    return [{"role": "system", "content": context_block}, *result]
+) -> str:
+    return f"{context_block}\n\n{prompt}"

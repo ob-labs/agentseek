@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from agentseek_contextseek.plugin import (
     ContextSeekPlugin,
-    _extract_text,
     _format_context_block,
     _inject_context,
 )
@@ -15,38 +14,10 @@ from agentseek_contextseek.plugin import (
 # ---------------------------------------------------------------------------
 
 
-def test_extract_text_from_messages():
-    messages = [
-        {"role": "system", "content": "sys"},
-        {"role": "user", "content": "hello"},
-    ]
-    assert _extract_text(messages) == "hello"
-
-
-def test_extract_text_returns_empty_when_no_user():
-    assert _extract_text([{"role": "assistant", "content": "hi"}]) == ""
-
-
-def test_inject_context_into_string_prompt():
+def test_inject_context_into_prompt():
     result = _inject_context("user query", "[ContextSeek]\n- fact")
-    assert isinstance(result, str)
     assert result.startswith("[ContextSeek]")
     assert "user query" in result
-
-
-def test_inject_context_into_messages_with_system():
-    messages = [{"role": "system", "content": "base"}, {"role": "user", "content": "q"}]
-    result = _inject_context(messages, "[ctx]")
-    assert isinstance(result, list)
-    assert "[ctx]" in result[0]["content"]
-
-
-def test_inject_context_prepends_system_when_absent():
-    messages = [{"role": "user", "content": "q"}]
-    result = _inject_context(messages, "[ctx]")
-    assert isinstance(result, list)
-    assert result[0]["role"] == "system"
-    assert result[0]["content"] == "[ctx]"
 
 
 def test_format_context_block():
@@ -91,18 +62,18 @@ def test_get_client_returns_none_on_failure():
 
 def test_scope_from_state():
     plugin = ContextSeekPlugin()
-    state = {"chat_id": "chat42", "session_id": "ses99"}
-    scope = plugin._scope_from_state(state)
+    message = {"chat_id": "chat42"}
+    scope = plugin._scope_from_message(message, "ses99")
     assert scope == "default/chat42/ses99"
 
 
 # ---------------------------------------------------------------------------
-# before_model hook
+# load_state + build_prompt hooks
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.anyio
-async def test_before_model_injects_context():
+async def test_load_state_returns_context_block_on_hits():
     plugin = ContextSeekPlugin()
     hit = MagicMock()
     hit.item.stage.value = "knowledge"
@@ -113,61 +84,96 @@ async def test_before_model_injects_context():
     plugin._client = mock_client
     plugin._client_initialized = True
 
-    result = await plugin.before_model(
-        prompt="what is OceanBase?",
+    state = await plugin.load_state(
+        message={"content": "what is OceanBase?", "chat_id": "c1"},
         session_id="s1",
-        state={"chat_id": "c1"},
     )
-    assert result is not None
-    assert "a relevant fact" in result
+    assert "_contextseek_block" in state
+    assert "a relevant fact" in state["_contextseek_block"]
+    assert state["_contextseek_scope"] == "default/c1/s1"
 
 
 @pytest.mark.anyio
-async def test_before_model_returns_none_on_no_hits():
+async def test_load_state_returns_scope_only_on_no_hits():
     plugin = ContextSeekPlugin()
     mock_client = MagicMock()
     mock_client.retrieve.return_value = []
     plugin._client = mock_client
     plugin._client_initialized = True
 
-    result = await plugin.before_model(prompt="hi", session_id="s1", state={})
-    assert result is None
+    state = await plugin.load_state(message={"content": "hi"}, session_id="s1")
+    assert "_contextseek_block" not in state
+    assert state["_contextseek_scope"] == "default/local/s1"
 
 
 @pytest.mark.anyio
-async def test_before_model_returns_none_when_client_unavailable():
+async def test_load_state_returns_empty_when_client_unavailable():
     plugin = ContextSeekPlugin()
     plugin._client = None
     plugin._client_initialized = True
 
-    result = await plugin.before_model(prompt="hi", session_id="s1", state={})
-    assert result is None
+    state = await plugin.load_state(message={"content": "hi"}, session_id="s1")
+    assert state == {}
 
 
 # ---------------------------------------------------------------------------
-# after_model hook
+# build_prompt + save_state hooks
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.anyio
-async def test_after_model_calls_add():
+async def test_build_prompt_injects_context():
+    plugin = ContextSeekPlugin()
+    result = await plugin.build_prompt(
+        message={"content": "what is OceanBase?"},
+        session_id="s1",
+        state={"_contextseek_block": "[ContextSeek]\n- fact"},
+    )
+    assert result is not None
+    assert result.startswith("[ContextSeek]")
+    assert "what is OceanBase?" in result
+
+
+@pytest.mark.anyio
+async def test_build_prompt_returns_none_without_context():
+    plugin = ContextSeekPlugin()
+    result = await plugin.build_prompt(
+        message={"content": "hi"},
+        session_id="s1",
+        state={},
+    )
+    assert result is None
+
+
+@pytest.mark.anyio
+async def test_save_state_calls_add():
     plugin = ContextSeekPlugin()
     mock_client = MagicMock()
     plugin._client = mock_client
     plugin._client_initialized = True
 
-    await plugin.after_model(prompt="q", response="answer text", session_id="s1", state={"chat_id": "c1"})
+    await plugin.save_state(
+        session_id="s1",
+        state={"_contextseek_scope": "default/c1/s1"},
+        message={"chat_id": "c1"},
+        model_output="answer text",
+    )
     mock_client.add.assert_called_once()
     call_kwargs = mock_client.add.call_args
     assert "agent-response" in call_kwargs.kwargs.get("tags", [])
 
 
 @pytest.mark.anyio
-async def test_after_model_skips_empty_response():
+async def test_save_state_skips_empty_response():
     plugin = ContextSeekPlugin()
     mock_client = MagicMock()
     plugin._client = mock_client
     plugin._client_initialized = True
 
-    await plugin.after_model(prompt="q", response="", session_id="s1", state={})
+    await plugin.save_state(
+        session_id="s1",
+        state={},
+        message={"chat_id": "c1"},
+        model_output="",
+    )
     mock_client.add.assert_not_called()
