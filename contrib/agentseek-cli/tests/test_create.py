@@ -494,6 +494,7 @@ def test_ag_ui_templates_generate_frontend_and_serve_script(
     generated = Path(output)
 
     pyproject = generated / "pyproject.toml"
+    readme = generated / "README.md"
     frontend = generated / "frontend"
     frontend_package = frontend / "package.json"
     frontend_app = frontend / "src" / "App.tsx"
@@ -501,7 +502,11 @@ def test_ag_ui_templates_generate_frontend_and_serve_script(
     env_example = generated / ".env.example"
 
     assert pyproject.is_file()
-    assert 'serve = "my_' in pyproject.read_text(encoding="utf-8")
+    pyproject_text = pyproject.read_text(encoding="utf-8")
+    assert 'serve = "my_' in pyproject_text
+    assert '"agentseek-cli"' in pyproject_text
+    assert readme.is_file()
+    assert "uv run agentseek run --no-browser" in readme.read_text(encoding="utf-8")
     assert frontend_package.is_file()
     assert frontend_app.is_file()
     assert frontend_main.is_file()
