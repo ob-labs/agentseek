@@ -269,7 +269,7 @@ def test_markdown_messages_template_renders_backend_and_frontend(tmp_path: Path)
     pyproject_text = pyproject.read_text(encoding="utf-8")
     assert "agentseek-langchain" not in pyproject_text
     assert "agentseek-ag-ui" not in pyproject_text
-    assert 'langgraph-cli[inmem]>=0.4.26,<0.5' in pyproject_text
+    assert "langgraph-cli[inmem]>=0.4.26,<0.5" in pyproject_text
     assert frontend_package.is_file()
     frontend_package_data = json.loads(frontend_package.read_text(encoding="utf-8"))
     frontend_dependencies = frontend_package_data["dependencies"]
