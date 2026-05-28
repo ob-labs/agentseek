@@ -1,0 +1,23 @@
+[project]
+name = "agentseek-contextseek"
+version = "0.1.0"
+description = "ContextSeek semantic context layer integration for agentseek"
+readme = "README.md"
+authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
+requires-python = ">=3.12"
+dependencies = [
+    "bub>=0.3.7",
+    "contextseek",
+    "pydantic-settings>=2.0.0",
+]
+
+[project.entry-points.bub]
+contextseek = "agentseek_contextseek.plugin:ContextSeekPlugin"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.build]
+package-dir = "src"
+includes = ["src/agentseek_contextseek"]

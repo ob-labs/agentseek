@@ -5,7 +5,7 @@ from agentseek_cli.app import build_app, iter_command_groups
 from agentseek_cli.plugin import AgentSeekCliPlugin
 from typer.testing import CliRunner
 
-EXPECTED_GROUPS = ("create", "run", "build", "deploy", "api", "skills")
+EXPECTED_GROUPS = ("create", "run", "build", "deploy", "api", "ctx", "skills")
 
 
 def test_build_app_registers_every_documented_group() -> None:

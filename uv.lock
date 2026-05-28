@@ -11,6 +11,7 @@ members = [
     "agentseek",
     "agentseek-ag-ui",
     "agentseek-cli",
+    "agentseek-contextseek",
     "agentseek-langchain",
     "agentseek-observability",
     "agentseek-project",
@@ -50,6 +51,10 @@ ag-ui = [
 cli = [
     { name = "agentseek-cli" },
 ]
+context = [
+    { name = "agentseek-cli" },
+    { name = "agentseek-contextseek" },
+]
 langchain = [
     { name = "agentseek-langchain" },
 ]
@@ -79,6 +84,8 @@ dev = [
 requires-dist = [
     { name = "agentseek-ag-ui", marker = "extra == 'ag-ui'", editable = "contrib/agentseek-ag-ui" },
     { name = "agentseek-cli", marker = "extra == 'cli'", editable = "contrib/agentseek-cli" },
+    { name = "agentseek-cli", marker = "extra == 'context'", editable = "contrib/agentseek-cli" },
+    { name = "agentseek-contextseek", marker = "extra == 'context'", editable = "contrib/agentseek-contextseek" },
     { name = "agentseek-langchain", marker = "extra == 'langchain'", editable = "contrib/agentseek-langchain" },
     { name = "agentseek-observability", marker = "extra == 'observability'", editable = "contrib/agentseek-observability" },
     { name = "agentseek-schedule-sqlalchemy", editable = "contrib/agentseek-schedule-sqlalchemy" },
@@ -89,7 +96,7 @@ requires-dist = [
     { name = "logfire", specifier = ">=4.33.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
 ]
-provides-extras = ["ag-ui", "cli", "langchain", "observability", "oceanbase"]
+provides-extras = ["ag-ui", "cli", "langchain", "observability", "oceanbase", "context"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -134,7 +141,7 @@ dependencies = [
     { name = "cookiecutter" },
     { name = "jinja2" },
     { name = "npx-skills" },
-    { name = "python-dotenv" },
+    { name = "pydantic-settings" },
     { name = "typer" },
 ]
 
@@ -144,8 +151,25 @@ requires-dist = [
     { name = "cookiecutter", specifier = ">=2.5" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "npx-skills", specifier = ">=1.5" },
-    { name = "python-dotenv", specifier = ">=1.0" },
+    { name = "pydantic-settings", specifier = ">=2.4" },
     { name = "typer", specifier = ">=0.12" },
+]
+
+[[package]]
+name = "agentseek-contextseek"
+version = "0.1.0"
+source = { editable = "contrib/agentseek-contextseek" }
+dependencies = [
+    { name = "bub" },
+    { name = "contextseek" },
+    { name = "pydantic-settings" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bub", specifier = ">=0.3.7" },
+    { name = "contextseek" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
 ]
 
 [[package]]
@@ -762,6 +786,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44", size = 27697, upload-time = "2022-10-25T02:36:22.414Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
+]
+
+[[package]]
+name = "contextseek"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "langchain-openai" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pyyaml" },
+    { name = "seekvfs" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/79/a9/22fe6f4de99d4efc2dde79e9d40d5344524da3aaad7052214669f7ce1997/contextseek-0.1.0.tar.gz", hash = "sha256:9d005e9e33d9c2de42d9785c572fad91fe7f73348f1d9fc0fb74c985803dd610", size = 450262, upload-time = "2026-05-25T12:15:14.389Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fb/e0/872f84be46c4ddc3badb1ba119541744326cd6c403a7fa025d7517833d80/contextseek-0.1.0-py3-none-any.whl", hash = "sha256:1f9f0fbe821eb0815f2d34300067e1edb1fd5d84a59be17ab8e1eeec9d4e5cae", size = 172236, upload-time = "2026-05-25T12:15:12.481Z" },
 ]
 
 [[package]]
@@ -3422,6 +3463,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/46/f5af3402b579fd5e11573ce652019a67074317e18c1935cc0b4ba9b35552/secretstorage-3.5.0-py3-none-any.whl", hash = "sha256:0ce65888c0725fcb2c5bc0fdb8e5438eece02c523557ea40ce0703c266248137", size = 15554, upload-time = "2025-11-23T19:02:51.545Z" },
+]
+
+[[package]]
+name = "seekvfs"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a7/82/a007005c01276c1d45666e5123a52c76a8b5e1b64ee866e95ef3b266cdc2/seekvfs-0.1.0.tar.gz", hash = "sha256:6b2d452c9f326d54179ba84e93bef0db704504458a54668939d96e2d5b4692d3", size = 35885, upload-time = "2026-04-27T07:55:25.094Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/53/748db6f0fd8f3e809263f37f35f2a08293c8a305a742cc40c37dc3afb2dd/seekvfs-0.1.0-py3-none-any.whl", hash = "sha256:88d496858eb6c0d2a02038c533f430de61afe17c30406b0e172b167c08037356", size = 42613, upload-time = "2026-04-27T07:55:23.966Z" },
 ]
 
 [[package]]

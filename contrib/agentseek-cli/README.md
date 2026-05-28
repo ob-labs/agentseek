@@ -15,7 +15,7 @@ as a Bub plugin on the main `agentseek` framework CLI.
 | Install path         | `pip install agentseek-cli` / `uvx agentseek-cli` |
 | Test target          | `make test-agentseek-cli`                   |
 
-Top-level command groups: `create`, `run`, `build`, `deploy`, `api`,
+Top-level command groups: `create`, `run`, `build`, `deploy`, `api`, `ctx`,
 `skills`.
 
 ## When To Use It
@@ -72,6 +72,9 @@ their own settings:
   [vercel-labs/skills](https://github.com/vercel-labs/skills)).
 - `agentseek-api` reads its own environment / config when invoked through
   `agentseek api`.
+- `contextseek` settings can be passed with either native `STORAGE_*` / `OB_*`
+  variables or `AGENTSEEK_CTX_*` aliases (when `agentseek-contextseek` is
+  installed alongside this package).
 
 The only CLI-level option exposed by this package is
 `agentseek skills --dir <path>`, which `chdir`s before delegating.
@@ -83,6 +86,7 @@ The only CLI-level option exposed by this package is
 agentseek --help
 agentseek skills --help
 agentseek api --help
+agentseek ctx --help
 
 # skills (functional; requires uvx on PATH and a platform-supported
 # npx-skills wheel)
@@ -96,6 +100,11 @@ agentseek skills remove frontend-design
 # api passthrough (requires agentseek-api in the env)
 agentseek api version
 agentseek api dev --port 9911
+
+# contextseek surface (requires contextseek in the env)
+agentseek ctx init --backend memory
+agentseek ctx retrieve --scope acme/db/eng --query "distributed database"
+agentseek ctx serve --port 8001 --mcp
 
 # create — scaffold a project from a bundled cookiecutter template
 agentseek create                                  # interactive type + template
@@ -148,6 +157,9 @@ agentseek deploy --dry-run --mode both --slug myproj --port 9000
   duck-typing forwards `dev / serve / dockerfile / build / up / version`
   to `agentseek_api.cli.main(argv, prog, cwd)`. A missing dependency
   exits with `1` and a clear install hint instead of a traceback.
+- **`ctx` migrated from `agentseek-contextseek`.** `agentseek-cli` now owns the
+  whole `agentseek ctx` group (passthrough + `init` / `serve` / `sync`) so
+  command discovery is centralized in one CLI plugin.
 - **Stubs exit cleanly.** All commands accept the documented arguments;
   `deploy` exits with 2 when called without `--dry-run`, since v1 only
   supports dry-run mode.
