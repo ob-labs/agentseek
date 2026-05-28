@@ -57,6 +57,12 @@ def _patch_no_signal(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(run_module, "_install_signal_handlers", lambda proc: None)
 
 
+def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Drop env vars that could otherwise override ``.env`` via pydantic-settings."""
+    for name in ("PORT", "FRONTEND_PORT"):
+        monkeypatch.delenv(name, raising=False)
+
+
 # ---------------------------------------------------------------------------
 # .env validation
 # ---------------------------------------------------------------------------
@@ -91,11 +97,12 @@ def test_no_browser_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     _write_env(tmp_path, PORT="4321")
     (tmp_path / "docker-compose.yml").write_text("services: {}\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
+    _isolate_env(monkeypatch)
 
     fake = _FakePopen(returncode=0, stays_alive=False)
     captured: dict[str, Any] = {}
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
+    def fake_spawn(cmd: list[str], cwd: Path) -> _FakePopen:
         captured["cmd"] = cmd
         return fake
 
@@ -125,11 +132,12 @@ def test_compose_mode_invokes_compose_up(tmp_path: Path, monkeypatch: pytest.Mon
     _write_env(tmp_path)
     (tmp_path / "compose.yaml").write_text("services: {}\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
+    _isolate_env(monkeypatch)
 
     captured: dict[str, Any] = {}
     fake = _FakePopen(returncode=0, stays_alive=False)
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
+    def fake_spawn(cmd: list[str], cwd: Path) -> _FakePopen:
         captured["cmd"] = cmd
         return fake
 
@@ -155,10 +163,11 @@ def test_wait_ready_timeout_exits_nonzero(tmp_path: Path, monkeypatch: pytest.Mo
     _write_env(tmp_path)
     (tmp_path / "docker-compose.yml").write_text("services: {}\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
+    _isolate_env(monkeypatch)
 
     fake = _FakePopen(returncode=0, stays_alive=True)
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
+    def fake_spawn(cmd: list[str], cwd: Path) -> _FakePopen:
         return fake
 
     monkeypatch.setattr(run_module, "_spawn", fake_spawn)
@@ -184,11 +193,12 @@ def test_python_mode_picks_app_py_entry(tmp_path: Path, monkeypatch: pytest.Monk
     (tmp_path / "pyproject.toml").write_text('[project]\nname = "demo"\n', encoding="utf-8")
     (tmp_path / "app.py").write_text("print('hi')\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
+    _isolate_env(monkeypatch)
 
     captured: dict[str, Any] = {}
     fake = _FakePopen(returncode=0, stays_alive=False)
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
+    def fake_spawn(cmd: list[str], cwd: Path) -> _FakePopen:
         captured["cmd"] = cmd
         return fake
 
@@ -214,11 +224,12 @@ def test_auto_mode_detects_project_script_entry(tmp_path: Path, monkeypatch: pyt
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
+    _isolate_env(monkeypatch)
 
     captured: dict[str, Any] = {}
     fake = _FakePopen(returncode=0, stays_alive=False)
 
-    def fake_spawn(cmd: list[str], cwd: Path, env: dict[str, str]) -> _FakePopen:
+    def fake_spawn(cmd: list[str], cwd: Path) -> _FakePopen:
         captured["cmd"] = cmd
         return fake
 

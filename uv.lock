@@ -134,7 +134,7 @@ dependencies = [
     { name = "cookiecutter" },
     { name = "jinja2" },
     { name = "npx-skills" },
-    { name = "python-dotenv" },
+    { name = "pydantic-settings" },
     { name = "typer" },
 ]
 
@@ -144,7 +144,7 @@ requires-dist = [
     { name = "cookiecutter", specifier = ">=2.5" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "npx-skills", specifier = ">=1.5" },
-    { name = "python-dotenv", specifier = ">=1.0" },
+    { name = "pydantic-settings", specifier = ">=2.4" },
     { name = "typer", specifier = ">=0.12" },
 ]
 

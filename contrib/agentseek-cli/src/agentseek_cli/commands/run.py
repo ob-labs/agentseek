@@ -2,21 +2,21 @@
 
 The command runs in the user's project working directory:
 
-1. Loads ``.env`` (must exist).
+1. Loads ``.env`` (must exist) via ``pydantic-settings`` to read ``PORT``.
 2. Detects launch mode: docker compose, Python entry point, or explicit override.
-3. Spawns the service as a child process.
+3. Spawns the service as a child process inheriting the current environment.
 4. Polls the frontend URL until it's ready (or times out).
 5. Opens the default browser to that URL.
 6. Streams the child until the user hits Ctrl-C, then tears down cleanly.
 
-The launch surface intentionally avoids global state mutation (e.g. it does
-*not* push values into ``os.environ``) so multiple invocations stay isolated.
+Each child process reads ``.env`` on its own (docker compose loads it
+automatically; Python entry points typically reuse ``pydantic-settings``).
+This command therefore never mutates ``os.environ``.
 """
 
 from __future__ import annotations
 
 import contextlib
-import os
 import re
 import shutil
 import signal
@@ -26,13 +26,13 @@ import time
 import urllib.error
 import urllib.request
 import webbrowser
-from collections.abc import Mapping
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
 import typer
-from dotenv import dotenv_values
+from pydantic import AliasChoices, Field, ValidationError
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class RunMode(StrEnum):
@@ -83,12 +83,12 @@ def run(
 ) -> None:
     """Start the project's services and (optionally) open the browser."""
     cwd = Path.cwd()
-    env = _load_env(cwd)
+    settings = _load_settings(cwd)
     resolved_mode = _resolve_mode(mode, cwd)
-    resolved_port = port if port is not None else _read_port(env, DEFAULT_PORT)
+    resolved_port = port if port is not None else (settings.port or DEFAULT_PORT)
     url = f"http://{host}:{resolved_port}/"
 
-    proc = _start_service(resolved_mode, cwd, env)
+    proc = _start_service(resolved_mode, cwd)
     _install_signal_handlers(proc)
     exit_code = 0
     try:
@@ -113,8 +113,29 @@ def run(
 # ---------------------------------------------------------------------------
 
 
-def _load_env(cwd: Path) -> dict[str, str]:
-    """Return a dict of values from ``cwd/.env``. Exit with code 2 if missing."""
+class RunSettings(BaseSettings):
+    """Settings sourced from ``.env`` (and overridden by process env vars).
+
+    Only the knobs ``agentseek run`` cares about are declared here. ``.env`` may
+    contain other keys for the project itself; those are ignored at this layer
+    and remain visible to child processes through their own configuration.
+    """
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
+    port: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("PORT", "FRONTEND_PORT"),
+    )
+
+
+def _load_settings(cwd: Path) -> RunSettings:
+    """Load :class:`RunSettings` from ``cwd/.env``. Exit 2 on missing/invalid input."""
     env_path = cwd / ".env"
     if not env_path.is_file():
         typer.echo(
@@ -123,19 +144,11 @@ def _load_env(cwd: Path) -> dict[str, str]:
             err=True,
         )
         raise typer.Exit(2)
-    raw = dotenv_values(env_path)
-    return {key: value for key, value in raw.items() if value is not None}
-
-
-def _read_port(env: Mapping[str, str], default: int) -> int:
-    raw = env.get("PORT") or env.get("FRONTEND_PORT")
-    if raw is None:
-        return default
     try:
-        return int(raw)
-    except ValueError:
-        typer.echo(f"Invalid PORT value in .env: {raw!r}. Falling back to {default}.", err=True)
-        return default
+        return RunSettings(_env_file=env_path)
+    except ValidationError as exc:
+        typer.echo(f"Invalid configuration in {env_path}:\n{exc}", err=True)
+        raise typer.Exit(2) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -190,16 +203,16 @@ def _find_script_hint(content: str) -> str | None:
     return None
 
 
-def _start_service(mode: RunMode, cwd: Path, env: Mapping[str, str]) -> subprocess.Popen[bytes]:
+def _start_service(mode: RunMode, cwd: Path) -> subprocess.Popen[bytes]:
     if mode is RunMode.COMPOSE:
-        return _start_compose(cwd, env)
+        return _start_compose(cwd)
     if mode is RunMode.PYTHON:
-        return _start_python(cwd, env)
+        return _start_python(cwd)
     msg = f"Unsupported run mode: {mode}"  # auto should already be resolved.
     raise RuntimeError(msg)
 
 
-def _start_compose(cwd: Path, env: Mapping[str, str]) -> subprocess.Popen[bytes]:
+def _start_compose(cwd: Path) -> subprocess.Popen[bytes]:
     docker = shutil.which("docker")
     if docker is None:
         typer.echo(
@@ -208,10 +221,10 @@ def _start_compose(cwd: Path, env: Mapping[str, str]) -> subprocess.Popen[bytes]
         )
         raise typer.Exit(2)
     cmd = [docker, "compose", "up"]
-    return _spawn(cmd, cwd, env)
+    return _spawn(cmd, cwd)
 
 
-def _start_python(cwd: Path, env: Mapping[str, str]) -> subprocess.Popen[bytes]:
+def _start_python(cwd: Path) -> subprocess.Popen[bytes]:
     uv = shutil.which("uv")
     if uv is not None:
         target = _python_target(cwd)
@@ -219,7 +232,7 @@ def _start_python(cwd: Path, env: Mapping[str, str]) -> subprocess.Popen[bytes]:
     else:
         target = _python_target(cwd)
         cmd = [sys.executable, *target]
-    return _spawn(cmd, cwd, env)
+    return _spawn(cmd, cwd)
 
 
 def _python_target(cwd: Path) -> list[str]:
@@ -234,10 +247,9 @@ def _python_target(cwd: Path) -> list[str]:
     raise RuntimeError(msg)
 
 
-def _spawn(cmd: list[str], cwd: Path, env: Mapping[str, str]) -> subprocess.Popen[bytes]:
-    merged = {**os.environ, **env}
+def _spawn(cmd: list[str], cwd: Path) -> subprocess.Popen[bytes]:
     typer.echo(f"$ {' '.join(cmd)}")
-    return subprocess.Popen(cmd, cwd=str(cwd), env=merged)  # noqa: S603
+    return subprocess.Popen(cmd, cwd=str(cwd))  # noqa: S603
 
 
 # ---------------------------------------------------------------------------
@@ -327,5 +339,6 @@ __all__ = [
     "DEFAULT_PORT",
     "DEFAULT_WAIT_TIMEOUT",
     "RunMode",
+    "RunSettings",
     "app",
 ]
