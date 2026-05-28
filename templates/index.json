@@ -2,5 +2,6 @@
   "deepagents/default": "Local create_deep_agent runnable bound to agentseek-langchain.",
   "langchain/default": "LangChain create_agent + CopilotKit middleware over agentseek-langchain.",
   "langchain/cli-remote": "Remote LangGraph CLI agent bridged via LangGraphClientRunnable.",
+  "langchain/markdown-messages": "Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek runtime.",
   "bub/default": "Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain."
 }
