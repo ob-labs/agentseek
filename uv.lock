@@ -161,12 +161,14 @@ source = { editable = "contrib/agentseek-contextseek" }
 dependencies = [
     { name = "bub" },
     { name = "contextseek" },
+    { name = "pydantic-settings" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "bub", specifier = ">=0.3.7" },
     { name = "contextseek" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
 ]
 
 [[package]]

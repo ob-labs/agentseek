@@ -6,8 +6,7 @@ from typing import Any
 
 from bub import hookimpl
 from bub.envelope import content_of, field_of
-from bub.types import Envelope
-from bub.types import State
+from bub.types import Envelope, State
 from loguru import logger
 
 from agentseek_contextseek.config import ContextSeekPluginSettings, apply_contextseek_env_aliases
