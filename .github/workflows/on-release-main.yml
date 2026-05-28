@@ -7,6 +7,7 @@ on:
 jobs:
 
   set-version:
+    if: ${{ startsWith(github.event.release.tag_name, 'v') && !startsWith(github.event.release.tag_name, 'cli-') }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +31,7 @@ jobs:
           path: pyproject.toml
 
   publish:
+    if: ${{ startsWith(github.event.release.tag_name, 'v') && !startsWith(github.event.release.tag_name, 'cli-') }}
     runs-on: ubuntu-latest
     needs: [set-version]
     steps:
@@ -53,6 +55,7 @@ jobs:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
   deploy-docs:
+    if: ${{ startsWith(github.event.release.tag_name, 'v') && !startsWith(github.event.release.tag_name, 'cli-') }}
     needs: publish
     runs-on: ubuntu-latest
     steps:

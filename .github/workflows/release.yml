@@ -3,7 +3,7 @@ name: Release agentseek-cli
 on:
   push:
     tags:
-      - "v*"
+      - "cli-v*"
 
 jobs:
   build:
