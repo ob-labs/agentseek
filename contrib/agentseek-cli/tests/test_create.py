@@ -7,6 +7,7 @@ import json
 import sys
 import types
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from agentseek_cli.app import build_app
@@ -230,9 +231,7 @@ def test_deepagents_research_template_metadata_and_docs_exist() -> None:
     template_path = local_root / "deepagents" / "research"
     assert (template_path / "cookiecutter.json").is_file()
     assert (template_path / "README.md").is_file()
-    cookiecutter_data = json.loads(
-        (template_path / "cookiecutter.json").read_text(encoding="utf-8")
-    )
+    cookiecutter_data = json.loads((template_path / "cookiecutter.json").read_text(encoding="utf-8"))
     assert cookiecutter_data["default_model"] == "openai:Pro/zai-org/GLM-5.1"
 
     templates_index = local_root / "index.json"
@@ -280,17 +279,13 @@ def test_deepagents_research_template_renders_docs_and_streaming_frontend(
     assert frontend_tool_card.is_file()
     assert frontend_app_test.is_file()
     assert frontend_tool_card_test.is_file()
-    assert '"test": "vitest run --environment jsdom"' in frontend_package.read_text(
-        encoding="utf-8"
-    )
+    assert '"test": "vitest run --environment jsdom"' in frontend_package.read_text(encoding="utf-8")
     assert agent_py.is_file()
     agent_text = agent_py.read_text(encoding="utf-8")
     assert "stream_chunk_timeout=STREAM_CHUNK_TIMEOUT_S" in agent_text
     assert "LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S" in agent_text
     assert env_example.is_file()
-    assert "LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S=300" in env_example.read_text(
-        encoding="utf-8"
-    )
+    assert "LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S=300" in env_example.read_text(encoding="utf-8")
 
 
 def test_deepagents_research_fetch_helper_follows_redirects(
@@ -311,7 +306,7 @@ def test_deepagents_research_fetch_helper_follows_redirects(
     sys.modules.pop("research_deepagent.tools", None)
 
     markdownify_module = types.ModuleType("markdownify")
-    markdownify_module.markdownify = lambda text: text
+    cast(Any, markdownify_module).markdownify = lambda text: text
     monkeypatch.setitem(sys.modules, "markdownify", markdownify_module)
 
     tavily_module = types.ModuleType("tavily")
@@ -320,13 +315,13 @@ def test_deepagents_research_fetch_helper_follows_redirects(
         def search(self, *_args: object, **_kwargs: object) -> dict[str, list[dict[str, str]]]:
             return {"results": []}
 
-    tavily_module.TavilyClient = FakeTavilyClient
+    cast(Any, tavily_module).TavilyClient = FakeTavilyClient
     monkeypatch.setitem(sys.modules, "tavily", tavily_module)
 
     langchain_core_module = types.ModuleType("langchain_core")
     langchain_core_tools_module = types.ModuleType("langchain_core.tools")
-    langchain_core_tools_module.InjectedToolArg = object
-    langchain_core_tools_module.tool = lambda **_kwargs: (lambda fn: fn)
+    cast(Any, langchain_core_tools_module).InjectedToolArg = object
+    cast(Any, langchain_core_tools_module).tool = lambda **_kwargs: lambda fn: fn
     monkeypatch.setitem(sys.modules, "langchain_core", langchain_core_module)
     monkeypatch.setitem(sys.modules, "langchain_core.tools", langchain_core_tools_module)
 
@@ -372,11 +367,11 @@ def test_deepagents_research_agent_invalid_timeout_env_uses_default(
     sys.modules.pop("research_deepagent.tools", None)
 
     dotenv_module = types.ModuleType("dotenv")
-    dotenv_module.load_dotenv = lambda: None
+    cast(Any, dotenv_module).load_dotenv = lambda: None
     monkeypatch.setitem(sys.modules, "dotenv", dotenv_module)
 
     deepagents_module = types.ModuleType("deepagents")
-    deepagents_module.create_deep_agent = lambda **kwargs: kwargs
+    cast(Any, deepagents_module).create_deep_agent = lambda **kwargs: kwargs
     monkeypatch.setitem(sys.modules, "deepagents", deepagents_module)
 
     init_calls: list[dict[str, object]] = []
@@ -387,13 +382,13 @@ def test_deepagents_research_agent_invalid_timeout_env_uses_default(
 
     langchain_module = types.ModuleType("langchain")
     langchain_chat_models_module = types.ModuleType("langchain.chat_models")
-    langchain_chat_models_module.init_chat_model = fake_init_chat_model
+    cast(Any, langchain_chat_models_module).init_chat_model = fake_init_chat_model
     monkeypatch.setitem(sys.modules, "langchain", langchain_module)
     monkeypatch.setitem(sys.modules, "langchain.chat_models", langchain_chat_models_module)
 
     fake_tools_module = types.ModuleType("research_deepagent.tools")
-    fake_tools_module.tavily_search = object()
-    fake_tools_module.think_tool = object()
+    cast(Any, fake_tools_module).tavily_search = object()
+    cast(Any, fake_tools_module).think_tool = object()
     monkeypatch.setitem(sys.modules, "research_deepagent.tools", fake_tools_module)
 
     monkeypatch.setenv("LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S", "not-a-number")
