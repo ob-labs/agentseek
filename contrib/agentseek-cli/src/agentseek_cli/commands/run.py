@@ -144,8 +144,10 @@ def _load_settings(cwd: Path) -> RunSettings:
             err=True,
         )
         raise typer.Exit(2)
+    # ``RunSettings`` resolves ``env_file=".env"`` against the current working
+    # directory, which the caller has already set to ``cwd``.
     try:
-        return RunSettings(_env_file=env_path)
+        return RunSettings()
     except ValidationError as exc:
         typer.echo(f"Invalid configuration in {env_path}:\n{exc}", err=True)
         raise typer.Exit(2) from exc
