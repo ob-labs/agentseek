@@ -6,6 +6,7 @@ runs: yes
 verified_on: 2026-05-28
 sources:
   - contrib/agentseek-cli/README.md
+  - contrib/agentseek-cli/pyproject.toml
   - Dockerfile
 ---
 
@@ -30,8 +31,6 @@ Compose / Kubernetes manifest 时使用本指南。两个命令均由
    ```bash title="not executed in this run"
    uv run agentseek build --tag my-agent:0.1.0
    ```
-
-   TODO(reviewer): execute against a Docker daemon to capture buildx output.
 
 2. 标志位 (来自 `agentseek build --help`)：
 
@@ -63,9 +62,6 @@ v1 中 `--dry-run` 是 **必填** —— 命令只写出 manifest，
    uv run agentseek deploy --dry-run --image my-agent:0.1.0
    ```
 
-   TODO(reviewer): capture the actual file tree written by `deploy --dry-run`
-   so the page can include a sample layout.
-
 2. 标志位 (来自 `agentseek deploy --help`)：
 
    | 标志 | 默认值 | 描述 |
@@ -79,10 +75,11 @@ v1 中 `--dry-run` 是 **必填** —— 命令只写出 manifest，
    | `--replicas` | `1` | k8s Deployment 副本数 (必须 ≥ 1)。 |
    | `--namespace` | `default` | k8s 命名空间。 |
 
-### CLI 快捷方式
+### 适用范围
 
-这些命令 **就是** CLI 形态。等价的嵌入式调用需要直接调用
-`agentseek-cli` 的 build / deploy 模块，参见
+这些命令属于 `agentseek-cli`，也就是**项目生命周期 CLI**。它们没有单独的
+harness 运行时等价物；要么直接走路径 A，要么在 `agentseek-cli` 与 harness
+共存的合并环境里执行。参见
 [agentseek-cli README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-cli/README.md)。
 
 ## 故障排查

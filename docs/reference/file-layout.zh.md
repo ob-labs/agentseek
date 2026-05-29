@@ -8,9 +8,14 @@ sources:
   - src/agentseek/env.py
   - entrypoint.sh
   - pyproject.toml
+  - docs/index.md
 ---
 
 # 文件布局参考
+
+本页描述的是 **harness 运行时布局**：也就是路径 B 在真正运行 `agentseek`
+之后会创建和使用的目录。单独的路径 A（`uv tool install agentseek-cli`）
+本身不会创建其中大部分路径，除非你进一步进入一个已同步 harness 的项目环境。
 
 agentseek 在运行时会接触三个目录：**运行时 home**（Bub 状态、config、MCP）、
 **workspace skills 目录**（`.agents/`），以及 **plugin sandbox**（一个保存已安装
@@ -75,6 +80,9 @@ entrypoint 会固定下面的变量：
 
 默认 sandbox 的 basename 必须与 `uv init --name` 匹配
 （`src/agentseek/env.py:22` 与 `src/agentseek/cli.py:134`）。
+
+`agentseek install` 属于 harness 运行时 CLI。只装了 `agentseek-cli` 的路径 A
+环境本身不会创建或管理这个 sandbox。
 
 ## 捆绑 skills（`src/skills`）
 

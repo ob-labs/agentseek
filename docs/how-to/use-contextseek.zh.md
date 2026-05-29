@@ -58,9 +58,6 @@ contrib 包提供；`agentseek ctx` 会转发到其底层 `contextseek` CLI。
    uv run agentseek ctx retrieve --scope my-scope --query "..."
    ```
 
-   TODO(reviewer): exercise a full add → retrieve loop against a real
-   ContextSeek backend.
-
 ## 子命令索引
 
 转发的 `contextseek` CLI 暴露 (来自
@@ -78,11 +75,12 @@ contrib 包提供；`agentseek ctx` 会转发到其底层 `contextseek` CLI。
 
 ## 回退
 
-ContextSeek 的存储由 backend 维护 (`agentseek-contextseek` README
-说明了如何移除)。卸载 extra：
+ContextSeek 的存储由 backend 维护（`agentseek-contextseek` README
+说明了如何移除）。`agentseek-contextseek` 是由 `context` extra 拉入的 uv
+workspace 成员（`pyproject.toml:43`、`:97`），通过移除该 extra 撤销安装：
 
 ```bash title="not executed in this run"
-uv pip uninstall agentseek-contextseek
+uv sync --no-extra context
 ```
 
 ## 相关

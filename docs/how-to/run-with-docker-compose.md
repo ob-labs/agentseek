@@ -8,12 +8,15 @@ sources:
   - Dockerfile
   - docker-compose.yml
   - entrypoint.sh
+  - docs/index.md
 ---
 
 # How to run with Docker Compose
 
 Use this when you want the bundled gateway, MCP wiring, and skills layout
-without installing Python locally.
+without installing Python locally. Operationally, this is **Path B packaged for
+operators**: the container ends up running the harness runtime CLI, not the
+standalone Path A lifecycle CLI.
 
 ## Prerequisites
 
@@ -39,9 +42,6 @@ without installing Python locally.
    ```bash title="not executed in this run"
    docker compose up --build
    ```
-
-   TODO(reviewer): execute against a Docker daemon and capture the
-   entrypoint banner.
 
    The entrypoint exports `BUB_*` and `AGENTSEEK_*` to the values from the
    compose `environment:` block, prepares `.agentseek/` and `.agents/skills`,
@@ -84,6 +84,7 @@ docker compose down             # stop + remove
 | --- | --- | --- |
 | `uv sync --frozen --no-dev` fails during build | `uv.lock` out of sync with `pyproject.toml` workspace members | Re-run `uv sync` on the host to refresh the lock; rebuild. |
 | Workspace data not persisted | `AGENTSEEK_DOCKER_WORKSPACE` left at default `.` | Mount a real data directory. |
+| You expected `create` / `build` / `deploy` inside the container | Compose starts the harness runtime path by default | Run those lifecycle commands from Path A or from a merged dev environment, not from the default container entrypoint. |
 
 ## Rollback
 

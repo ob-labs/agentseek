@@ -8,12 +8,14 @@ sources:
   - Dockerfile
   - docker-compose.yml
   - entrypoint.sh
+  - docs/index.md
 ---
 
 # 如何使用 Docker Compose 运行
 
 当你不想本地装 Python，仍希望获得捆绑的 gateway、MCP 连线与
-skills 布局时使用本指南。
+skills 布局时使用本指南。从职责上说，这就是**给运维打包过的路径 B**：
+容器里最终运行的是 harness 运行时 CLI，而不是独立的路径 A 生命周期 CLI。
 
 ## 前置条件
 
@@ -38,9 +40,6 @@ skills 布局时使用本指南。
    ```bash title="not executed in this run"
    docker compose up --build
    ```
-
-   TODO(reviewer): execute against a Docker daemon and capture the
-   entrypoint banner.
 
    entrypoint 会把 `BUB_*` 与 `AGENTSEEK_*` 导出为 compose
    `environment:` 块中的值，准备 `.agentseek/` 与 `.agents/skills`，
@@ -83,6 +82,7 @@ docker compose down             # stop + remove
 | --- | --- | --- |
 | 构建期 `uv sync --frozen --no-dev` 失败 | `uv.lock` 与 `pyproject.toml` workspace 成员脱节 | 在宿主上重跑 `uv sync` 刷新 lock；再重新构建。 |
 | workspace 数据未持久化 | `AGENTSEEK_DOCKER_WORKSPACE` 仍是默认 `.` | 挂载一个真实的数据目录。 |
+| 你期待在容器里直接拿到 `create` / `build` / `deploy` | Compose 默认启动的是 harness 运行时路径 | 这些生命周期命令请在路径 A，或在本地的合并开发环境里执行，不走默认容器 entrypoint。 |
 
 ## 回退
 

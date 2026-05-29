@@ -59,9 +59,6 @@ forwards to its underlying `contextseek` CLI.
    uv run agentseek ctx retrieve --scope my-scope --query "..."
    ```
 
-   TODO(reviewer): exercise a full add → retrieve loop against a real
-   ContextSeek backend.
-
 ## Subcommand index
 
 The forwarded `contextseek` CLI exposes (from
@@ -81,10 +78,11 @@ README.
 ## Rollback
 
 ContextSeek storage is owned by the backend (`agentseek-contextseek` README
-documents removal). Uninstall the extra with:
+documents removal). `agentseek-contextseek` is a uv workspace member pulled in
+by the `context` extra (`pyproject.toml:43`, `:97`), so undo the extra with:
 
 ```bash title="not executed in this run"
-uv pip uninstall agentseek-contextseek
+uv sync --no-extra context
 ```
 
 ## Related

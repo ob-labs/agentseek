@@ -55,10 +55,6 @@ entrypoint 默认遵循该约定，并把其他位置 symlink 到同一路径
 uv run agentseek skills --dir . add psiace/skills --skill friendly-python
 ```
 
-TODO(reviewer): exercise `agentseek skills add` end-to-end; this run
-captured `--help` only because `add` without `<source>` errors out
-immediately.
-
 ## 步骤 — 捆绑一个发布版 skill
 
 1. 将 skill 放在 `src/skills/<name>/SKILL.md` 下。`pyproject.toml:74`

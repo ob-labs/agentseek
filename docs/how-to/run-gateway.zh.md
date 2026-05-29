@@ -7,13 +7,15 @@ verified_on: 2026-05-28
 sources:
   - src/agentseek/cli.py
   - entrypoint.sh
+  - docs/index.md
 ---
 
 # 如何运行 gateway
 
 当你需要一个 **长期运行** 的进程来监听各 channel (Feishu、
-Telegram、AG-UI 等) 时使用本指南。`agentseek gateway` 既是默认的
-容器 entrypoint，也是本地使用的同一命令。
+Telegram、AG-UI 等) 时使用本指南。`agentseek gateway` 归 **harness**
+包所有，因此本页默认你已经在路径 B：本仓库 `uv sync` 之后、生成项目
+`uv sync` 之后，或包装了同一套 harness 的 Docker Compose 环境中。
 
 ## 前置条件
 
@@ -48,9 +50,6 @@ Telegram、AG-UI 等) 时使用本指南。`agentseek gateway` 既是默认的
    uv run agentseek gateway --enable-channel telegram
    ```
 
-   TODO(reviewer): run with real channel credentials and confirm shutdown
-   behaviour on SIGINT.
-
 3. 要在 Docker 内运行，直接把 stack 起来即可 —— `entrypoint.sh:45`
    默认会 exec `agentseek gateway`：
 
@@ -62,14 +61,16 @@ Telegram、AG-UI 等) 时使用本指南。`agentseek gateway` 既是默认的
    在 workspace 中放置一个 `startup.sh`；entrypoint 会改为
    `exec bash` 它 (`entrypoint.sh:41`)。
 
-### CLI 快捷方式
+### 适用范围
 
-这 **就是** CLI 形式。gateway 没有嵌入式 API。
+这个命令属于 harness 运行时 CLI。仅安装 `agentseek-cli` 的路径 A 环境
+并不提供它。gateway 也没有单独的嵌入式 API。
 
 ## 故障排查
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
+| 找不到 `agentseek gateway` | 你现在是只装了 `agentseek-cli` 的路径 A 环境 | 改用 harness 环境，或用 Docker Compose 包装它。 |
 | channel 一直收不到消息 | 运行时环境缺少该 plugin | `uv run agentseek install <plugin>` 加入 sandbox。 |
 | gateway 立即退出 | channel 凭据缺失 | 在日志中找到 channel 名称；把凭据加到 `.env`。 |
 | Docker 内多个 gateway 互相竞争 | `startup.sh` 和默认 entrypoint 都跑了 | 二选一；`startup.sh` 是替换不是链式叠加。 |

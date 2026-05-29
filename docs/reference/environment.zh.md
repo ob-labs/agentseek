@@ -26,7 +26,7 @@ agentseek 从两个并行的命名空间读取其运行时配置：
 | 变量 | 默认值 | 定义于 |
 | --- | --- | --- |
 | `BUB_HOME` | `Path.cwd() / ".agentseek"` | `src/agentseek/env.py:70`、`:86` |
-| `BUB_PROJECT` | `${BUB_HOME}/agentseek-project` | `src/agentseek/env.py:72` |
+| `BUB_PROJECT` | `${BUB_HOME}/agentseek-project` | `src/agentseek/env.py:73` |
 
 两个默认值都使用 `setdefault` 应用，因此显式值优先生效。
 

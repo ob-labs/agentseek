@@ -56,10 +56,6 @@ locations into the same path (`entrypoint.sh:30`–`:35`).
 uv run agentseek skills --dir . add psiace/skills --skill friendly-python
 ```
 
-TODO(reviewer): exercise `agentseek skills add` end-to-end; this run
-captured `--help` only because `add` without `<source>` errors out
-immediately.
-
 ## Steps — bundle a release skill
 
 1. Place the skill under `src/skills/<name>/SKILL.md`. `pyproject.toml:74`

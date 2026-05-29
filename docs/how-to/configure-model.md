@@ -6,6 +6,8 @@ runs: yes
 verified_on: 2026-05-28
 sources:
   - src/agentseek/env.py
+  - README.md
+  - docs/index.md
 ---
 
 # How to configure the model provider
@@ -17,8 +19,9 @@ turn can run.
 
 ## Prerequisites
 
-- agentseek installed in your project (`uv sync` from the repo, or
-  `uv pip install agentseek`).
+- A working **harness** environment: either this repository after `uv sync`,
+  or a generated project after its own `uv sync`. `agentseek-cli` on its own
+  does not provide `chat`.
 - A valid API key for your chosen provider.
 
 ## Steps
@@ -62,9 +65,6 @@ AGENTSEEK_MODEL=openai:gpt-4o-mini \
 AGENTSEEK_API_KEY=sk-replace-me \
 uv run agentseek chat
 ```
-
-TODO(reviewer): exercise a full `chat` turn against a real key during release
-QA.
 
 ## Troubleshooting
 

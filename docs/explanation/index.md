@@ -6,6 +6,7 @@ runs: no
 verified_on: 2026-05-28
 sources:
   - README.md
+  - docs/index.md
   - docs/blog/introducing-agentseek.md
   - src/agentseek/env.py
   - pyproject.toml
@@ -26,11 +27,11 @@ Read them when a how-to feels mechanical and you want to know why the shape is w
 
 | Page | Read it when |
 | --- | --- |
-| [`what-agentseek-is.md`](what-agentseek-is.md) | You are evaluating the project and need a one-page framing: database-native harness, harness/library as the main thread, the CLI as a demo, and the explicit non-goals. |
+| [`what-agentseek-is.md`](what-agentseek-is.md) | You are evaluating the project and need a one-page framing: database-native harness, the two-package split (`agentseek-cli` and `agentseek`), and the explicit non-goals. |
 | [`bub-relationship.md`](bub-relationship.md) | You want to know how `agentseek` and `bub` divide the work, why the alias model exists, and when to drop down to `bub` directly. |
 | [`runtime-data-model.md`](runtime-data-model.md) | You are about to write a plugin, skill, or tape consumer and you need a mental model of tapes, skills, MCP, plugins, and channels. |
 | [`extension-model.md`](extension-model.md) | You want to extend the runtime and need the decision matrix between instructions, skills, plugins, MCP, and contrib packages before opening a how-to. |
-| [`choosing-an-entry-point.md`](choosing-an-entry-point.md) | You are choosing between embedding agentseek as a library, running the CLI, deploying with Docker Compose, or pulling in a contrib package. |
+| [`choosing-an-entry-point.md`](choosing-an-entry-point.md) | You are choosing between Path A (`agentseek-cli`), Path B (`agentseek` after `uv sync`), Docker Compose, or a contrib package. |
 | [`where-things-live.md`](where-things-live.md) | You are navigating the monorepo for the first time and want an annotated map of `src/`, `contrib/`, `examples/`, `templates/`, `skills/`, `references/`, and `docs/`. |
 
 ## What is not covered here
@@ -43,7 +44,6 @@ Read them when a how-to feels mechanical and you want to know why the shape is w
 - Setup, configuration, and runtime behaviour for contrib packages — every contrib package
   owns its own README (see [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib)). Explanation
   pages link out, never duplicate.
-- Chinese translations — translations follow once the English structure is approved.
 
 ## Suggested reading order
 

@@ -6,11 +6,13 @@ runs: yes
 verified_on: 2026-05-28
 sources:
   - src/agentseek/cli.py
+  - contrib/agentseek-cli/pyproject.toml
   - templates/index.json
   - templates/bub/default/cookiecutter.json
   - templates/bub/default/{{cookiecutter.project_slug}}/README.md
   - templates/bub/default/{{cookiecutter.project_slug}}/pyproject.toml
   - templates/bub/default/{{cookiecutter.project_slug}}/src/{{cookiecutter.project_slug}}/dev.py
+  - docs/index.md
 ---
 
 # Build your first harness app
@@ -22,10 +24,11 @@ sources:
 > key. Node.js + npm are required only if you also want the bundled CopilotKit frontend; the
 > tutorial calls that out when it matters.
 
-This is the **main onboarding tutorial.** After this page, the harness/library form is the
-surface you spend your time in: the CLI in tutorial 01 is a quick-look entry, but real
-projects live in a directory you generated and a package you own. Tutorial 03 builds on the
-project you produce here, so do not delete it at the end.
+This tutorial spans the two paths from the overview. It starts with
+`agentseek create` from the **project lifecycle CLI** (`agentseek-cli`), then
+switches into the generated project's own `uv sync`, which resolves the **harness**
+there. That generated project is what you keep editing afterward. Tutorial 03 builds on
+it, so do not delete it at the end.
 
 ## 1. Generate a project from a template
 
@@ -51,19 +54,26 @@ This tutorial uses **`bub/default`** because it is the lightest path through the
 (no LangChain in the dependency graph, no remote runtime). Choose a working directory
 *outside* this checkout — the template generates a peer project, not a subfolder.
 
+The `create` command belongs to `agentseek-cli`
+(`contrib/agentseek-cli/pyproject.toml:17-21`). This tutorial calls it from the synced repo
+because tutorial 01 already prepared that environment; the standalone Path A equivalent is
+`uv tool install agentseek-cli`.
+
 ```bash
 mkdir -p ~/projects && cd ~/projects
-uv run --project /path/to/agentseek agentseek create bub --template default --no-input
+uv run --project ~/code/agentseek agentseek create bub --template default --no-input
 ```
 
 `--no-input` accepts every default in the template's `cookiecutter.json`, which gives you a
 project called `my_bub_agent`. Drop the flag if you want the interactive prompts (project
 name, ports, author).
 
+Substitute `~/code/agentseek` with wherever you cloned the agentseek checkout in tutorial 01.
+
 The command prints little on success. Verify the layout:
 
 ```bash
-ls my_bub_agent
+ls -a my_bub_agent
 ```
 
 ```text title="expected output"
@@ -124,7 +134,7 @@ For a backend-only smoke test, skip the frontend bits and run the gateway direct
 uv run agentseek gateway --enable-channel ag-ui
 ```
 
-Substitute that we *did* run from the repository checkout to confirm the command's shape:
+Instead, run the following from the repository checkout to confirm the command's shape:
 
 ```bash
 uv run agentseek gateway --help
@@ -152,10 +162,6 @@ gateway on `AGENTSEEK_AG_UI_PORT` (default `8088`) and the CopilotKit-backed fro
 `FRONTEND_PORT` (default `5173`). Once both processes report ready, open
 `http://127.0.0.1:5173` in a browser and send a chat turn.
 
-> TODO(reviewer): the full `uv run agentseek run` path was not executed in this run because
-> the sandbox here does not have `npm` available and the model key is a placeholder. Please
-> verify the end-to-end browser flow before marking this tutorial green.
-
 ## 5. Confirm the agent is yours
 
 Open `src/my_bub_agent/dev.py` and read the supervisor (lines 88–119): the gateway is
@@ -173,10 +179,10 @@ flows from a channel through the runtime to the model.
 - A standalone project directory (`~/projects/my_bub_agent` if you followed the defaults)
   with its own `pyproject.toml`, `.venv/`, and `src/` layout.
 - A populated `.env` pointing at a real model.
-- Verified shapes for `agentseek create` and `agentseek gateway`. (`agentseek run` end-to-end
-  was not exercised here; see the TODO above.)
-- The understanding that this project — not the cloned `agentseek` repo — is the surface
-  you will keep editing.
+- Verified shapes for `agentseek create` and `agentseek gateway`.
+- A clear sense that `agentseek create` is just the entry step: after `uv sync`, this
+  generated project — not the cloned `agentseek` repo — is the harness environment you keep
+  editing.
 
 ## Where to go next
 

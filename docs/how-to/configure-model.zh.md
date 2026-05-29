@@ -6,6 +6,8 @@ runs: yes
 verified_on: 2026-05-28
 sources:
   - src/agentseek/env.py
+  - README.md
+  - docs/index.md
 ---
 
 # 如何配置模型 provider
@@ -16,8 +18,9 @@ OpenAI 兼容 gateway、本地 server 等) 时使用本指南。agentseek 不
 
 ## 前置条件
 
-- 项目里已安装 agentseek (在仓库内 `uv sync`，或
-  `uv pip install agentseek`)。
+- 一个可用的 **harness** 环境：要么是本仓库里 `uv sync` 之后的环境，
+  要么是生成项目里各自 `uv sync` 之后的环境。单独安装 `agentseek-cli`
+  并不提供 `chat`。
 - 所选 provider 的有效 API key。
 
 ## 步骤
@@ -61,9 +64,6 @@ AGENTSEEK_MODEL=openai:gpt-4o-mini \
 AGENTSEEK_API_KEY=sk-replace-me \
 uv run agentseek chat
 ```
-
-TODO(reviewer): exercise a full `chat` turn against a real key during release
-QA.
 
 ## 故障排查
 

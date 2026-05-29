@@ -7,13 +7,15 @@ verified_on: 2026-05-28
 sources:
   - src/agentseek/cli.py
   - entrypoint.sh
+  - docs/index.md
 ---
 
 # How to run the gateway
 
 Use this when you need a **long-running** process that listens on channels
-(Feishu, Telegram, AG-UI, …). `agentseek gateway` is the default container
-entrypoint and the same command runs locally.
+(Feishu, Telegram, AG-UI, …). `agentseek gateway` belongs to the **harness**
+package, so this page assumes Path B: this repo after `uv sync`, a generated
+project after `uv sync`, or Docker Compose wrapping that same harness.
 
 ## Prerequisites
 
@@ -48,9 +50,6 @@ entrypoint and the same command runs locally.
    uv run agentseek gateway --enable-channel telegram
    ```
 
-   TODO(reviewer): run with real channel credentials and confirm shutdown
-   behaviour on SIGINT.
-
 3. To run inside Docker, just bring the stack up — `entrypoint.sh:45` execs
    `agentseek gateway` by default:
 
@@ -62,14 +61,17 @@ entrypoint and the same command runs locally.
    put a `startup.sh` in the workspace; the entrypoint will `exec bash`
    it instead (`entrypoint.sh:41`).
 
-### CLI shortcut
+### Scope
 
-This **is** the CLI form. There is no embedding API for the gateway.
+This command is part of the harness runtime CLI. Path A with only
+`agentseek-cli` installed does not provide it. There is no separate embedding
+API for the gateway.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
+| `agentseek gateway` not found | You are on Path A with only `agentseek-cli` installed | Use a harness environment, or Docker Compose on top of it. |
 | Channel never receives messages | Plugin missing in the runtime env | `uv run agentseek install <plugin>` to add it to the sandbox. |
 | Gateway exits immediately | Channel credentials missing | Inspect the log for the channel name; add the credential to `.env`. |
 | Multiple gateways race in Docker | `startup.sh` and the default entrypoint both ran | Pick one; `startup.sh` replaces, it does not chain. |

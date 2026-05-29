@@ -8,6 +8,7 @@ sources:
   - src/agentseek/cli.py
   - src/agentseek/env.py
   - pyproject.toml
+  - contrib/agentseek-cli/pyproject.toml
   - README.md
 ---
 
@@ -18,10 +19,11 @@ sources:
 > **You need:** Python 3.12+, [uv](https://docs.astral.sh/uv/), `git`, and one model
 > provider API key (OpenAI, OpenRouter, DashScope, etc.).
 
-This page exists so you can see that agentseek is real in about five minutes. It is **not**
-the recommended way to use agentseek in your own application. The CLI is a Bub-compatible
-front door that loads the repository's own configuration; for embedding agentseek in your
-own project, jump to `02-first-harness-app.md` after you finish here.
+This tutorial is **Path B** from the overview: run the harness runtime CLI from a synced
+checkout. Use it to evaluate the project in minutes, drive local one-off workflows, or
+inspect the runtime. Tutorial 02 covers the complementary path: start with
+`agentseek create` from the project lifecycle CLI, then keep working inside the generated
+project.
 
 ## 1. Clone and install
 
@@ -35,7 +37,10 @@ uv sync
 
 `uv sync` creates `.venv/` in the repository root and installs the `agentseek` distribution
 in editable mode along with its transitive dependencies. From now on, `uv run agentseek …`
-runs the version of agentseek that lives in this checkout.
+runs the version of agentseek that lives in this checkout. Because this workspace also owns
+`agentseek-cli` (`pyproject.toml:31-33`, `pyproject.toml:98`), the visible command surface
+is usually the merged one: harness runtime groups like `chat` alongside lifecycle groups
+like `create` and `build`.
 
 Confirm the CLI loads.
 
@@ -108,13 +113,13 @@ uv run agentseek chat
 
 ```text title="expected output"
 INFO     | channel.manager started listening
-╭──────────────── Bub ────────────────╮
-│ workspace: /…/agentseek             │
-│ model: openai:qwen-plus             │
-│ internal command prefix: ','        │
-│ shell command prefix: ',' at line start (Ctrl-X for shell mode)
-│ type ',help' for command list
-╰─────────────────────────────────────╯
+╭───────────────────────────── Bub ──────────────────────────────╮
+│ workspace: /…/agentseek                                        │
+│ model: openai:qwen-plus                                        │
+│ internal command prefix: ','                                   │
+│ shell command prefix: ',' at line start (Ctrl-X for shell mode)│
+│ type ',help' for command list                                  │
+╰────────────────────────────────────────────────────────────────╯
 agentseek >
 ```
 
@@ -136,8 +141,9 @@ just what the local checkout happened to be configured for. Type a short prompt 
 
 ## Where to go next
 
-- To run agentseek inside *your own* application instead of the bundled CLI, continue with
-  `02-first-harness-app.md`. That is the main onboarding path.
+- To generate a project you own, continue with `02-first-harness-app.md`. That tutorial
+  starts with `agentseek create` (owned by `agentseek-cli`) and then switches into the
+  generated project's harness environment.
 - To understand why the demo uses `.agentseek/` for local state and how the alias model
   works, read `../explanation/bub-relationship.md`.
 - To look up every CLI flag or environment variable instead of memorising them, see

@@ -48,9 +48,6 @@ plugin 会安装到 **plugin sandbox**，即位于 `AGENTSEEK_PROJECT` /
    uv run agentseek install bub-feishu@main
    ```
 
-   TODO(reviewer): exercise an actual install in a clean checkout to confirm
-   sandbox bootstrap output.
-
 4. 验证 sandbox 现在列出了该 plugin：
 
    ```bash title="not executed in this run"

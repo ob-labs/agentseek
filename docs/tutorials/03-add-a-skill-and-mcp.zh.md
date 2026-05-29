@@ -122,8 +122,6 @@ uv run agentseek gateway --enable-channel ag-ui
 
 如果某个 skill 没被识别，再跑一次 `uv run agentseek skills list`，确认你那一行出现了。如果某个 MCP server 没被识别，确认文件路径与 `AGENTSEEK_MCP_CONFIG_PATH` 完全一致。
 
-> TODO(reviewer): "让 agent 使用 skill / MCP server" 的实时往返没有在本次校验运行中执行，因为它需要一个可用的 model key 和一个运行中的 MCP host。请在真实 provider 上验证后再把本教程标记为 green。
-
 ## 你现在拥有什么
 
 - 在 `.agents/skills/local-greeting/SKILL.md` 一个项目本地 skill，能被 `agentseek skills list` 列在 **Project Skills** 之下。

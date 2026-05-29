@@ -5,7 +5,10 @@ audience: [A2, A3, A4, A5]
 runs: no
 verified_on: 2026-05-28
 sources:
+  - README.md
+  - docs/index.md
   - pyproject.toml
+  - contrib/agentseek-cli/pyproject.toml
   - contrib/README.md
   - examples/README.md
   - src/skills/README.md
@@ -15,10 +18,11 @@ sources:
 
 # Where things live in the monorepo
 
-> **In short:** the agentseek repository is a uv workspace. Core code lives under `src/`,
-> larger integrations under `contrib/`, runnable end-to-end demos under `examples/`,
-> project scaffolds under `templates/`, supporting skill repos under `skills/`, vendored
-> upstream code under `references/`, and the published documentation under `docs/`.
+> **In short:** the agentseek repository is a uv workspace that ships two top-level packages:
+> `agentseek` (the harness) and `agentseek-cli` (the project lifecycle CLI). Core code lives
+> under `src/`, larger integrations under `contrib/`, runnable end-to-end demos under
+> `examples/`, project scaffolds under `templates/`, supporting skill repos under `skills/`,
+> vendored upstream code under `references/`, and the published documentation under `docs/`.
 
 ## Context
 
@@ -35,11 +39,12 @@ the referenced READMEs rather than reading this page end-to-end.
 ```text
 agentseek/
 ├── src/
-│   ├── agentseek/        ← core distribution (env aliases, CLI overrides)
+│   ├── agentseek/        ← harness package (PyPI: agentseek)
 │   └── skills/           ← bundled skills shipped with the wheel
 ├── contrib/
 │   ├── README.md         ← contrib README standard + package index
-│   └── agentseek-*/      ← workspace member packages (plugins + lifecycle CLI)
+│   ├── agentseek-cli/    ← project lifecycle CLI (PyPI: agentseek-cli)
+│   └── agentseek-*/      ← runtime plugin packages (workspace members)
 ├── examples/             ← runnable end-to-end demos
 ├── templates/            ← project scaffolds used by `agentseek create`
 ├── skills/               ← stand-alone skills, separate from `src/skills`
@@ -49,13 +54,22 @@ agentseek/
 ├── tests/                ← top-level tests
 ├── entrypoint.sh         ← Docker entrypoint
 ├── docker-compose.yml    ← Compose definition
-├── pyproject.toml        ← distribution, dependencies, extras, workspace members
+├── pyproject.toml        ← harness pyproject (deps, extras, workspace members)
 └── README.md             ← repo README; entry point for the project
 ```
 
-### `src/agentseek/` — the core distribution
+### `src/agentseek/` — the harness package
 
-The Python package that `pip install agentseek` ships. Three files matter:
+The Python package published to PyPI as `agentseek` (the harness itself). It is
+**not** directly installable from PyPI: `requires-dist` includes `bub-feishu`,
+`bub-mcp`, and `agentseek-schedule-sqlalchemy`, which are wired via
+`[tool.uv.sources]` (git source / workspace). PyPI metadata cannot carry source
+overrides, so a plain `pip install agentseek` or `uv tool install agentseek`
+will fail to resolve. Install it by cloning this repo and running `uv sync`, or
+by `uv sync`-ing inside a project generated via `agentseek create`. See
+[`choosing-an-entry-point.md`](choosing-an-entry-point.md).
+
+Three files matter:
 
 - `src/agentseek/env.py` — alias rules from `AGENTSEEK_*` to `BUB_*` plus the location
   defaults (`.agentseek/`, `.agentseek/agentseek-project`). The mechanics are explained in
@@ -65,7 +79,7 @@ The Python package that `pip install agentseek` ships. Three files matter:
 - `src/agentseek/__main__.py` — the boot sequence that runs the alias step, applies the CLI
   overrides, and constructs a `BubFramework`.
 
-This is the only place core agentseek code lives. Everything bigger goes under `contrib/`.
+This is the only place core harness code lives. Everything bigger goes under `contrib/`.
 
 ### `src/skills/` — bundled skills
 
@@ -81,17 +95,19 @@ skill is.
 
 Workspace member packages, each a regular Python distribution with its own README. The
 index and the README standard live at [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib).
-Today the packages are:
+`agentseek-cli` is a top-level PyPI package in its own right (the project
+lifecycle CLI of Path A — see [`choosing-an-entry-point.md`](choosing-an-entry-point.md));
+the other entries are runtime plugins for the harness.
 
-| Directory | Purpose |
-| --- | --- |
-| `agentseek-ag-ui` | AG-UI SSE channel adapter for `agentseek gateway`. |
-| `agentseek-cli` | Project-lifecycle CLI: `create / run / build / deploy / api / ctx / skills`. |
-| `agentseek-contextseek` | ContextSeek semantic context runtime plugin. |
-| `agentseek-langchain` | Routes Bub model turns through a user-supplied LangChain `Runnable`. |
-| `agentseek-observability` | Logfire-backed tracing across the any-llm / Republic / Bub stack. |
-| `agentseek-schedule-sqlalchemy` | SQLAlchemy-backed APScheduler job store (bundled as a hard dependency). |
-| `agentseek-tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility. |
+| Directory | Role | Purpose |
+| --- | --- | --- |
+| `agentseek-cli` | **Project lifecycle CLI** (top-level PyPI package) | `create / run / build / deploy / api / ctx / skills`. Installable via `uv tool install agentseek-cli`; when present alongside the harness it folds into the same `agentseek` command surface. |
+| `agentseek-ag-ui` | Runtime plugin | AG-UI SSE channel adapter for `agentseek gateway`. |
+| `agentseek-contextseek` | Runtime plugin | ContextSeek semantic context layer. |
+| `agentseek-langchain` | Runtime plugin | Routes Bub model turns through a user-supplied LangChain `Runnable`. |
+| `agentseek-observability` | Runtime plugin | Logfire-backed tracing across the any-llm / Republic / Bub stack. |
+| `agentseek-schedule-sqlalchemy` | Runtime plugin (bundled as a hard dep of the harness) | SQLAlchemy-backed APScheduler job store. |
+| `agentseek-tapestore-oceanbase` | Runtime plugin | SQLAlchemy tape storage with OceanBase compatibility. |
 
 Each package owns its install, configure, run, and verify documentation. The main docs
 link out; they do not duplicate. The workspace mapping lives at `pyproject.toml:100-110`.
@@ -162,9 +178,11 @@ the source of the navigation/where-things-live picture used across the site.
 
 ## Why it is like this
 
-- **One distribution, many packages.** The uv workspace lets `agentseek` ship as one
-  distribution while contrib packages evolve at their own pace. Optional extras
-  (`pyproject.toml:27-46`) make adopting them a one-line change.
+- **Two packages, one workspace.** The uv workspace lets the harness
+  (`agentseek`) and the project lifecycle CLI (`agentseek-cli`) ship as two
+  PyPI packages while contrib plugins evolve at their own pace. Optional
+  extras (`pyproject.toml:27-46`) make adopting them a one-line change inside
+  the repo.
 - **Bundled vs project-local skills.** Bundling skills inside the wheel makes them
   reproducible (`src/skills/`); workspace-local skills (`.agents/skills/`) make them
   hackable. Stand-alone skill repos (`skills/`) sit in between for skills that should be

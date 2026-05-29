@@ -58,11 +58,23 @@ over MCP. This page covers **authoring an entry**; see
    uv run agentseek chat
    ```
 
-   TODO(reviewer): exercise with a real MCP server and capture tool listing.
-
 ### CLI shortcut
 
-There is no `agentseek mcp add` command today. Authoring is by file edit.
+`agentseek mcp add` writes the same entry for you without opening the
+file:
+
+```bash
+# Remote (http / sse) server:
+uv run agentseek mcp add github https://example.com/mcp \
+  --transport http --header "Authorization: Bearer $TOKEN"
+
+# Stdio server (use `--` to separate the command from agentseek flags):
+uv run agentseek mcp add fs --transport stdio --env LOG_LEVEL=info \
+  -- uvx mcp-server-filesystem --root /workspace
+```
+
+`uv run agentseek mcp list` shows currently registered servers; `remove`
+deletes one by name. See `../reference/cli.md#agentseek-mcp`.
 
 ## Field reference
 

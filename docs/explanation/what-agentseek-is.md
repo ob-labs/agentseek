@@ -13,11 +13,12 @@ sources:
 
 # What agentseek is
 
-> **In short:** agentseek is a **database-native Agent Harness** distributed as a Python
-> library you embed in your own application. It packages [Bub](https://github.com/bubbuild/bub)
-> with project-local defaults so runtime data — context, tool calls, traces, tasks, feedback —
-> lives on one durable substrate from the first turn. The CLI is a demo entry point, not the
-> product.
+> **In short:** agentseek is a **database-native Agent Harness**. Runtime data
+> — context, tool calls, traces, tasks, feedback — lives on one durable,
+> queryable substrate from the first turn. The harness ships as two PyPI
+> packages split by job: `agentseek-cli` (the **project lifecycle CLI**) and
+> `agentseek` (the **harness** itself, both a library you embed and a runtime
+> CLI).
 
 ## Context
 
@@ -36,21 +37,31 @@ that already treats runtime data as a first-class workload.
 
 Three pieces sit on top of each other:
 
-1. **Bub** provides the kernel: a hook-first turn pipeline, channels, a tape store, skills,
-   and a plugin model. See <https://github.com/bubbuild/bub>.
-2. **agentseek** packages Bub with project-local defaults (`.agentseek/` runtime home,
-   `AGENTSEEK_*` environment aliases, an install sandbox at `.agentseek/agentseek-project`,
-   bundled skills under `src/skills/`) — see `src/agentseek/__main__.py:18` for the boot
-   sequence and `pyproject.toml:18` for the dependency on Bub.
-3. **Contrib packages and your app** sit on top: storage backends, model routing,
-   observability, channel adapters, and the application code that actually wants to run on
-   the harness. The contrib monorepo is indexed at [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib).
+1. **Bub** is the upstream runtime: a hook-first turn pipeline, channels, a
+   tape store, skills, and a plugin model. agentseek consumes Bub as a regular
+   library dependency (`pyproject.toml:18`). See
+   <https://github.com/bubbuild/bub>.
+2. **`agentseek` (the harness)** runs on top of Bub. It owns the runtime CLI
+   (`chat`, `run`, `gateway`, `install`, `update`, …), the embeddable library
+   surface, runtime defaults (`.agentseek/` runtime home, the
+   `.agentseek/agentseek-project` install sandbox, the alias layer from
+   `AGENTSEEK_*` to `BUB_*`), and the bundled skills under `src/skills/`. See
+   `src/agentseek/__main__.py:52-69` for the boot sequence.
+3. **`agentseek-cli` (the project lifecycle CLI)** is the second PyPI package.
+   It owns scaffolding and lifecycle commands (`create / run / build / deploy
+   / api / ctx / skills`). On its own it is self-contained and small; alongside
+   the harness it folds in as a Bub plugin so the same `agentseek` command
+   exposes the union of both surfaces. See
+   [`choosing-an-entry-point.md`](choosing-an-entry-point.md).
+4. **Contrib packages and your app** sit on top: storage backends, model
+   routing, observability, channel adapters, and the application code that
+   actually wants to run on the harness. The contrib monorepo is indexed at
+   [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib).
 
-In practice the recommended path is to depend on `agentseek` from your project (`pyproject.toml`
-declares it as a regular distribution under `[project] name = "agentseek"`,
-`pyproject.toml:2`) and let your application code drive turns. The CLI happens to be a thin
-Typer app that boots the exact same framework — see `src/agentseek/__main__.py:52-69` — which
-is why the CLI demo is a faithful preview of what your app will get.
+In practice, most application teams depend on `agentseek` (the harness) from
+their own project and let application code drive turns. The runtime CLI is a
+thin Typer app over the same framework — a CLI run is a faithful preview of
+what an embedded library run will produce.
 
 ## Why it is like this
 
@@ -63,25 +74,35 @@ is why the CLI demo is a faithful preview of what your app will get.
   semantics*; the actual store is a deployment concern. Local SQLite works out of the box;
   OceanBase / [seekdb](https://github.com/oceanbase/seekdb) is the recommended scaling path
   and ships as a contrib plugin (`agentseek-tapestore-oceanbase`).
-- **CLI as demo, not product.** Putting the CLI front-and-centre would mis-signal what the
-  project is. The CLI is real and supported, but it is the on-ramp for evaluators, not the
-  surface app developers build against. See
-  [`choosing-an-entry-point.md`](choosing-an-entry-point.md).
-- **Bub underneath, agentseek on top.** Rather than fork or replace Bub, agentseek wraps it
-  and supplies opinionated defaults. The reasoning is in
-  [`bub-relationship.md`](bub-relationship.md).
+- **Two packages, one job each.** `agentseek-cli` exists so teams that only
+  need scaffolding and lifecycle commands do not have to install the harness's
+  full dependency tree on their laptop or in CI; `agentseek` exists so the
+  harness itself stays a regular Python package you embed in your application.
+  The trade-offs and the "same name, merged surface when both are installed"
+  mechanic are in [`choosing-an-entry-point.md`](choosing-an-entry-point.md).
+- **Bub underneath, agentseek on top.** Rather than fork or replace Bub,
+  agentseek consumes it as a regular library. The reasoning and the alias
+  rules are in [`bub-relationship.md`](bub-relationship.md).
 
 ## Consequences for users
 
-- You are expected to **embed agentseek in an application**. Library use is the main path;
-  see [`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md).
-- Anywhere the documentation looks plain — environment variables, file layout, install
-  sandbox semantics — that plainness is intentional. The complexity is concentrated in the
-  runtime substrate (Bub + tape) and in optional contrib packages, not in agentseek itself.
-- Tutorials, how-tos, and reference pages all assume that your project has a `.agentseek/`
-  directory and that `AGENTSEEK_*` variables drive configuration. The why and the alias
-  rules are in [`bub-relationship.md`](bub-relationship.md); the exact tables are in
-  [`../reference/environment.md`](../reference/environment.md).
+- Pick the package that matches your job. `agentseek-cli` is for project lifecycle
+  work without the harness runtime on the host; `agentseek` is the harness itself
+  and is what you run after `uv sync` in this repo or inside a generated project.
+- Most evaluators start with Path B and `agentseek chat`
+  ([`../tutorials/01-quick-demo-cli.md`](../tutorials/01-quick-demo-cli.md)).
+  Most application teams start with Path A to scaffold, then Path B inside the
+  generated project
+  ([`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md)).
+- Anywhere the documentation looks plain — environment variables, file
+  layout, install sandbox semantics — that plainness is intentional. The
+  complexity is concentrated in the runtime substrate (Bub + tape) and in
+  optional contrib packages, not in agentseek itself.
+- Tutorials, how-tos, and reference pages all assume that, once the harness
+  is running, your project has a `.agentseek/` directory and that
+  `AGENTSEEK_*` variables drive configuration. The why and the alias rules
+  are in [`bub-relationship.md`](bub-relationship.md); the exact tables are
+  in [`../reference/environment.md`](../reference/environment.md).
 
 ## Explicit non-goals
 

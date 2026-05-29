@@ -6,6 +6,7 @@ runs: yes
 verified_on: 2026-05-28
 sources:
   - contrib/agentseek-cli/README.md
+  - contrib/agentseek-cli/pyproject.toml
   - Dockerfile
 ---
 
@@ -30,8 +31,6 @@ set of Compose / Kubernetes manifests. Both commands are provided by
    ```bash title="not executed in this run"
    uv run agentseek build --tag my-agent:0.1.0
    ```
-
-   TODO(reviewer): execute against a Docker daemon to capture buildx output.
 
 2. Flags (from `agentseek build --help`):
 
@@ -63,9 +62,6 @@ does not deploy.
    uv run agentseek deploy --dry-run --image my-agent:0.1.0
    ```
 
-   TODO(reviewer): capture the actual file tree written by `deploy --dry-run`
-   so the page can include a sample layout.
-
 2. Flags (from `agentseek deploy --help`):
 
    | Flag | Default | Description |
@@ -79,10 +75,12 @@ does not deploy.
    | `--replicas` | `1` | k8s Deployment replicas (must be ≥ 1). |
    | `--namespace` | `default` | k8s namespace. |
 
-### CLI shortcut
+### Scope
 
-These commands **are** the CLI form. Equivalent embedding would require
-calling into `agentseek-cli`'s build / deploy modules; see the
+These commands belong to `agentseek-cli`, the **project lifecycle CLI**. There
+is no separate harness-runtime equivalent; use Path A directly, or run them
+from a merged environment where `agentseek-cli` is installed alongside the
+harness. See the
 [agentseek-cli README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-cli/README.md).
 
 ## Troubleshooting

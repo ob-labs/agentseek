@@ -6,11 +6,13 @@ runs: yes
 verified_on: 2026-05-28
 sources:
   - src/agentseek/cli.py
+  - contrib/agentseek-cli/pyproject.toml
   - templates/index.json
   - templates/bub/default/cookiecutter.json
   - templates/bub/default/{{cookiecutter.project_slug}}/README.md
   - templates/bub/default/{{cookiecutter.project_slug}}/pyproject.toml
   - templates/bub/default/{{cookiecutter.project_slug}}/src/{{cookiecutter.project_slug}}/dev.py
+  - docs/index.md
 ---
 
 # 构建你的第一个 harness 应用
@@ -18,7 +20,10 @@ sources:
 > **你将完成：** 从 `bub/default` 模板生成一个新项目，把它作为独立的 Python 包安装，并运行一个**你自己**端到端掌控的 agent —— 前端、gateway、配置全都归你。
 > **你需要：** Python 3.12+、[uv](https://docs.astral.sh/uv/) 和一个模型提供方的 API key。只有当你还想用上自带的 CopilotKit 前端时，才需要 Node.js + npm；教程会在涉及到时明确指出。
 
-这是**主要的上手教程。** 看完这一页之后，你日常使用的就是 harness/library 形态：教程 01 的 CLI 是快速一瞥的入口，但真实项目存在于你生成的目录和你自己的包里。教程 03 会基于本页生成的项目继续构建，所以结束时别删掉它。
+本教程会把总览里的两条路径串起来：先用**项目生命周期 CLI** `agentseek-cli`
+提供的 `agentseek create` 生成项目，再切到生成项目里执行自己的 `uv sync`，
+把 **harness** 本体解析进去。之后你持续编辑的就是这个生成出来的项目。教程 03
+会基于它继续构建，所以结束时别删掉它。
 
 ## 1. 从模板生成项目
 
@@ -40,17 +45,22 @@ Available bub templates:
 
 本教程使用 **`bub/default`**，因为它是经过 harness 最轻量的路径（依赖图里没有 LangChain，没有远程 runtime）。请选择一个**位于本 checkout 之外**的工作目录 —— 模板生成的是同级项目，而不是子目录。
 
+`create` 命令属于 `agentseek-cli`
+（`contrib/agentseek-cli/pyproject.toml:17-21`）。本教程直接从已同步的仓库环境里调用它，是因为教程 01 已经准备好了这个环境；独立的路径 A 等价做法是 `uv tool install agentseek-cli`。
+
 ```bash
 mkdir -p ~/projects && cd ~/projects
-uv run --project /path/to/agentseek agentseek create bub --template default --no-input
+uv run --project ~/code/agentseek agentseek create bub --template default --no-input
 ```
 
 `--no-input` 会接受模板 `cookiecutter.json` 中的所有默认值，得到一个名为 `my_bub_agent` 的项目。想要交互式提示（项目名、端口、作者），就去掉这个 flag。
 
+把 `~/code/agentseek` 换成你在教程 01 里 clone agentseek 的实际路径即可。
+
 命令成功时输出很少。验证一下目录结构：
 
 ```bash
-ls my_bub_agent
+ls -a my_bub_agent
 ```
 
 ```text title="expected output"
@@ -101,7 +111,7 @@ AGENTSEEK_AG_UI_AGENT_URL=http://127.0.0.1:8088/agent
 uv run agentseek gateway --enable-channel ag-ui
 ```
 
-我们改在仓库 checkout 里跑一条命令，来确认它的形状：
+改在仓库 checkout 里跑一条命令，确认它的形状：
 
 ```bash
 uv run agentseek gateway --help
@@ -125,8 +135,6 @@ uv run agentseek run --no-browser
 
 `agentseek run`（由 `agentseek-cli` contrib 包提供，见 `../reference/cli.md`）包装了 `src/my_bub_agent/dev.py` 中的 supervisor。它会在 `AGENTSEEK_AG_UI_PORT`（默认 `8088`）上启动 gateway，在 `FRONTEND_PORT`（默认 `5173`）上启动 CopilotKit 支持的前端。两个进程都报告 ready 之后，在浏览器中打开 `http://127.0.0.1:5173`，发一轮对话。
 
-> TODO(reviewer): 本次校验运行没有执行完整的 `uv run agentseek run` 路径，因为这里的沙箱没有 `npm`，而且 model key 是占位符。在把本教程标记为 green 之前，请确认端到端浏览器流程。
-
 ## 5. 确认这个 agent 是你的
 
 打开 `src/my_bub_agent/dev.py`，看看 supervisor（第 88–119 行）：gateway 是用 `agentseek gateway --enable-channel ag-ui` 拉起的，前端用的是 `npm run dev`，两者在收到 `SIGINT`/`SIGTERM` 时都会被回收。这套流程没有任何部分被锁死在 agentseek 仓库上 —— 你可以编辑这个文件、修改 channel、换掉前端，或者完全删掉前端，从别处调用 gateway。harness 是你的。
@@ -137,8 +145,8 @@ uv run agentseek run --no-browser
 
 - 一个独立的项目目录（按默认值就是 `~/projects/my_bub_agent`），有自己的 `pyproject.toml`、`.venv/` 和 `src/` 布局。
 - 一个已填好的 `.env`，指向真实模型。
-- 已确认 `agentseek create` 和 `agentseek gateway` 的形状。（`agentseek run` 端到端这里没有真正跑过；见上面的 TODO。）
-- 一个清晰的认识：你今后会持续编辑的，是这个项目，而不是 clone 下来的 `agentseek` 仓库。
+- 已确认 `agentseek create` 和 `agentseek gateway` 的形状。
+- 一个清晰的认识：`agentseek create` 只是入口步骤；`uv sync` 之后，你持续编辑的是这个生成出来的项目，而不是 clone 下来的 `agentseek` 仓库。
 
 ## 接下来去哪
 

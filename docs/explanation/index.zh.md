@@ -6,6 +6,7 @@ runs: no
 verified_on: 2026-05-28
 sources:
   - README.md
+  - docs/index.md
   - docs/blog/introducing-agentseek.md
   - src/agentseek/env.py
   - pyproject.toml
@@ -25,11 +26,11 @@ sources:
 
 | 页面 | 何时阅读 |
 | --- | --- |
-| [`what-agentseek-is.md`](what-agentseek-is.md) | 你正在评估这个项目，需要一页式的概览：database-native harness、harness/library 是主线、CLI 是 demo、以及明确的非目标。 |
+| [`what-agentseek-is.md`](what-agentseek-is.md) | 你正在评估这个项目，需要一页式的概览：database-native harness、按职责拆分的两个包（`agentseek-cli` 与 `agentseek`），以及明确的非目标。 |
 | [`bub-relationship.md`](bub-relationship.md) | 你想了解 `agentseek` 和 `bub` 如何分工、alias 模型为什么存在，以及何时直接落到 `bub`。 |
 | [`runtime-data-model.md`](runtime-data-model.md) | 你即将编写一个 plugin、skill 或 tape 消费者，需要一个关于 tape、skill、MCP、plugin 和 channel 的心智模型。 |
 | [`extension-model.md`](extension-model.md) | 你想扩展 runtime，需要在打开对应操作指南之前，在 instructions、skill、plugin、MCP 和 contrib 包之间做出决策。 |
-| [`choosing-an-entry-point.md`](choosing-an-entry-point.md) | 你正在 library 嵌入、运行 CLI、用 Docker Compose 部署、或引入 contrib 包之间做选择。 |
+| [`choosing-an-entry-point.md`](choosing-an-entry-point.md) | 你正在路径 A（`agentseek-cli`）、路径 B（`uv sync` 后的 `agentseek`）、Docker Compose，或 contrib 包之间做选择。 |
 | [`where-things-live.md`](where-things-live.md) | 你第一次在 monorepo 中导航，希望得到 `src/`、`contrib/`、`examples/`、`templates/`、`skills/`、`references/` 和 `docs/` 的带注释地图。 |
 
 ## 这里不涉及的内容
@@ -42,7 +43,6 @@ sources:
 - contrib 包的安装、配置和运行行为 —— 每个 contrib 包都有自己的 README
   （参见 [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib)）。
   概念解释页面只链接出去，不重复。
-- 中文翻译 —— 翻译会在英文结构定稿后再跟进。
 
 ## 推荐阅读顺序
 

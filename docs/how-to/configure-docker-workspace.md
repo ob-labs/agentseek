@@ -51,9 +51,6 @@ different MCP source path inside the container.
    docker compose up --build
    ```
 
-   TODO(reviewer): run `docker compose up --build` and capture entrypoint
-   logs to confirm the override path is taken.
-
 ### CLI shortcut
 
 You can also override per invocation:

@@ -8,9 +8,15 @@ sources:
   - src/agentseek/env.py
   - entrypoint.sh
   - pyproject.toml
+  - docs/index.md
 ---
 
 # File layout reference
+
+This page describes the **harness runtime layout**: what Path B creates once
+`agentseek` is actually running. Path A by itself (`uv tool install
+agentseek-cli`) does not create most of these paths until a generated project
+syncs the harness in or you move into a harness environment.
 
 agentseek touches three directories at runtime: the **runtime home** (Bub
 state, config, MCP), the **workspace skills directory** (`.agents/`), and the
@@ -77,6 +83,9 @@ its `pyproject.toml` to see which plugins are installed.
 
 The default sandbox basename must match `uv init --name`
 (`src/agentseek/env.py:22` and `src/agentseek/cli.py:134`).
+
+`agentseek install` belongs to the harness runtime CLI. A Path A environment
+with only `agentseek-cli` does not create or manage this sandbox on its own.
 
 ## Bundled skills (`src/skills`)
 

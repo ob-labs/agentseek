@@ -26,7 +26,7 @@ set** (`setdefault`). See `src/agentseek/env.py:56`.
 | Variable | Default | Defined in |
 | --- | --- | --- |
 | `BUB_HOME` | `Path.cwd() / ".agentseek"` | `src/agentseek/env.py:70`, `:86` |
-| `BUB_PROJECT` | `${BUB_HOME}/agentseek-project` | `src/agentseek/env.py:72` |
+| `BUB_PROJECT` | `${BUB_HOME}/agentseek-project` | `src/agentseek/env.py:73` |
 
 Both defaults are applied with `setdefault`, so explicit values win.
 

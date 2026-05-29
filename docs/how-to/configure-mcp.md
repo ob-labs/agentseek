@@ -58,13 +58,20 @@ symlinks it into `${AGENTSEEK_HOME}/mcp.json` (`entrypoint.sh:13`, `:37`).
    uv run agentseek chat
    ```
 
-   TODO(reviewer): confirm MCP wiring with a real server when a credential is
-   available. `--help` succeeded in this run.
-
 ### CLI shortcut
 
-There is no dedicated `agentseek mcp` subcommand. Configuration is purely by
-file path + environment variable.
+The `agentseek mcp` subcommand can manage entries in the resolved
+`mcp.json` for you, so you do not have to edit the file by hand:
+
+```bash
+uv run agentseek mcp list
+uv run agentseek mcp add <name> <target> --transport <http|sse|stdio>
+uv run agentseek mcp remove <name>
+```
+
+See `../reference/cli.md#agentseek-mcp` for the full flag set. The file
+path is still controlled by `AGENTSEEK_MCP_CONFIG_PATH` as described
+above; the CLI just writes through it.
 
 ## Troubleshooting
 

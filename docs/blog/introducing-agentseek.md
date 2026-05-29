@@ -33,32 +33,37 @@ contrib packages, or out to separate projects.
 
 ## What agentseek is now
 
-agentseek today is one Python distribution plus a uv workspace of contrib
+agentseek today is two top-level Python packages plus a uv workspace of contrib
 packages.
 
-The **core distribution** (`src/agentseek/`) is small:
+The **harness distribution** (`agentseek`, source under `src/agentseek/`) is small:
 
 - `apply_agentseek_env_aliases()` maps `AGENTSEEK_*` env vars onto Bub's
   `BUB_*` names (`src/agentseek/env.py:56`).
 - `apply_agentseek_cli_overrides()` brands the onboarding banner, enables
   lifecycle channels in `chat`, and swaps the plugin sandbox path to
-  `.agentseek/agentseek-project` (`src/agentseek/cli.py:74`).
+  `.agentseek/agentseek-project` (`src/agentseek/cli.py:143`).
 - `__main__.py` boots a `BubFramework` and asks it for a Typer CLI
   (`src/agentseek/__main__.py:52`).
 
-Everything else is a plugin. The bundled hard dependencies (`bub`, `bub-feishu`,
-`bub-mcp`, `agentseek-schedule-sqlalchemy`, `logfire`) and the optional extras
-(`ag-ui`, `cli`, `langchain`, `observability`, `oceanbase`, `context`) are listed
-in [Packages reference](../reference/packages.md). The full layout — `src/`,
+The second top-level package is **`agentseek-cli`**, the self-contained project
+lifecycle CLI for `create / run / build / deploy / api / ctx / skills`.
+Installed on its own, it is Path A from the docs overview; installed alongside
+the harness, it folds into the same `agentseek` command surface as a Bub
+plugin. The bundled hard dependencies (`bub`, `bub-feishu`, `bub-mcp`,
+`agentseek-schedule-sqlalchemy`, `logfire`) and the optional extras (`ag-ui`,
+`cli`, `langchain`, `observability`, `oceanbase`, `context`) are listed in
+[Packages reference](../reference/packages.md). The full layout — `src/`,
 `contrib/`, `examples/`, `templates/`, `skills/`, `references/`, `docs/` — is
 mapped in [Where things live](../explanation/where-things-live.md).
 
-The **CLI** (`agentseek chat`, `agentseek gateway`, `agentseek install`, plus the
-`agentseek-cli` lifecycle commands `create / run / build / deploy / api / ctx /
-skills`) is the cheapest way to see the project working on a stranger's machine.
-It is not the place to build an application around; for that, the
-[harness app tutorial](../tutorials/02-first-harness-app.md) is the entry point.
-The full split is in [Choosing an entry point](../explanation/choosing-an-entry-point.md).
+Operationally, the docs expose this as **two paths**. Path A starts with
+`uv tool install agentseek-cli` when you need scaffolding or lifecycle commands
+without the harness runtime on the host. Path B runs the harness itself after
+`uv sync` in this repo or in a generated project; that is where `agentseek
+chat`, `agentseek gateway`, `agentseek install`, and the embeddable library
+surface live. The full split is in
+[Choosing an entry point](../explanation/choosing-an-entry-point.md).
 
 ## Why "database-native" and what it means
 
@@ -93,7 +98,7 @@ Two consequences fall out, and we organise the project around both:
 
 ## Why a harness, not a framework
 
-agentseek is deliberately **not** trying to replace your agent framework. If you
+agentseek does not aim to replace your agent framework. If you
 already use LangChain, DeepAgents, or your own orchestrator, route model turns
 through `agentseek-langchain` and let the harness own state, channels, and the
 tape. If you are starting fresh, the bundled Bub kernel is enough on its own.
@@ -108,8 +113,9 @@ one.
 agentseek **packages [Bub](https://github.com/bubbuild/bub)** — same hook-first
 turn pipeline, channels, tape, skills, and plugin model. `agentseek` is the
 distribution entry point; `.agentseek/` and `AGENTSEEK_*` are project-facing
-defaults. None of Bub is forked or patched beyond the three Typer monkeypatches in
-`src/agentseek/cli.py:74`. The full relationship is laid out in
+defaults. None of Bub is forked or patched beyond the three Typer monkeypatches
+composed by `apply_agentseek_cli_overrides` (`src/agentseek/cli.py:143`). The
+full relationship is laid out in
 [How agentseek relates to Bub](../explanation/bub-relationship.md).
 
 The post [Why we rewrote Bub](https://bub.build/posts/why-rewrite-bub/) explains
@@ -119,8 +125,9 @@ monolith that implements every store and channel itself.
 
 ## Where to start
 
-- **Hands-on:** [Tutorials](../tutorials/index.md). The CLI demo is five minutes;
-  the first harness app is the path most application developers want.
+- **Hands-on:** [Tutorials](../tutorials/index.md). The CLI walkthrough takes
+  five minutes; the first harness app is the path most application developers
+  want.
 - **Look up a fact:** [Reference](../reference/index.md) for env vars, the CLI,
   packages, file layout, and Docker.
 - **Decide where to put your change:** [Extension model](../explanation/extension-model.md).

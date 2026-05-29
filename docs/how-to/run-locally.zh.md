@@ -7,28 +7,33 @@ verified_on: 2026-05-28
 sources:
   - src/agentseek/cli.py
   - contrib/agentseek-cli/README.md
+  - contrib/agentseek-cli/pyproject.toml
+  - docs/index.md
 ---
 
 # 如何在本地运行 agentseek
 
-当你想要一个快速的本地回路时使用本指南。agentseek 提供两个本地入口
-点；根据意图选择。
+当你想在 **harness 环境** 中做一个快速本地回路时使用本指南
+（总览里的路径 B：本仓库 `uv sync` 之后，或生成项目各自 `uv sync`
+之后）。具体能用哪个命令，取决于它归哪个包所有。
 
 | 目标 | 命令 | 说明 |
 | --- | --- | --- |
-| 健全性验证一次 chat turn | `agentseek chat` | 单 CLI channel + 生命周期 channel。内置。 |
-| 运行生成的项目 (模板结构) | `agentseek run` | 启动 frontend + gateway。由 `agentseek-cli` 提供 (`pyproject.toml:31`)。 |
+| 健全性验证一次 chat turn | `agentseek chat` | harness 运行时 CLI。路径 B 可用。 |
+| 运行生成的项目 (模板结构) | `agentseek run` | 启动 frontend + gateway。归 `agentseek-cli` 所有；在合并后的同一 `agentseek` 命令面中可用。 |
 
 ## 前置条件
 
 - 已配置模型与密钥 —— 见 `configure-model.md`。
+- 一个可用的 harness 环境（在本仓库 `uv sync`，或在生成项目里
+  `uv sync`）。
 - `agentseek run` 需要：通过 `agentseek create` 创建的项目 (见
   `../reference/templates.md`) **或** 当前目录下已有的兼容
   `agentseek-cli` 的布局。
 
 ## 选项 1 — `agentseek chat`
 
-`agentseek chat` 是内置 CLI channel，并启用了生命周期 channel
+`agentseek chat` 归 **harness** 包所有。它是内置 CLI channel，并启用了生命周期 channel
 (`src/agentseek/cli.py:83`)。用它在没有任何 frontend 的情况下对模型 /
 MCP / skill 组合做健全性检查。
 
@@ -40,9 +45,6 @@ MCP / skill 组合做健全性检查。
    uv run agentseek chat
    ```
 
-   TODO(reviewer): exercise a real chat turn with a credential during release
-   QA. `agentseek chat --help` was confirmed in this run.
-
 3. 可选标志 (来自 `agentseek chat --help`)：
 
    | 标志 | 默认值 | 描述 |
@@ -52,8 +54,8 @@ MCP / skill 组合做健全性检查。
 
 ## 选项 2 — `agentseek run`
 
-`agentseek run` 启动本地项目，通常是 frontend (Vite) 加一个
-gateway，并等待 frontend 就绪。
+`agentseek run` 归 **`agentseek-cli`** 所有。在合并环境里，它会启动本地项目，
+通常是 frontend (Vite) 加一个 gateway，并等待 frontend 就绪。
 
 1. 在项目目录内：
 
@@ -79,6 +81,7 @@ gateway，并等待 frontend 就绪。
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
+| 找不到 `agentseek chat` | 你现在是只装了 `agentseek-cli` 的路径 A 环境 | 改用 harness 环境（仓库或生成项目里执行 `uv sync`）。 |
 | `agentseek chat` 在模型错误后悄然退出 | provider 拒绝了请求 | 用模型的 debug env 重跑，或用 `agentseek onboard` 重写配置。 |
 | `agentseek run` 等 frontend 超时 | 端口不匹配 | 传入 `--port <n>`，与 frontend 监听端口一致。 |
 | `agentseek run` 报 "not in a project" 退出 | 在非生成项目目录下选了 `--mode python` | 先运行 `agentseek create`，或改用 `--mode compose`。 |

@@ -5,7 +5,10 @@ audience: [A2, A3, A4, A5]
 runs: no
 verified_on: 2026-05-28
 sources:
+  - README.md
+  - docs/index.md
   - pyproject.toml
+  - contrib/agentseek-cli/pyproject.toml
   - contrib/README.md
   - examples/README.md
   - src/skills/README.md
@@ -15,10 +18,11 @@ sources:
 
 # monorepo 中各样东西的位置
 
-> **简而言之：** agentseek repository 是一个 uv workspace。核心代码位于 `src/`，更大的集成
-> 位于 `contrib/`，可运行的端到端 demo 位于 `examples/`，项目脚手架位于 `templates/`，
-> 配套的 skill repo 位于 `skills/`，vendor 进来的上游代码位于 `references/`，发布的文档位于
-> `docs/`。
+> **简而言之：** agentseek repository 是一个 uv workspace，并在其中发布两个顶层包：
+> `agentseek`（harness）与 `agentseek-cli`（项目生命周期 CLI）。核心代码位于 `src/`，
+> 更大的集成位于 `contrib/`，可运行的端到端 demo 位于 `examples/`，项目脚手架位于
+> `templates/`，配套的 skill repo 位于 `skills/`，vendor 进来的上游代码位于
+> `references/`，发布的文档位于 `docs/`。
 
 ## 背景
 
@@ -33,27 +37,36 @@ agentseek 有意是一个 monorepo：harness、捆绑的 plugin、contrib 集成
 ```text
 agentseek/
 ├── src/
-│   ├── agentseek/        ← core distribution (env aliases, CLI overrides)
-│   └── skills/           ← bundled skills shipped with the wheel
+│   ├── agentseek/        ← harness 包（PyPI: agentseek）
+│   └── skills/           ← 随 wheel 一起发布的捆绑 skill
 ├── contrib/
-│   ├── README.md         ← contrib README standard + package index
-│   └── agentseek-*/      ← workspace member packages (plugins + lifecycle CLI)
-├── examples/             ← runnable end-to-end demos
-├── templates/            ← project scaffolds used by `agentseek create`
-├── skills/               ← stand-alone skills, separate from `src/skills`
-├── references/           ← vendored upstream sources for reading, not editing
-├── docs/                 ← published documentation (Diátaxis: tutorials/how-to/reference/explanation)
-├── scripts/              ← project scripts (currently empty)
-├── tests/                ← top-level tests
+│   ├── README.md         ← contrib README 标准与包索引
+│   ├── agentseek-cli/    ← 项目生命周期 CLI（PyPI: agentseek-cli）
+│   └── agentseek-*/      ← 运行时 plugin 包（workspace 成员）
+├── examples/             ← 可运行的端到端 demo
+├── templates/            ← `agentseek create` 使用的项目脚手架
+├── skills/               ← 独立 skill，独立于 `src/skills`
+├── references/           ← vendor 进来的上游源，仅供阅读
+├── docs/                 ← 发布文档（Diátaxis：tutorials/how-to/reference/explanation）
+├── scripts/              ← 项目脚本（目前为空）
+├── tests/                ← 顶层测试
 ├── entrypoint.sh         ← Docker entrypoint
-├── docker-compose.yml    ← Compose definition
-├── pyproject.toml        ← distribution, dependencies, extras, workspace members
-└── README.md             ← repo README; entry point for the project
+├── docker-compose.yml    ← Compose 定义
+├── pyproject.toml        ← harness pyproject（依赖、extras、workspace 成员）
+└── README.md             ← 仓库 README；项目入口
 ```
 
-### `src/agentseek/` —— core distribution
+### `src/agentseek/` —— harness 包
 
-`pip install agentseek` 发布的 Python 包。三个文件重要：
+发布到 PyPI 时名为 `agentseek`（harness 本身）的 Python 包。它**不能**直接
+从 PyPI 安装：`requires-dist` 包含 `bub-feishu`、`bub-mcp`、
+`agentseek-schedule-sqlalchemy`，这些依赖通过 `[tool.uv.sources]` 接到 git
+source / workspace；PyPI metadata 无法携带 source 覆盖，因此
+`pip install agentseek` 与 `uv tool install agentseek` 都会失败。请克隆本仓库后
+`uv sync`，或在 `agentseek create` 生成的项目里 `uv sync`。详见
+[`choosing-an-entry-point.md`](choosing-an-entry-point.md)。
+
+三个文件重要：
 
 - `src/agentseek/env.py` —— `AGENTSEEK_*` 到 `BUB_*` 的 alias 规则，加上位置默认值
   （`.agentseek/`、`.agentseek/agentseek-project`）。机制在
@@ -63,7 +76,7 @@ agentseek/
 - `src/agentseek/__main__.py` —— 跑 alias 步骤、应用 CLI override 并构造 `BubFramework`
   的启动顺序。
 
-这是 core agentseek 代码唯一存在的地方。任何更大的东西都进入 `contrib/`。
+这是 core harness 代码唯一存在的地方。任何更大的东西都进入 `contrib/`。
 
 ### `src/skills/` —— 捆绑的 skill
 
@@ -76,19 +89,20 @@ repo 导入的 skill（`pyproject.toml:78-80`）—— 当前是来自
 
 ### `contrib/` —— 较大的集成
 
-Workspace member 包，每一个都是一个带自己 README 的常规 Python distribution。索引和 README
+Workspace member 包，每一个都是一个带自己 README 的常规 Python 包。索引和 README
 标准位于 [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib)。
-今天的包是：
+`agentseek-cli` 自己也是一个顶层 PyPI 包（路径 A 的项目生命周期 CLI ——
+见 [`choosing-an-entry-point.md`](choosing-an-entry-point.md)），其余项是 harness 的运行时 plugin。
 
-| 目录 | 用途 |
-| --- | --- |
-| `agentseek-ag-ui` | 为 `agentseek gateway` 提供 AG-UI SSE channel 适配器。 |
-| `agentseek-cli` | 项目生命周期 CLI：`create / run / build / deploy / api / ctx / skills`。 |
-| `agentseek-contextseek` | ContextSeek 语义 context runtime plugin。 |
-| `agentseek-langchain` | 把 Bub model turn 路由到用户提供的 LangChain `Runnable`。 |
-| `agentseek-observability` | 跨 any-llm / Republic / Bub 栈的 Logfire 支撑 tracing。 |
-| `agentseek-schedule-sqlalchemy` | SQLAlchemy 支撑的 APScheduler job store（作为硬依赖捆绑）。 |
-| `agentseek-tapestore-oceanbase` | SQLAlchemy tape 存储，兼容 OceanBase。 |
+| 目录 | 角色 | 用途 |
+| --- | --- | --- |
+| `agentseek-cli` | **项目生命周期 CLI**（顶层 PyPI 包） | `create / run / build / deploy / api / ctx / skills`。通过 `uv tool install agentseek-cli` 安装；与 harness 共存时会折叠进同一个 `agentseek` 命令面。 |
+| `agentseek-ag-ui` | 运行时 plugin | 为 `agentseek gateway` 提供 AG-UI SSE channel 适配器。 |
+| `agentseek-contextseek` | 运行时 plugin | ContextSeek 语义 context 层。 |
+| `agentseek-langchain` | 运行时 plugin | 把 Bub model turn 路由到用户提供的 LangChain `Runnable`。 |
+| `agentseek-observability` | 运行时 plugin | 跨 any-llm / Republic / Bub 栈的 Logfire 支撑 tracing。 |
+| `agentseek-schedule-sqlalchemy` | 运行时 plugin（作为 harness 硬依赖捆绑） | SQLAlchemy 支撑的 APScheduler job store。 |
+| `agentseek-tapestore-oceanbase` | 运行时 plugin | SQLAlchemy tape 存储，兼容 OceanBase。 |
 
 每个包拥有自己的安装、配置、运行和验证文档。主文档链接出去；它们不重复。workspace 映射位于
 `pyproject.toml:100-110`。
@@ -153,9 +167,10 @@ navigation/where-things-live 图景的来源。
 
 ## 为什么是这样
 
-- **一个 distribution，多个包。** uv workspace 让 `agentseek` 以一个 distribution 形式发布，
-  同时 contrib 包按自己的节奏演进。可选 extras（`pyproject.toml:27-46`）让采用它们变成一行
-  变更。
+- **两个包，一个 workspace。** uv workspace 让 harness（`agentseek`）和项目
+  生命周期 CLI（`agentseek-cli`）以两个 PyPI 包形式发布，同时 contrib
+  plugin 按自己的节奏演进。可选 extras（`pyproject.toml:27-46`）让在仓库内
+  采用它们变成一行变更。
 - **捆绑 vs project-local skill。** 把 skill 捆绑进 wheel 让它们可重现（`src/skills/`）；
   workspace-local skill（`.agents/skills/`）让它们可被 hack。独立的 skill repo
   （`skills/`）介于两者之间，适合应该按需安装的 skill。

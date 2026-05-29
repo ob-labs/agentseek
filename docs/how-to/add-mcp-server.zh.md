@@ -58,11 +58,22 @@ sources:
    uv run agentseek chat
    ```
 
-   TODO(reviewer): exercise with a real MCP server and capture tool listing.
-
 ### CLI 快捷方式
 
-目前没有 `agentseek mcp add` 命令。编写工作通过编辑文件完成。
+`agentseek mcp add` 可以替你写入同样的条目，而不必打开文件：
+
+```bash
+# 远端 (http / sse) server：
+uv run agentseek mcp add github https://example.com/mcp \
+  --transport http --header "Authorization: Bearer $TOKEN"
+
+# stdio server（用 `--` 把后面的命令和 agentseek 自己的参数分开）：
+uv run agentseek mcp add fs --transport stdio --env LOG_LEVEL=info \
+  -- uvx mcp-server-filesystem --root /workspace
+```
+
+`uv run agentseek mcp list` 列出当前已注册的 server；`remove` 按名删除。
+参见 `../reference/cli.md#agentseek-mcp`。
 
 ## 字段参考
 

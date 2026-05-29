@@ -24,7 +24,8 @@ agentseek 打包了 Bub，而 Bub 有意保持小巧：一个跑 turn 的 kernel
 系统（见 [Why we rewrote Bub](https://bub.build/posts/why-rewrite-bub/)）。下面这五个概念是
 Bub 的词汇；agentseek 原封不动地继承它们，并为它们在 workspace 中的位置添加默认值。
 
-如果你只用过 CLI，本页就是 "我发了一条 chat 消息" 与 "我想把我的应用接入这个 runtime" 之间的桥梁。
+无论你是通过 CLI 还是通过 library 到达 agentseek，下面这五个概念都决定了一轮 turn 携带什么、
+持久化到哪里、以及 agent 如何触达外部世界。本页给它们命名，让文档其余部分可以按名字引用。
 
 ## 工作原理
 

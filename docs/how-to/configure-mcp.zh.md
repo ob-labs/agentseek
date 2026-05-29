@@ -58,13 +58,19 @@ agentseek 通过 `bub-mcp` 消费 MCP 配置，后者读取
    uv run agentseek chat
    ```
 
-   TODO(reviewer): confirm MCP wiring with a real server when a credential is
-   available. `--help` succeeded in this run.
-
 ### CLI 快捷方式
 
-没有专门的 `agentseek mcp` 子命令。配置完全通过文件路径 + 环境变量
-完成。
+`agentseek mcp` 子命令可以替你管理已解析到的 `mcp.json` 中的条目，
+不必再手工编辑文件：
+
+```bash
+uv run agentseek mcp list
+uv run agentseek mcp add <name> <target> --transport <http|sse|stdio>
+uv run agentseek mcp remove <name>
+```
+
+完整的参数列表见 `../reference/cli.md#agentseek-mcp`。文件路径仍由上文
+所述的 `AGENTSEEK_MCP_CONFIG_PATH` 控制，CLI 只是写穿该路径。
 
 ## 故障排查
 

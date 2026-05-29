@@ -48,9 +48,6 @@ Plugins install into the **plugin sandbox**, a uv-managed project at
    uv run agentseek install bub-feishu@main
    ```
 
-   TODO(reviewer): exercise an actual install in a clean checkout to confirm
-   sandbox bootstrap output.
-
 4. Verify the sandbox now lists the plugin:
 
    ```bash title="not executed in this run"

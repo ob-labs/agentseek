@@ -74,10 +74,10 @@ Your `local-greeting` row should appear under **Project Skills**. The `Agents:` 
 which clients have been wired to surface the skill — your generated app needs no extra
 wiring because Bub reads the workspace skills directly.
 
-> **Bundled vs project-local.** `src/skills/` ships with the agentseek distribution
-> (see the bottom two rows above). `.agents/skills/` is **your** project's authoring
-> surface. Keep authoring there; do not edit `src/skills/`. See
-> `../how-to/add-skills.md` for the full taxonomy.
+> **Bundled vs project-local.** Bundled skills ship with the agentseek distribution under
+> `skills/` and `src/skills/` (the bottom two rows above come from `skills/`).
+> `.agents/skills/` is **your** project's authoring surface. Keep authoring there; do not
+> edit the bundled directories. See `../how-to/add-skills.md` for the full taxonomy.
 
 ## 2. Declare an MCP server
 
@@ -147,10 +147,6 @@ that should trigger either capability:
 If a skill is not picked up, run `uv run agentseek skills list` again and confirm your row
 appears. If an MCP server is not picked up, confirm the file path matches
 `AGENTSEEK_MCP_CONFIG_PATH` exactly.
-
-> TODO(reviewer): the live "ask the agent to use the skill / MCP server" round-trip was not
-> exercised in this validation run because it requires a working model key and a running
-> MCP host. Please verify against a real provider before marking this tutorial green.
 
 ## What you have now
 

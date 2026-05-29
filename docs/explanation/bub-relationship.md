@@ -14,10 +14,11 @@ sources:
 
 # How agentseek relates to Bub
 
-> **In short:** agentseek is a **distribution of Bub**, not a fork. It boots the same
-> framework, adds project-local defaults under `.agentseek/`, brands the CLI, and lets
-> `AGENTSEEK_*` environment variables act as fallbacks for the matching `BUB_*` variables.
-> When you need upstream behaviour unmodified, the `bub` CLI and Python API are right there.
+> **In short:** the `agentseek` **harness package** is a distribution of Bub, not a fork. It
+> boots the same framework, adds project-local defaults under `.agentseek/`, brands the CLI,
+> and lets `AGENTSEEK_*` environment variables act as fallbacks for the matching `BUB_*`
+> variables. When you need upstream behaviour unmodified, the `bub` CLI and Python API are
+> right there.
 
 ## Context
 
@@ -25,10 +26,10 @@ sources:
 channels, tape, skills, and a plugin model exposed through the `[project.entry-points.bub]`
 group. The kernel is intentionally small; everything interesting is a plugin.
 
-agentseek packages that kernel for "a real project running in a real workspace". That means
-opinionated defaults (where data lives, what variables look like, what the install sandbox
-is named, what skills come bundled) and a brand for the CLI. It does not mean replacing,
-extending, or hiding Bub: agentseek depends on Bub as a regular distribution
+The `agentseek` harness package wraps that kernel for "a real project running in a real
+workspace". That means opinionated defaults (where data lives, what variables look like,
+what the install sandbox is named, what skills come bundled) and a brand for the CLI. It
+does not mean replacing, extending, or hiding Bub: `agentseek` depends on Bub as a regular distribution
 (`pyproject.toml:19`, `bub>=0.3.7`) and the CLI is created by
 `BubFramework.create_cli_app()` after agentseek-specific overrides are applied
 (`src/agentseek/__main__.py:52-69`).
@@ -47,8 +48,10 @@ When you run `agentseek …`, the entry point does three things, in order
 3. `create_cli_app()` instantiates `BubFramework(config_file=agentseek_config_file())` and
    asks it for a Typer app. From that point on the runtime is plain Bub.
 
-The same is true of the Docker entrypoint (`entrypoint.sh:5-26`): it resolves
-`BUB_*`/`AGENTSEEK_*` pairs, exports both, then execs `agentseek gateway`.
+The same is true of the Docker entrypoint (`entrypoint.sh:5-45`): it resolves
+`BUB_*`/`AGENTSEEK_*` pairs and exports both, then execs
+`${workspace_path}/startup.sh` if it exists, otherwise falls back to
+`agentseek gateway`.
 
 ### Alias mapping
 

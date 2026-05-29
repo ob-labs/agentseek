@@ -27,8 +27,9 @@ system that supplies everything else (see
 are Bub's vocabulary; agentseek inherits them unchanged and adds defaults for where they
 live in a workspace.
 
-If you have only used the CLI, this page is the bridge between "I sent a chat message" and
-"I want to plug my application into this runtime."
+Whether you reached agentseek through the CLI or through the library, the same five
+concepts decide what a turn carries, where it persists, and how the agent reaches the
+outside world. This page names them so the rest of the docs can refer to them by name.
 
 ## How it works
 

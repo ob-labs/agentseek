@@ -8,6 +8,7 @@ sources:
   - src/agentseek/cli.py
   - src/agentseek/env.py
   - pyproject.toml
+  - contrib/agentseek-cli/pyproject.toml
   - README.md
 ---
 
@@ -16,7 +17,9 @@ sources:
 > **你将完成：** clone 仓库、安装依赖、把 agentseek 指向一个模型，并从自带的 `agentseek chat` REPL 收到一轮聊天回复。
 > **你需要：** Python 3.12+、[uv](https://docs.astral.sh/uv/)、`git`，以及一个模型提供方的 API key（OpenAI、OpenRouter、DashScope 等）。
 
-这一页的目的是让你在大约五分钟内确认 agentseek 是真实可用的。它**不是**在你自己的应用里使用 agentseek 的推荐方式。CLI 是一个 Bub 兼容的入口，会加载仓库自身的配置；要把 agentseek 嵌入你自己的项目，看完本页后请直接跳到 `02-first-harness-app.md`。
+本教程对应总览里的 **路径 B**：从已经 `uv sync` 的 checkout 直接运行 harness 的
+运行时 CLI。适合在几分钟内评估项目、跑本地一次性工作流，或排查 runtime。教程 02
+覆盖互补路径：先用项目生命周期 CLI 的 `agentseek create` 生成项目，再在生成项目里继续工作。
 
 ## 1. Clone 并安装
 
@@ -28,7 +31,7 @@ cd agentseek
 uv sync
 ```
 
-`uv sync` 会在仓库根目录创建 `.venv/`，并以可编辑模式安装 `agentseek` 发行版及其传递依赖。从此以后，`uv run agentseek …` 跑的就是本次 checkout 中的 agentseek 版本。
+`uv sync` 会在仓库根目录创建 `.venv/`，并以可编辑模式安装 `agentseek` 发行版及其传递依赖。从此以后，`uv run agentseek …` 跑的就是本次 checkout 中的 agentseek 版本。由于这个 workspace 还同时拥有 `agentseek-cli`（`pyproject.toml:31-33`、`pyproject.toml:98`），你通常看到的是合并后的命令面：既有 `chat` 这样的 harness 运行时命令，也有 `create`、`build` 这样的生命周期命令。
 
 确认 CLI 能加载。
 
@@ -95,13 +98,13 @@ uv run agentseek chat
 
 ```text title="expected output"
 INFO     | channel.manager started listening
-╭──────────────── Bub ────────────────╮
-│ workspace: /…/agentseek             │
-│ model: openai:qwen-plus             │
-│ internal command prefix: ','        │
-│ shell command prefix: ',' at line start (Ctrl-X for shell mode)
-│ type ',help' for command list
-╰─────────────────────────────────────╯
+╭───────────────────────────── Bub ──────────────────────────────╮
+│ workspace: /…/agentseek                                        │
+│ model: openai:qwen-plus                                        │
+│ internal command prefix: ','                                   │
+│ shell command prefix: ',' at line start (Ctrl-X for shell mode)│
+│ type ',help' for command list                                  │
+╰────────────────────────────────────────────────────────────────╯
 agentseek >
 ```
 
@@ -117,6 +120,6 @@ agentseek >
 
 ## 接下来去哪
 
-- 想在**你自己**的应用里跑 agentseek 而不是用自带 CLI，请继续 `02-first-harness-app.md`。那是主要的上手路径。
+- 想生成一个由你自己掌控的项目，继续 `02-first-harness-app.md`。那一篇先从 `agentseek create`（由 `agentseek-cli` 提供）开始，再切进生成项目自己的 harness 环境。
 - 想了解为什么演示使用 `.agentseek/` 存放本地状态，以及别名模型如何工作，请读 `../explanation/bub-relationship.md`。
 - 想查阅每个 CLI flag 或环境变量而不是死记硬背，请看 `../reference/cli.md` 和 `../reference/environment.md`。
