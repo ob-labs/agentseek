@@ -20,7 +20,7 @@ if os.getenv("AGENTSEEK_API_KEY") and not os.getenv("OPENAI_API_KEY"):
 if os.getenv("AGENTSEEK_API_BASE") and not os.getenv("OPENAI_API_BASE"):
     os.environ["OPENAI_API_BASE"] = os.environ["AGENTSEEK_API_BASE"]
 
-model = init_chat_model("{{ cookiecutter.default_model }}", model_provider="openai")
+model = init_chat_model("{{ cookiecutter.default_model }}")
 
 graph = create_agent(
     model=model,

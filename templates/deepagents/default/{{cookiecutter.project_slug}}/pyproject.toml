@@ -5,8 +5,18 @@ description = "{{ cookiecutter.project_name }} — DeepAgents bound through agen
 authors = [{ name = "{{ cookiecutter.author }}" }]
 requires-python = ">=3.12"
 dependencies = [
+    "agentseek",
+    "agentseek-cli",
+    "agentseek-ag-ui",
     "agentseek-langchain",
     "deepagents>=0.5.3",
     "langchain-openai>=0.3.0",
     "pydantic-settings>=2.0.0",
 ]
+
+
+[tool.uv.sources]
+agentseek = { path = "{{ cookiecutter._agentseek_source_path }}", editable = true }
+agentseek-cli = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-cli", editable = true }
+agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
+agentseek-langchain = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-langchain", editable = true }
