@@ -87,6 +87,37 @@ plugins:
             Intro: 介绍
             Introducing agentseek: 认识 agentseek
             Hub: 目录
+            # Tutorials
+            "Quick demo (CLI)": 通过 CLI 快速演示
+            First harness app: 构建你的第一个 harness 应用
+            Add a skill and MCP: 添加 skill 和 MCP
+            # How-to
+            Configure model: 配置模型
+            Configure MCP: 配置 MCP
+            Configure docker workspace: 配置 Docker workspace
+            Install a plugin: 安装插件
+            Add skills: 添加 skill
+            Add an MCP server: 添加 MCP server
+            Run locally: 本地运行
+            Run the gateway: 运行 gateway
+            Run with Docker Compose: 使用 Docker Compose 运行
+            Build and deploy: 构建与部署
+            Use ContextSeek: 使用 ContextSeek
+            Author a contrib plugin: 编写 contrib 插件
+            # Explanation
+            What agentseek is: agentseek 是什么
+            Bub relationship: agentseek 与 Bub 的关系
+            Runtime data model: 运行时数据模型
+            Extension model: 扩展模型
+            Choosing an entry point: 选择一个入口
+            Where things live: 各样东西的位置
+            # Reference
+            Environment variables: 环境变量
+            CLI: CLI
+            File layout: 文件布局
+            Packages: 包
+            Templates: 模板
+            Docker: Docker
   - search
   - mkdocstrings:
       handlers:
