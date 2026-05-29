@@ -1,3 +1,4 @@
+bub-feishu
 copilotkit>=0.1.80
 langchain>=1.0.0
 langchain-openai>=0.3.0

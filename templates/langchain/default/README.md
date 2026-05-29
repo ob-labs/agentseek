@@ -1,7 +1,8 @@
 # LangChain — default template
 
 Scaffolds a `create_agent` project with CopilotKit middleware bound to
-agentseek via `agentseek-langchain`. Mirrors `examples/ag_ui_langchain`.
+agentseek via `agentseek-langchain`. Mirrors `examples/ag_ui_langchain` for
+local AG-UI development and also includes a first-class Feishu gateway path.
 
 ## Inputs
 
@@ -12,3 +13,4 @@ agentseek via `agentseek-langchain`. Mirrors `examples/ag_ui_langchain`.
 | `author` | Project author. |
 | `system_prompt` | System prompt baked into the agent. |
 | `default_model` | Default `AGENTSEEK_MODEL`. |
+| `gateway_port` | Default gateway port for AG-UI. |

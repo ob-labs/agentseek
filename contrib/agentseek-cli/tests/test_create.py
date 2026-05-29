@@ -494,6 +494,7 @@ def test_ag_ui_templates_generate_frontend_and_serve_script(
     generated = Path(output)
 
     pyproject = generated / "pyproject.toml"
+    readme = generated / "README.md"
     frontend = generated / "frontend"
     frontend_package = frontend / "package.json"
     frontend_app = frontend / "src" / "App.tsx"
@@ -501,8 +502,41 @@ def test_ag_ui_templates_generate_frontend_and_serve_script(
     env_example = generated / ".env.example"
 
     assert pyproject.is_file()
-    assert 'serve = "my_' in pyproject.read_text(encoding="utf-8")
+    pyproject_text = pyproject.read_text(encoding="utf-8")
+    assert 'serve = "my_' in pyproject_text
+    assert '"agentseek-cli"' in pyproject_text
+    assert readme.is_file()
+    assert "uv run agentseek run --no-browser" in readme.read_text(encoding="utf-8")
     assert frontend_package.is_file()
     assert frontend_app.is_file()
     assert frontend_main.is_file()
     assert "FRONTEND_PORT" in env_example.read_text(encoding="utf-8")
+
+
+def test_langchain_default_template_includes_feishu_use_case(tmp_path: Path) -> None:
+    """The langchain/default template should ship a first-class Feishu path."""
+    pytest.importorskip("cookiecutter")
+    from cookiecutter.main import cookiecutter
+
+    local_root = create_module._local_templates_root()
+    assert local_root is not None, "Tests must run from a git checkout"
+    template_path = local_root / "langchain" / "default"
+    assert (template_path / "cookiecutter.json").is_file()
+
+    output = cookiecutter(str(template_path), output_dir=str(tmp_path), no_input=True)
+    generated = Path(output)
+
+    pyproject_text = (generated / "pyproject.toml").read_text(encoding="utf-8")
+    env_example_text = (generated / ".env.example").read_text(encoding="utf-8")
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+
+    assert '"bub-feishu"' in pyproject_text
+    assert 'serve-feishu = "my_' in pyproject_text
+    assert "AGENTSEEK_FEISHU_APP_ID" in env_example_text
+    assert "AGENTSEEK_FEISHU_APP_SECRET" in env_example_text
+    assert "AGENTSEEK_FEISHU_VERIFICATION_TOKEN" in env_example_text
+    assert "Feishu" in readme_text
+    assert "uv run serve-feishu" in readme_text
+    assert "Credentials & Basic Info" in readme_text
+    assert "Verification Token" in readme_text
+    assert "Encryption Settings" in readme_text
