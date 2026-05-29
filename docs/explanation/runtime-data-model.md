@@ -17,7 +17,7 @@ sources:
 > **In short:** five things flow through the harness — **tapes**, **skills**, **MCP**
 > servers, **plugins**, and **channels**. The first is the durable substrate; the others
 > shape what enters and leaves a turn. Understanding which is which makes the extension
-> model in [`extension-model.md`](extension-model.md) obvious.
+> model in [The extension model](extension-model.md) obvious.
 
 ## Context
 
@@ -56,17 +56,17 @@ A **tape** is an append-only stream of facts about a turn: the input message, th
 calls, the tool calls and their results, anchors, and any derived views. The model is
 described in [Tape Systems](https://tape.systems/); agentseek treats it as the canonical
 runtime data shape, which is what "database-native" means in practice (see
-[`../blog/introducing-agentseek.md`](../blog/introducing-agentseek.md)).
+[Introducing agentseek](../blog/introducing-agentseek.md)).
 
 Bub exposes persistence through the `provide_tape_store` hook. Plugins that implement that
 hook decide where tape entries land:
 
 - The default Bub tape store writes to a local SQLite file inside `BUB_HOME` (which is
-  `.agentseek/` under agentseek defaults — see [`bub-relationship.md`](bub-relationship.md)
+  `.agentseek/` under agentseek defaults — see [How agentseek relates to Bub](bub-relationship.md)
   for how that default is set).
 - `agentseek-tapestore-oceanbase` swaps in SQLAlchemy storage with OceanBase compatibility
   and optional vector retrieval. The full configuration lives in its own README
-  ([`contrib/agentseek-tapestore-oceanbase/`](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-tapestore-oceanbase)).
+  ([contrib/agentseek-tapestore-oceanbase/](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-tapestore-oceanbase)).
 
 Because the tape captures input + steps + output as one stream, the same data feeds
 debugging, replay, trajectory comparison, evaluation, and training without copying through
@@ -90,7 +90,7 @@ this repository:
 Skills are advisory: they shape what the model does, but they do not register new tools or
 hooks. When a change *is* runtime behaviour — a new model provider, a new channel, a tape
 store, a tool integration — write a plugin instead. The decision matrix is in
-[`extension-model.md`](extension-model.md).
+[The extension model](extension-model.md).
 
 ### MCP — external tools, declared in config
 
@@ -133,7 +133,7 @@ and exposes the rest as optional extras (`pyproject.toml:27-46`):
 
 Plugins are installed into the **same Python environment** as agentseek; they are not
 sandboxed runtime units. The `agentseek install` sandbox at `.agentseek/agentseek-project`
-(see [`bub-relationship.md`](bub-relationship.md)) is a uv project used to resolve and add
+(see [How agentseek relates to Bub](bub-relationship.md)) is a uv project used to resolve and add
 plugins, not a runtime boundary.
 
 ### Channels — how a turn enters and leaves
@@ -155,7 +155,7 @@ turn.
 - **One substrate, many consumers.** Putting tapes at the centre means debugging, replay,
   evaluation, and training all read from the same place; new consumers do not require new
   pipelines. That is the wager described in
-  [`../blog/introducing-agentseek.md`](../blog/introducing-agentseek.md).
+  [Introducing agentseek](../blog/introducing-agentseek.md).
 - **Small kernel, many plugins.** Bub keeps the kernel small so the failure surface stays
   small; everything else is a plugin you can swap, version, or remove. agentseek inherits
   that shape rather than baking storage and channels into the distribution itself.
@@ -177,14 +177,14 @@ turn.
 
 ## Related
 
-- Tutorial: [`../tutorials/03-add-a-skill-and-mcp.md`](../tutorials/03-add-a-skill-and-mcp.md)
-- How-to: [`../how-to/add-skills.md`](../how-to/add-skills.md),
-  [`../how-to/add-mcp-server.md`](../how-to/add-mcp-server.md),
-  [`../how-to/install-a-plugin.md`](../how-to/install-a-plugin.md)
-- Reference: [`../reference/packages.md`](../reference/packages.md),
-  [`../reference/file-layout.md`](../reference/file-layout.md)
-- Explanation: [`extension-model.md`](extension-model.md),
-  [`bub-relationship.md`](bub-relationship.md)
+- Tutorial: [03 — Add a skill and an MCP server](../tutorials/03-add-a-skill-and-mcp.md)
+- How-to: [How to add skills](../how-to/add-skills.md),
+  [How to add an MCP server](../how-to/add-mcp-server.md),
+  [How to install a plugin](../how-to/install-a-plugin.md)
+- Reference: [Packages reference](../reference/packages.md),
+  [File layout reference](../reference/file-layout.md)
+- Explanation: [The extension model](extension-model.md),
+  [How agentseek relates to Bub](bub-relationship.md)
 - External: [Tape Systems](https://tape.systems/),
   [Why we rewrote Bub](https://bub.build/posts/why-rewrite-bub/),
   [Model Context Protocol](https://modelcontextprotocol.io/)

@@ -13,7 +13,7 @@ sources:
 
 Use this when you need to expose an external tool or service to the agent
 over MCP. This page covers **authoring an entry**; see
-`configure-mcp.md` for choosing **where** the file lives.
+[How to configure MCP servers](configure-mcp.md) for choosing **where** the file lives.
 
 ## Prerequisites
 
@@ -100,5 +100,5 @@ Remove the server entry from `mcp.json`. Restart the process.
 
 ## Related
 
-- How-to: `configure-mcp.md`, `configure-docker-workspace.md`
-- Reference: `../reference/environment.md`
+- How-to: [How to configure MCP servers](configure-mcp.md), [How to configure the Docker workspace](configure-docker-workspace.md)
+- Reference: [Environment variables reference](../reference/environment.md)

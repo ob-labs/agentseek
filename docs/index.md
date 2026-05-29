@@ -1,121 +1,111 @@
 ---
-title: agentseek documentation
-type: explanation
-audience: [A1, A2, A3, A4, A5]
-runs: no
-verified_on: 2026-05-29
-sources:
-  - README.md
-  - src/agentseek/__main__.py
-  - contrib/agentseek-cli/pyproject.toml
-  - pyproject.toml
+hide_sidebar: true
 ---
 
 # agentseek
 
-agentseek is a database-native Agent Harness. Context, tool calls, traces, and
-feedback land on one durable, queryable substrate from the first turn — whether you
-drive it from a terminal or embed it in your own application.
+A database-native Agent Harness, by the OceanBase OSS Team.
 
-## Two ways in, both first-class
+agentseek is a database-native Agent Harness for teams that want agent runtime
+data to become a first-class database workload.
 
-agentseek ships as **two complementary packages** on PyPI, split by job:
-`agentseek-cli` owns the **project lifecycle** (scaffold, run, build, deploy);
-`agentseek` is the **harness** itself (chat, gateway, runtime). Pick by what you
-are doing, not by which one feels more "real".
+It treats the database as the natural place to keep agent context, execution
+history, tool calls, tasks, feedback, and observability together. The same
+runtime data can then serve debugging, replay, trajectory comparison,
+evaluation, analysis, and training workflows without being copied into separate
+systems or re-ingested later.
 
-| You want to… | Start here | What `agentseek` does after install |
-| --- | --- | --- |
-| **Scaffold a project**, then run / build / deploy it from outside the harness | `uv tool install agentseek-cli` | Project lifecycle commands: `create`, `run`, `build`, `deploy`, `api`, `ctx`, `skills` |
-| **Run the harness itself** — chat with a model, drive channels, host the gateway | Clone the repo + `uv sync` | Harness runtime commands: `chat`, `run`, `gateway`, `install`, `update`, … |
+## Two packages, two paths
 
-Both paths give you a command named `agentseek`. Same name on purpose — the
-project CLI scaffolds harness apps, and a harness app runs the same framework
-either side ultimately launches. See
-[`explanation/choosing-an-entry-point.md`](explanation/choosing-an-entry-point.md)
-for the trade-offs and why the two are shipped as separate packages.
+agentseek ships as two complementary packages on PyPI, split by job:
 
-### Path A — install the project lifecycle CLI from PyPI
+- **`agentseek-cli`** — the project lifecycle CLI: `create`, `run`, `build`,
+  `deploy`, `api`, `ctx`, `skills`. Self-contained, installable with
+  `uv tool install agentseek-cli`.
+- **`agentseek`** — the harness itself: `chat`, `run`, `gateway`, `install`,
+  `update`, and the library surface you embed in your application. Resolved
+  through this repository's `[tool.uv.sources]`, not through a direct
+  `pip install agentseek`.
 
-`agentseek-cli` is the **project lifecycle CLI**: a self-contained Typer app with a
-small dependency tree that owns scaffolding and the lifecycle commands. It is the
-right thing to install on a developer laptop or in CI when you just need to
-generate a project, build an image, or invoke `run / build / deploy / api / ctx /
-skills`.
+Both register a command named `agentseek`. See
+[Choosing an entry point](explanation/choosing-an-entry-point.md) for which one
+fits which job.
+
+## Why it exists
+
+Most agents prove their value at runtime, but their runtime data quickly
+scatters across logs, notes, local databases, tracing systems, object storage,
+and offline pipelines. After the first interaction, that makes replay,
+comparison, evaluation, and training materially more expensive.
+
+agentseek starts from the opposite assumption: context, memory, tasks, tool
+calls, traces, feedback, and evaluation material should share one durable
+substrate from the beginning.
+
+For agent systems, this makes runtime data reusable. For databases, it opens a
+direct path to carry intelligent-application workloads instead of only storing
+final business results.
+
+## Quick Start
+
+Pick one of the two paths. They are both first-class.
+
+### Path A — install the project lifecycle CLI
+
+Use this when you want to scaffold a project, build an image, or call lifecycle
+commands without checking the repository out.
 
 ```bash
-# Installs the `agentseek` console script into an isolated venv managed by uv.
 uv tool install agentseek-cli
 agentseek --help            # create / run / build / deploy / api / ctx / skills
 agentseek create bub --template default --no-input
 cd my_bub_agent
+uv sync                     # the generated project resolves the full harness via its own [tool.uv.sources]
 ```
-
-The generated project depends on `agentseek` (the harness library) and on whatever
-contrib packages its template needs. From there, `uv sync` inside the project
-resolves the full harness — including git-sourced dependencies — through the
-project's own `pyproject.toml`. That gets you to Path B without leaving the
-generated tree.
-
-Tutorial: [`tutorials/02-first-harness-app.md`](tutorials/02-first-harness-app.md).
-Reference: [`reference/cli.md`](reference/cli.md).
 
 ### Path B — clone the repo and run the harness
 
-The **harness** (`agentseek`) depends on a few packages that are only resolvable
-through `[tool.uv.sources]` (notably `bub-feishu`, `bub-mcp`, and the workspace
-contrib packages under `contrib/`). PyPI metadata cannot carry git sources, so a
-plain `pip install agentseek` or `uv tool install agentseek` will fail to resolve
-the harness. The reliable path is to use a project that owns those sources —
-either this repository, or one generated by Path A.
+Use this when you want to drive the harness itself — `chat`, `gateway`,
+`install`, and the rest of the runtime CLI.
 
 ```bash
 git clone https://github.com/ob-labs/agentseek.git
 cd agentseek
-uv sync                     # resolves bub, bub-feishu, bub-mcp, and contrib packages
-export AGENTSEEK_MODEL=openai:gpt-4o-mini
-export AGENTSEEK_API_KEY=sk-...
-uv run agentseek chat       # harness CLI: chat REPL backed by Bub
+uv sync
+uv run agentseek --help
 ```
 
-Tutorial: [`tutorials/01-quick-demo-cli.md`](tutorials/01-quick-demo-cli.md).
-Reference: [`reference/cli.md`](reference/cli.md).
+Configure a model, then start a local session:
 
-### What to install when
+```bash
+export AGENTSEEK_MODEL=openrouter:free
+export AGENTSEEK_API_KEY=sk-or-v1-your-key
+export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+uv run agentseek chat
+```
 
-- **Trying it for the first time** — Path B against a free model is the shortest
-  way to see a turn run end to end.
-- **Building your own application around the harness** — Path A to generate a
-  project, then `uv sync` inside the generated project (which puts you on Path B in
-  a tree you own).
-- **Operating a workspace** — Path B inside the repo or generated project, usually
-  behind Docker Compose. See [`how-to/run-with-docker-compose.md`](how-to/run-with-docker-compose.md).
-- **CI that only needs `build` / `deploy`** — Path A alone is enough; it does not
-  pull the harness runtime.
+> Note: `pip install agentseek` and `uv tool install agentseek` will fail to
+> resolve, because the harness depends on `bub-feishu`, `bub-mcp`, and the
+> workspace contrib packages wired via `[tool.uv.sources]`. Use one of the two
+> paths above.
 
-## Read by quadrant
+## Read next
 
-The documentation follows the [Diátaxis framework](https://diataxis.fr/). Each page
-belongs to exactly one of these four groups. Pick the one that matches what you are
-doing right now.
-
-| Quadrant | When to use it | Index |
-| --- | --- | --- |
-| **Tutorials** — learn by doing | You are new and want a guided run that ends in a working setup. | [`tutorials/index.md`](tutorials/index.md) |
-| **How-to** — solve a specific task | You already know the system and need the shortest path to an outcome. | [`how-to/index.md`](how-to/index.md) |
-| **Reference** — look up exact facts | You need the canonical list of env vars, CLI flags, file paths, or extras. | [`reference/index.md`](reference/index.md) |
-| **Explanation** — understand the design | You want to know *why* agentseek looks like this and where it fits next to Bub. | [`explanation/index.md`](explanation/index.md) |
-
-## Where the project lives
-
-agentseek is a monorepo. The harness sits under `src/agentseek/` (PyPI package
-`agentseek`); the project lifecycle CLI sits under `contrib/agentseek-cli/` (PyPI
-package `agentseek-cli`); larger integrations live under `contrib/` and own their
-own READMEs; runnable end-to-end examples live under `examples/`. The annotated map
-is in [`explanation/where-things-live.md`](explanation/where-things-live.md).
-
-External references:
-
-- Upstream runtime: <https://github.com/bubbuild/bub>
-- Wider ecosystem catalogue: <https://hub.bub.build>
-- Project background: [`blog/introducing-agentseek.md`](blog/introducing-agentseek.md)
+<div class="terminal-grid terminal-grid-2">
+  <div class="terminal-card">
+    <h3><a href="docs/">Documentation</a></h3>
+    <p>What agentseek is, where it fits, and how the documentation is structured.</p>
+  </div>
+  <div class="terminal-card">
+    <h3><a href="tutorials/">Tutorials</a></h3>
+    <p>Start here: quick CLI demo, first harness app, and adding a skill and MCP.</p>
+  </div>
+  <div class="terminal-card">
+    <h3><a href="how-to/">How-to guides</a></h3>
+    <p>Task-focused recipes for configuring models, installing plugins, running, and deploying.</p>
+  </div>
+  <div class="terminal-card">
+    <h3><a href="reference/">Reference</a></h3>
+    <p>Environment variables, CLI commands, packages, file layout, templates, and Docker.</p>
+  </div>
+</div>

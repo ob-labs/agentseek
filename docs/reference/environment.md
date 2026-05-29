@@ -94,6 +94,6 @@ For any single variable the runtime sees, top wins:
 
 ## See also
 
-- How-to: `../how-to/configure-model.md`, `../how-to/configure-mcp.md`,
-  `../how-to/configure-docker-workspace.md`
-- Explanation: `../explanation/bub-relationship.md`
+- How-to: [How to configure the model provider](../how-to/configure-model.md), [How to configure MCP servers](../how-to/configure-mcp.md),
+  [How to configure the Docker workspace](../how-to/configure-docker-workspace.md)
+- Explanation: [How agentseek relates to Bub](../explanation/bub-relationship.md)

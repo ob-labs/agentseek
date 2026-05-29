@@ -92,6 +92,6 @@ discard the entire sandbox, delete `${AGENTSEEK_PROJECT}` (default
 
 ## Related
 
-- How-to: `author-a-contrib-plugin.md`, `add-skills.md`
-- Reference: `../reference/cli.md`, `../reference/file-layout.md`
-- Concepts: `../explanation/extension-model.md`
+- How-to: [How to author a contrib plugin](author-a-contrib-plugin.md), [How to add skills](add-skills.md)
+- Reference: [CLI reference](../reference/cli.md), [File layout reference](../reference/file-layout.md)
+- Concepts: [The extension model](../explanation/extension-model.md)

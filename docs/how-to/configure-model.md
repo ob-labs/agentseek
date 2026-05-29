@@ -81,5 +81,5 @@ your shell. There is no on-disk state to clean up.
 
 ## Related
 
-- Reference: `../reference/environment.md`
-- Explanation: `../explanation/bub-relationship.md`
+- Reference: [Environment variables reference](../reference/environment.md)
+- Explanation: [How agentseek relates to Bub](../explanation/bub-relationship.md)

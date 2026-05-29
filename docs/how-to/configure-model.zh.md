@@ -80,5 +80,5 @@ uv run agentseek chat
 
 ## 相关
 
-- 参考: `../reference/environment.md`
-- 概念解释: `../explanation/bub-relationship.md`
+- 参考: [Environment variables reference](../reference/environment.md)
+- 概念解释: [How agentseek relates to Bub](../explanation/bub-relationship.md)

@@ -88,4 +88,4 @@ uv sync --no-extra context
 ## Related
 
 - Contrib: [agentseek-contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)
-- Reference: `../reference/cli.md`, `../reference/packages.md`
+- Reference: [CLI reference](../reference/cli.md), [Packages reference](../reference/packages.md)

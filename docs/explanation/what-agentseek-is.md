@@ -25,7 +25,7 @@ sources:
 Most agents prove their value at runtime, then their data scatters: session context in one
 place, tool calls in another, logs and eval artefacts in more pipelines. After the first
 consumer, it is expensive to query, replay, compare, evaluate, or turn into training
-material — see [`../blog/introducing-agentseek.md`](../blog/introducing-agentseek.md).
+material — see [Introducing agentseek](../blog/introducing-agentseek.md).
 
 agentseek starts from a different assumption: context, memory, tasks, tool calls, traces,
 feedback, and evaluation material should share **one durable substrate from the beginning**.
@@ -52,11 +52,11 @@ Three pieces sit on top of each other:
    / api / ctx / skills`). On its own it is self-contained and small; alongside
    the harness it folds in as a Bub plugin so the same `agentseek` command
    exposes the union of both surfaces. See
-   [`choosing-an-entry-point.md`](choosing-an-entry-point.md).
+   [Choosing an entry point](choosing-an-entry-point.md).
 4. **Contrib packages and your app** sit on top: storage backends, model
    routing, observability, channel adapters, and the application code that
    actually wants to run on the harness. The contrib monorepo is indexed at
-   [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib).
+   [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib).
 
 In practice, most application teams depend on `agentseek` (the harness) from
 their own project and let application code drive turns. The runtime CLI is a
@@ -79,10 +79,10 @@ what an embedded library run will produce.
   full dependency tree on their laptop or in CI; `agentseek` exists so the
   harness itself stays a regular Python package you embed in your application.
   The trade-offs and the "same name, merged surface when both are installed"
-  mechanic are in [`choosing-an-entry-point.md`](choosing-an-entry-point.md).
+  mechanic are in [Choosing an entry point](choosing-an-entry-point.md).
 - **Bub underneath, agentseek on top.** Rather than fork or replace Bub,
   agentseek consumes it as a regular library. The reasoning and the alias
-  rules are in [`bub-relationship.md`](bub-relationship.md).
+  rules are in [How agentseek relates to Bub](bub-relationship.md).
 
 ## Consequences for users
 
@@ -90,10 +90,10 @@ what an embedded library run will produce.
   work without the harness runtime on the host; `agentseek` is the harness itself
   and is what you run after `uv sync` in this repo or inside a generated project.
 - Most evaluators start with Path B and `agentseek chat`
-  ([`../tutorials/01-quick-demo-cli.md`](../tutorials/01-quick-demo-cli.md)).
+  ([01 — Quick demo via the CLI](../tutorials/01-quick-demo-cli.md)).
   Most application teams start with Path A to scaffold, then Path B inside the
   generated project
-  ([`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md)).
+  ([02 — Build your first harness app](../tutorials/02-first-harness-app.md)).
 - Anywhere the documentation looks plain — environment variables, file
   layout, install sandbox semantics — that plainness is intentional. The
   complexity is concentrated in the runtime substrate (Bub + tape) and in
@@ -101,8 +101,8 @@ what an embedded library run will produce.
 - Tutorials, how-tos, and reference pages all assume that, once the harness
   is running, your project has a `.agentseek/` directory and that
   `AGENTSEEK_*` variables drive configuration. The why and the alias rules
-  are in [`bub-relationship.md`](bub-relationship.md); the exact tables are
-  in [`../reference/environment.md`](../reference/environment.md).
+  are in [How agentseek relates to Bub](bub-relationship.md); the exact tables are
+  in [Environment variables reference](../reference/environment.md).
 
 ## Explicit non-goals
 
@@ -112,21 +112,21 @@ agentseek **does not** try to:
   alongside; route their turns through the harness via `agentseek-langchain` when needed.
 - Be a generic plugin marketplace. The plugin model is Bub's; the wider catalogue lives at
   <https://hub.bub.build>. agentseek only ships and maintains the contrib packages listed
-  in [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib).
+  in [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib).
 - Ship a UI. Frontend examples live under `examples/` and use CopilotKit, AG-UI, or your
   own UI of choice.
 - Hide Bub. You can always drop down to `bub …` directly when you need upstream behaviour
-  unmodified — see [`bub-relationship.md`](bub-relationship.md).
+  unmodified — see [How agentseek relates to Bub](bub-relationship.md).
 - Provide a hosted service. Deployment is operator-owned; the harness gives you the
   building blocks, not a SaaS.
 
 ## Related
 
-- Tutorial: [`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md)
-- Explanation: [`bub-relationship.md`](bub-relationship.md),
-  [`choosing-an-entry-point.md`](choosing-an-entry-point.md)
-- Reference: [`../reference/environment.md`](../reference/environment.md),
-  [`../reference/packages.md`](../reference/packages.md)
+- Tutorial: [02 — Build your first harness app](../tutorials/02-first-harness-app.md)
+- Explanation: [How agentseek relates to Bub](bub-relationship.md),
+  [Choosing an entry point](choosing-an-entry-point.md)
+- Reference: [Environment variables reference](../reference/environment.md),
+  [Packages reference](../reference/packages.md)
 - External: [Introducing agentseek (blog)](../blog/introducing-agentseek.md),
   [Bub repository](https://github.com/bubbuild/bub),
   [Tape Systems](https://tape.systems/)

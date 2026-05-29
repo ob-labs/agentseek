@@ -83,6 +83,6 @@ state beyond what each channel plugin stores (e.g. cursor files).
 
 ## Related
 
-- How-to: `run-locally.md`, `run-with-docker-compose.md`,
-  `configure-docker-workspace.md`
-- Reference: `../reference/cli.md`, `../reference/docker.md`
+- How-to: [How to run agentseek locally](run-locally.md), [How to run with Docker Compose](run-with-docker-compose.md),
+  [How to configure the Docker workspace](configure-docker-workspace.md)
+- Reference: [CLI reference](../reference/cli.md), [Docker reference](../reference/docker.md)

@@ -64,7 +64,7 @@ The alias rule lives in
   same value **iff `BUB_<suffix>` is not already set** (`setdefault` semantics, line 64).
 - A pre-existing `BUB_*` variable therefore wins over the `AGENTSEEK_*` alias. This is the
   "BUB takes precedence" rule that the contrib README also calls out
-  ([`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib)).
+  ([contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib)).
 
 In addition, two location defaults are applied unconditionally when missing
 (`src/agentseek/env.py:68-73`):
@@ -75,7 +75,7 @@ In addition, two location defaults are applied unconditionally when missing
 | `BUB_PROJECT` | `${BUB_HOME}/agentseek-project` | `src/agentseek/env.py:22` (`DEFAULT_PLUGIN_SANDBOX`) and `src/agentseek/env.py:70-73` |
 
 The full per-variable table — including model, API key, MCP path, skills home, workspace —
-lives in [`../reference/environment.md`](../reference/environment.md).
+lives in [Environment variables reference](../reference/environment.md).
 
 ### CLI overrides
 
@@ -102,7 +102,7 @@ contrib-supplied subcommands — is Bub's own code.
 - **Aliases are one-way and BUB wins.** Plugin authors can target the upstream prefix and
   still work cleanly under agentseek, because the alias only fills in gaps. This is why the
   contrib README tells plugin authors to prefer `AGENTSEEK_*` only for distribution-scoped
-  settings and let `BUB_*` own runtime behaviour ([`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib)).
+  settings and let `BUB_*` own runtime behaviour ([contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib)).
 - **No private fork of Bub.** Bub is a normal dependency, pinned by version in
   `pyproject.toml:19`. Upgrading Bub upgrades agentseek; nothing in agentseek vendors or
   patches the kernel beyond the three Typer monkeypatches above.
@@ -138,12 +138,12 @@ agentseek install sandbox, lifecycle channels in chat mode, and the `AGENTSEEK_*
 
 ## Related
 
-- Tutorial: [`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md)
-- How-to: [`../how-to/install-a-plugin.md`](../how-to/install-a-plugin.md),
-  [`../how-to/configure-model.md`](../how-to/configure-model.md)
-- Reference: [`../reference/environment.md`](../reference/environment.md),
-  [`../reference/cli.md`](../reference/cli.md)
-- Explanation: [`runtime-data-model.md`](runtime-data-model.md)
+- Tutorial: [02 — Build your first harness app](../tutorials/02-first-harness-app.md)
+- How-to: [How to install a plugin](../how-to/install-a-plugin.md),
+  [How to configure the model provider](../how-to/configure-model.md)
+- Reference: [Environment variables reference](../reference/environment.md),
+  [CLI reference](../reference/cli.md)
+- Explanation: [The runtime data model](runtime-data-model.md)
 - External: [Bub repository](https://github.com/bubbuild/bub),
   [Bub Hub](https://hub.bub.build),
   [Why we rewrote Bub](https://bub.build/posts/why-rewrite-bub/)

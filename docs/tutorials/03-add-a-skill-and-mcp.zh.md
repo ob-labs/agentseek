@@ -14,7 +14,7 @@ sources:
 # 添加一个 skill 和一个 MCP server
 
 > **你将完成：** 把一个项目本地的 skill 放进 `.agents/skills/<name>/SKILL.md`，在 `.agents/mcp.json` 里声明一个 MCP server，并确认 agent 把两者都识别了。
-> **你需要：** `02-first-harness-app.md` 生成的项目（或任意一个 agentseek workspace）和 `uv`。`bub-mcp` 已经是 `agentseek` 的核心依赖（`pyproject.toml:21`），无需额外安装。
+> **你需要：** [02 — Build your first harness app](02-first-harness-app.md) 生成的项目（或任意一个 agentseek workspace）和 `uv`。`bub-mcp` 已经是 `agentseek` 的核心依赖（`pyproject.toml:21`），无需额外安装。
 
 本教程涵盖的是每个 harness app 最终都会长出来的运维形态：*这个 workspace 里有些东西，agent 应该感知到，而我不想手工把它们写进 Python 代码*。Skill 处理指令/playbook 这一类；MCP server 处理工具和实时数据源。
 
@@ -62,7 +62,7 @@ langchain-cn-models ~/oceanbase/agentseek/skills/langchain-cn-models
 
 你那条 `local-greeting` 应当出现在 **Project Skills** 下。`Agents:` 列显示哪些客户端已经接好该 skill —— 你生成的 app 不需要额外接线，因为 Bub 直接读取 workspace 中的 skill。
 
-> **自带 vs 项目本地。** `src/skills/` 随 agentseek 发行版一起出货（上面下两行就是）。`.agents/skills/` 才是**你自己**项目的创作面。请在那里编写，不要修改 `src/skills/`。完整分类见 `../how-to/add-skills.md`。
+> **自带 vs 项目本地。** `src/skills/` 随 agentseek 发行版一起出货（上面下两行就是）。`.agents/skills/` 才是**你自己**项目的创作面。请在那里编写，不要修改 `src/skills/`。完整分类见 [How to add skills](../how-to/add-skills.md)。
 
 ## 2. 声明一个 MCP server
 
@@ -105,7 +105,7 @@ export AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json
 mkdir -p .agentseek && $EDITOR .agentseek/mcp.json
 ```
 
-完整的 MCP 相关变量清单在 `../reference/environment.md`；两个位置之间的取舍见 `../how-to/configure-mcp.md`。
+完整的 MCP 相关变量清单在 [Environment variables reference](../reference/environment.md)；两个位置之间的取舍见 [How to configure MCP servers](../how-to/configure-mcp.md)。
 
 ## 3. 看 agent 把它们识别出来
 
@@ -130,7 +130,7 @@ uv run agentseek gateway --enable-channel ag-ui
 
 ## 接下来去哪
 
-- 想用 Bub 兼容的 Python plugin（而不是 skill 或 MCP），看 `../how-to/install-a-plugin.md`。
-- 决策矩阵 —— 什么时候选 skill、MCP server 还是 contrib plugin —— 见 `../explanation/extension-model.md`。
+- 想用 Bub 兼容的 Python plugin（而不是 skill 或 MCP），看 [How to install a plugin](../how-to/install-a-plugin.md)。
+- 决策矩阵 —— 什么时候选 skill、MCP server 还是 contrib plugin —— 见 [The extension model](../explanation/extension-model.md)。
 - `agentseek skills` 透传给 `npx skills` 的全部内容，见 `../reference/cli.md#skills`。
-- `AGENTSEEK_*` 变量及其 `BUB_*` 别名的完整清单，见 `../reference/environment.md`。
+- `AGENTSEEK_*` 变量及其 `BUB_*` 别名的完整清单，见 [Environment variables reference](../reference/environment.md)。

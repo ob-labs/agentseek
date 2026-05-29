@@ -60,7 +60,7 @@ alias 规则位于
   （`setdefault` 语义，line 64）。
 - 因此预先存在的 `BUB_*` 变量会胜过 `AGENTSEEK_*` alias。这就是 contrib README 也提到的
   "BUB 优先" 规则
-  （[`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib)）。
+  （[contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib)）。
 
 此外，当缺失时有两个位置默认值会被无条件应用
 （`src/agentseek/env.py:68-73`）：
@@ -71,7 +71,7 @@ alias 规则位于
 | `BUB_PROJECT` | `${BUB_HOME}/agentseek-project` | `src/agentseek/env.py:22`（`DEFAULT_PLUGIN_SANDBOX`）和 `src/agentseek/env.py:70-73` |
 
 完整的逐变量表 —— 包括 model、API key、MCP path、skills home、workspace ——
-位于 [`../reference/environment.md`](../reference/environment.md)。
+位于 [Environment variables reference](../reference/environment.md)。
 
 ### CLI override
 
@@ -95,7 +95,7 @@ CLI 的行为与 Bub 的一致，但有三处刻意的改动（`src/agentseek/cl
 - **Alias 是单向的，且 BUB 优先。** Plugin 作者可以面向上游前缀编写代码，在 agentseek 下也能干净
   运行，因为 alias 只填空。这就是为什么 contrib README 告诉 plugin 作者只把 `AGENTSEEK_*`
   保留给 distribution 范围的设置，让 `BUB_*` 主导 runtime 行为
-  （[`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib)）。
+  （[contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib)）。
 - **没有 Bub 的私有 fork。** Bub 是一个普通依赖，在 `pyproject.toml:19` 中按版本固定。升级 Bub
   就升级 agentseek；agentseek 中除了上面三处 Typer monkeypatch 外，没有任何代码 vendor 或
   patch 这个 kernel。
@@ -129,12 +129,12 @@ install sandbox、chat 模式下的 lifecycle channel，以及 `AGENTSEEK_*` 命
 
 ## 相关
 
-- 教程：[`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md)
-- 操作指南：[`../how-to/install-a-plugin.md`](../how-to/install-a-plugin.md),
-  [`../how-to/configure-model.md`](../how-to/configure-model.md)
-- 参考：[`../reference/environment.md`](../reference/environment.md),
-  [`../reference/cli.md`](../reference/cli.md)
-- 概念解释：[`runtime-data-model.md`](runtime-data-model.md)
+- 教程：[02 — Build your first harness app](../tutorials/02-first-harness-app.md)
+- 操作指南：[How to install a plugin](../how-to/install-a-plugin.md),
+  [How to configure the model provider](../how-to/configure-model.md)
+- 参考：[Environment variables reference](../reference/environment.md),
+  [CLI reference](../reference/cli.md)
+- 概念解释：[The runtime data model](runtime-data-model.md)
 - 外部：[Bub repository](https://github.com/bubbuild/bub),
   [Bub Hub](https://hub.bub.build),
   [Why we rewrote Bub](https://bub.build/posts/why-rewrite-bub/)

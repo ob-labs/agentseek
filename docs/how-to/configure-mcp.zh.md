@@ -33,7 +33,7 @@ agentseek 通过 `bub-mcp` 消费 MCP 配置，后者读取
 
 ## 步骤
 
-1. 编写 MCP server 文件。条目格式见 `add-mcp-server.md`。
+1. 编写 MCP server 文件。条目格式见 [How to add an MCP server](add-mcp-server.md)。
 
    ```json title=".agentseek/mcp.json"
    {
@@ -85,5 +85,5 @@ uv run agentseek mcp remove <name>
 
 ## 相关
 
-- 操作指南: `add-mcp-server.md`, `configure-docker-workspace.md`
-- 参考: `../reference/environment.md`, `../reference/docker.md`
+- 操作指南: [How to add an MCP server](add-mcp-server.md), [How to configure the Docker workspace](configure-docker-workspace.md)
+- 参考: [Environment variables reference](../reference/environment.md), [Docker reference](../reference/docker.md)

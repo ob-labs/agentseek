@@ -77,7 +77,7 @@ points you at it and lists the agentseek-specific bits you must not skip.
 5. Use the bundled `plugin-creator` skill to scaffold the package. The
    agentseek-adapted version mirrors the upstream Bub contrib workflow but
    specializes for `contrib/agentseek-*`, `AGENTSEEK_*` aliases, and bundled
-   `src/skills` (see `../explanation/extension-model.md`).
+   `src/skills` (see [The extension model](../explanation/extension-model.md)).
 
 ### CLI shortcut
 
@@ -95,6 +95,6 @@ rename.
 ## Related
 
 - Contrib standard: [contrib/README.md](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md)
-- How-to: `install-a-plugin.md`, `add-skills.md`
-- Reference: `../reference/packages.md`
-- Concepts: `../explanation/extension-model.md`
+- How-to: [How to install a plugin](install-a-plugin.md), [How to add skills](add-skills.md)
+- Reference: [Packages reference](../reference/packages.md)
+- Concepts: [The extension model](../explanation/extension-model.md)

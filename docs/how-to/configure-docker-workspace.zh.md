@@ -73,5 +73,5 @@ AGENTSEEK_DOCKER_WORKSPACE=/srv/agentseek-data docker compose up
 
 ## 相关
 
-- 操作指南: `run-with-docker-compose.md`, `configure-mcp.md`
-- 参考: `../reference/docker.md`, `../reference/environment.md`
+- 操作指南: [How to run with Docker Compose](run-with-docker-compose.md), [How to configure MCP servers](configure-mcp.md)
+- 参考: [Docker reference](../reference/docker.md), [Environment variables reference](../reference/environment.md)

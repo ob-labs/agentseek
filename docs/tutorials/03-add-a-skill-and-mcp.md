@@ -15,7 +15,7 @@ sources:
 
 > **You will:** drop a project-local skill into `.agents/skills/<name>/SKILL.md`, declare an
 > MCP server in `.agents/mcp.json`, and confirm that the agent picks both up.
-> **You need:** the project from `02-first-harness-app.md` (or any agentseek workspace) and
+> **You need:** the project from [02 — Build your first harness app](02-first-harness-app.md) (or any agentseek workspace) and
 > `uv`. `bub-mcp` is already a core dependency of `agentseek` (`pyproject.toml:21`), so no
 > extra install is required.
 
@@ -77,7 +77,7 @@ wiring because Bub reads the workspace skills directly.
 > **Bundled vs project-local.** Bundled skills ship with the agentseek distribution under
 > `skills/` and `src/skills/` (the bottom two rows above come from `skills/`).
 > `.agents/skills/` is **your** project's authoring surface. Keep authoring there; do not
-> edit the bundled directories. See `../how-to/add-skills.md` for the full taxonomy.
+> edit the bundled directories. See [How to add skills](../how-to/add-skills.md) for the full taxonomy.
 
 ## 2. Declare an MCP server
 
@@ -124,8 +124,8 @@ export AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json
 mkdir -p .agentseek && $EDITOR .agentseek/mcp.json
 ```
 
-The full list of MCP-related variables is in `../reference/environment.md`; the trade-offs
-between the two locations live in `../how-to/configure-mcp.md`.
+The full list of MCP-related variables is in [Environment variables reference](../reference/environment.md); the trade-offs
+between the two locations live in [How to configure MCP servers](../how-to/configure-mcp.md).
 
 ## 3. Watch the agent pick them up
 
@@ -160,10 +160,10 @@ appears. If an MCP server is not picked up, confirm the file path matches
 ## Where to go next
 
 - For Bub-compatible Python plugins (rather than skills or MCP), see
-  `../how-to/install-a-plugin.md`.
+  [How to install a plugin](../how-to/install-a-plugin.md).
 - For the decision matrix — when to reach for a skill, an MCP server, or a contrib plugin —
-  see `../explanation/extension-model.md`.
+  see [The extension model](../explanation/extension-model.md).
 - For everything `agentseek skills` forwards to `npx skills`, see
   `../reference/cli.md#skills`.
 - For the full list of `AGENTSEEK_*` variables and their `BUB_*` aliases, see
-  `../reference/environment.md`.
+  [Environment variables reference](../reference/environment.md).

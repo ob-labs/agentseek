@@ -90,6 +90,6 @@ agentseek 从两个并行的命名空间读取其运行时配置：
 
 ## 另请参阅
 
-- 操作指南：`../how-to/configure-model.md`、`../how-to/configure-mcp.md`、
-  `../how-to/configure-docker-workspace.md`
-- 概念解释：`../explanation/bub-relationship.md`
+- 操作指南：[How to configure the model provider](../how-to/configure-model.md)、[How to configure MCP servers](../how-to/configure-mcp.md)、
+  [How to configure the Docker workspace](../how-to/configure-docker-workspace.md)
+- 概念解释：[How agentseek relates to Bub](../explanation/bub-relationship.md)

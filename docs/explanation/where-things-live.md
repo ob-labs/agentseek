@@ -67,13 +67,13 @@ The Python package published to PyPI as `agentseek` (the harness itself). It is
 overrides, so a plain `pip install agentseek` or `uv tool install agentseek`
 will fail to resolve. Install it by cloning this repo and running `uv sync`, or
 by `uv sync`-ing inside a project generated via `agentseek create`. See
-[`choosing-an-entry-point.md`](choosing-an-entry-point.md).
+[Choosing an entry point](choosing-an-entry-point.md).
 
 Three files matter:
 
 - `src/agentseek/env.py` — alias rules from `AGENTSEEK_*` to `BUB_*` plus the location
   defaults (`.agentseek/`, `.agentseek/agentseek-project`). The mechanics are explained in
-  [`bub-relationship.md`](bub-relationship.md).
+  [How agentseek relates to Bub](bub-relationship.md).
 - `src/agentseek/cli.py` — the three Typer monkeypatches that brand onboarding, enable
   lifecycle channels in `chat`, and re-point the install sandbox.
 - `src/agentseek/__main__.py` — the boot sequence that runs the alias step, applies the CLI
@@ -87,16 +87,16 @@ Skills shipped inside the distribution because `pyproject.toml:73-77` includes `
 in the build. As of this writing the directory contains `plugin-creator/`, plus skills
 imported at build time from external repos via `[tool.pdm.build].skills`
 (`pyproject.toml:78-80`) — currently `friendly-python` and `piglet` from
-<https://github.com/PsiACE/skills>. See [`src/skills/`](https://github.com/ob-labs/agentseek/tree/main/src/skills)
-for the bundled skill list and [`runtime-data-model.md`](runtime-data-model.md) for what a
+<https://github.com/PsiACE/skills>. See [src/skills/](https://github.com/ob-labs/agentseek/tree/main/src/skills)
+for the bundled skill list and [The runtime data model](runtime-data-model.md) for what a
 skill is.
 
 ### `contrib/` — larger integrations
 
 Workspace member packages, each a regular Python distribution with its own README. The
-index and the README standard live at [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib).
+index and the README standard live at [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib).
 `agentseek-cli` is a top-level PyPI package in its own right (the project
-lifecycle CLI of Path A — see [`choosing-an-entry-point.md`](choosing-an-entry-point.md));
+lifecycle CLI of Path A — see [Choosing an entry point](choosing-an-entry-point.md));
 the other entries are runtime plugins for the harness.
 
 | Directory | Role | Purpose |
@@ -115,7 +115,7 @@ link out; they do not duplicate. The workspace mapping lives at `pyproject.toml:
 ### `examples/` — runnable end-to-end demos
 
 Outside the package source trees on purpose, so each example shows the install + run shape
-of a user workspace. Today the catalogue (from [`examples/`](https://github.com/ob-labs/agentseek/tree/main/examples))
+of a user workspace. Today the catalogue (from [examples/](https://github.com/ob-labs/agentseek/tree/main/examples))
 is `ag-ui`, `ag_ui_langchain`, `agentseek_api_remote_agent`, `langchain_otel_sidecar`,
 `langchain_deepagents`, and `langchain_cli_remote_agent`. They are the right starting
 point when you want to see the whole assembly — gateway + frontend + LangChain + agentseek
@@ -135,14 +135,14 @@ catalogue lives at `templates/index.json`:
 
 The directory is excluded from ty (`pyproject.toml:120-126`) and ruff
 (`pyproject.toml:133-139`) because the files contain Jinja2 placeholders, not real Python.
-Reference: [`../reference/templates.md`](../reference/templates.md).
+Reference: [Templates reference](../reference/templates.md).
 
 ### `skills/` — stand-alone skill repositories
 
 Separate from `src/skills/`. This directory holds skills that are maintained alongside the
 project but **not bundled into the `agentseek` wheel**. Today the entries are
 `github-repo-cards` and `langchain-cn-models`; see
-[`skills/`](https://github.com/ob-labs/agentseek/tree/main/skills) and the published
+[skills/](https://github.com/ob-labs/agentseek/tree/main/skills) and the published
 [Hub page](../hub.md) for the catalogue. Install them into your workspace under
 `.agents/skills/` via `npx skills add` or by copying the folder.
 
@@ -155,8 +155,8 @@ Read-only copies of upstream projects checked in for offline navigation and grep
 ### `docs/`
 
 `docs/` holds the published documentation. The Diátaxis layout follows the four quadrants
-([`../tutorials/`](../tutorials/index.md), [`../how-to/`](../how-to/index.md),
-[`../reference/`](../reference/index.md), [`../explanation/`](../explanation/index.md))
+([Tutorials](../tutorials/index.md), [How-to index](../how-to/index.md),
+[Reference index](../reference/index.md), [Explanation — understanding agentseek](../explanation/index.md))
 plus a `blog/` archive and a published `hub.md` browse page.
 
 Generic Diátaxis writing standards and the four page templates live in the
@@ -172,7 +172,7 @@ the source of the navigation/where-things-live picture used across the site.
 - `tests/` holds top-level tests; contrib packages have their own test trees under
   `contrib/*/tests/`.
 - `entrypoint.sh` and `docker-compose.yml` are the Docker entry points; see
-  [`choosing-an-entry-point.md`](choosing-an-entry-point.md).
+  [Choosing an entry point](choosing-an-entry-point.md).
 - `pyproject.toml` is the source of truth for the distribution, the optional extras, and
   the workspace member list.
 
@@ -198,7 +198,7 @@ the source of the navigation/where-things-live picture used across the site.
 - Add core agentseek code under `src/agentseek/`. If a change needs its own dependency or
   test surface, it is a contrib package.
 - New plugins go under `contrib/agentseek-<feature>/` and follow the README standard from
-  [`contrib/README.md`](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md). The bundled `plugin-creator` skill
+  [contrib/README.md](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md). The bundled `plugin-creator` skill
   at `src/skills/plugin-creator/` scaffolds the layout.
 - New end-to-end demos go under `examples/`, not under a package.
 - Skill changes go under `src/skills/` (bundled) or `.agents/skills/` (project-local);
@@ -208,14 +208,14 @@ the source of the navigation/where-things-live picture used across the site.
 
 ## Related
 
-- How-to: [`../how-to/install-a-plugin.md`](../how-to/install-a-plugin.md),
-  [`../how-to/add-skills.md`](../how-to/add-skills.md),
-  [`../how-to/author-a-contrib-plugin.md`](../how-to/author-a-contrib-plugin.md)
-- Reference: [`../reference/file-layout.md`](../reference/file-layout.md),
-  [`../reference/packages.md`](../reference/packages.md),
-  [`../reference/templates.md`](../reference/templates.md)
-- Explanation: [`extension-model.md`](extension-model.md),
-  [`choosing-an-entry-point.md`](choosing-an-entry-point.md)
+- How-to: [How to install a plugin](../how-to/install-a-plugin.md),
+  [How to add skills](../how-to/add-skills.md),
+  [How to author a contrib plugin](../how-to/author-a-contrib-plugin.md)
+- Reference: [File layout reference](../reference/file-layout.md),
+  [Packages reference](../reference/packages.md),
+  [Templates reference](../reference/templates.md)
+- Explanation: [The extension model](extension-model.md),
+  [Choosing an entry point](choosing-an-entry-point.md)
 - External: [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md),
   [examples catalogue](https://github.com/ob-labs/agentseek/tree/main/examples),
   [Hub page](../hub.md)

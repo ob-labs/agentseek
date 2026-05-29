@@ -39,7 +39,7 @@ how-tos can stay short.
 
 | Need | Use | Authoring shape | Lives at | When to grow out of it |
 | --- | --- | --- | --- | --- |
-| Durable project instructions (channels, conventions, runtime rules) | **Project instructions** | One Markdown file | [`AGENTS.md`](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) | When the rule depends on runtime state or a specific tool call — that is a skill or plugin. |
+| Durable project instructions (channels, conventions, runtime rules) | **Project instructions** | One Markdown file | [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) | When the rule depends on runtime state or a specific tool call — that is a skill or plugin. |
 | Task-specific behaviour, workflow knowledge, small script the agent should know how to call | **Agent Skill** | `SKILL.md` (+ optional scripts) in a folder | `.agents/skills/` (project), `src/skills/` (bundled) | When you need a new hook, channel, store, or tool registration. |
 | Runtime hooks, channels, tools, stores, schedulers, model providers | **Bub-compatible plugin** | Python package with `[project.entry-points.bub]` | Installed into the same venv as agentseek; sandbox at `.agentseek/agentseek-project` | When the integration is large enough to own docs, tests, and optional deps — that is a contrib package. |
 | External tool or service that already speaks MCP | **MCP server entry** | JSON entry in `mcp.json` | `.agentseek/mcp.json` (default) or `.agents/mcp.json` | When the integration needs lifecycle hooks of its own — write a plugin. |
@@ -66,7 +66,7 @@ the contrib monorepo (`contrib/README.md`) sets the standard for the heaviest st
   distributions (bundled `src/skills` is included in the build via
   `pyproject.toml:73-77`).
 - The MCP config path follows the alias model from
-  [`bub-relationship.md`](bub-relationship.md): `${BUB_HOME}/mcp.json` by default, override
+  [How agentseek relates to Bub](bub-relationship.md): `${BUB_HOME}/mcp.json` by default, override
   via `AGENTSEEK_MCP_CONFIG_PATH`.
 - The install sandbox at `.agentseek/agentseek-project` is created on demand by
   `src/agentseek/cli.py:115-140`. Plugins land in that sandbox's environment, not in a
@@ -82,17 +82,17 @@ the contrib monorepo (`contrib/README.md`) sets the standard for the heaviest st
   makes the choice visible and reviewable.
 - **Contrib README is the doc standard.** Once an integration is heavy enough to need
   install steps, env vars, and runtime behaviour notes, those facts belong next to the
-  code. That is why [`contrib/README.md`](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md) defines a fixed
+  code. That is why [contrib/README.md](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md) defines a fixed
   section order and the main docs only link out.
 - **`AGENTSEEK_*` vs `BUB_*`.** Plugin authors keep `BUB_*` for runtime behaviour and
   reserve `AGENTSEEK_*` for distribution-scoped settings. When a plugin supports both, the
-  upstream `BUB_*` name wins — see [`bub-relationship.md`](bub-relationship.md).
+  upstream `BUB_*` name wins — see [How agentseek relates to Bub](bub-relationship.md).
 
 ## Consequences for users
 
 - The first question to ask is "where on the matrix does this belong?" — not "do I need a
   plugin?".
-- Project instructions in [`AGENTS.md`](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) apply to every turn in this
+- Project instructions in [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) apply to every turn in this
   repo; treat them as durable, not as scratch space.
 - Anything that would otherwise become a `print` statement in your own code probably
   belongs in a skill or a plugin hook; the tape captures it in either case.
@@ -105,14 +105,14 @@ the contrib monorepo (`contrib/README.md`) sets the standard for the heaviest st
 ## Related
 
 - How-to:
-  - Project instructions: edit [`AGENTS.md`](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) directly.
-  - [`../how-to/add-skills.md`](../how-to/add-skills.md)
-  - [`../how-to/install-a-plugin.md`](../how-to/install-a-plugin.md)
-  - [`../how-to/add-mcp-server.md`](../how-to/add-mcp-server.md)
-  - [`../how-to/author-a-contrib-plugin.md`](../how-to/author-a-contrib-plugin.md)
-- Reference: [`../reference/packages.md`](../reference/packages.md),
-  [`../reference/file-layout.md`](../reference/file-layout.md)
-- Explanation: [`runtime-data-model.md`](runtime-data-model.md),
-  [`bub-relationship.md`](bub-relationship.md)
+  - Project instructions: edit [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) directly.
+  - [How to add skills](../how-to/add-skills.md)
+  - [How to install a plugin](../how-to/install-a-plugin.md)
+  - [How to add an MCP server](../how-to/add-mcp-server.md)
+  - [How to author a contrib plugin](../how-to/author-a-contrib-plugin.md)
+- Reference: [Packages reference](../reference/packages.md),
+  [File layout reference](../reference/file-layout.md)
+- Explanation: [The runtime data model](runtime-data-model.md),
+  [How agentseek relates to Bub](bub-relationship.md)
 - External: [Bub Hub](https://hub.bub.build),
   [Model Context Protocol](https://modelcontextprotocol.io/)

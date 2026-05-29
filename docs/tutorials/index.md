@@ -23,31 +23,32 @@ project lifecycle commands (`create / run / build / deploy / api / ctx / skills`
 below cover both paths: tutorial 01 runs the harness directly from a synced checkout;
 tutorial 02 starts with the lifecycle CLI and lands inside a generated harness project.
 
-If you want a task recipe instead (cookbook style), see `../how-to/index.md`. For exact
-flag names or environment aliases, see `../reference/index.md`.
+If you want a task recipe instead (cookbook style), see the
+[How-to guides](../how-to/index.md). For exact flag names or environment aliases,
+see the [Reference](../reference/index.md).
 
 ## Audience matrix
 
 | If you are… | Start with | Then |
 | --- | --- | --- |
-| A1 — a first-time evaluator | `01-quick-demo-cli.md` | `../explanation/what-agentseek-is.md` |
-| A2 — building an app on top of agentseek | `02-first-harness-app.md` | `03-add-a-skill-and-mcp.md`, then `../how-to/` |
-| A3 — writing a plugin or integration | `02-first-harness-app.md` (for the runtime shape) | `../explanation/runtime-data-model.md`, `../how-to/author-a-contrib-plugin.md` |
-| A4 — operating a deployment | `03-add-a-skill-and-mcp.md` | `../how-to/run-with-docker-compose.md`, `../reference/environment.md` |
-| A5 — just curious | skip tutorials | `../explanation/what-agentseek-is.md` |
+| A1 — a first-time evaluator | [Quick demo (CLI)](01-quick-demo-cli.md) | [What agentseek is](../explanation/what-agentseek-is.md) |
+| A2 — building an app on top of agentseek | [First harness app](02-first-harness-app.md) | [Add a skill and MCP](03-add-a-skill-and-mcp.md), then [How-to guides](../how-to/index.md) |
+| A3 — writing a plugin or integration | [First harness app](02-first-harness-app.md) | [Runtime data model](../explanation/runtime-data-model.md), then [Author a contrib plugin](../how-to/author-a-contrib-plugin.md) |
+| A4 — operating a deployment | [Add a skill and MCP](03-add-a-skill-and-mcp.md) | [Run with Docker Compose](../how-to/run-with-docker-compose.md), then [Environment variables](../reference/environment.md) |
+| A5 — just curious | skip tutorials | [What agentseek is](../explanation/what-agentseek-is.md) |
 
 ## The three tutorials
 
-1. **`01-quick-demo-cli.md` — Quick demo via the CLI.** A five-minute evaluator path:
+1. **[Quick demo (CLI)](01-quick-demo-cli.md).** A five-minute evaluator path:
    clone, `uv sync`, set three environment variables, run `agentseek chat`. This is
    **Path B** from the overview: the harness runtime CLI from a synced checkout. Use it
    when you are evaluating agentseek, running a local one-off workflow, or poking at the
    runtime to diagnose something.
-2. **`02-first-harness-app.md` — Your first harness app.** The application-developer path.
+2. **[First harness app](02-first-harness-app.md).** The application-developer path.
    Start with `agentseek create` (owned by `agentseek-cli`), then `uv sync` inside the
    generated project so the harness itself resolves there. After this page, that generated
    project — not the cloned repo — is the surface you keep editing.
-3. **`03-add-a-skill-and-mcp.md` — Add a skill and an MCP server.** Operational shape:
+3. **[Add a skill and MCP](03-add-a-skill-and-mcp.md).** Operational shape:
    drop a project-local skill under `.agents/skills/<name>/SKILL.md`, register an MCP
    server in `.agents/mcp.json` (or `.agentseek/mcp.json`), and watch the running agent
    pick both up.

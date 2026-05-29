@@ -78,7 +78,7 @@ cd my_bub_agent
 uv sync
 ```
 
-这会在 `my_bub_agent/` 里（而不是在 agentseek checkout 里）创建一个 `.venv/`，并安装 `agentseek`、`agentseek-ag-ui` 和其它列出的依赖。如果你是从本地源码 checkout 生成的项目，`pyproject.toml` 已经通过 `[tool.uv.sources]` 指向它了 —— 完整对照表见 `../reference/templates.md`。
+这会在 `my_bub_agent/` 里（而不是在 agentseek checkout 里）创建一个 `.venv/`，并安装 `agentseek`、`agentseek-ag-ui` 和其它列出的依赖。如果你是从本地源码 checkout 生成的项目，`pyproject.toml` 已经通过 `[tool.uv.sources]` 指向它了 —— 完整对照表见 [Templates reference](../reference/templates.md)。
 
 ## 3. 配置模型
 
@@ -101,7 +101,7 @@ COPILOTKIT_PORT=4000
 AGENTSEEK_AG_UI_AGENT_URL=http://127.0.0.1:8088/agent
 ```
 
-填入 `AGENTSEEK_API_KEY`（如果你不用 OpenAI，再填 `AGENTSEEK_API_BASE`）。模型也可以换 —— `openrouter:free`、`openai:qwen-plus` 等等。变量名和 CLI 用的是同一套，因为模板依赖的是同一个 agentseek 发行版。完整参考在 `../reference/environment.md`。
+填入 `AGENTSEEK_API_KEY`（如果你不用 OpenAI，再填 `AGENTSEEK_API_BASE`）。模型也可以换 —— `openrouter:free`、`openai:qwen-plus` 等等。变量名和 CLI 用的是同一套，因为模板依赖的是同一个 agentseek 发行版。完整参考在 [Environment variables reference](../reference/environment.md)。
 
 ## 4. 运行 gateway
 
@@ -133,13 +133,13 @@ npm install --prefix frontend
 uv run agentseek run --no-browser
 ```
 
-`agentseek run`（由 `agentseek-cli` contrib 包提供，见 `../reference/cli.md`）包装了 `src/my_bub_agent/dev.py` 中的 supervisor。它会在 `AGENTSEEK_AG_UI_PORT`（默认 `8088`）上启动 gateway，在 `FRONTEND_PORT`（默认 `5173`）上启动 CopilotKit 支持的前端。两个进程都报告 ready 之后，在浏览器中打开 `http://127.0.0.1:5173`，发一轮对话。
+`agentseek run`（由 `agentseek-cli` contrib 包提供，见 [CLI reference](../reference/cli.md)）包装了 `src/my_bub_agent/dev.py` 中的 supervisor。它会在 `AGENTSEEK_AG_UI_PORT`（默认 `8088`）上启动 gateway，在 `FRONTEND_PORT`（默认 `5173`）上启动 CopilotKit 支持的前端。两个进程都报告 ready 之后，在浏览器中打开 `http://127.0.0.1:5173`，发一轮对话。
 
 ## 5. 确认这个 agent 是你的
 
 打开 `src/my_bub_agent/dev.py`，看看 supervisor（第 88–119 行）：gateway 是用 `agentseek gateway --enable-channel ag-ui` 拉起的，前端用的是 `npm run dev`，两者在收到 `SIGINT`/`SIGTERM` 时都会被回收。这套流程没有任何部分被锁死在 agentseek 仓库上 —— 你可以编辑这个文件、修改 channel、换掉前端，或者完全删掉前端，从别处调用 gateway。harness 是你的。
 
-模型路由决策位于 `agentseek-ag-ui`（一个 contrib 包）和 `agentseek` 发行版本身；一轮对话如何从 channel 经过 runtime 走到模型，见 `../explanation/runtime-data-model.md`。
+模型路由决策位于 `agentseek-ag-ui`（一个 contrib 包）和 `agentseek` 发行版本身；一轮对话如何从 channel 经过 runtime 走到模型，见 [The runtime data model](../explanation/runtime-data-model.md)。
 
 ## 你现在拥有什么
 
@@ -150,8 +150,8 @@ uv run agentseek run --no-browser
 
 ## 接下来去哪
 
-- 给你刚生成的项目加一个本地 skill 和一个 MCP server：`03-add-a-skill-and-mcp.md`。
-- 在不破坏项目的前提下切换模型提供方：`../how-to/configure-model.md`。
-- 查阅 `agentseek create`、`agentseek gateway` 和 `agentseek run` 的每个 flag：`../reference/cli.md`。
-- 看完整模板列表和每个模板带了什么：`../reference/templates.md`。
-- 在 Docker Compose 下运行同一个项目：`../how-to/run-with-docker-compose.md`。
+- 给你刚生成的项目加一个本地 skill 和一个 MCP server：[03 — Add a skill and an MCP server](03-add-a-skill-and-mcp.md)。
+- 在不破坏项目的前提下切换模型提供方：[How to configure the model provider](../how-to/configure-model.md)。
+- 查阅 `agentseek create`、`agentseek gateway` 和 `agentseek run` 的每个 flag：[CLI reference](../reference/cli.md)。
+- 看完整模板列表和每个模板带了什么：[Templates reference](../reference/templates.md)。
+- 在 Docker Compose 下运行同一个项目：[How to run with Docker Compose](../how-to/run-with-docker-compose.md)。

@@ -16,14 +16,14 @@ the source file wins.
 
 | Page | Mirrors |
 | --- | --- |
-| `environment.md` | `src/agentseek/env.py` — `AGENTSEEK_*` / `BUB_*` aliases. |
-| `cli.md` | `src/agentseek/cli.py` plus `agentseek <subcommand> --help`. |
-| `file-layout.md` | `.agentseek/`, `.agents/`, plugin sandbox. |
-| `packages.md` | `pyproject.toml` — extras, workspace members, contrib entry points. |
-| `templates.md` | `templates/index.json` and each `templates/<framework>/<name>/`. |
-| `docker.md` | `entrypoint.sh`, `docker-compose.yml`, `Dockerfile`. |
+| [Environment variables](environment.md) | `src/agentseek/env.py` — `AGENTSEEK_*` / `BUB_*` aliases. |
+| [CLI](cli.md) | `src/agentseek/cli.py` plus `agentseek <subcommand> --help`. |
+| [File layout](file-layout.md) | `.agentseek/`, `.agents/`, plugin sandbox. |
+| [Packages](packages.md) | `pyproject.toml` — extras, workspace members, contrib entry points. |
+| [Templates](templates.md) | `templates/index.json` and each `templates/<framework>/<name>/`. |
+| [Docker](docker.md) | `entrypoint.sh`, `docker-compose.yml`, `Dockerfile`. |
 
 ## See also
 
-- How-to: `../how-to/index.md`
-- Concepts: `../explanation/index.md`
+- How-to: [How-to guides](../how-to/index.md)
+- Concepts: [Explanation](../explanation/index.md)

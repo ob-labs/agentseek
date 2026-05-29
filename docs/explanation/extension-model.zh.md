@@ -37,7 +37,7 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
 
 | 需求 | 使用 | 编写形态 | 位于 | 何时升级 |
 | --- | --- | --- | --- | --- |
-| 持久性的项目 instructions（channel、约定、runtime 规则） | **项目 instructions** | 一个 Markdown 文件 | [`AGENTS.md`](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) | 当规则依赖 runtime 状态或某次具体 tool call 时 —— 那就是一个 skill 或 plugin。 |
+| 持久性的项目 instructions（channel、约定、runtime 规则） | **项目 instructions** | 一个 Markdown 文件 | [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) | 当规则依赖 runtime 状态或某次具体 tool call 时 —— 那就是一个 skill 或 plugin。 |
 | 任务专属行为、工作流知识、agent 应该知道如何调用的小脚本 | **Agent Skill** | 一个文件夹里的 `SKILL.md`（外加可选脚本） | `.agents/skills/`（项目）、`src/skills/`（捆绑） | 当你需要一个新的 hook、channel、store 或 tool 注册时。 |
 | Runtime hook、channel、tool、store、scheduler、model provider | **Bub 兼容的 plugin** | 带 `[project.entry-points.bub]` 的 Python 包 | 安装到与 agentseek 同一个 venv；sandbox 在 `.agentseek/agentseek-project` | 当集成大到足以拥有自己的文档、测试和可选依赖时 —— 那就是一个 contrib 包。 |
 | 已经能说 MCP 的外部工具或服务 | **MCP server entry** | `mcp.json` 中的一条 JSON entry | `.agentseek/mcp.json`（默认）或 `.agents/mcp.json` | 当集成需要自己的 lifecycle hook 时 —— 写一个 plugin。 |
@@ -60,7 +60,7 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
 - Plugin 通过 `[project.entry-points.bub]` 注册（`contrib/README.md`）。
 - Skill 从 workspace（`.agents/skills/`）和打包好的 distribution 中发现
   （捆绑的 `src/skills` 通过 `pyproject.toml:73-77` 被包含进 build）。
-- MCP 配置路径遵循 [`bub-relationship.md`](bub-relationship.md) 中的 alias 模型：默认是
+- MCP 配置路径遵循 [How agentseek relates to Bub](bub-relationship.md) 中的 alias 模型：默认是
   `${BUB_HOME}/mcp.json`，通过 `AGENTSEEK_MCP_CONFIG_PATH` override。
 - 位于 `.agentseek/agentseek-project` 的 install sandbox 由 `src/agentseek/cli.py:115-140`
   按需创建。Plugin 落到那个 sandbox 的环境里，并非 runtime 隔离单元。
@@ -73,16 +73,16 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
   步骤（plugin 或 contrib 包）背后，让这个选择变得可见、可审。
 - **contrib README 是文档标准。** 一旦集成重到需要安装步骤、环境变量和 runtime 行为说明时，
   这些事实应该挨着代码。这就是为什么
-  [`contrib/README.md`](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md)
+  [contrib/README.md](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md)
   定义了固定的小节顺序，而主文档只链接出去。
 - **`AGENTSEEK_*` vs `BUB_*`。** Plugin 作者把 `BUB_*` 保留给 runtime 行为，把
   `AGENTSEEK_*` 保留给 distribution 范围的设置。当一个 plugin 同时支持两者时，上游的 `BUB_*`
-  名称胜出 —— 见 [`bub-relationship.md`](bub-relationship.md)。
+  名称胜出 —— 见 [How agentseek relates to Bub](bub-relationship.md)。
 
 ## 对用户的影响
 
 - 第一个要问的问题是 "这属于矩阵的哪一行？" —— 而不是 "我需要 plugin 吗？"。
-- [`AGENTS.md`](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) 中的项目 instructions
+- [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) 中的项目 instructions
   对这个 repo 中的每一轮 turn 都生效；把它当作持久内容对待，不要当成草稿空间。
 - 任何在你自己代码里本来会变成 `print` 语句的东西，可能都属于某个 skill 或 plugin hook；
   无论哪种情况，tape 都会捕获它。
@@ -94,14 +94,14 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
 ## 相关
 
 - 操作指南：
-  - 项目 instructions：直接编辑 [`AGENTS.md`](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md)。
-  - [`../how-to/add-skills.md`](../how-to/add-skills.md)
-  - [`../how-to/install-a-plugin.md`](../how-to/install-a-plugin.md)
-  - [`../how-to/add-mcp-server.md`](../how-to/add-mcp-server.md)
-  - [`../how-to/author-a-contrib-plugin.md`](../how-to/author-a-contrib-plugin.md)
-- 参考：[`../reference/packages.md`](../reference/packages.md),
-  [`../reference/file-layout.md`](../reference/file-layout.md)
-- 概念解释：[`runtime-data-model.md`](runtime-data-model.md),
-  [`bub-relationship.md`](bub-relationship.md)
+  - 项目 instructions：直接编辑 [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md)。
+  - [How to add skills](../how-to/add-skills.md)
+  - [How to install a plugin](../how-to/install-a-plugin.md)
+  - [How to add an MCP server](../how-to/add-mcp-server.md)
+  - [How to author a contrib plugin](../how-to/author-a-contrib-plugin.md)
+- 参考：[Packages reference](../reference/packages.md),
+  [File layout reference](../reference/file-layout.md)
+- 概念解释：[The runtime data model](runtime-data-model.md),
+  [How agentseek relates to Bub](bub-relationship.md)
 - 外部：[Bub Hub](https://hub.bub.build),
   [Model Context Protocol](https://modelcontextprotocol.io/)

@@ -93,11 +93,11 @@ plugin，并暴露 **harness 运行时**命令面：
 适合路径 B 的场景：
 
 - 你想端到端**评估**项目 ——
-  [`../tutorials/01-quick-demo-cli.zh.md`](../tutorials/01-quick-demo-cli.zh.md)
+  [01 —— 通过 CLI 快速演示](../tutorials/01-quick-demo-cli.zh.md)
   是最短的路。
 - 你把 harness **嵌**进自己的应用。`agentseek` 就是一个普通 Python 包，
   harness 在你应用启动时随之启动。详见
-  [`../tutorials/02-first-harness-app.zh.md`](../tutorials/02-first-harness-app.zh.md)。
+  [02 —— 构建你的第一个 harness 应用](../tutorials/02-first-harness-app.zh.md)。
 - 你跑**长进程**工作负载 —— 本地 `gateway`、MCP server、或 Bub 插件开发。
 
 ### 两者共存 —— 同名、合并表面
@@ -118,7 +118,7 @@ plugin，并暴露 **harness 运行时**命令面：
   覆盖为项目生命周期 CLI 的 `run`（本地启动项目）。
 
 最终：单个 `agentseek …` 暴露两个表面的并集。每条命令属于哪个包详见
-[`../reference/cli.zh.md`](../reference/cli.zh.md)。
+[CLI 参考](../reference/cli.zh.md)。
 
 ## 部署 / 扩展面
 
@@ -133,18 +133,18 @@ plugin，并暴露 **harness 运行时**命令面：
 
 Compose 就是把路径 B 的 harness 为运维场景打了包。当你需要一个挂载工作区
 的长进程 gateway、又不想在 host 上管理 Python 环境时使用它。端到端流程见
-[`../how-to/run-with-docker-compose.zh.md`](../how-to/run-with-docker-compose.zh.md)。
+[如何使用 Docker Compose 运行](../how-to/run-with-docker-compose.zh.md)。
 
 ### Contrib 包 —— 功能维度的扩展
 
 每个 `contrib/agentseek-*/` 包都是一个可以安装在 harness 之上的 Python 发
-行物。它们列在 [`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib)
+行物。它们列在 [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib)
 下，并通过 `pyproject.toml:27-46` 暴露为可选 extras。
 
 这些是路径 B 的**运行时 plugin**：`agentseek-ag-ui`、`agentseek-langchain`、
 `agentseek-tapestore-oceanbase`、`agentseek-observability`、
 `agentseek-schedule-sqlalchemy`、`agentseek-contextseek`。它们扩展 harness，
-不替代 harness。详见 [`extension-model.md`](extension-model.md)。
+不替代 harness。详见 [The extension model](extension-model.md)。
 
 `agentseek-cli` 也在 `contrib/` 下，但它**不是**运行时 plugin —— 它是
 路径 A 的独立项目生命周期 CLI，只是同时注册了一个 Bub plugin，以实现上面
@@ -163,30 +163,30 @@ Compose 就是把路径 B 的 harness 为运维场景打了包。当你需要一
 ## 对用户的影响
 
 - 如果你是**评估者（A1）**，对一个免费 model 走路径 B 是最短的可工作路径
-  （[`../tutorials/01-quick-demo-cli.zh.md`](../tutorials/01-quick-demo-cli.zh.md)）。
+  （[01 —— 通过 CLI 快速演示](../tutorials/01-quick-demo-cli.zh.md)）。
 - 如果你是**应用开发者（A2）**，路径 A 生成项目，路径 B 在其中运行 harness
-  （[`../tutorials/02-first-harness-app.zh.md`](../tutorials/02-first-harness-app.zh.md)）。
+  （[02 —— 构建你的第一个 harness 应用](../tutorials/02-first-harness-app.zh.md)）。
 - 如果你是**插件作者（A3）**，你住在路径 B。在 `agentseek` 与 `bub` 两边
-  测试（见 [`bub-relationship.md`](bub-relationship.md)），避免对 agentseek
+  测试（见 [How agentseek relates to Bub](bub-relationship.md)），避免对 agentseek
   默认值意外耦合。
 - 如果你是**运维（A4）**，路径 B 之上的 Compose 是起点；路径 B 的 CLI 是
   调试运行时的内循环工具。
 - 如果你曾困惑「为什么 `agentseek …` 在两个环境里命令不同」——
-  请看 [`../reference/cli.zh.md`](../reference/cli.zh.md)，每条命令都标注了
+  请看 [CLI 参考](../reference/cli.zh.md)，每条命令都标注了
   它属于哪个包。
 
 ## 相关
 
-- 概览：[`../index.zh.md`](../index.zh.md)
-- 教程：[`../tutorials/01-quick-demo-cli.zh.md`](../tutorials/01-quick-demo-cli.zh.md)、
-  [`../tutorials/02-first-harness-app.zh.md`](../tutorials/02-first-harness-app.zh.md)
-- 操作指南：[`../how-to/run-locally.zh.md`](../how-to/run-locally.zh.md)、
-  [`../how-to/run-with-docker-compose.zh.md`](../how-to/run-with-docker-compose.zh.md)、
-  [`../how-to/install-a-plugin.zh.md`](../how-to/install-a-plugin.zh.md)
-- 参考：[`../reference/cli.zh.md`](../reference/cli.zh.md)、
-  [`../reference/packages.zh.md`](../reference/packages.zh.md)、
-  [`../reference/docker.zh.md`](../reference/docker.zh.md)、
-  [`../reference/templates.zh.md`](../reference/templates.zh.md)
-- 概念解释：[`what-agentseek-is.zh.md`](what-agentseek-is.zh.md)、
-  [`bub-relationship.zh.md`](bub-relationship.zh.md)、
-  [`where-things-live.zh.md`](where-things-live.zh.md)
+- 概览：[agentseek](../index.zh.md)
+- 教程：[01 —— 通过 CLI 快速演示](../tutorials/01-quick-demo-cli.zh.md)、
+  [02 —— 构建你的第一个 harness 应用](../tutorials/02-first-harness-app.zh.md)
+- 操作指南：[如何在本地运行 agentseek](../how-to/run-locally.zh.md)、
+  [如何使用 Docker Compose 运行](../how-to/run-with-docker-compose.zh.md)、
+  [如何安装一个 plugin](../how-to/install-a-plugin.zh.md)
+- 参考：[CLI 参考](../reference/cli.zh.md)、
+  [包参考](../reference/packages.zh.md)、
+  [Docker 参考](../reference/docker.zh.md)、
+  [模板参考](../reference/templates.zh.md)
+- 概念解释：[agentseek 是什么](what-agentseek-is.zh.md)、
+  [agentseek 与 Bub 的关系](bub-relationship.zh.md)、
+  [monorepo 中各样东西的位置](where-things-live.zh.md)

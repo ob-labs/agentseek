@@ -13,7 +13,7 @@ sources:
 # Docker 参考
 
 本页镜像了验证日期的 `Dockerfile`、`entrypoint.sh` 与 `docker-compose.yml`。
-任务说明请参见 `../how-to/run-with-docker-compose.md`。
+任务说明请参见 [How to run with Docker Compose](../how-to/run-with-docker-compose.md)。
 
 ## 镜像
 
@@ -89,6 +89,6 @@ sources:
 
 ## 另请参阅
 
-- 操作指南：`../how-to/run-with-docker-compose.md`、
-  `../how-to/configure-docker-workspace.md`
-- 参考：`environment.md`、`file-layout.md`
+- 操作指南：[How to run with Docker Compose](../how-to/run-with-docker-compose.md)、
+  [How to configure the Docker workspace](../how-to/configure-docker-workspace.md)
+- 参考：[Environment variables reference](environment.md)、[File layout reference](file-layout.md)

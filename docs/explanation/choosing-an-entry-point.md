@@ -100,11 +100,11 @@ every Bub plugin, and exposes the **harness runtime** command surface:
 Path B fits when:
 
 - You want to **evaluate** the project end-to-end —
-  [`../tutorials/01-quick-demo-cli.md`](../tutorials/01-quick-demo-cli.md) is
+  [01 — Quick demo via the CLI](../tutorials/01-quick-demo-cli.md) is
   the shortest route.
 - You **embed** the harness in your own application. `agentseek` is a regular
   Python package; the harness boots when your app starts. See
-  [`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md).
+  [02 — Build your first harness app](../tutorials/02-first-harness-app.md).
 - You drive **long-running** workloads — a local `gateway`, an MCP server, or
   Bub plugin development.
 
@@ -129,7 +129,7 @@ but the user-visible behaviour is identical:
   `run` (start the project locally).
 
 End result: a single `agentseek …` exposes the union of both surfaces. See
-[`../reference/cli.md`](../reference/cli.md) for the per-command attribution.
+[CLI reference](../reference/cli.md) for the per-command attribution.
 
 ## Deployment and extension surfaces
 
@@ -146,19 +146,19 @@ execs either a workspace-provided `startup.sh` or `agentseek gateway`
 Compose is the path B harness, packaged for operators. Use it when you want a
 mounted workspace plus a long-running gateway without managing a Python
 environment on the host. End-to-end walkthrough:
-[`../how-to/run-with-docker-compose.md`](../how-to/run-with-docker-compose.md).
+[How to run with Docker Compose](../how-to/run-with-docker-compose.md).
 
 ### Contrib packages — feature-scoped extensions
 
 Each `contrib/agentseek-*/` package is a Python distribution you can install on
 top of the harness. They are listed at
-[`contrib/`](https://github.com/ob-labs/agentseek/tree/main/contrib) and
+[contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib) and
 exposed as optional extras under `pyproject.toml:27-46`.
 
 These are **runtime plugins** for Path B: `agentseek-ag-ui`, `agentseek-langchain`,
 `agentseek-tapestore-oceanbase`, `agentseek-observability`,
 `agentseek-schedule-sqlalchemy`, `agentseek-contextseek`. They extend the
-harness; they do not replace it. See [`extension-model.md`](extension-model.md).
+harness; they do not replace it. See [The extension model](extension-model.md).
 
 `agentseek-cli` is also under `contrib/`, but it is **not** a runtime plugin —
 it is the standalone project lifecycle CLI of Path A, which happens to also
@@ -180,32 +180,32 @@ register a Bub plugin for the dual-mode behaviour described above.
 
 - If you are an **evaluator (A1)**, Path B against a free model is the
   shortest path to a working turn
-  ([`../tutorials/01-quick-demo-cli.md`](../tutorials/01-quick-demo-cli.md)).
+  ([01 — Quick demo via the CLI](../tutorials/01-quick-demo-cli.md)).
 - If you are an **application developer (A2)**, Path A scaffolds the project,
   then Path B runs the harness from inside it
-  ([`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md)).
+  ([02 — Build your first harness app](../tutorials/02-first-harness-app.md)).
 - If you are a **plugin author (A3)**, you live in Path B. Test under both
-  `agentseek` and `bub` (see [`bub-relationship.md`](bub-relationship.md)) so
+  `agentseek` and `bub` (see [How agentseek relates to Bub](bub-relationship.md)) so
   you catch accidental coupling to agentseek defaults.
 - If you are an **operator (A4)**, Compose on top of Path B is the right
   starting point; Path B's CLI is the inner-loop tool for poking at the
   runtime.
 - If you ever wonder why `agentseek …` has different commands in two
-  environments, look at [`../reference/cli.md`](../reference/cli.md): each
+  environments, look at [CLI reference](../reference/cli.md): each
   command lists the package that owns it.
 
 ## Related
 
-- Overview: [`../index.md`](../index.md)
-- Tutorial: [`../tutorials/01-quick-demo-cli.md`](../tutorials/01-quick-demo-cli.md),
-  [`../tutorials/02-first-harness-app.md`](../tutorials/02-first-harness-app.md)
-- How-to: [`../how-to/run-locally.md`](../how-to/run-locally.md),
-  [`../how-to/run-with-docker-compose.md`](../how-to/run-with-docker-compose.md),
-  [`../how-to/install-a-plugin.md`](../how-to/install-a-plugin.md)
-- Reference: [`../reference/cli.md`](../reference/cli.md),
-  [`../reference/packages.md`](../reference/packages.md),
-  [`../reference/docker.md`](../reference/docker.md),
-  [`../reference/templates.md`](../reference/templates.md)
-- Explanation: [`what-agentseek-is.md`](what-agentseek-is.md),
-  [`bub-relationship.md`](bub-relationship.md),
-  [`where-things-live.md`](where-things-live.md)
+- Overview: [agentseek](../index.md)
+- Tutorial: [01 — Quick demo via the CLI](../tutorials/01-quick-demo-cli.md),
+  [02 — Build your first harness app](../tutorials/02-first-harness-app.md)
+- How-to: [How to run agentseek locally](../how-to/run-locally.md),
+  [How to run with Docker Compose](../how-to/run-with-docker-compose.md),
+  [How to install a plugin](../how-to/install-a-plugin.md)
+- Reference: [CLI reference](../reference/cli.md),
+  [Packages reference](../reference/packages.md),
+  [Docker reference](../reference/docker.md),
+  [Templates reference](../reference/templates.md)
+- Explanation: [What agentseek is](what-agentseek-is.md),
+  [How agentseek relates to Bub](bub-relationship.md),
+  [Where things live in the monorepo](where-things-live.md)

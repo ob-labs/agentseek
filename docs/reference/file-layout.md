@@ -65,7 +65,7 @@ With `BUB_HOME` / `AGENTSEEK_HOME` unset, the defaults from
   startup.sh                       # optional, runs instead of `agentseek gateway`
 ```
 
-See `docker.md` for the resolution order.
+See [Docker reference](docker.md) for the resolution order.
 
 ## Plugin sandbox semantics
 
@@ -105,5 +105,5 @@ live in the user's workspace.
 
 ## See also
 
-- How-to: `../how-to/install-a-plugin.md`, `../how-to/add-skills.md`
-- Reference: `environment.md`, `docker.md`, `packages.md`
+- How-to: [How to install a plugin](../how-to/install-a-plugin.md), [How to add skills](../how-to/add-skills.md)
+- Reference: [Environment variables reference](environment.md), [Docker reference](docker.md), [Packages reference](packages.md)

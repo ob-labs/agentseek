@@ -66,7 +66,7 @@ generated project depends on it).
     | `--list-templates` | flag | — | List templates available for the type and exit. |
     | `--no-input` | flag | off | Skip cookiecutter prompts. |
 
-    See [`templates.md`](templates.md) for the bundled template list.
+    See [Templates reference](templates.md) for the bundled template list.
 
 ### `agentseek run`
 
@@ -144,7 +144,7 @@ generated project depends on it).
     `upstream`, `evidence-chain`, `chain-confidence`, `skill-tools`,
     `skill-context`, `skill-import`, `items`.
 
-    See [`../how-to/use-contextseek.md`](../how-to/use-contextseek.md) and the
+    See [How to use ContextSeek](../how-to/use-contextseek.md) and the
     [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)
     for usage.
 
@@ -260,8 +260,8 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     `agentseek mcp remove NAME` — remove a server by name. `NAME` is
     required; no other flags.
 
-    See [`../how-to/configure-mcp.md`](../how-to/configure-mcp.md) and
-    [`../how-to/add-mcp-server.md`](../how-to/add-mcp-server.md) for end-to-end
+    See [How to configure MCP servers](../how-to/configure-mcp.md) and
+    [How to add an MCP server](../how-to/add-mcp-server.md) for end-to-end
     recipes.
 
 ### `agentseek login`
@@ -311,8 +311,8 @@ uv run agentseek login openai --help
 
 ## See also
 
-- Overview: [`../index.md`](../index.md)
-- Explanation: [`../explanation/choosing-an-entry-point.md`](../explanation/choosing-an-entry-point.md)
-- How-to: `../how-to/install-a-plugin.md`, `../how-to/run-locally.md`,
-  `../how-to/run-gateway.md`, `../how-to/build-and-deploy.md`
-- Reference: `environment.md`, `packages.md`
+- Overview: [agentseek](../index.md)
+- Explanation: [Choosing an entry point](../explanation/choosing-an-entry-point.md)
+- How-to: [How to install a plugin](../how-to/install-a-plugin.md), [How to run agentseek locally](../how-to/run-locally.md),
+  [How to run the gateway](../how-to/run-gateway.md), [How to build and deploy](../how-to/build-and-deploy.md)
+- Reference: [Environment variables reference](environment.md), [Packages reference](packages.md)

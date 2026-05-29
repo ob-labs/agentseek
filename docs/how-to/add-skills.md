@@ -13,7 +13,7 @@ sources:
 
 Use this when the extension is **instruction or workflow knowledge** — a
 `SKILL.md` file plus optional scripts — rather than a new runtime hook. Use
-`install-a-plugin.md` instead when you need a new channel, store, or tool
+[How to install a plugin](install-a-plugin.md) instead when you need a new channel, store, or tool
 registration.
 
 ## Pick a scope
@@ -98,6 +98,6 @@ if you bundled it.
 
 ## Related
 
-- How-to: `install-a-plugin.md`, `author-a-contrib-plugin.md`
-- Reference: `../reference/packages.md`, `../reference/file-layout.md`
+- How-to: [How to install a plugin](install-a-plugin.md), [How to author a contrib plugin](author-a-contrib-plugin.md)
+- Reference: [Packages reference](../reference/packages.md), [File layout reference](../reference/file-layout.md)
 - Project conventions: [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md)

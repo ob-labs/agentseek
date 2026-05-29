@@ -14,7 +14,7 @@ sources:
 
 This page mirrors `Dockerfile`, `entrypoint.sh`, and `docker-compose.yml` at
 the verification date. For task instructions, see
-`../how-to/run-with-docker-compose.md`.
+[How to run with Docker Compose](../how-to/run-with-docker-compose.md).
 
 ## Image
 
@@ -92,6 +92,6 @@ gateway` invocation.
 
 ## See also
 
-- How-to: `../how-to/run-with-docker-compose.md`,
-  `../how-to/configure-docker-workspace.md`
-- Reference: `environment.md`, `file-layout.md`
+- How-to: [How to run with Docker Compose](../how-to/run-with-docker-compose.md),
+  [How to configure the Docker workspace](../how-to/configure-docker-workspace.md)
+- Reference: [Environment variables reference](environment.md), [File layout reference](file-layout.md)

@@ -97,7 +97,7 @@ uv sync
 This creates a `.venv/` inside `my_bub_agent/` (not inside the agentseek checkout) and
 installs `agentseek`, `agentseek-ag-ui`, and the other listed dependencies. If you generated
 the project from a local source checkout, `pyproject.toml` will already point to it via
-`[tool.uv.sources]` — see `../reference/templates.md` for the full table.
+`[tool.uv.sources]` — see [Templates reference](../reference/templates.md) for the full table.
 
 ## 3. Configure the model
 
@@ -123,7 +123,7 @@ AGENTSEEK_AG_UI_AGENT_URL=http://127.0.0.1:8088/agent
 Fill in `AGENTSEEK_API_KEY` (and `AGENTSEEK_API_BASE` if you are not on OpenAI). Replace the
 model if you want — `openrouter:free`, `openai:qwen-plus`, etc. The variable names are the
 same set that the CLI uses, because the template depends on the same agentseek
-distribution. The full reference is at `../reference/environment.md`.
+distribution. The full reference is at [Environment variables reference](../reference/environment.md).
 
 ## 4. Run the gateway
 
@@ -157,7 +157,7 @@ uv run agentseek run --no-browser
 ```
 
 `agentseek run` (provided by the `agentseek-cli` contrib package, see
-`../reference/cli.md`) wraps the supervisor in `src/my_bub_agent/dev.py`. It launches the
+[CLI reference](../reference/cli.md)) wraps the supervisor in `src/my_bub_agent/dev.py`. It launches the
 gateway on `AGENTSEEK_AG_UI_PORT` (default `8088`) and the CopilotKit-backed frontend on
 `FRONTEND_PORT` (default `5173`). Once both processes report ready, open
 `http://127.0.0.1:5173` in a browser and send a chat turn.
@@ -171,7 +171,7 @@ agentseek repository — you can edit the file, change the channels, swap the fr
 delete the frontend entirely and call the gateway from elsewhere. The harness is yours.
 
 The model-routing decisions live in `agentseek-ag-ui` (a contrib package) and in the
-`agentseek` distribution itself; see `../explanation/runtime-data-model.md` for how a turn
+`agentseek` distribution itself; see [The runtime data model](../explanation/runtime-data-model.md) for how a turn
 flows from a channel through the runtime to the model.
 
 ## What you have now
@@ -187,9 +187,9 @@ flows from a channel through the runtime to the model.
 ## Where to go next
 
 - Add a local skill and an MCP server to the project you just generated:
-  `03-add-a-skill-and-mcp.md`.
-- Switch model providers without breaking the project: `../how-to/configure-model.md`.
+  [03 — Add a skill and an MCP server](03-add-a-skill-and-mcp.md).
+- Switch model providers without breaking the project: [How to configure the model provider](../how-to/configure-model.md).
 - Look up every flag for `agentseek create`, `agentseek gateway`, and `agentseek run`:
-  `../reference/cli.md`.
-- See the full list of templates and what each ships: `../reference/templates.md`.
-- Run the same project under Docker Compose: `../how-to/run-with-docker-compose.md`.
+  [CLI reference](../reference/cli.md).
+- See the full list of templates and what each ships: [Templates reference](../reference/templates.md).
+- Run the same project under Docker Compose: [How to run with Docker Compose](../how-to/run-with-docker-compose.md).

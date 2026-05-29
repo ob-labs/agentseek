@@ -7,41 +7,43 @@ repo_name: ob-labs/agentseek
 
 nav:
   - Home: index.md
-  - Tutorials:
-      - Overview: tutorials/index.md
-      - Quick demo (CLI): tutorials/01-quick-demo-cli.md
-      - First harness app: tutorials/02-first-harness-app.md
-      - Add a skill and MCP: tutorials/03-add-a-skill-and-mcp.md
-  - How-to:
-      - Overview: how-to/index.md
-      - Configure model: how-to/configure-model.md
-      - Configure MCP: how-to/configure-mcp.md
-      - Configure docker workspace: how-to/configure-docker-workspace.md
-      - Install a plugin: how-to/install-a-plugin.md
-      - Add skills: how-to/add-skills.md
-      - Add an MCP server: how-to/add-mcp-server.md
-      - Run locally: how-to/run-locally.md
-      - Run the gateway: how-to/run-gateway.md
-      - Run with Docker Compose: how-to/run-with-docker-compose.md
-      - Build and deploy: how-to/build-and-deploy.md
-      - Use ContextSeek: how-to/use-contextseek.md
-      - Author a contrib plugin: how-to/author-a-contrib-plugin.md
-  - Reference:
-      - Overview: reference/index.md
-      - Environment variables: reference/environment.md
-      - CLI: reference/cli.md
-      - File layout: reference/file-layout.md
-      - Packages: reference/packages.md
-      - Templates: reference/templates.md
-      - Docker: reference/docker.md
-  - Explanation:
-      - Overview: explanation/index.md
-      - What agentseek is: explanation/what-agentseek-is.md
-      - Bub relationship: explanation/bub-relationship.md
-      - Runtime data model: explanation/runtime-data-model.md
-      - Extension model: explanation/extension-model.md
-      - Choosing an entry point: explanation/choosing-an-entry-point.md
-      - Where things live: explanation/where-things-live.md
+  - Docs:
+      - Overview: docs.md
+      - Tutorials:
+          - Overview: tutorials/index.md
+          - Quick demo (CLI): tutorials/01-quick-demo-cli.md
+          - First harness app: tutorials/02-first-harness-app.md
+          - Add a skill and MCP: tutorials/03-add-a-skill-and-mcp.md
+      - How-to:
+          - Overview: how-to/index.md
+          - Configure model: how-to/configure-model.md
+          - Configure MCP: how-to/configure-mcp.md
+          - Configure docker workspace: how-to/configure-docker-workspace.md
+          - Install a plugin: how-to/install-a-plugin.md
+          - Add skills: how-to/add-skills.md
+          - Add an MCP server: how-to/add-mcp-server.md
+          - Run locally: how-to/run-locally.md
+          - Run the gateway: how-to/run-gateway.md
+          - Run with Docker Compose: how-to/run-with-docker-compose.md
+          - Build and deploy: how-to/build-and-deploy.md
+          - Use ContextSeek: how-to/use-contextseek.md
+          - Author a contrib plugin: how-to/author-a-contrib-plugin.md
+      - Explanation:
+          - Overview: explanation/index.md
+          - What agentseek is: explanation/what-agentseek-is.md
+          - Bub relationship: explanation/bub-relationship.md
+          - Runtime data model: explanation/runtime-data-model.md
+          - Extension model: explanation/extension-model.md
+          - Choosing an entry point: explanation/choosing-an-entry-point.md
+          - Where things live: explanation/where-things-live.md
+      - Reference:
+          - Overview: reference/index.md
+          - Environment variables: reference/environment.md
+          - CLI: reference/cli.md
+          - File layout: reference/file-layout.md
+          - Packages: reference/packages.md
+          - Templates: reference/templates.md
+          - Docker: reference/docker.md
   - Blog:
       - Intro: blog/index.md
       - Introducing agentseek: blog/introducing-agentseek.md
@@ -60,6 +62,7 @@ plugins:
           build: true
           nav_translations:
             Home: Home
+            Docs: Docs
             Tutorials: Tutorials
             How-to: How-to
             Reference: Reference
@@ -74,6 +77,7 @@ plugins:
           build: true
           nav_translations:
             Home: 首页
+            Docs: 文档
             Tutorials: 教程
             How-to: 操作指南
             Reference: 参考

@@ -76,7 +76,7 @@ Bub 兼容 plugin 时使用本指南。plugin 契约、README 结构与
 5. 使用捆绑的 `plugin-creator` skill 来脚手架包结构。
    agentseek 改造版镜像了上游 Bub 的 contrib 流程，但
    专门针对 `contrib/agentseek-*`、`AGENTSEEK_*` 别名以及捆绑的
-   `src/skills` (参见 `../explanation/extension-model.md`)。
+   `src/skills` (参见 [The extension model](../explanation/extension-model.md))。
 
 ### CLI 快捷方式
 
@@ -93,6 +93,6 @@ Bub 兼容 plugin 时使用本指南。plugin 契约、README 结构与
 ## 相关
 
 - contrib 标准: [contrib/README.md](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md)
-- 操作指南: `install-a-plugin.md`, `add-skills.md`
-- 参考: `../reference/packages.md`
-- 概念: `../explanation/extension-model.md`
+- 操作指南: [How to install a plugin](install-a-plugin.md), [How to add skills](add-skills.md)
+- 参考: [Packages reference](../reference/packages.md)
+- 概念: [The extension model](../explanation/extension-model.md)

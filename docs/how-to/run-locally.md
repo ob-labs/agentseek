@@ -25,11 +25,11 @@ it.
 
 ## Prerequisites
 
-- Model and key configured — see `configure-model.md`.
+- Model and key configured — see [How to configure the model provider](configure-model.md).
 - A working harness environment (`uv sync` in this repo, or `uv sync` inside a
   generated project).
 - For `agentseek run`: a project created with `agentseek create` (see
-  `../reference/templates.md`) **or** an existing `agentseek-cli`-compatible
+  [Templates reference](../reference/templates.md)) **or** an existing `agentseek-cli`-compatible
   layout in the current directory.
 
 ## Option 1 — `agentseek chat`
@@ -39,7 +39,7 @@ channel with lifecycle channels enabled
 (`src/agentseek/cli.py:83`). Use it to sanity-check a model / MCP / skills
 combination without any frontend.
 
-1. Make sure `.env` has a model and key. See `configure-model.md`.
+1. Make sure `.env` has a model and key. See [How to configure the model provider](configure-model.md).
 
 2. Run a session:
 
@@ -77,7 +77,7 @@ waits for the frontend to become ready.
    | `--mode` | `auto` | One of `auto`, `compose`, `python`. |
 
 `--mode compose` defers to Docker Compose; see
-`run-with-docker-compose.md`. `--mode python` runs the project's Python
+[How to run with Docker Compose](run-with-docker-compose.md). `--mode python` runs the project's Python
 entry point directly.
 
 ## Troubleshooting
@@ -96,6 +96,6 @@ your `.agentseek/` runtime home.
 
 ## Related
 
-- How-to: `run-gateway.md`, `run-with-docker-compose.md`,
-  `configure-model.md`
-- Reference: `../reference/cli.md`
+- How-to: [How to run the gateway](run-gateway.md), [How to run with Docker Compose](run-with-docker-compose.md),
+  [How to configure the model provider](configure-model.md)
+- Reference: [CLI reference](../reference/cli.md)

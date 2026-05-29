@@ -13,7 +13,7 @@ sources:
 
 当你需要通过 MCP 向 agent 暴露外部工具或服务时使用本指南。本页讲解
 **如何编写一条条目**；如果要选择文件 **放在哪里**，请参考
-`configure-mcp.md`。
+[How to configure MCP servers](configure-mcp.md)。
 
 ## 前置条件
 
@@ -99,5 +99,5 @@ plugin 为准。
 
 ## 相关
 
-- 操作指南: `configure-mcp.md`, `configure-docker-workspace.md`
-- 参考: `../reference/environment.md`
+- 操作指南: [How to configure MCP servers](configure-mcp.md), [How to configure the Docker workspace](configure-docker-workspace.md)
+- 参考: [Environment variables reference](../reference/environment.md)

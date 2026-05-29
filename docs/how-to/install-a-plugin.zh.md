@@ -92,6 +92,6 @@ uv run agentseek update bub-feishu   # update one
 
 ## 相关
 
-- 操作指南: `author-a-contrib-plugin.md`, `add-skills.md`
-- 参考: `../reference/cli.md`, `../reference/file-layout.md`
-- 概念: `../explanation/extension-model.md`
+- 操作指南: [How to author a contrib plugin](author-a-contrib-plugin.md), [How to add skills](add-skills.md)
+- 参考: [CLI reference](../reference/cli.md), [File layout reference](../reference/file-layout.md)
+- 概念: [The extension model](../explanation/extension-model.md)

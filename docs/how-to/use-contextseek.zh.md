@@ -86,4 +86,4 @@ uv sync --no-extra context
 ## 相关
 
 - contrib: [agentseek-contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)
-- 参考: `../reference/cli.md`, `../reference/packages.md`
+- 参考: [CLI reference](../reference/cli.md), [Packages reference](../reference/packages.md)

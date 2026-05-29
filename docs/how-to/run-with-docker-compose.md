@@ -23,7 +23,7 @@ standalone Path A lifecycle CLI.
 - Docker (with the `compose` subcommand) installed.
 - The repository checked out (Compose builds from `.`).
 - A `.env` next to `docker-compose.yml` with at least an `AGENTSEEK_MODEL`
-  and an `AGENTSEEK_API_KEY`. See `configure-model.md`.
+  and an `AGENTSEEK_API_KEY`. See [How to configure the model provider](configure-model.md).
 
 ## Steps
 
@@ -97,5 +97,5 @@ Remove `.env` entries you added.
 
 ## Related
 
-- How-to: `configure-docker-workspace.md`, `build-and-deploy.md`
-- Reference: `../reference/docker.md`, `../reference/environment.md`
+- How-to: [How to configure the Docker workspace](configure-docker-workspace.md), [How to build and deploy](build-and-deploy.md)
+- Reference: [Docker reference](../reference/docker.md), [Environment variables reference](../reference/environment.md)

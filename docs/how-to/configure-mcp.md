@@ -33,7 +33,7 @@ symlinks it into `${AGENTSEEK_HOME}/mcp.json` (`entrypoint.sh:13`, `:37`).
 
 ## Steps
 
-1. Write the MCP server file. See `add-mcp-server.md` for the entry format.
+1. Write the MCP server file. See [How to add an MCP server](add-mcp-server.md) for the entry format.
 
    ```json title=".agentseek/mcp.json"
    {
@@ -86,5 +86,5 @@ Delete the `mcp.json` file. Unset `AGENTSEEK_MCP_CONFIG_PATH` if you set it.
 
 ## Related
 
-- How-to: `add-mcp-server.md`, `configure-docker-workspace.md`
-- Reference: `../reference/environment.md`, `../reference/docker.md`
+- How-to: [How to add an MCP server](add-mcp-server.md), [How to configure the Docker workspace](configure-docker-workspace.md)
+- Reference: [Environment variables reference](../reference/environment.md), [Docker reference](../reference/docker.md)

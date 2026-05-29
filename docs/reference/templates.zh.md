@@ -98,6 +98,6 @@ sources:
 
 ## 另请参阅
 
-- 操作指南：`../how-to/install-a-plugin.md`
-- 教程：`../tutorials/02-first-harness-app.md`
-- 参考：`cli.md`
+- 操作指南：[How to install a plugin](../how-to/install-a-plugin.md)
+- 教程：[02 — Build your first harness app](../tutorials/02-first-harness-app.md)
+- 参考：[CLI reference](cli.md)

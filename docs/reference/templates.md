@@ -100,6 +100,6 @@ runnable bound to agentseek via `agentseek-langchain`.
 
 ## See also
 
-- How-to: `../how-to/install-a-plugin.md`
-- Tutorial: `../tutorials/02-first-harness-app.md`
-- Reference: `cli.md`
+- How-to: [How to install a plugin](../how-to/install-a-plugin.md)
+- Tutorial: [02 — Build your first harness app](../tutorials/02-first-harness-app.md)
+- Reference: [CLI reference](cli.md)

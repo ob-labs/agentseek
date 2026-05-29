@@ -13,7 +13,7 @@ sources:
 # How to build and deploy
 
 Use this when you have a generated project (see
-`../reference/templates.md`) and want to ship it as a container image and a
+[Templates reference](../reference/templates.md)) and want to ship it as a container image and a
 set of Compose / Kubernetes manifests. Both commands are provided by
 `agentseek-cli` (`pyproject.toml:31`).
 
@@ -105,6 +105,6 @@ directory if you want to discard them.
 
 ## Related
 
-- How-to: `run-with-docker-compose.md`
-- Reference: `../reference/cli.md`, `../reference/docker.md`
+- How-to: [How to run with Docker Compose](run-with-docker-compose.md)
+- Reference: [CLI reference](../reference/cli.md), [Docker reference](../reference/docker.md)
 - Contrib: [agentseek-cli README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-cli/README.md)

@@ -34,7 +34,7 @@ which package is active in the current environment.
 > reliable path is Path B (`git clone + uv sync`) or Path A
 > (`uv tool install agentseek-cli` → `agentseek create` → `uv sync` inside the
 > generated project), both of which own the `[tool.uv.sources]` block. See
-> [`../index.md`](../index.md).
+> [agentseek](../index.md).
 
 ### `agentseek` (harness)
 
@@ -59,7 +59,7 @@ which package is active in the current environment.
 
 The dual registration (`project.scripts` + `entry-points.bub`) is what lets the
 same package act as a standalone CLI on Path A and a runtime plugin (folded into
-`agentseek …`) on Path B. See [`cli.md`](cli.md) for the command surface in
+`agentseek …`) on Path B. See [CLI reference](cli.md) for the command surface in
 each mode.
 
 ## Harness core dependencies
@@ -157,8 +157,8 @@ mirror (e.g. `https://pypi.tuna.tsinghua.edu.cn/simple`).
 
 ## See also
 
-- Overview: [`../index.md`](../index.md)
-- Explanation: [`../explanation/choosing-an-entry-point.md`](../explanation/choosing-an-entry-point.md)
-- How-to: `../how-to/install-a-plugin.md`,
-  `../how-to/author-a-contrib-plugin.md`
-- Reference: `cli.md`, `file-layout.md`
+- Overview: [agentseek](../index.md)
+- Explanation: [Choosing an entry point](../explanation/choosing-an-entry-point.md)
+- How-to: [How to install a plugin](../how-to/install-a-plugin.md),
+  [How to author a contrib plugin](../how-to/author-a-contrib-plugin.md)
+- Reference: [CLI reference](cli.md), [File layout reference](file-layout.md)

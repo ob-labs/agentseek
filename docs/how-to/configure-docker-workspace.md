@@ -74,5 +74,5 @@ overrides in `.env` to return to defaults.
 
 ## Related
 
-- How-to: `run-with-docker-compose.md`, `configure-mcp.md`
-- Reference: `../reference/docker.md`, `../reference/environment.md`
+- How-to: [How to run with Docker Compose](run-with-docker-compose.md), [How to configure MCP servers](configure-mcp.md)
+- Reference: [Docker reference](../reference/docker.md), [Environment variables reference](../reference/environment.md)

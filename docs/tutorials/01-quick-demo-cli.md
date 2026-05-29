@@ -83,7 +83,7 @@ moving on.
 
 agentseek reads `AGENTSEEK_*` variables and forwards them to the underlying Bub runtime as
 `BUB_*` aliases. The mapping lives in `src/agentseek/env.py` (`apply_agentseek_env_aliases`).
-For exact precedence rules, see `../reference/environment.md`.
+For exact precedence rules, see [Environment variables reference](../reference/environment.md).
 
 Export the three variables that matter for a CLI demo:
 
@@ -131,7 +131,7 @@ just what the local checkout happened to be configured for. Type a short prompt 
 > **Single-shot variant.** If you just want one prompt without dropping into the REPL,
 > `uv run agentseek run "summarize this workspace in one sentence"` is available. Note that
 > `agentseek run` belongs to the `agentseek-cli` contrib package and is wired through to the
-> upstream Bub `run` behaviour; see `../reference/cli.md` for the full surface.
+> upstream Bub `run` behaviour; see [CLI reference](../reference/cli.md) for the full surface.
 
 ## What you have now
 
@@ -141,10 +141,10 @@ just what the local checkout happened to be configured for. Type a short prompt 
 
 ## Where to go next
 
-- To generate a project you own, continue with `02-first-harness-app.md`. That tutorial
+- To generate a project you own, continue with [02 — Build your first harness app](02-first-harness-app.md). That tutorial
   starts with `agentseek create` (owned by `agentseek-cli`) and then switches into the
   generated project's harness environment.
 - To understand why the demo uses `.agentseek/` for local state and how the alias model
-  works, read `../explanation/bub-relationship.md`.
+  works, read [How agentseek relates to Bub](../explanation/bub-relationship.md).
 - To look up every CLI flag or environment variable instead of memorising them, see
-  `../reference/cli.md` and `../reference/environment.md`.
+  [CLI reference](../reference/cli.md) and [Environment variables reference](../reference/environment.md).

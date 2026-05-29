@@ -14,7 +14,8 @@ sources:
 
 Task-oriented recipes for operators and integrators. Each page assumes you
 already have a working **harness** environment. If you do not, start with
-`../tutorials/01-quick-demo-cli.md` and `../tutorials/02-first-harness-app.md`.
+[Quick demo (CLI)](../tutorials/01-quick-demo-cli.md) and
+[First harness app](../tutorials/02-first-harness-app.md).
 
 The job split from the overview matters here:
 
@@ -32,34 +33,34 @@ the page says so up front. Pages follow a consistent outline:
 
 ## Configure
 
-- `configure-model.md` — pick a provider, set keys, switch models from code or
+- [Configure model](configure-model.md) — pick a provider, set keys, switch models from code or
   CLI.
-- `configure-mcp.md` — place `mcp.json` under `.agentseek/` or `.agents/`,
+- [Configure MCP](configure-mcp.md) — place `mcp.json` under `.agentseek/` or `.agents/`,
   and point the harness or CLI at it.
-- `configure-docker-workspace.md` — switch workspace mount, MCP path, and
+- [Configure docker workspace](configure-docker-workspace.md) — switch workspace mount, MCP path, and
   sandbox in Compose.
 
 ## Extend
 
-- `install-a-plugin.md` — install a plugin with `agentseek install` and load
+- [Install a plugin](install-a-plugin.md) — install a plugin with `agentseek install` and load
   it from the harness.
-- `add-skills.md` — register project-local skills alongside bundled ones.
-- `add-mcp-server.md` — author an MCP entry that both shapes pick up.
-- `author-a-contrib-plugin.md` — scaffold a new `contrib/agentseek-<feature>/`
+- [Add skills](add-skills.md) — register project-local skills alongside bundled ones.
+- [Add an MCP server](add-mcp-server.md) — author an MCP entry that both shapes pick up.
+- [Author a contrib plugin](author-a-contrib-plugin.md) — scaffold a new `contrib/agentseek-<feature>/`
   package.
 
 ## Run
 
-- `run-locally.md` — invoke a single turn through the harness, or with
+- [Run locally](run-locally.md) — invoke a single turn through the harness, or with
   `agentseek run` and `agentseek chat`.
-- `run-gateway.md` — operate long-running channel listeners.
-- `run-with-docker-compose.md` — Compose workflow, mounts, and env defaults.
-- `build-and-deploy.md` — package and ship with `agentseek build` and
+- [Run the gateway](run-gateway.md) — operate long-running channel listeners.
+- [Run with Docker Compose](run-with-docker-compose.md) — Compose workflow, mounts, and env defaults.
+- [Build and deploy](build-and-deploy.md) — package and ship with `agentseek build` and
   `agentseek deploy`.
-- `use-contextseek.md` — drive the `agentseek ctx` flow from the CLI, and
+- [Use ContextSeek](use-contextseek.md) — drive the `agentseek ctx` flow from the CLI, and
   consume the same context from the harness.
 
 ## Related
 
-- Reference: `../reference/index.md`
-- Concepts: `../explanation/extension-model.md`
+- Reference: [Reference](../reference/index.md)
+- Concepts: [Extension model](../explanation/extension-model.md)
