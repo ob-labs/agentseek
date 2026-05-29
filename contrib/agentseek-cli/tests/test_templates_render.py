@@ -13,11 +13,24 @@ catch Jinja errors, missing files, and unsubstituted variables before they hit
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
 from agentseek_cli.commands import create as create_module
 from cookiecutter.main import cookiecutter
+
+
+def _patch_template_for_test(template_dir: Path, tmp_path: Path) -> Path:
+    """Copy a template dir and inject ``_agentseek_source_path`` if missing."""
+    patched = tmp_path / "patched_template" / template_dir.name
+    shutil.copytree(template_dir, patched)
+    cc_file = patched / "cookiecutter.json"
+    cc_data = json.loads(cc_file.read_text(encoding="utf-8"))
+    if "_agentseek_source_path" not in cc_data:
+        cc_data["_agentseek_source_path"] = ""
+        cc_file.write_text(json.dumps(cc_data, indent=2) + "\n", encoding="utf-8")
+    return patched
 
 
 def _discover_templates() -> list[tuple[str, str, Path]]:
@@ -63,13 +76,16 @@ def test_template_renders_without_unrendered_jinja(
 ) -> None:
     """Each template must render with its defaults and leave no Jinja markers."""
     del type_name, template_name  # parametrize ids only; not used in body
+    patched = _patch_template_for_test(template_dir, tmp_path)
+    out_dir = tmp_path / "output"
+    out_dir.mkdir()
     cookiecutter(
-        template=str(template_dir),
-        output_dir=str(tmp_path),
+        template=str(patched),
+        output_dir=str(out_dir),
         no_input=True,
     )
 
-    generated = next(p for p in tmp_path.iterdir() if p.is_dir())
+    generated = next(p for p in out_dir.iterdir() if p.is_dir())
 
     pyproject = generated / "pyproject.toml"
     assert pyproject.is_file(), f"missing pyproject.toml in {generated}"
