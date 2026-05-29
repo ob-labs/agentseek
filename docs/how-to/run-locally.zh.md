@@ -24,11 +24,11 @@ sources:
 
 ## 前置条件
 
-- 已配置模型与密钥 —— 见 [How to configure the model provider](configure-model.md)。
+- 已配置模型与密钥 —— 见 [如何配置模型提供商](configure-model.zh.md)。
 - 一个可用的 harness 环境（在本仓库 `uv sync`，或在生成项目里
   `uv sync`）。
 - `agentseek run` 需要：通过 `agentseek create` 创建的项目 (见
-  [Templates reference](../reference/templates.md)) **或** 当前目录下已有的兼容
+  [模板参考](../reference/templates.zh.md)) **或** 当前目录下已有的兼容
   `agentseek-cli` 的布局。
 
 ## 选项 1 — `agentseek chat`
@@ -37,7 +37,7 @@ sources:
 (`src/agentseek/cli.py:83`)。用它在没有任何 frontend 的情况下对模型 /
 MCP / skill 组合做健全性检查。
 
-1. 确认 `.env` 中有模型与密钥。见 [How to configure the model provider](configure-model.md)。
+1. 确认 `.env` 中有模型与密钥。见 [如何配置模型提供商](configure-model.zh.md)。
 
 2. 运行一个 session：
 
@@ -74,7 +74,7 @@ MCP / skill 组合做健全性检查。
    | `--mode` | `auto` | `auto`、`compose`、`python` 之一。 |
 
 `--mode compose` 将工作交给 Docker Compose；见
-[How to run with Docker Compose](run-with-docker-compose.md)。`--mode python` 直接运行项目的 Python
+[如何使用 Docker Compose 运行](run-with-docker-compose.zh.md)。`--mode python` 直接运行项目的 Python
 入口。
 
 ## 故障排查
@@ -93,6 +93,6 @@ MCP / skill 组合做健全性检查。
 
 ## 相关
 
-- 操作指南: [How to run the gateway](run-gateway.md), [How to run with Docker Compose](run-with-docker-compose.md),
-  [How to configure the model provider](configure-model.md)
-- 参考: [CLI reference](../reference/cli.md)
+- 操作指南: [如何运行 gateway](run-gateway.zh.md), [如何使用 Docker Compose 运行](run-with-docker-compose.zh.md),
+  [如何配置模型提供商](configure-model.zh.md)
+- 参考: [CLI 参考](../reference/cli.zh.md)

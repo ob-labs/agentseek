@@ -60,7 +60,7 @@ sources:
     | `--list-templates` | flag | — | 列出该类型可用的模板并退出。 |
     | `--no-input` | flag | off | 跳过 cookiecutter 的交互提示。 |
 
-    捆绑模板列表请参见 [Templates reference](templates.md)。
+    捆绑模板列表请参见 [模板参考](templates.zh.md)。
 
 ### `agentseek run`
 
@@ -134,7 +134,7 @@ sources:
     `upstream`、`evidence-chain`、`chain-confidence`、`skill-tools`、
     `skill-context`、`skill-import`、`items`。
 
-    用法参见 [How to use ContextSeek](../how-to/use-contextseek.md) 以及
+    用法参见 [如何使用 ContextSeek](../how-to/use-contextseek.zh.md) 以及
     [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)。
 
 ### `agentseek skills`
@@ -243,8 +243,8 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     `agentseek mcp remove NAME` —— 按名称删除 server。`NAME` 必填，
     没有其他参数。
 
-    端到端流程见 [How to configure MCP servers](../how-to/configure-mcp.md) 与
-    [How to add an MCP server](../how-to/add-mcp-server.md)。
+    端到端流程见 [如何配置 MCP server](../how-to/configure-mcp.zh.md) 与
+    [如何添加 MCP server](../how-to/add-mcp-server.zh.md)。
 
 ### `agentseek login`
 
@@ -294,6 +294,6 @@ uv run agentseek login openai --help
 
 - 概览：[agentseek](../index.zh.md)
 - 概念解释：[选择一个入口](../explanation/choosing-an-entry-point.zh.md)
-- 操作指南：[How to install a plugin](../how-to/install-a-plugin.md)、[How to run agentseek locally](../how-to/run-locally.md)、
-  [How to run the gateway](../how-to/run-gateway.md)、[How to build and deploy](../how-to/build-and-deploy.md)
-- 参考：[Environment variables reference](environment.md)、[Packages reference](packages.md)
+- 操作指南：[如何安装插件](../how-to/install-a-plugin.zh.md)、[如何本地运行 agentseek](../how-to/run-locally.zh.md)、
+  [如何运行 gateway](../how-to/run-gateway.zh.md)、[如何构建和部署](../how-to/build-and-deploy.zh.md)
+- 参考：[环境变量参考](environment.zh.md)、[包参考](packages.zh.md)

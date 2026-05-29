@@ -1,5 +1,5 @@
 ---
-title: 如何配置模型 provider
+title: 如何配置模型提供方
 type: how-to
 audience: [A2, A4]
 runs: yes
@@ -10,7 +10,7 @@ sources:
   - docs/index.md
 ---
 
-# 如何配置模型 provider
+# 如何配置模型提供方
 
 当你需要让 agentseek 指向特定 LLM (OpenRouter、OpenAI、
 OpenAI 兼容 gateway、本地 server 等) 时使用本指南。agentseek 不
@@ -21,7 +21,7 @@ OpenAI 兼容 gateway、本地 server 等) 时使用本指南。agentseek 不
 - 一个可用的 **harness** 环境：要么是本仓库里 `uv sync` 之后的环境，
   要么是生成项目里各自 `uv sync` 之后的环境。单独安装 `agentseek-cli`
   并不提供 `chat`。
-- 所选 provider 的有效 API key。
+- 所选提供方的有效 API key。
 
 ## 步骤
 
@@ -80,5 +80,5 @@ uv run agentseek chat
 
 ## 相关
 
-- 参考: [Environment variables reference](../reference/environment.md)
-- 概念解释: [How agentseek relates to Bub](../explanation/bub-relationship.md)
+- 参考: [环境变量参考](../reference/environment.zh.md)
+- 概念解释: [agentseek 与 Bub 的关系](../explanation/bub-relationship.zh.md)

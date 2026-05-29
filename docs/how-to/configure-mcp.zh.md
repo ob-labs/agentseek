@@ -1,5 +1,5 @@
 ---
-title: 如何配置 MCP server
+title: 如何配置 MCP 服务器
 type: how-to
 audience: [A2, A4]
 runs: yes
@@ -9,7 +9,7 @@ sources:
   - entrypoint.sh
 ---
 
-# 如何配置 MCP server
+# 如何配置 MCP 服务器
 
 当你希望 agent 通过 MCP 调用外部工具或服务时使用本指南。
 agentseek 通过 `bub-mcp` 消费 MCP 配置，后者读取
@@ -18,7 +18,7 @@ agentseek 通过 `bub-mcp` 消费 MCP 配置，后者读取
 ## 前置条件
 
 - 已安装 agentseek (`bub-mcp` 是核心依赖，`pyproject.toml:21`)。
-- 至少有一个想注册的 MCP server。
+- 至少有一个想注册的 MCP 服务器。
 
 ## 选择位置
 
@@ -33,7 +33,7 @@ agentseek 通过 `bub-mcp` 消费 MCP 配置，后者读取
 
 ## 步骤
 
-1. 编写 MCP server 文件。条目格式见 [How to add an MCP server](add-mcp-server.md)。
+1. 编写 MCP server 文件。条目格式见 [如何添加 MCP 服务器](add-mcp-server.zh.md)。
 
    ```json title=".agentseek/mcp.json"
    {
@@ -69,8 +69,8 @@ uv run agentseek mcp add <name> <target> --transport <http|sse|stdio>
 uv run agentseek mcp remove <name>
 ```
 
-完整的参数列表见 `../reference/cli.md#agentseek-mcp`。文件路径仍由上文
-所述的 `AGENTSEEK_MCP_CONFIG_PATH` 控制，CLI 只是写穿该路径。
+完整的参数列表见 [CLI 参考](../reference/cli.zh.md)。文件路径仍由上文所述的
+`AGENTSEEK_MCP_CONFIG_PATH` 控制，CLI 只是写穿该路径。
 
 ## 故障排查
 
@@ -85,5 +85,5 @@ uv run agentseek mcp remove <name>
 
 ## 相关
 
-- 操作指南: [How to add an MCP server](add-mcp-server.md), [How to configure the Docker workspace](configure-docker-workspace.md)
-- 参考: [Environment variables reference](../reference/environment.md), [Docker reference](../reference/docker.md)
+- 操作指南: [如何添加 MCP 服务器](add-mcp-server.zh.md), [如何配置 Docker workspace](configure-docker-workspace.zh.md)
+- 参考: [环境变量参考](../reference/environment.zh.md), [Docker 参考](../reference/docker.zh.md)

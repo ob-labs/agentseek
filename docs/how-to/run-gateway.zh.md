@@ -82,6 +82,6 @@ Telegram、AG-UI 等) 时使用本指南。`agentseek gateway` 归 **harness**
 
 ## 相关
 
-- 操作指南: [How to run agentseek locally](run-locally.md), [How to run with Docker Compose](run-with-docker-compose.md),
-  [How to configure the Docker workspace](configure-docker-workspace.md)
-- 参考: [CLI reference](../reference/cli.md), [Docker reference](../reference/docker.md)
+- 操作指南: [如何本地运行 agentseek](run-locally.zh.md), [如何使用 Docker Compose 运行](run-with-docker-compose.zh.md),
+  [如何配置 Docker 工作区](configure-docker-workspace.zh.md)
+- 参考: [CLI 参考](../reference/cli.zh.md), [Docker 参考](../reference/docker.zh.md)

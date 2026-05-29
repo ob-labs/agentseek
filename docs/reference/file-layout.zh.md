@@ -63,7 +63,7 @@ entrypoint 会固定下面的变量：
   startup.sh                       # optional, runs instead of `agentseek gateway`
 ```
 
-解析顺序参见 [Docker reference](docker.md)。
+解析顺序参见 [Docker 参考](docker.zh.md)。
 
 ## Plugin sandbox 语义
 
@@ -100,5 +100,5 @@ entrypoint 会固定下面的变量：
 
 ## 另请参阅
 
-- 操作指南：[How to install a plugin](../how-to/install-a-plugin.md)、[How to add skills](../how-to/add-skills.md)
-- 参考：[Environment variables reference](environment.md)、[Docker reference](docker.md)、[Packages reference](packages.md)
+- 操作指南：[如何安装插件](../how-to/install-a-plugin.zh.md)、[如何添加 skill](../how-to/add-skills.zh.md)
+- 参考：[环境变量参考](environment.zh.md)、[Docker 参考](docker.zh.md)、[包参考](packages.zh.md)

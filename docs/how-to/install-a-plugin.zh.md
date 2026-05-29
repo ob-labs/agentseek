@@ -24,7 +24,7 @@ plugin 会安装到 **plugin sandbox**，即位于 `AGENTSEEK_PROJECT` /
 
 ## 步骤
 
-1. 选择 plugin spec。`agentseek install` 接受 (`reference/cli.md#agentseek-install-specs`)：
+1. 选择 plugin spec。`agentseek install` 的参数格式见 [CLI 参考](../reference/cli.zh.md)：
 
    - 一个 git URL
    - `owner/repo`
@@ -92,6 +92,6 @@ uv run agentseek update bub-feishu   # update one
 
 ## 相关
 
-- 操作指南: [How to author a contrib plugin](author-a-contrib-plugin.md), [How to add skills](add-skills.md)
-- 参考: [CLI reference](../reference/cli.md), [File layout reference](../reference/file-layout.md)
-- 概念: [The extension model](../explanation/extension-model.md)
+- 操作指南: [如何编写一个 contrib plugin](author-a-contrib-plugin.zh.md), [如何添加 skill](add-skills.zh.md)
+- 参考: [CLI 参考](../reference/cli.zh.md), [文件布局参考](../reference/file-layout.zh.md)
+- 概念: [扩展模型](../explanation/extension-model.zh.md)

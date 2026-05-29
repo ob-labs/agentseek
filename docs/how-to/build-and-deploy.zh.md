@@ -13,7 +13,7 @@ sources:
 # 如何构建与部署
 
 当你已经有一个生成好的项目 (参见
-[Templates reference](../reference/templates.md))，想把它打成容器镜像并产出一组
+[模板参考](../reference/templates.zh.md))，想把它打成容器镜像并产出一组
 Compose / Kubernetes manifest 时使用本指南。两个命令均由
 `agentseek-cli` 提供 (`pyproject.toml:31`)。
 
@@ -104,6 +104,6 @@ docker image rm my-agent:0.1.0
 
 ## 相关
 
-- 操作指南: [How to run with Docker Compose](run-with-docker-compose.md)
-- 参考: [CLI reference](../reference/cli.md), [Docker reference](../reference/docker.md)
+- 操作指南: [如何使用 Docker Compose 运行](run-with-docker-compose.zh.md)
+- 参考: [CLI 参考](../reference/cli.zh.md), [Docker 参考](../reference/docker.zh.md)
 - contrib: [agentseek-cli README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-cli/README.md)

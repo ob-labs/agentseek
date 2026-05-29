@@ -4,15 +4,15 @@
 
 ## 文章
 
-- [认识 agentseek](introducing-agentseek.md) —— 项目在 2026-05 的现状、从最初的
+- [认识 agentseek](introducing-agentseek.zh.md) —— 项目在 2026-05 的现状、从最初的
   `bubseek` 工作走到今天发生了什么，以及它和 Bub 与数据库的位置关系。
 
 ## 如何阅读这一部分
 
 如果你正在评估 agentseek，上面这篇文章是"为什么先于怎么做"的最短路径。如果想立刻
-动手，请直接进入 [教程](../tutorials/index.md)。要查阅精确的运行机制，
-[参考](../reference/index.md) 是查阅入口。要深入了解设计上下文，
-[概念解释](../explanation/index.md) 是讨论区。
+动手，请直接进入 [教程](../tutorials/index.zh.md)。要查阅精确的运行机制，
+[参考](../reference/index.zh.md) 是查阅入口。要深入了解设计上下文，
+[概念解释](../explanation/index.zh.md) 是讨论区。
 
 ## 未来你会在这里看到什么
 

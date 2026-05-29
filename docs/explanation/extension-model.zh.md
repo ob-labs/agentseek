@@ -1,5 +1,5 @@
 ---
-title: extension 模型
+title: 扩展模型
 type: explanation
 audience: [A2, A3, A5]
 runs: no
@@ -12,7 +12,7 @@ sources:
   - src/agentseek/cli.py
 ---
 
-# extension 模型
+# 扩展模型
 
 > **简而言之：** 你可能想对 agentseek runtime 做的任何改动，都对应到五个地方之一 ——
 > **项目 instructions**、**skill**、**plugin**、**MCP server**，或 **contrib 包**。
@@ -60,7 +60,7 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
 - Plugin 通过 `[project.entry-points.bub]` 注册（`contrib/README.md`）。
 - Skill 从 workspace（`.agents/skills/`）和打包好的 distribution 中发现
   （捆绑的 `src/skills` 通过 `pyproject.toml:73-77` 被包含进 build）。
-- MCP 配置路径遵循 [How agentseek relates to Bub](bub-relationship.md) 中的 alias 模型：默认是
+- MCP 配置路径遵循 [agentseek 与 Bub 的关系](bub-relationship.zh.md) 中的 alias 模型：默认是
   `${BUB_HOME}/mcp.json`，通过 `AGENTSEEK_MCP_CONFIG_PATH` override。
 - 位于 `.agentseek/agentseek-project` 的 install sandbox 由 `src/agentseek/cli.py:115-140`
   按需创建。Plugin 落到那个 sandbox 的环境里，并非 runtime 隔离单元。
@@ -77,7 +77,7 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
   定义了固定的小节顺序，而主文档只链接出去。
 - **`AGENTSEEK_*` vs `BUB_*`。** Plugin 作者把 `BUB_*` 保留给 runtime 行为，把
   `AGENTSEEK_*` 保留给 distribution 范围的设置。当一个 plugin 同时支持两者时，上游的 `BUB_*`
-  名称胜出 —— 见 [How agentseek relates to Bub](bub-relationship.md)。
+  名称胜出 —— 见 [agentseek 与 Bub 的关系](bub-relationship.zh.md)。
 
 ## 对用户的影响
 
@@ -95,13 +95,13 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
 
 - 操作指南：
   - 项目 instructions：直接编辑 [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md)。
-  - [How to add skills](../how-to/add-skills.md)
-  - [How to install a plugin](../how-to/install-a-plugin.md)
-  - [How to add an MCP server](../how-to/add-mcp-server.md)
-  - [How to author a contrib plugin](../how-to/author-a-contrib-plugin.md)
-- 参考：[Packages reference](../reference/packages.md),
-  [File layout reference](../reference/file-layout.md)
-- 概念解释：[The runtime data model](runtime-data-model.md),
-  [How agentseek relates to Bub](bub-relationship.md)
+  - [如何添加 skill](../how-to/add-skills.zh.md)
+  - [如何安装插件](../how-to/install-a-plugin.zh.md)
+  - [如何添加 MCP 服务器](../how-to/add-mcp-server.zh.md)
+  - [如何编写一个 contrib plugin](../how-to/author-a-contrib-plugin.zh.md)
+- 参考：[包参考](../reference/packages.zh.md),
+  [文件布局参考](../reference/file-layout.zh.md)
+- 概念解释：[运行时数据模型](runtime-data-model.zh.md),
+  [agentseek 与 Bub 的关系](bub-relationship.zh.md)
 - 外部：[Bub Hub](https://hub.bub.build),
   [Model Context Protocol](https://modelcontextprotocol.io/)

@@ -39,7 +39,7 @@ sources:
 | `agentseek create <local-path>` | 使用本地 cookiecutter 目录。 |
 | `agentseek create <type> --list-templates` | 列出该类型的模板并退出。 |
 
-完整的标志表参见 `cli.md#agentseek-create-spec`。
+完整的标志表参见 [CLI 参考](cli.zh.md)。
 
 ## 每个模板的输入
 
@@ -98,6 +98,6 @@ sources:
 
 ## 另请参阅
 
-- 操作指南：[How to install a plugin](../how-to/install-a-plugin.md)
-- 教程：[02 — Build your first harness app](../tutorials/02-first-harness-app.md)
-- 参考：[CLI reference](cli.md)
+- 操作指南：[如何安装插件](../how-to/install-a-plugin.zh.md)
+- 教程：[构建你的第一个 harness 应用](../tutorials/02-first-harness-app.zh.md)
+- 参考：[CLI 参考](cli.zh.md)

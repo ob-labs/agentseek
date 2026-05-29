@@ -144,7 +144,7 @@ Compose 就是把路径 B 的 harness 为运维场景打了包。当你需要一
 这些是路径 B 的**运行时 plugin**：`agentseek-ag-ui`、`agentseek-langchain`、
 `agentseek-tapestore-oceanbase`、`agentseek-observability`、
 `agentseek-schedule-sqlalchemy`、`agentseek-contextseek`。它们扩展 harness，
-不替代 harness。详见 [The extension model](extension-model.md)。
+不替代 harness。详见 [扩展模型](extension-model.zh.md)。
 
 `agentseek-cli` 也在 `contrib/` 下，但它**不是**运行时 plugin —— 它是
 路径 A 的独立项目生命周期 CLI，只是同时注册了一个 Bub plugin，以实现上面
@@ -167,7 +167,7 @@ Compose 就是把路径 B 的 harness 为运维场景打了包。当你需要一
 - 如果你是**应用开发者（A2）**，路径 A 生成项目，路径 B 在其中运行 harness
   （[02 —— 构建你的第一个 harness 应用](../tutorials/02-first-harness-app.zh.md)）。
 - 如果你是**插件作者（A3）**，你住在路径 B。在 `agentseek` 与 `bub` 两边
-  测试（见 [How agentseek relates to Bub](bub-relationship.md)），避免对 agentseek
+  测试（见 [agentseek 与 Bub 的关系](bub-relationship.zh.md)），避免对 agentseek
   默认值意外耦合。
 - 如果你是**运维（A4）**，路径 B 之上的 Compose 是起点；路径 B 的 CLI 是
   调试运行时的内循环工具。

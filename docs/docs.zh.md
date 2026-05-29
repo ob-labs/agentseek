@@ -38,7 +38,7 @@ sources:
 
 ## 建议起点
 
-- 第一次接触项目：从 [Quick demo (CLI)](tutorials/01-quick-demo-cli.md) 开始。
-- 准备构建应用：先读 [选择一个入口](explanation/choosing-an-entry-point.md)，再读 [第一个 harness app](tutorials/02-first-harness-app.md)。
-- 需要运维一个 workspace：进入 [操作指南](how-to/index.md)，优先看 Docker Compose 和 gateway 相关页面。
-- 需要查准确信息：直接打开 [参考](reference/index.md)。
+- 第一次接触项目：从 [通过 CLI 快速演示](tutorials/01-quick-demo-cli.zh.md) 开始。
+- 准备构建应用：先读 [选择一个入口](explanation/choosing-an-entry-point.zh.md)，再读 [构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md)。
+- 需要运维一个 workspace：进入 [操作指南](how-to/index.zh.md)，优先看 Docker Compose 和 gateway 相关页面。
+- 需要查准确信息：直接打开 [参考](reference/index.zh.md)。

@@ -58,7 +58,7 @@ agentseek 在 PyPI 上以**两个互补的包**形式提供，按职责拆分。
 
 `project.scripts` 与 `entry-points.bub` 的双重注册，使得同一个包能在路径 A
 作为独立 CLI 运行，在路径 B 作为运行时 plugin 折叠进 `agentseek …`。各模式
-下的命令面详见 [CLI reference](cli.md)。
+下的命令面详见 [CLI 参考](cli.zh.md)。
 
 ## Harness 核心依赖
 
@@ -151,6 +151,6 @@ contrib/agentseek-contextseek
 
 - 概览：[agentseek](../index.zh.md)
 - 概念解释：[选择一个入口](../explanation/choosing-an-entry-point.zh.md)
-- 操作指南：[How to install a plugin](../how-to/install-a-plugin.md)、
-  [How to author a contrib plugin](../how-to/author-a-contrib-plugin.md)
-- 参考：[CLI reference](cli.md)、[File layout reference](file-layout.md)
+- 操作指南：[如何安装插件](../how-to/install-a-plugin.zh.md)、
+  [如何编写 contrib 插件](../how-to/author-a-contrib-plugin.zh.md)
+- 参考：[CLI 参考](cli.zh.md)、[文件布局参考](file-layout.zh.md)

@@ -71,7 +71,7 @@ alias 规则位于
 | `BUB_PROJECT` | `${BUB_HOME}/agentseek-project` | `src/agentseek/env.py:22`（`DEFAULT_PLUGIN_SANDBOX`）和 `src/agentseek/env.py:70-73` |
 
 完整的逐变量表 —— 包括 model、API key、MCP path、skills home、workspace ——
-位于 [Environment variables reference](../reference/environment.md)。
+位于 [环境变量参考](../reference/environment.zh.md)。
 
 ### CLI override
 
@@ -129,12 +129,12 @@ install sandbox、chat 模式下的 lifecycle channel，以及 `AGENTSEEK_*` 命
 
 ## 相关
 
-- 教程：[02 — Build your first harness app](../tutorials/02-first-harness-app.md)
-- 操作指南：[How to install a plugin](../how-to/install-a-plugin.md),
-  [How to configure the model provider](../how-to/configure-model.md)
-- 参考：[Environment variables reference](../reference/environment.md),
-  [CLI reference](../reference/cli.md)
-- 概念解释：[The runtime data model](runtime-data-model.md)
+- 教程：[02 —— 构建你的第一个 harness 应用](../tutorials/02-first-harness-app.zh.md)
+- 操作指南：[如何安装插件](../how-to/install-a-plugin.zh.md),
+  [如何配置模型提供商](../how-to/configure-model.zh.md)
+- 参考：[环境变量参考](../reference/environment.zh.md),
+  [CLI 参考](../reference/cli.zh.md)
+- 概念解释：[运行时数据模型](runtime-data-model.zh.md)
 - 外部：[Bub repository](https://github.com/bubbuild/bub),
   [Bub Hub](https://hub.bub.build),
   [Why we rewrote Bub](https://bub.build/posts/why-rewrite-bub/)

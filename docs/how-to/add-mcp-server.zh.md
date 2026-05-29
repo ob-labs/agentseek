@@ -1,5 +1,5 @@
 ---
-title: 如何添加 MCP server
+title: 如何添加 MCP 服务器
 type: how-to
 audience: [A2, A4]
 runs: yes
@@ -9,11 +9,11 @@ sources:
   - entrypoint.sh
 ---
 
-# 如何添加 MCP server
+# 如何添加 MCP 服务器
 
 当你需要通过 MCP 向 agent 暴露外部工具或服务时使用本指南。本页讲解
 **如何编写一条条目**；如果要选择文件 **放在哪里**，请参考
-[How to configure MCP servers](configure-mcp.md)。
+[如何配置 MCP 服务器](configure-mcp.zh.md)。
 
 ## 前置条件
 
@@ -73,7 +73,7 @@ uv run agentseek mcp add fs --transport stdio --env LOG_LEVEL=info \
 ```
 
 `uv run agentseek mcp list` 列出当前已注册的 server；`remove` 按名删除。
-参见 `../reference/cli.md#agentseek-mcp`。
+参见 [CLI 参考](../reference/cli.zh.md)。
 
 ## 字段参考
 
@@ -99,5 +99,5 @@ plugin 为准。
 
 ## 相关
 
-- 操作指南: [How to configure MCP servers](configure-mcp.md), [How to configure the Docker workspace](configure-docker-workspace.md)
-- 参考: [Environment variables reference](../reference/environment.md)
+- 操作指南: [如何配置 MCP 服务器](configure-mcp.zh.md), [如何配置 Docker workspace](configure-docker-workspace.zh.md)
+- 参考: [环境变量参考](../reference/environment.zh.md)

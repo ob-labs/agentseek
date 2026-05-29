@@ -14,14 +14,14 @@ sources:
 
 | 页面 | 镜像内容 |
 | --- | --- |
-| [Environment variables](environment.md) | `src/agentseek/env.py` — `AGENTSEEK_*` / `BUB_*` 别名。 |
-| [CLI](cli.md) | `src/agentseek/cli.py` 以及 `agentseek <subcommand> --help`。 |
-| [File layout](file-layout.md) | `.agentseek/`、`.agents/`、plugin sandbox。 |
-| [Packages](packages.md) | `pyproject.toml` — extras、workspace 成员、contrib 入口点。 |
-| [Templates](templates.md) | `templates/index.json` 以及各个 `templates/<framework>/<name>/`。 |
-| [Docker](docker.md) | `entrypoint.sh`、`docker-compose.yml`、`Dockerfile`。 |
+| [环境变量参考](environment.zh.md) | `src/agentseek/env.py` — `AGENTSEEK_*` / `BUB_*` 别名。 |
+| [CLI 参考](cli.zh.md) | `src/agentseek/cli.py` 以及 `agentseek <subcommand> --help`。 |
+| [文件布局参考](file-layout.zh.md) | `.agentseek/`、`.agents/`、plugin sandbox。 |
+| [包参考](packages.zh.md) | `pyproject.toml` — extras、workspace 成员、contrib 入口点。 |
+| [模板参考](templates.zh.md) | `templates/index.json` 以及各个 `templates/<framework>/<name>/`。 |
+| [Docker 参考](docker.zh.md) | `entrypoint.sh`、`docker-compose.yml`、`Dockerfile`。 |
 
 ## 另请参阅
 
-- 操作指南：[操作指南](../how-to/index.md)
-- 概念解释：[概念解释](../explanation/index.md)
+- 操作指南：[操作指南](../how-to/index.zh.md)
+- 概念解释：[概念解释](../explanation/index.zh.md)

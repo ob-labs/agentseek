@@ -13,7 +13,7 @@ sources:
 
 当扩展属于 **指令或工作流知识** —— 一个 `SKILL.md` 文件加上可选脚本 ——
 而不是新的运行时 hook 时使用本指南。如果你需要注册新的 channel、store 或
-tool，请改用 [How to install a plugin](install-a-plugin.md)。
+tool，请改用 [如何安装插件](install-a-plugin.zh.md)。
 
 ## 选择作用域
 
@@ -97,6 +97,6 @@ skills = [
 
 ## 相关
 
-- 操作指南: [How to install a plugin](install-a-plugin.md), [How to author a contrib plugin](author-a-contrib-plugin.md)
-- 参考: [Packages reference](../reference/packages.md), [File layout reference](../reference/file-layout.md)
+- 操作指南: [如何安装插件](install-a-plugin.zh.md), [如何编写 contrib 插件](author-a-contrib-plugin.zh.md)
+- 参考: [包参考](../reference/packages.zh.md), [文件布局参考](../reference/file-layout.zh.md)
 - 项目规约: [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md)
