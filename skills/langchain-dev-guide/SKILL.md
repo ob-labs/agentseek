@@ -1,6 +1,6 @@
 ---
 name: langchain-dev-guide
-description: "A reference of LangChain / LangGraph engineering pitfalls and verified fixes. Use when running into unexpected behavior or API-choice questions during LangChain v1 development."
+description: "LangChain / LangGraph engineering pitfalls and verified fixes. Covers DeepAgents, OpenAI-compatible model integration, middleware, streaming, multi-agent orchestration, and other common development issues. Use when hitting unexpected behavior or making architecture decisions during LangChain development."
 ---
 
 # LangChain Dev Guide
@@ -21,7 +21,7 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 | Category | File | Trigger Scenarios |
 |----------|------|-------------------|
 | Deep Agents | [reference/deepagents.md](reference/deepagents.md) | Model selection, filesystem backend, disabling the general-purpose sub-agent, file permissions, long-term memory |
-| Model Integration | [reference/model-integration.md](reference/model-integration.md) | Pitfalls when using `ChatOpenAI` against OpenAI-compatible providers, integrating Reasoning models (chain-of-thought / `reasoning_content`) |
+| OpenAI-compatible Model Integration | [reference/model-integration.md](reference/model-integration.md) | Pitfalls when using `ChatOpenAI` against OpenAI-compatible providers, integrating Reasoning models (chain-of-thought / `reasoning_content`) |
 | Middleware | [reference/middleware.md](reference/middleware.md) | Middleware execution order, `state_schema` merging, HITL `resume` values, modifying state from `wrap_model_call` |
 | Streaming Output | [reference/streaming.md](reference/streaming.md) | Choosing between `stream_events` and `stream`, distinguishing tokens from multiple LLMs, disabling streaming, custom progress events |
 | Multi-Agent Orchestration | [reference/multi-agent.md](reference/multi-agent.md) | subagents vs handoffs, tool-per-agent vs dispatch, retrieving subagent state, trimming subagent boilerplate, quickly building handoff setups |

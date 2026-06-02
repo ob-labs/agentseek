@@ -24,7 +24,12 @@ So `ChatOpenAI` is suitable only for **quick verification** and **simple convers
 
 ## Issue 2: How to robustly integrate OpenAI-compatible reasoning models
 
-To address the issues above, two approaches are recommended — pick one based on team preference.
+To address the issues above, two approaches are recommended. **Before proceeding, ask the user which approach they prefer:**
+
+- **Approach 1 — Code generation via skill**: use the `langchain-cn-models` skill to generate an integration class into the project repo. Best for teams that want full control and easy customization.
+- **Approach 2 — Third-party library**: install `langchain-dev-utils` and use its built-in adapters. Best for teams that prefer zero hand-written adapter code.
+
+If the user has no preference, ask: *"Would you like to generate a custom integration class in your repo (Approach 1), or use the `langchain-dev-utils` library for a ready-made adapter (Approach 2)?"*
 
 ### Approach 1: Use the langchain-cn-models skill to generate integration classes
 
