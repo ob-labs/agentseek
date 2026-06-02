@@ -18,7 +18,7 @@ ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --all-extras --group plugins
 
 RUN chmod +x /app/entrypoint.sh && mkdir -p /workspace
 

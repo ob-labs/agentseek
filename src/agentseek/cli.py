@@ -140,6 +140,29 @@ def apply_agentseek_install_project_defaults() -> None:
     object.__setattr__(bub_cli, "_ensure_project", _ensure_plugin_sandbox)
 
 
+def apply_agentseek_install_requirement_resolution() -> None:
+    """Route ``agentseek-*`` packages directly as bare names.
+
+    Resolution order for bare names (no ``/``, no URL prefix):
+
+    1. Name starts with ``agentseek-`` → pass bare name (uv resolves from workspace or PyPI).
+    2. Otherwise → Bub's original ``_build_requirement`` (PyPI or bub-contrib).
+    """
+    import bub.builtin.cli as bub_cli
+
+    _original_build_requirement = bub_cli._build_requirement
+
+    def _build_requirement(spec: str) -> str:
+        if spec.startswith(("git@", "https://")) or "/" in spec:
+            return _original_build_requirement(spec)
+        name, _, _ = spec.partition("@")
+        if name.startswith("agentseek-"):
+            return name
+        return _original_build_requirement(spec)
+
+    object.__setattr__(bub_cli, "_build_requirement", _build_requirement)
+
+
 def apply_agentseek_cli_overrides() -> None:
     """Patch ``bub.builtin.cli`` before ``BubFramework.create_cli_app`` registers commands.
 
@@ -149,6 +172,7 @@ def apply_agentseek_cli_overrides() -> None:
     apply_agentseek_onboard_branding()
     apply_agentseek_chat_channel_defaults()
     apply_agentseek_install_project_defaults()
+    apply_agentseek_install_requirement_resolution()
 
 
 __all__ = [
@@ -158,6 +182,7 @@ __all__ = [
     "apply_agentseek_chat_channel_defaults",
     "apply_agentseek_cli_overrides",
     "apply_agentseek_install_project_defaults",
+    "apply_agentseek_install_requirement_resolution",
     "apply_agentseek_onboard_branding",
     "resolve_enabled_channels",
 ]

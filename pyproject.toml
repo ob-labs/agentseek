@@ -17,36 +17,18 @@ classifiers = [
 ]
 dependencies = [
     "bub>=0.3.7",
-    "bub-feishu",
-    "bub-mcp",
-    "agentseek-schedule-sqlalchemy",
     "logfire>=4.33.0",
     "pydantic-settings>=2.0.0",
 ]
 
 [project.optional-dependencies]
-ag-ui = [
-    "agentseek-ag-ui",
-]
 cli = [
     "agentseek-cli",
-]
-langchain = [
-    "agentseek-langchain",
-]
-observability = [
-    "agentseek-observability",
-]
-oceanbase = [
-    "agentseek-tapestore-oceanbase",
-]
-context = [
-    "agentseek-cli",
-    "agentseek-contextseek",
 ]
 
 [project.scripts]
 agentseek = "agentseek.__main__:app"
+bub = "agentseek.__main__:app"
 
 [project.urls]
 Repository = "https://github.com/ob-labs/agentseek"
@@ -64,6 +46,16 @@ dev = [
     "langchain-openai>=0.3.0",
     "mkdocs-terminal>=4.8.0",
     "mkdocs-static-i18n>=1.3.0",
+]
+plugins = [
+    "bub-feishu",
+    "bub-mcp",
+    "agentseek-schedule-sqlalchemy",
+    "agentseek-ag-ui",
+    "agentseek-langchain",
+    "agentseek-observability",
+    "agentseek-tapestore-oceanbase",
+    "agentseek-contextseek",
 ]
 
 [build-system]

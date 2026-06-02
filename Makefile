@@ -16,7 +16,7 @@ lock: ## Update uv.lock against PyPI (ignore UV_INDEX_URL so lock stays canonica
 .PHONY: install
 install: ## Install the virtual environment and install the pre-commit hooks
 	@echo "🚀 Creating virtual environment using uv"
-	@uv sync --all-packages
+	@uv sync --all-packages --all-extras --group plugins
 	@uv run pre-commit install
 
 .PHONY: check
@@ -67,7 +67,7 @@ $(foreach dir,$(CONTRIB_DIRS),$(eval $(call define_contrib_targets,$(call contri
 .PHONY: sync-contrib
 sync-contrib: ## Sync dependencies for all contrib packages.
 	@echo "🚀 Syncing dependencies for contrib packages"
-	@uv sync --all-packages
+	@uv sync --all-packages --all-extras --group plugins
 
 .PHONY: check-contrib
 check-contrib: $(CONTRIB_CHECKS) ## Run checks for contrib packages.
