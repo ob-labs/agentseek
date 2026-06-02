@@ -51,8 +51,9 @@ lifecycle CLI for `create / run / build / deploy / api / ctx / skills`.
 Installed on its own, it is Path A from the docs overview; installed alongside
 the harness, it folds into the same `agentseek` command surface as a Bub
 plugin. The bundled hard dependencies (`bub`, `bub-feishu`, `bub-mcp`,
-`agentseek-schedule-sqlalchemy`, `logfire`) and the optional extras (`ag-ui`,
-`cli`, `langchain`, `observability`, `oceanbase`, `context`) are listed in
+`agentseek-schedule-sqlalchemy`, `logfire`) and the optional plugins
+installable via `agentseek install` (`agentseek-langchain`,
+`agentseek-contextseek`, etc.) are listed in
 [Packages reference](../reference/packages.md). The full layout — `src/`,
 `contrib/`, `examples/`, `templates/`, `skills/`, `references/`, `docs/` — is
 mapped in [Where things live](../explanation/where-things-live.md).

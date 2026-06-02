@@ -16,7 +16,7 @@ It does not introduce a new agent wrapper or own your model credentials. Its job
 | Python package | `agentseek_langchain` |
 | Bub entry point | `langchain` |
 | Config surface | `AGENTSEEK_LANGCHAIN_SPEC` (agentseek alias) or `BUB_LANGCHAIN_SPEC` |
-| Root install path | `uv sync --extra langchain` |
+| Root install path | `agentseek install agentseek-langchain` |
 | Test target | `make check-langchain` |
 
 ## When To Use It
@@ -38,13 +38,7 @@ It does not:
 From the repository root:
 
 ```bash
-uv sync --extra langchain
-```
-
-Or install only this package:
-
-```bash
-uv pip install -e contrib/agentseek-langchain
+agentseek install agentseek-langchain
 ```
 
 ## Configure
@@ -158,7 +152,7 @@ make check-langchain
 Or run it directly:
 
 ```bash
-uv sync --extra langchain
+agentseek install agentseek-langchain
 uv run python -m pytest contrib/agentseek-langchain/tests
 ```
 

@@ -76,22 +76,23 @@ agentseek 在 PyPI 上以**两个互补的包**形式提供，按职责拆分。
 `bub-feishu`、`bub-mcp` 与 `agentseek-schedule-sqlalchemy` **都不在 PyPI 上**。
 这正是上面"agentseek 不能从 PyPI 直装"提示的根因。
 
-## 可选 extras（在本仓库内工作时）
+## 安装插件
 
-定义于 `pyproject.toml:27`。当你已经把仓库克隆下来并想把某个 contrib 包合并到
-harness 环境时，可以使用 `uv sync --extra <extra>`。
+插件通过 `agentseek install` 命令安装。之前的 `[optional-dependencies]` extras
+（例如 `pip install agentseek[langchain]`）已被移除；只有 `agentseek[cli]` 作为
+pip extra 保留。
 
 > `cli` extra **不是**拿到项目生命周期 CLI 的唯一途径；
 > `uv tool install agentseek-cli` 同样能独立安装该包。
 
-| Extra | 拉入 | 用途 |
+| 插件包 | 安装命令 | 用途 |
 | --- | --- | --- |
-| `ag-ui` | `agentseek-ag-ui` | AG-UI 适配器与 FastAPI helpers。 |
-| `cli` | `agentseek-cli` | 把项目生命周期 CLI 合并进 harness 环境（`create / run / build / deploy / api / ctx / skills`）。 |
-| `langchain` | `agentseek-langchain` | LangChain `Runnable` / agent 桥接。 |
-| `observability` | `agentseek-observability` | Logfire 支持的 spans。 |
-| `oceanbase` | `agentseek-tapestore-oceanbase` | 兼容 OceanBase 的 SQLAlchemy tape 存储。 |
-| `context` | `agentseek-cli`、`agentseek-contextseek` | ContextSeek 语义上下文运行时 plugin（同时带入 `agentseek ctx` 所需的项目生命周期 CLI）。 |
+| `agentseek-ag-ui` | `agentseek install agentseek-ag-ui` | AG-UI 适配器与 FastAPI helpers。 |
+| `agentseek-cli` | `agentseek install agentseek-cli` 或 `uv tool install agentseek-cli` | 把项目生命周期 CLI 合并进 harness 环境（`create / run / build / deploy / api / ctx / skills`）。 |
+| `agentseek-langchain` | `agentseek install agentseek-langchain` | LangChain `Runnable` / agent 桥接。 |
+| `agentseek-observability` | `agentseek install agentseek-observability` | Logfire 支持的 spans。 |
+| `agentseek-tapestore-oceanbase` | `agentseek install agentseek-tapestore-oceanbase` | 兼容 OceanBase 的 SQLAlchemy tape 存储。 |
+| `agentseek-contextseek` | `agentseek install agentseek-contextseek` | ContextSeek 语义上下文运行时 plugin（同时带入 `agentseek ctx` 所需的项目生命周期 CLI）。 |
 
 ## Contrib 包
 

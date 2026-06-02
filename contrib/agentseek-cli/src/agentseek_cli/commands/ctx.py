@@ -109,9 +109,8 @@ def _load_contextseek_run_cli() -> _RunCli:
 
 def _raise_missing_contextseek() -> NoReturn:
     typer.echo(
-        "The `agentseek ctx` commands require `contextseek` in the current environment.\n"
-        "Install it with:  uv pip install contextseek\n"
-        "Or via extra:     uv pip install 'agentseek[context]'",
+        "The `agentseek ctx` commands require `agentseek-contextseek` in the current environment.\n"
+        "Install it with:  agentseek install agentseek-contextseek",
         err=True,
     )
     raise typer.Exit(1)

@@ -139,7 +139,7 @@ Compose 就是把路径 B 的 harness 为运维场景打了包。当你需要一
 
 每个 `contrib/agentseek-*/` 包都是一个可以安装在 harness 之上的 Python 发
 行物。它们列在 [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib)
-下，并通过 `pyproject.toml:27-46` 暴露为可选 extras。
+下，通过 `agentseek install <package>` 安装（例如 `agentseek install agentseek-langchain`）。
 
 这些是路径 B 的**运行时 plugin**：`agentseek-ag-ui`、`agentseek-langchain`、
 `agentseek-tapestore-oceanbase`、`agentseek-observability`、

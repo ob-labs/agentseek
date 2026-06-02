@@ -10,7 +10,7 @@ OceanBase compatibility and vector enhancement plugin for `agentseek` and `bub`.
 | Python package | `agentseek_tapestore_oceanbase` |
 | Bub entry point | `tapestore-oceanbase` |
 | Config section / surface | `tapestore-oceanbase` |
-| Root install path | `uv sync --extra oceanbase` |
+| Root install path | `agentseek install agentseek-tapestore-oceanbase` |
 | Test target | `make check-oceanbase` |
 
 ## When To Use It
@@ -32,10 +32,10 @@ What it provides:
 Inside this repository:
 
 ```bash
-uv sync --extra oceanbase
+agentseek install agentseek-tapestore-oceanbase
 ```
 
-If you only want this plugin package outside the root extra flow, install it directly.
+If you only want this plugin package outside the root install flow, install it directly.
 
 From Git:
 
@@ -95,7 +95,7 @@ The SQLAlchemy URL itself still comes from the base tape store settings.
 Install the extra and point the tape store at a local SQLite file:
 
 ```bash
-uv sync --extra oceanbase
+agentseek install agentseek-tapestore-oceanbase
 export AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=sqlite+pysqlite:///./agentseek-tapes.db
 uv run agentseek chat
 ```
@@ -105,7 +105,7 @@ This uses the same plugin entry point but does not activate OceanBase vector ret
 ### OceanBase Vector
 
 ```bash
-uv sync --extra oceanbase
+agentseek install agentseek-tapestore-oceanbase
 export AGENTSEEK_TAPESTORE_SQLALCHEMY_URL=mysql+oceanbase://user:password@127.0.0.1:2881/agentseek
 export AGENTSEEK_TAPESTORE_OCEANBASE_EMBEDDING_MODEL=openai:text-embedding-3-small
 export AGENTSEEK_TAPESTORE_OCEANBASE_VECTOR_METRIC=cosine
@@ -138,7 +138,7 @@ make check-oceanbase
 Or run only this package's tests after syncing the extra:
 
 ```bash
-uv sync --extra oceanbase
+agentseek install agentseek-tapestore-oceanbase
 uv run python -m pytest contrib/agentseek-tapestore-oceanbase/tests
 ```
 

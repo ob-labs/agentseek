@@ -119,17 +119,16 @@ group and supplies one or more hook implementations. Plugins are how Bub gets ch
 model providers, tape stores, schedulers, and tool packages.
 
 agentseek ships a few plugins as hard dependencies (`pyproject.toml:19-25`) — Bub itself,
-`bub-feishu`, `bub-mcp`, `agentseek-schedule-sqlalchemy`, plus `logfire` for telemetry —
-and exposes the rest as optional extras (`pyproject.toml:27-46`):
+`bub-feishu`, `bub-mcp`, `agentseek-schedule-sqlalchemy`, plus `logfire` for telemetry.
+The remaining plugins are installed on demand via `agentseek install`:
 
-| Extra | Adds | Source |
-| --- | --- | --- |
-| `ag-ui` | `agentseek-ag-ui` AG-UI channel adapter | `pyproject.toml:28-30` |
-| `cli` | `agentseek-cli` project-lifecycle commands | `pyproject.toml:31-33` |
-| `langchain` | `agentseek-langchain` model routing | `pyproject.toml:34-36` |
-| `observability` | `agentseek-observability` Logfire tracing | `pyproject.toml:37-39` |
-| `oceanbase` | `agentseek-tapestore-oceanbase` tape storage | `pyproject.toml:40-42` |
-| `context` | `agentseek-cli` + `agentseek-contextseek` | `pyproject.toml:43-46` |
+| Command | Adds |
+| --- | --- |
+| `agentseek install agentseek-ag-ui` | AG-UI channel adapter |
+| `agentseek install agentseek-langchain` | LangChain model routing |
+| `agentseek install agentseek-observability` | Logfire tracing |
+| `agentseek install agentseek-tapestore-oceanbase` | OceanBase tape storage |
+| `agentseek install agentseek-contextseek` | ContextSeek semantic context layer |
 
 Plugins are installed into the **same Python environment** as agentseek; they are not
 sandboxed runtime units. The `agentseek install` sandbox at `.agentseek/agentseek-project`

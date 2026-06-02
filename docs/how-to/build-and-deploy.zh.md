@@ -86,7 +86,7 @@ harness 运行时等价物；要么直接走路径 A，要么在 `agentseek-cli`
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
-| 找不到 `agentseek build` | 未安装 `agentseek[cli]` | `uv sync --extra cli` 或把 `agentseek-cli` 加进你的项目。 |
+| 找不到 `agentseek build` | 未安装 `agentseek-cli` | `pip install agentseek[cli]` 或把 `agentseek-cli` 加进你的项目。 |
 | `--push` 报 `unauthorized` | 未登录 registry | 先执行 `docker login <registry>`。 |
 | `agentseek deploy` 没带 `--dry-run` 报错 | v1 强制要求 `--dry-run` | 加上该标志。 |
 | manifest 引用了错误的镜像 | 未设置 `--image`，回退到 slug | 传入 `--image my-agent:0.1.0`。 |

@@ -87,7 +87,7 @@ harness. See the
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek build` not found | `agentseek[cli]` not installed | `uv sync --extra cli` or add `agentseek-cli` to your project. |
+| `agentseek build` not found | `agentseek-cli` not installed | `pip install agentseek[cli]` or add `agentseek-cli` to your project. |
 | `--push` fails with `unauthorized` | Registry login missing | `docker login <registry>` first. |
 | `agentseek deploy` errors without `--dry-run` | v1 hard-requires `--dry-run` | Add the flag. |
 | Manifest references the wrong image | `--image` not set; slug fallback used | Pass `--image my-agent:0.1.0`. |

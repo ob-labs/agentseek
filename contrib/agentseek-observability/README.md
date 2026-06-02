@@ -10,7 +10,7 @@
 | Python package | `agentseek_observability` |
 | Bub entry point | `observability` |
 | Config surface | Logfire's native `LOGFIRE_*` / `OTEL_*` environment variables |
-| Root install path | `uv sync --extra observability` |
+| Root install path | `agentseek install agentseek-observability` |
 | Test target | `uv run python -m pytest contrib/agentseek-observability/tests` |
 
 ## When To Use It
@@ -32,13 +32,7 @@ It does not:
 From the repository root:
 
 ```bash
-uv sync --extra observability
-```
-
-Or install only this package:
-
-```bash
-uv pip install -e contrib/agentseek-observability
+agentseek install agentseek-observability
 ```
 
 ## Configure
@@ -61,7 +55,7 @@ Minimal local run with the agentseek entry point:
 LOGFIRE_SEND_TO_LOGFIRE=false \
 LOGFIRE_SERVICE_NAME=agentseek \
 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4318/v1/traces \
-uv run --extra observability agentseek run "List your tools briefly."
+agentseek run "List your tools briefly."
 ```
 
 The same package also works with upstream Bub:
@@ -70,7 +64,7 @@ The same package also works with upstream Bub:
 LOGFIRE_SEND_TO_LOGFIRE=false \
 LOGFIRE_SERVICE_NAME=bub \
 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4318/v1/traces \
-uv run --extra observability bub run "Summarize the last turn."
+uv run bub run "Summarize the last turn."
 ```
 
 ## Runtime Behavior
@@ -84,7 +78,7 @@ uv run --extra observability bub run "Summarize the last turn."
 ## Verify
 
 ```bash
-uv sync --extra observability
+agentseek install agentseek-observability
 uv run python -m pytest contrib/agentseek-observability/tests
 ```
 

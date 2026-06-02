@@ -46,7 +46,7 @@ sources:
 这些命令来自 `agentseek-cli`
 （`contrib/agentseek-cli/src/agentseek_cli/app.py:22-30`）。它们在**路径 A**
 开箱可用；在**路径 B**下，只要 harness 环境里装了 `agentseek-cli`
-（例如通过 `uv sync --extra cli`，或者生成的项目本身依赖它），它们也会出现。
+（例如通过 `agentseek install agentseek-cli`，或者生成的项目本身依赖它），它们也会出现。
 
 ### `agentseek create [SPEC]`
 
@@ -127,7 +127,7 @@ sources:
 
 :   ContextSeek — 语义上下文层。转发给 `contextseek` CLI。当
     `agentseek-contextseek` 在 path 上时可用（例如在路径 B 上通过
-    `uv sync --extra context`，或在路径 A 上由生成项目拉入）。
+    `agentseek install agentseek-contextseek`，或在路径 A 上由生成项目拉入）。
 
     子命令包括 `add`、`retrieve`、`expand`、`compact`、
     `forget`、`delete`、`overview`、`tools`、`metrics`、`dream`、`feedback`、

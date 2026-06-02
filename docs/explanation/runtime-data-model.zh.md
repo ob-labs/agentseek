@@ -105,17 +105,16 @@ MCP server 适合那些应该被 **声明而非编码** 的 tool 集成 —— i
 方式。
 
 agentseek 将少量 plugin 作为硬依赖发布（`pyproject.toml:19-25`）—— Bub 本身、`bub-feishu`、
-`bub-mcp`、`agentseek-schedule-sqlalchemy`，加上 `logfire` 用于 telemetry —— 并把其余作为
-可选 extras 暴露（`pyproject.toml:27-46`）：
+`bub-mcp`、`agentseek-schedule-sqlalchemy`，加上 `logfire` 用于 telemetry。其余 plugin
+通过 `agentseek install` 按需安装：
 
-| Extra | 添加 | 来源 |
-| --- | --- | --- |
-| `ag-ui` | `agentseek-ag-ui` AG-UI channel 适配器 | `pyproject.toml:28-30` |
-| `cli` | `agentseek-cli` 项目生命周期命令 | `pyproject.toml:31-33` |
-| `langchain` | `agentseek-langchain` model 路由 | `pyproject.toml:34-36` |
-| `observability` | `agentseek-observability` Logfire tracing | `pyproject.toml:37-39` |
-| `oceanbase` | `agentseek-tapestore-oceanbase` tape 存储 | `pyproject.toml:40-42` |
-| `context` | `agentseek-cli` + `agentseek-contextseek` | `pyproject.toml:43-46` |
+| 命令 | 添加 |
+| --- | --- |
+| `agentseek install agentseek-ag-ui` | AG-UI channel 适配器 |
+| `agentseek install agentseek-langchain` | LangChain model 路由 |
+| `agentseek install agentseek-observability` | Logfire tracing |
+| `agentseek install agentseek-tapestore-oceanbase` | OceanBase tape 存储 |
+| `agentseek install agentseek-contextseek` | ContextSeek 语义 context 层 |
 
 Plugin 被安装到与 agentseek **相同的 Python 环境** 中；它们不是 sandbox runtime 单元。
 位于 `.agentseek/agentseek-project` 的 `agentseek install` sandbox

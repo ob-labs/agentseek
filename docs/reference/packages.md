@@ -80,23 +80,23 @@ These are the `requires-dist` entries of the `agentseek` package
 That is the root cause of the "cannot install agentseek directly from PyPI"
 note above.
 
-## Optional extras (when working from this repo)
+## Installing plugins
 
-Defined in `pyproject.toml:27`. These are useful when you already have the
-repository checked out and want to fold a contrib package into the harness env
-with `uv sync --extra <extra>`.
+Plugins are installed via the `agentseek install` command. The previous
+`[optional-dependencies]` extras (e.g. `pip install agentseek[langchain]`) have
+been removed; only `agentseek[cli]` remains as a pip extra.
 
 > The `cli` extra is **not the only way** to get the project lifecycle CLI;
 > `uv tool install agentseek-cli` installs the same package independently.
 
-| Extra | Pulls in | Purpose |
+| Plugin package | Install command | Purpose |
 | --- | --- | --- |
-| `ag-ui` | `agentseek-ag-ui` | AG-UI adapter and FastAPI helpers. |
-| `cli` | `agentseek-cli` | Project lifecycle CLI folded into the harness env (`create / run / build / deploy / api / ctx / skills`). |
-| `langchain` | `agentseek-langchain` | LangChain `Runnable` / agent bridge. |
-| `observability` | `agentseek-observability` | Logfire-backed spans. |
-| `oceanbase` | `agentseek-tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility. |
-| `context` | `agentseek-cli`, `agentseek-contextseek` | ContextSeek semantic context runtime plugin (also brings the lifecycle CLI for `agentseek ctx`). |
+| `agentseek-ag-ui` | `agentseek install agentseek-ag-ui` | AG-UI adapter and FastAPI helpers. |
+| `agentseek-cli` | `agentseek install agentseek-cli` or `uv tool install agentseek-cli` | Project lifecycle CLI folded into the harness env (`create / run / build / deploy / api / ctx / skills`). |
+| `agentseek-langchain` | `agentseek install agentseek-langchain` | LangChain `Runnable` / agent bridge. |
+| `agentseek-observability` | `agentseek install agentseek-observability` | Logfire-backed spans. |
+| `agentseek-tapestore-oceanbase` | `agentseek install agentseek-tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility. |
+| `agentseek-contextseek` | `agentseek install agentseek-contextseek` | ContextSeek semantic context runtime plugin (also brings the lifecycle CLI for `agentseek ctx`). |
 
 ## Contrib packages
 

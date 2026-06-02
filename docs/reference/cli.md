@@ -50,8 +50,8 @@ This page lists every subcommand and notes which surface owns it.
 These commands come from `agentseek-cli`
 (`contrib/agentseek-cli/src/agentseek_cli/app.py:22-30`). They are available
 on **Path A** out of the box, and on **Path B** whenever `agentseek-cli` is
-installed in the harness env (e.g. via `uv sync --extra cli`, or because the
-generated project depends on it).
+installed in the harness env (e.g. via `agentseek install agentseek-cli`, or
+because the generated project depends on it).
 
 ### `agentseek create [SPEC]`
 
@@ -136,8 +136,8 @@ generated project depends on it).
 
 :   ContextSeek — semantic context layer. Forwarded to the `contextseek` CLI.
     Available when `agentseek-contextseek` is on the path (e.g. on Path B via
-    `uv sync --extra context`, or on Path A when the generated project pulls
-    it in).
+    `agentseek install agentseek-contextseek`, or on Path A when the generated
+    project pulls it in).
 
     Subcommands include `add`, `retrieve`, `expand`, `compact`, `forget`,
     `delete`, `overview`, `tools`, `metrics`, `dream`, `feedback`,

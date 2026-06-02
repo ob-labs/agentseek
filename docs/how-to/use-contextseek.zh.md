@@ -17,14 +17,14 @@ contrib 包提供；`agentseek ctx` 会转发到其底层 `contextseek` CLI。
 
 ## 前置条件
 
-- 已安装 `agentseek[context]`：
+- 已安装 `agentseek-contextseek` 插件：
 
   ```bash title="not executed in this run"
-  uv sync --extra context
+  agentseek install agentseek-contextseek
   ```
 
-  `context` extra 同时拉入 `agentseek-cli` (用于 CLI 挂载点)
-  与 `agentseek-contextseek` (`pyproject.toml:43`)。
+  该命令同时拉入 `agentseek-cli` (用于 CLI 挂载点)
+  与 `agentseek-contextseek`。
 
 - 已配置 ContextSeek 自身的 backend。见
   [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)。
@@ -70,17 +70,16 @@ contrib 包提供；`agentseek ctx` 会转发到其底层 `contextseek` CLI。
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
-| `agentseek ctx` 报 command not found | 未安装 `agentseek[context]` | `uv sync --extra context`。 |
+| `agentseek ctx` 报 command not found | 未安装 `agentseek-contextseek` | `agentseek install agentseek-contextseek`。 |
 | `contextseek` 报 backend 缺失 | 配置未就绪 | 见 [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)。 |
 
 ## 回退
 
 ContextSeek 的存储由 backend 维护（`agentseek-contextseek` README
-说明了如何移除）。`agentseek-contextseek` 是由 `context` extra 拉入的 uv
-workspace 成员（`pyproject.toml:43`、`:97`），通过移除该 extra 撤销安装：
+说明了如何移除）。要卸载该插件：
 
 ```bash title="not executed in this run"
-uv sync --no-extra context
+pip uninstall agentseek-contextseek
 ```
 
 ## 相关

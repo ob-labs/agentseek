@@ -153,7 +153,7 @@ environment on the host. End-to-end walkthrough:
 Each `contrib/agentseek-*/` package is a Python distribution you can install on
 top of the harness. They are listed at
 [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib) and
-exposed as optional extras under `pyproject.toml:27-46`.
+installed via `agentseek install <package>` (e.g. `agentseek install agentseek-langchain`).
 
 These are **runtime plugins** for Path B: `agentseek-ag-ui`, `agentseek-langchain`,
 `agentseek-tapestore-oceanbase`, `agentseek-observability`,

@@ -40,7 +40,7 @@ Use this section order for package READMEs:
 
 1. `At A Glance`: distribution name, Python package, Bub entry point, config section or surface, install path, and test target.
 2. `When To Use It`: the user problem the package solves and what it does not own.
-3. `Install`: root extra or workspace install, plus standalone local/Git install when supported.
+3. `Install`: `agentseek install` command or workspace install, plus standalone local/Git install when supported.
 4. `Configure`: environment variables, config file sections, precedence, and defaults.
 5. `Run`: minimal command sequence and package-specific examples.
 6. `Runtime Behavior`: hooks, lifecycle behavior, storage behavior, and fallback behavior.

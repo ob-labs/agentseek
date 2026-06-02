@@ -52,7 +52,7 @@ agentseek/
 ├── tests/                ← 顶层测试
 ├── entrypoint.sh         ← Docker entrypoint
 ├── docker-compose.yml    ← Compose 定义
-├── pyproject.toml        ← harness pyproject（依赖、extras、workspace 成员）
+├── pyproject.toml        ← harness pyproject（依赖、plugin、workspace 成员）
 └── README.md             ← 仓库 README；项目入口
 ```
 
@@ -163,19 +163,19 @@ navigation/where-things-live 图景的来源。
 - `tests/` 保存顶层测试；contrib 包在 `contrib/*/tests/` 下有自己的测试树。
 - `entrypoint.sh` 和 `docker-compose.yml` 是 Docker entry point；
   见 [选择一个入口](choosing-an-entry-point.zh.md)。
-- `pyproject.toml` 是 distribution、可选 extras 和 workspace 成员列表的事实来源。
+- `pyproject.toml` 是 distribution、依赖和 workspace 成员列表的事实来源。
 
 ## 为什么是这样
 
 - **两个包，一个 workspace。** uv workspace 让 harness（`agentseek`）和项目
   生命周期 CLI（`agentseek-cli`）以两个 PyPI 包形式发布，同时 contrib
-  plugin 按自己的节奏演进。可选 extras（`pyproject.toml:27-46`）让在仓库内
-  采用它们变成一行变更。
+  plugin 按自己的节奏演进。通过 `agentseek install <package>` 安装 plugin，
+  采用它们只需一条命令。
 - **捆绑 vs project-local skill。** 把 skill 捆绑进 wheel 让它们可重现（`src/skills/`）；
   workspace-local skill（`.agents/skills/`）让它们可被 hack。独立的 skill repo
   （`skills/`）介于两者之间，适合应该按需安装的 skill。
 - **示例位于包之外。** 把示例保留在 `examples/` 而非某个包下面，展示了队友实际会用的安装形态 ——
-  extras 固定、gateway 启动、前端串好。
+  plugin 安装好、gateway 启动、前端串好。
 - **References 是 check in 的，不是 vendor 的。** 它们是搜索目标，不是依赖。这种权衡保持
   grep 廉价而不承担维护负担。
 

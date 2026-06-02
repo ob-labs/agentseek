@@ -54,7 +54,7 @@ agentseek/
 ├── tests/                ← top-level tests
 ├── entrypoint.sh         ← Docker entrypoint
 ├── docker-compose.yml    ← Compose definition
-├── pyproject.toml        ← harness pyproject (deps, extras, workspace members)
+├── pyproject.toml        ← harness pyproject (deps, plugins, workspace members)
 └── README.md             ← repo README; entry point for the project
 ```
 
@@ -173,22 +173,22 @@ the source of the navigation/where-things-live picture used across the site.
   `contrib/*/tests/`.
 - `entrypoint.sh` and `docker-compose.yml` are the Docker entry points; see
   [Choosing an entry point](choosing-an-entry-point.md).
-- `pyproject.toml` is the source of truth for the distribution, the optional extras, and
+- `pyproject.toml` is the source of truth for the distribution, the dependencies, and
   the workspace member list.
 
 ## Why it is like this
 
 - **Two packages, one workspace.** The uv workspace lets the harness
   (`agentseek`) and the project lifecycle CLI (`agentseek-cli`) ship as two
-  PyPI packages while contrib plugins evolve at their own pace. Optional
-  extras (`pyproject.toml:27-46`) make adopting them a one-line change inside
-  the repo.
+  PyPI packages while contrib plugins evolve at their own pace. Plugins are
+  installed via `agentseek install <package>`, making adoption a single
+  command.
 - **Bundled vs project-local skills.** Bundling skills inside the wheel makes them
   reproducible (`src/skills/`); workspace-local skills (`.agents/skills/`) make them
   hackable. Stand-alone skill repos (`skills/`) sit in between for skills that should be
   install-on-demand.
 - **Examples sit outside packages.** Keeping examples in `examples/` rather than under a
-  package shows the install shape teammates will actually use — extras pinned, gateway
+  package shows the install shape teammates will actually use — plugins installed, gateway
   launched, frontend wired up.
 - **References are checked in, not vendored.** They are search targets, not dependencies.
   This trade keeps grep cheap without taking on maintenance burden.

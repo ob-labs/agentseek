@@ -44,8 +44,8 @@ agentseek 今天是两个顶层 Python 包，加上一组 uv workspace 内的 co
 `create / run / build / deploy / api / ctx / skills`。单独安装时，它对应文档总览
 中的路径 A；与 harness 共存时，它会作为 Bub plugin 折叠进同一个 `agentseek`
 命令面。捆绑的硬依赖（`bub`、`bub-feishu`、`bub-mcp`、
-`agentseek-schedule-sqlalchemy`、`logfire`）和可选 extras（`ag-ui`、`cli`、
-`langchain`、`observability`、`oceanbase`、`context`）列在
+`agentseek-schedule-sqlalchemy`、`logfire`）和可通过 `agentseek install` 安装的
+可选插件（`agentseek-langchain`、`agentseek-contextseek` 等）列在
 [包参考](../reference/packages.zh.md) 中。整个目录布局 —— `src/`、`contrib/`、
 `examples/`、`templates/`、`skills/`、`references/`、`docs/` ——
 见 [文件存放位置](../explanation/where-things-live.zh.md)。

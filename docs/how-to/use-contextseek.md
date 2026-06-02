@@ -18,14 +18,14 @@ forwards to its underlying `contextseek` CLI.
 
 ## Prerequisites
 
-- `agentseek[context]` installed:
+- `agentseek-contextseek` plugin installed:
 
   ```bash title="not executed in this run"
-  uv sync --extra context
+  agentseek install agentseek-contextseek
   ```
 
-  The `context` extra pulls in both `agentseek-cli` (for the CLI mount
-  point) and `agentseek-contextseek` (`pyproject.toml:43`).
+  This pulls in both `agentseek-cli` (for the CLI mount point) and
+  `agentseek-contextseek`.
 
 - ContextSeek's own backend configured. See the
   [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md).
@@ -72,17 +72,16 @@ README.
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek ctx` says command not found | `agentseek[context]` not installed | `uv sync --extra context`. |
+| `agentseek ctx` says command not found | `agentseek-contextseek` not installed | `agentseek install agentseek-contextseek`. |
 | `contextseek` errors about missing backend | Config not set up | See the [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md). |
 
 ## Rollback
 
 ContextSeek storage is owned by the backend (`agentseek-contextseek` README
-documents removal). `agentseek-contextseek` is a uv workspace member pulled in
-by the `context` extra (`pyproject.toml:43`, `:97`), so undo the extra with:
+documents removal). To uninstall the plugin:
 
 ```bash title="not executed in this run"
-uv sync --no-extra context
+pip uninstall agentseek-contextseek
 ```
 
 ## Related
