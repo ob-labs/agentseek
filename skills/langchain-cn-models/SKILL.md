@@ -62,6 +62,7 @@ Use grep to list all placeholders, then replace each one with the actual value:
 | `PROVIDER_API_BASE` | API Base env var name | `QWEN_API_BASE` |
 | `PROVIDER_API_BASE_URL` | Default API URL | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
 | `chat-provider` | Model identifier for `_llm_type` | `chat-qwen` |
+| `provider-name` | Value for `response_metadata["model_provider"]` | `dashscope` |
 | `Provider` | Provider display name for error messages | `Qwen` |
 
 Each placeholder is a standalone, complete token — simply do a global find-and-replace. Apply replacements in both `chat_model.py` and `__init__.py`.

@@ -111,12 +111,20 @@ class ChatModel(BaseChatOpenAI):
         generation_info: dict | None = None,
     ) -> ChatResult:
         rtn = super()._create_chat_result(response, generation_info)
-        if isinstance(response, openai.BaseModel):
-            choices = getattr(response, "choices", None)
-            if choices and hasattr(choices[0].message, "reasoning_content"):
-                rtn.generations[0].message.additional_kwargs["reasoning_content"] = (
-                    choices[0].message.reasoning_content
-                )
+
+        if not isinstance(response, openai.BaseModel):
+            return rtn
+
+        for generation in rtn.generations:
+            if generation.message.response_metadata is None:
+                generation.message.response_metadata = {}
+            generation.message.response_metadata["model_provider"] = "provider-name"
+
+        choices = getattr(response, "choices", None)
+        if choices and hasattr(choices[0].message, "reasoning_content"):
+            rtn.generations[0].message.additional_kwargs["reasoning_content"] = (
+                choices[0].message.reasoning_content
+            )
         return rtn
 
     def _convert_chunk_to_generation_chunk(
@@ -132,12 +140,17 @@ class ChatModel(BaseChatOpenAI):
         )
         if (choices := chunk.get("choices")) and generation_chunk:
             top = choices[0]
-            if isinstance(generation_chunk.message, AIMessageChunk) and (
-                reasoning_content := top.get("delta", {}).get("reasoning_content")
-            ) is not None:
-                generation_chunk.message.additional_kwargs["reasoning_content"] = (
-                    reasoning_content
-                )
+            if isinstance(generation_chunk.message, AIMessageChunk):
+                generation_chunk.message.response_metadata = {
+                    **generation_chunk.message.response_metadata,
+                    "model_provider": "provider-name",
+                }
+                if (
+                    reasoning_content := top.get("delta", {}).get("reasoning_content")
+                ) is not None:
+                    generation_chunk.message.additional_kwargs["reasoning_content"] = (
+                        reasoning_content
+                    )
         return generation_chunk
 
     def _stream(self, messages, stop=None, run_manager=None, **kwargs):

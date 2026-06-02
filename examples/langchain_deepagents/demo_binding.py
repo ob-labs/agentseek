@@ -6,6 +6,7 @@ from typing import Any
 
 from agentseek_langchain import messages_spec
 from deepagents import create_deep_agent
+from langchain.agents.middleware import ToolCallLimitMiddleware
 
 from .settings import get_deepagents_example_settings
 
@@ -32,6 +33,7 @@ def build_agent() -> Any:
     return create_deep_agent(
         model=settings.require_model(),
         tools=[outline_answer],
+        middleware=[ToolCallLimitMiddleware(run_limit=20)],
         system_prompt=(
             "You are a pragmatic engineering assistant. "
             "Use the outline_answer tool when a planning scaffold would help, "
