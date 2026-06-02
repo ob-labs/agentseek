@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# langgraph dev in-memory state
+.langgraph_api/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Env
+.env

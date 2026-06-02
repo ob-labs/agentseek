@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Sequence
-from pathlib import Path
 from types import SimpleNamespace
 
 import agentseek_langchain.plugin as plugin_module
-import typer
 from agentseek_langchain.profiles import text_spec
 from agentseek_langchain.shapes import ObjectDict, copy_str_mapping
-from typer.testing import CliRunner
 
 
 class _AsyncRunnable:
@@ -37,30 +33,14 @@ class _AsyncRunnableWithContext:
         return self.output
 
 
-class _FakeAgentSeekApiCliModule:
-    def __init__(self, exit_code: int, captured: dict[str, object]) -> None:
-        self._exit_code = exit_code
-        self._captured = captured
-
-    def main(
-        self,
-        argv: Sequence[str] | None = None,
-        *,
-        prog: str | None = None,
-        cwd: str | Path | None = None,
-    ) -> int:
-        self._captured["argv"] = list(argv or [])
-        self._captured["prog"] = prog
-        self._captured["cwd"] = cwd
-        return self._exit_code
-
-
 def test_plugin_run_model_delegates_to_loaded_spec(monkeypatch, tmp_path) -> None:
     runnable = _AsyncRunnable("delegated-output")
     spec = text_spec(runnable)
+    info_messages: list[str] = []
 
     monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(SPEC="dummy:SPEC"))
     monkeypatch.setattr(plugin_module, "load_spec_from_path", lambda path: spec)
+    monkeypatch.setattr(plugin_module.logger, "info", info_messages.append)
 
     plugin = plugin_module.LangChainRunnablePlugin()
     result = asyncio.run(
@@ -78,6 +58,7 @@ def test_plugin_run_model_delegates_to_loaded_spec(monkeypatch, tmp_path) -> Non
         "session_id": "session-1",
         "workspace": str(tmp_path),
     }
+    assert info_messages == ["Using LangChain spec entrypoint: dummy:SPEC"]
 
 
 def test_plugin_run_model_stream_wraps_single_result(monkeypatch, tmp_path) -> None:
@@ -137,60 +118,36 @@ def test_plugin_passes_ag_ui_context_as_runtime_context(monkeypatch, tmp_path) -
     }
 
 
-async def _collect_events(stream) -> list:
-    return [event async for event in stream]
+def test_plugin_falls_back_to_default_model_entrypoint_without_spec(monkeypatch, tmp_path) -> None:
+    warning_messages: list[str] = []
+    load_calls: list[str] = []
 
+    monkeypatch.setattr(plugin_module, "get_langchain_settings", lambda: SimpleNamespace(SPEC="   "))
+    monkeypatch.setattr(plugin_module, "load_spec_from_path", load_calls.append)
+    monkeypatch.setattr(plugin_module.logger, "warning", warning_messages.append)
 
-def test_plugin_registers_api_cli_group_once() -> None:
-    app = typer.Typer()
     plugin = plugin_module.LangChainRunnablePlugin()
 
-    plugin.register_cli_commands(app)
-    plugin.register_cli_commands(app)
+    result = asyncio.run(
+        plugin.run_model(
+            prompt="hello",
+            session_id="session-1",
+            state={"_runtime_workspace": str(tmp_path)},
+        )
+    )
+    stream = asyncio.run(
+        plugin.run_model_stream(
+            prompt="hello",
+            session_id="session-1",
+            state={"_runtime_workspace": str(tmp_path)},
+        )
+    )
 
-    groups = [group.name for group in app.registered_groups]
-    assert groups.count("api") == 1
-
-    result = CliRunner().invoke(app, ["api", "--help"])
-
-    assert result.exit_code == 0
-    assert "dev" in result.stdout
-    assert "serve" in result.stdout
-    assert "dockerfile" in result.stdout
-    assert "build" in result.stdout
-    assert "up" in result.stdout
-    assert "version" in result.stdout
-
-
-def test_api_cli_forwards_arguments_to_agentseek_api(monkeypatch) -> None:
-    import agentseek_langchain.api_cli as api_cli_module
-
-    captured: dict[str, object] = {}
-    fake_module = _FakeAgentSeekApiCliModule(exit_code=7, captured=captured)
-
-    monkeypatch.setattr(api_cli_module.importlib, "import_module", lambda name: fake_module)
-
-    app = typer.Typer()
-    plugin_module.LangChainRunnablePlugin().register_cli_commands(app)
-    result = CliRunner().invoke(app, ["api", "dev", "--port", "9911", "--no-reload"])
-
-    assert result.exit_code == 7
-    assert captured["argv"] == ["dev", "--port", "9911", "--no-reload"]
-    assert captured["prog"] == "agentseek api"
-    assert captured["cwd"] == Path.cwd().resolve()
+    assert result is None
+    assert stream is None
+    assert load_calls == []
+    assert warning_messages == ["LangChain spec not configured; falling back to the default model entrypoint."]
 
 
-def test_api_cli_reports_missing_agentseek_api_dependency(monkeypatch) -> None:
-    import agentseek_langchain.api_cli as api_cli_module
-
-    def fail_import(name: str):
-        raise ModuleNotFoundError(name)
-
-    monkeypatch.setattr(api_cli_module.importlib, "import_module", fail_import)
-
-    app = typer.Typer()
-    plugin_module.LangChainRunnablePlugin().register_cli_commands(app)
-    result = CliRunner().invoke(app, ["api", "version"])
-
-    assert result.exit_code == 1
-    assert "agentseek-api" in result.stderr
+async def _collect_events(stream) -> list:
+    return [event async for event in stream]

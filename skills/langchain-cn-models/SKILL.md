@@ -87,4 +87,3 @@ After the model class is complete, you must write integration tests. See the det
 > **Before running integration tests, you must remind the user to edit the `.env` file themselves and fill in the required API Key and other environment variables.**
 >
 > When running tests, you will likely encounter common setup issues (package not importable, async test mode, etc.). Refer to the "Common Issues" section at the end of [reference/integration-tests.md](reference/integration-tests.md) for fixes.
-

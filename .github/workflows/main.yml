@@ -22,8 +22,8 @@ jobs:
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
 
-      - name: Run checks
-        run: make check
+      - name: Run lint and type check
+        run: make lint typecheck
 
   tests-and-type-check:
     runs-on: ubuntu-latest

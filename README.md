@@ -13,7 +13,12 @@ agentseek is a database-native Agent Harness for teams that want agent runtime d
 
 It treats the database as the natural place to keep agent context, execution history, tool calls, tasks, feedback, and observability together. The same runtime data can then serve debugging, replay, trajectory comparison, evaluation, analysis, and training workflows without being copied into separate systems or re-ingested later.
 
-agentseek packages [Bub](https://github.com/bubbuild/bub) with agentseek defaults, environment aliases, and a project-local runtime layout. Use `agentseek` when you want the Bub runtime model with a project-local `.agentseek` home and `AGENTSEEK_*` configuration.
+agentseek ships as two complementary packages on PyPI, split by job:
+
+- **`agentseek-cli`** — the **project lifecycle CLI** (`create`, `run`, `build`, `deploy`, `api`, `ctx`, `skills`). Self-contained, installable with `uv tool install agentseek-cli`.
+- **`agentseek`** — the **harness** itself. Provides the runtime CLI (`chat`, `run`, `gateway`, `install`, `update`, …) and the library you embed in your application. Resolved through this repository's `[tool.uv.sources]`, not via a direct `pip install agentseek`.
+
+Both register a command named `agentseek`. See [`docs/index.md`](docs/index.md) and [`docs/explanation/choosing-an-entry-point.md`](docs/explanation/choosing-an-entry-point.md) for which one fits which job.
 
 ## Why it exists
 
@@ -23,11 +28,29 @@ agentseek starts from a different assumption: context, memory, tasks, tool calls
 
 ## Quick Start
 
+Pick one of the two paths. They are both first-class.
+
+### Path A — install the project lifecycle CLI
+
+Use this when you want to scaffold a project, build an image, or call lifecycle commands without checking the repo out.
+
+```bash
+uv tool install agentseek-cli
+agentseek --help            # create / run / build / deploy / api / ctx / skills
+agentseek create bub --template default --no-input
+cd my_bub_agent
+uv sync                     # the generated project resolves the full harness via its own [tool.uv.sources]
+```
+
+### Path B — clone the repo and run the harness
+
+Use this when you want to drive the harness itself — `chat`, `gateway`, `install`, and the rest of the runtime CLI.
+
 ```bash
 git clone https://github.com/ob-labs/agentseek.git
 cd agentseek
 uv sync
-uv run agentseek --help
+uv run agentseek --help     # chat / run / gateway / install / update / …
 ```
 
 Configure a model, then start a local chat:
@@ -39,9 +62,7 @@ export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
 uv run agentseek chat
 ```
 
-`agentseek` is a Bub-compatible distribution entry point. It defaults to `.agentseek` under the current workspace for local config and runtime home. You can also use `uv run bub ...` and Bub plugins directly when you want the upstream CLI or extension namespace.
-
-Project-local skills under `.agents/skills` work in local runs because Bub discovers project skills from the workspace. For MCP, `bub-mcp` uses `${BUB_HOME}/mcp.json` by default, which becomes `.agentseek/mcp.json` with agentseek defaults; if you prefer `.agents/mcp.json` in the project root, set `AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json`.
+> Note: `pip install agentseek` and `uv tool install agentseek` will fail to resolve, because the harness depends on `bub-feishu`, `bub-mcp`, and the workspace contrib packages, which are wired via `[tool.uv.sources]` and cannot be carried by PyPI metadata. Use one of the two paths above.
 
 ## Docker Compose
 
@@ -65,11 +86,12 @@ To mount a different host directory as the workspace, set `AGENTSEEK_DOCKER_WORK
 The main documentation describes the built-in agentseek distribution layer:
 
 - [Overview](docs/index.md): what agentseek is, where it fits, and how the docs are structured.
+- [Tutorials](docs/tutorials/index.md): start here — quick CLI demo, first harness app, adding a skill and MCP.
+- [How-to guides](docs/how-to/index.md): task-focused recipes for configuring models, installing plugins, running, and deploying.
+- [Reference](docs/reference/index.md): environment variables, CLI commands, packages, file layout, templates, Docker.
+- [Explanation](docs/explanation/index.md): what agentseek is, how it relates to Bub, runtime data model, extension model.
 - [Blog intro](docs/blog/index.md): release notes, migrations, and longer-form posts.
-- [Introducing agentseek](docs/blog/introducing-agentseek.md): lineage from bubseek, database-native harness, and Bub/tape context.
-- [Getting started](docs/docs/getting-started.md): a tutorial for running agentseek locally or with Docker Compose.
-- [Configuration](docs/docs/configuration.md): reference for agentseek environment aliases, local runtime paths, and Docker defaults.
-- [Extensions](docs/docs/extensions.md): how to add project instructions, skills, MCP config, and Bub-compatible plugins.
+- [Introducing agentseek](docs/blog/introducing-agentseek.md): lineage from bubseek, database-native harness, and Bub/tape store.
 
 Contrib packages document their complete setup in their own README files:
 
@@ -80,9 +102,10 @@ Contrib packages document their complete setup in their own README files:
 
 ## How it works
 
-- **Bub as the runtime layer** — [Bub](https://github.com/bubbuild/bub) provides the CLI, hook-first turn pipeline, tape context, skills, plugins, and channel model. agentseek uses Bub as the default governance layer, not as the product boundary.
-- **Project-local defaults** — `.agentseek` is the default runtime home, and `agentseek-project` is the default plugin sandbox used by `agentseek install`.
-- **Environment aliases** — `AGENTSEEK_*` values act as fallbacks for matching `BUB_*` values, so agentseek projects can use their own naming namespace while staying Bub-compatible.
+- **Two packages, two paths** — `agentseek-cli` (project lifecycle CLI) and `agentseek` (harness). Same command name, different command surface. See [`docs/explanation/choosing-an-entry-point.md`](docs/explanation/choosing-an-entry-point.md).
+- **Bub as the upstream runtime** — [Bub](https://github.com/bubbuild/bub) provides the hook-first turn pipeline, tape store, skills, plugins, and channel model that the harness runs on. agentseek consumes Bub as a library; it is not a re-skin.
+- **`.agentseek` runtime home** — when the harness boots, it uses `.agentseek/` under the current workspace as runtime home, and `agentseek-project` as the plugin sandbox used by `agentseek install`. Override via env vars in [`docs/reference/environment.md`](docs/reference/environment.md).
+- **Environment aliases** — `AGENTSEEK_*` values act as fallbacks for matching `BUB_*` values, so projects keep their own naming namespace while staying compatible with the upstream.
 - **Open authoring model** — `AGENTS.md`, project-local skills, bundled skills, and MCP config are first-class parts of the authoring and extension workflow.
 - **Contrib extension path** — database storage, LangChain routing, persistent scheduling, and other larger integrations live under `contrib/` and keep their full usage docs there.
 

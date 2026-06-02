@@ -1,0 +1,12 @@
+{
+  "project_name": "My LangChain Agent",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "author": "Your Name",
+  "system_prompt": "You are a helpful UI assistant. Build visual responses using the available components.",
+  "default_model": "openai:Pro/zai-org/GLM-5.1",
+  "gateway_port": "8089",
+  "frontend_port": "5174",
+  "copilotkit_port": "4001",
+  "_agentseek_source_path": "",
+  "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git"
+}

@@ -3,14 +3,22 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from collections.abc import Iterable
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
+
+if TYPE_CHECKING:
+    from bub.channels.cli import CliChannel
+    from bub.channels.cli.renderer import CliRenderer
+    from bub.channels.message import MessageKind
+    from rich.live import Live
 
 AGENTSEEK_ONBOARD_BANNER = r"""
     _                    _                 _
@@ -49,6 +57,20 @@ def resolve_enabled_channels(framework, primary_channels: Iterable[str]) -> list
     return enabled
 
 
+def _install_single_cli_log_sink(self: CliChannel) -> int:
+    from loguru import logger
+
+    with contextlib.suppress(ValueError):
+        logger.remove()
+    return logger.add(self._renderer.log, colorize=False, format="{level:<8} | {message}")
+
+
+def _finish_cli_stream_once(self: CliRenderer, live: Live, *, kind: MessageKind, text: str) -> None:
+    del self
+    del kind, text
+    live.stop()
+
+
 def apply_agentseek_onboard_branding() -> None:
     """Replace Bub's onboard banner and copy without changing the onboard workflow."""
     from bub.builtin import cli
@@ -62,8 +84,12 @@ def apply_agentseek_chat_channel_defaults() -> None:
     """Include lifecycle channels in chat mode so MCP and similar helpers can boot."""
     import bub.builtin.cli as bub_cli
     from bub.channels.cli import CliChannel
+    from bub.channels.cli.renderer import CliRenderer
     from bub.channels.manager import ChannelManager
     from bub.framework import BubFramework
+
+    type.__setattr__(CliChannel, "_install_log_sink", _install_single_cli_log_sink)
+    type.__setattr__(CliRenderer, "finish_stream", _finish_cli_stream_once)
 
     def chat(
         ctx: typer.Context,
@@ -95,6 +121,14 @@ def apply_agentseek_install_project_defaults() -> None:
     import bub.builtin.cli as bub_cli
 
     def _ensure_plugin_sandbox(project: Path) -> None:
+        # Bub's own ``_default_project`` factory mkdir's the sandbox before
+        # returning the path. When ``BUB_PROJECT`` is supplied through the
+        # environment (which is what ``apply_agentseek_env_aliases`` does for
+        # ``.agentseek/agentseek-project``), that factory is bypassed and the
+        # directory may not exist yet — ``_uv(... cwd=project)`` would then
+        # raise ``FileNotFoundError`` from ``subprocess.run``. Mirror Bub's
+        # invariant here so ``agentseek install`` works in a fresh workspace.
+        project.mkdir(parents=True, exist_ok=True)
         if (project / "pyproject.toml").is_file():
             return
         bub_cli._uv("init", "--bare", "--name", DEFAULT_PLUGIN_SANDBOX, "--app", cwd=project)

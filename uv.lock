@@ -10,8 +10,11 @@ resolution-markers = [
 members = [
     "agentseek",
     "agentseek-ag-ui",
+    "agentseek-cli",
+    "agentseek-contextseek",
     "agentseek-langchain",
     "agentseek-observability",
+    "agentseek-project",
     "agentseek-schedule-sqlalchemy",
     "agentseek-tapestore-oceanbase",
 ]
@@ -37,12 +40,20 @@ dependencies = [
     { name = "bub" },
     { name = "bub-feishu" },
     { name = "bub-mcp" },
+    { name = "logfire" },
     { name = "pydantic-settings" },
 ]
 
 [package.optional-dependencies]
 ag-ui = [
     { name = "agentseek-ag-ui" },
+]
+cli = [
+    { name = "agentseek-cli" },
+]
+context = [
+    { name = "agentseek-cli" },
+    { name = "agentseek-contextseek" },
 ]
 langchain = [
     { name = "agentseek-langchain" },
@@ -72,16 +83,20 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "agentseek-ag-ui", marker = "extra == 'ag-ui'", editable = "contrib/agentseek-ag-ui" },
+    { name = "agentseek-cli", marker = "extra == 'cli'", editable = "contrib/agentseek-cli" },
+    { name = "agentseek-cli", marker = "extra == 'context'", editable = "contrib/agentseek-cli" },
+    { name = "agentseek-contextseek", marker = "extra == 'context'", editable = "contrib/agentseek-contextseek" },
     { name = "agentseek-langchain", marker = "extra == 'langchain'", editable = "contrib/agentseek-langchain" },
     { name = "agentseek-observability", marker = "extra == 'observability'", editable = "contrib/agentseek-observability" },
     { name = "agentseek-schedule-sqlalchemy", editable = "contrib/agentseek-schedule-sqlalchemy" },
     { name = "agentseek-tapestore-oceanbase", marker = "extra == 'oceanbase'", editable = "contrib/agentseek-tapestore-oceanbase" },
     { name = "bub", specifier = ">=0.3.7" },
-    { name = "bub-feishu", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-feishu&branch=main" },
-    { name = "bub-mcp", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-mcp&branch=main" },
+    { name = "bub-feishu", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-feishu&rev=5374c8ffc8a38091a4e26dcc455c54f3c9e71aff" },
+    { name = "bub-mcp", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-mcp&rev=5374c8ffc8a38091a4e26dcc455c54f3c9e71aff" },
+    { name = "logfire", specifier = ">=4.33.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
 ]
-provides-extras = ["ag-ui", "langchain", "observability", "oceanbase"]
+provides-extras = ["ag-ui", "cli", "langchain", "observability", "oceanbase", "context"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -115,6 +130,46 @@ requires-dist = [
     { name = "bub", specifier = ">=0.3.7" },
     { name = "fastapi", specifier = ">=0.115.12" },
     { name = "uvicorn", specifier = ">=0.34.0" },
+]
+
+[[package]]
+name = "agentseek-cli"
+version = "0.1.0"
+source = { editable = "contrib/agentseek-cli" }
+dependencies = [
+    { name = "bub" },
+    { name = "cookiecutter" },
+    { name = "jinja2" },
+    { name = "npx-skills" },
+    { name = "pydantic-settings" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bub", specifier = ">=0.3.7" },
+    { name = "cookiecutter", specifier = ">=2.5" },
+    { name = "jinja2", specifier = ">=3.1" },
+    { name = "npx-skills", specifier = ">=1.5" },
+    { name = "pydantic-settings", specifier = ">=2.4" },
+    { name = "typer", specifier = ">=0.12" },
+]
+
+[[package]]
+name = "agentseek-contextseek"
+version = "0.1.0"
+source = { editable = "contrib/agentseek-contextseek" }
+dependencies = [
+    { name = "bub" },
+    { name = "contextseek" },
+    { name = "pydantic-settings" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bub", specifier = ">=0.3.7" },
+    { name = "contextseek" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
 ]
 
 [[package]]
@@ -156,6 +211,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "agentseek-project"
+version = "0.1.0"
+source = { virtual = ".agentseek/agentseek-project" }
+dependencies = [
+    { name = "bub" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "bub", specifier = ">=0.3.7" }]
+
+[[package]]
 name = "agentseek-schedule-sqlalchemy"
 version = "0.1.0"
 source = { editable = "contrib/agentseek-schedule-sqlalchemy" }
@@ -192,7 +258,7 @@ dependencies = [
 requires-dist = [
     { name = "any-llm-sdk" },
     { name = "bub", specifier = ">=0.3.7" },
-    { name = "bub-tapestore-sqlalchemy", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-sqlalchemy&branch=main" },
+    { name = "bub-tapestore-sqlalchemy", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-sqlalchemy&rev=5374c8ffc8a38091a4e26dcc455c54f3c9e71aff" },
     { name = "pymysql", specifier = ">=1.1.0" },
     { name = "pyobvector", specifier = ">=0.2.22" },
 ]
@@ -409,6 +475,19 @@ wheels = [
 ]
 
 [[package]]
+name = "arrow"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-dateutil" },
+    { name = "tzdata" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b9/33/032cdc44182491aa708d06a68b62434140d8c50820a087fac7af37703357/arrow-1.4.0.tar.gz", hash = "sha256:ed0cc050e98001b8779e84d461b0098c4ac597e88704a655582b21d116e526d7", size = 152931, upload-time = "2025-10-18T17:46:46.761Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/c9/d7977eaacb9df673210491da99e6a247e93df98c715fc43fd136ce1d3d33/arrow-1.4.0-py3-none-any.whl", hash = "sha256:749f0769958ebdc79c173ff0b0670d59051a535fa26e8eba02953dc19eb43205", size = 68797, upload-time = "2025-10-18T17:46:45.663Z" },
+]
+
+[[package]]
 name = "attrs"
 version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -437,6 +516,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/c7/94/1009e248bbfbab11397abca7193bea6626806be9a327d399810d523a07cb/beartype-0.22.9.tar.gz", hash = "sha256:8f82b54aa723a2848a56008d18875f91c1db02c32ef6a62319a002e3e25a975f", size = 1608866, upload-time = "2025-12-13T06:50:30.72Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/71/cc/18245721fa7747065ab478316c7fea7c74777d07f37ae60db2e84f8172e8/beartype-0.22.9-py3-none-any.whl", hash = "sha256:d16c9bbc61ea14637596c5f6fbff2ee99cbe3573e46a716401734ef50c3060c2", size = 1333658, upload-time = "2025-12-13T06:50:28.266Z" },
+]
+
+[[package]]
+name = "binaryornot"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/72/4755b85101f37707c71526a301c1203e413c715a0016ecb592de3d2dcfff/binaryornot-0.6.0.tar.gz", hash = "sha256:cc8d57cfa71d74ff8c28a7726734d53a851d02fad9e3a5581fb807f989f702f0", size = 478718, upload-time = "2026-03-08T16:26:28.804Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/0c/31cfaa6b56fe23488ecb993bc9fc526c0d84d89607decdf2a10776426c2e/binaryornot-0.6.0-py3-none-any.whl", hash = "sha256:900adfd5e1b821255ba7e63139b0396b14c88b9286e74e03b6f51e0200331337", size = 14185, upload-time = "2026-03-08T16:26:27.466Z" },
 ]
 
 [[package]]
@@ -477,7 +565,7 @@ wheels = [
 [[package]]
 name = "bub-feishu"
 version = "0.1.0"
-source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-feishu&branch=main#85e2da5a70e75b95c8e896370f4d7ee7d5c04120" }
+source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-feishu&rev=5374c8ffc8a38091a4e26dcc455c54f3c9e71aff#5374c8ffc8a38091a4e26dcc455c54f3c9e71aff" }
 dependencies = [
     { name = "httpx" },
     { name = "lark-oapi" },
@@ -487,7 +575,7 @@ dependencies = [
 [[package]]
 name = "bub-mcp"
 version = "0.1.0"
-source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-mcp&branch=main#85e2da5a70e75b95c8e896370f4d7ee7d5c04120" }
+source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-mcp&rev=5374c8ffc8a38091a4e26dcc455c54f3c9e71aff#5374c8ffc8a38091a4e26dcc455c54f3c9e71aff" }
 dependencies = [
     { name = "fastmcp" },
     { name = "pydantic-settings" },
@@ -496,7 +584,7 @@ dependencies = [
 [[package]]
 name = "bub-tapestore-sqlalchemy"
 version = "0.1.0"
-source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-sqlalchemy&branch=main#85e2da5a70e75b95c8e896370f4d7ee7d5c04120" }
+source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-sqlalchemy&rev=5374c8ffc8a38091a4e26dcc455c54f3c9e71aff#5374c8ffc8a38091a4e26dcc455c54f3c9e71aff" }
 dependencies = [
     { name = "sqlalchemy" },
 ]
@@ -698,6 +786,42 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44", size = 27697, upload-time = "2022-10-25T02:36:22.414Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
+]
+
+[[package]]
+name = "contextseek"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "langchain-openai" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pyyaml" },
+    { name = "seekvfs" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/79/a9/22fe6f4de99d4efc2dde79e9d40d5344524da3aaad7052214669f7ce1997/contextseek-0.1.0.tar.gz", hash = "sha256:9d005e9e33d9c2de42d9785c572fad91fe7f73348f1d9fc0fb74c985803dd610", size = 450262, upload-time = "2026-05-25T12:15:14.389Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fb/e0/872f84be46c4ddc3badb1ba119541744326cd6c403a7fa025d7517833d80/contextseek-0.1.0-py3-none-any.whl", hash = "sha256:1f9f0fbe821eb0815f2d34300067e1edb1fd5d84a59be17ab8e1eeec9d4e5cae", size = 172236, upload-time = "2026-05-25T12:15:12.481Z" },
+]
+
+[[package]]
+name = "cookiecutter"
+version = "2.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "arrow" },
+    { name = "binaryornot" },
+    { name = "click" },
+    { name = "jinja2" },
+    { name = "python-slugify" },
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "rich" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/92/03/f4c96d8fd4f5e8af0210bf896eb63927f35d3014a8e8f3bf9d2c43ad3332/cookiecutter-2.7.1.tar.gz", hash = "sha256:ca7bb7bc8c6ff441fbf53921b5537668000e38d56e28d763a1b73975c66c6138", size = 142854, upload-time = "2026-03-04T04:06:02.786Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/a9/8c855c14b401dc67d20739345295af5afce5e930a69600ab20f6cfa50b5c/cookiecutter-2.7.1-py3-none-any.whl", hash = "sha256:cee50defc1eaa7ad0071ee9b9893b746c1b3201b66bf4d3686d0f127c8ed6cf9", size = 41317, upload-time = "2026-03-04T04:06:01.221Z" },
 ]
 
 [[package]]
@@ -2068,6 +2192,19 @@ wheels = [
 ]
 
 [[package]]
+name = "npx-skills"
+version = "1.5.6"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6d/17/3fdbc5f0be5540f2306ce1b5cee35919197b0dc896ad32bf8a20f92c23b8/npx_skills-1.5.6-py3-none-macosx_10_13_universal2.whl", hash = "sha256:aa0a8b48a92f2c5cdc719e123d381ef37739d9797f536bea216bf5dd3dbc64c5", size = 39030510, upload-time = "2026-05-09T08:11:59.441Z" },
+    { url = "https://files.pythonhosted.org/packages/16/f7/6466be6fcc4863390bc64cdedbe486af831367b3f34c354d8e743b85355c/npx_skills-1.5.6-py3-none-macosx_15_0_arm64.whl", hash = "sha256:37313d94434e0daa406f43a17939d6d7f54ccfa0683c0e874166796d17e18691", size = 37311258, upload-time = "2026-05-09T08:12:09.35Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/97/48516b85bcff453ed2f1bd10b563bf08738932f539b5c7636d703db10e11/npx_skills-1.5.6-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:fad247f9cd516c2c762aafc60addba044780f700b4fce6cdac3278f98da5a476", size = 44662077, upload-time = "2026-05-09T08:11:52.852Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/8a/16d7c220e16fe54f68b3c406a3dc9a284dc756467c3a99684f8c39edd615/npx_skills-1.5.6-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:7600ddce6bcfa20f4efdd5429efda97702cfc79503e409f7d5313a3ecd3a5879", size = 45470644, upload-time = "2026-05-09T08:12:02.906Z" },
+    { url = "https://files.pythonhosted.org/packages/39/52/24bc93829b53943efd2ca3d30a2a71564ad413d7a94b0c96ffbc9516f325/npx_skills-1.5.6-py3-none-win_amd64.whl", hash = "sha256:320b24b748de0677725f5bc8fffd0ec5d5063e9fcb7771033cddf2e22a142977", size = 33659276, upload-time = "2026-05-09T08:12:06.062Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/a1/5e08d05ac9f8fcd4a578e9db4c6584350aa9101f720352f985565a998da7/npx_skills-1.5.6-py3-none-win_arm64.whl", hash = "sha256:fc47f997d1382e0dc9f5b9b9633eb375e96415d5aefd0418938ebec3d705373f", size = 30138087, upload-time = "2026-05-09T08:11:56.181Z" },
+]
+
+[[package]]
 name = "numpy"
 version = "2.4.4"
 source = { registry = "https://pypi.org/simple" }
@@ -2869,6 +3006,18 @@ wheels = [
 ]
 
 [[package]]
+name = "python-slugify"
+version = "8.0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "text-unidecode" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/87/c7/5e1547c44e31da50a460df93af11a535ace568ef89d7a811069ead340c4a/python-slugify-8.0.4.tar.gz", hash = "sha256:59202371d1d05b54a9e7720c5e038f928f45daaffe41dd10822f3907b937c856", size = 10921, upload-time = "2024-02-08T18:32:45.488Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a4/62/02da182e544a51a5c3ccf4b03ab79df279f9c60c5e82d5e8bec7ca26ac11/python_slugify-8.0.4-py2.py3-none-any.whl", hash = "sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8", size = 10051, upload-time = "2024-02-08T18:32:43.911Z" },
+]
+
+[[package]]
 name = "python-telegram-bot"
 version = "22.7"
 source = { registry = "https://pypi.org/simple" }
@@ -3317,6 +3466,19 @@ wheels = [
 ]
 
 [[package]]
+name = "seekvfs"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a7/82/a007005c01276c1d45666e5123a52c76a8b5e1b64ee866e95ef3b266cdc2/seekvfs-0.1.0.tar.gz", hash = "sha256:6b2d452c9f326d54179ba84e93bef0db704504458a54668939d96e2d5b4692d3", size = 35885, upload-time = "2026-04-27T07:55:25.094Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/53/748db6f0fd8f3e809263f37f35f2a08293c8a305a742cc40c37dc3afb2dd/seekvfs-0.1.0-py3-none-any.whl", hash = "sha256:88d496858eb6c0d2a02038c533f430de61afe17c30406b0e172b167c08037356", size = 42613, upload-time = "2026-04-27T07:55:23.966Z" },
+]
+
+[[package]]
 name = "shellingham"
 version = "1.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -3440,6 +3602,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/47/c6/ee486fd809e357697ee8a44d3d69222b344920433d3b6666ccd9b374630c/tenacity-9.1.4.tar.gz", hash = "sha256:adb31d4c263f2bd041081ab33b498309a57c77f9acf2db65aadf0898179cf93a", size = 49413, upload-time = "2026-02-07T10:45:33.841Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/c1/eb8f9debc45d3b7918a32ab756658a0904732f75e555402972246b0b8e71/tenacity-9.1.4-py3-none-any.whl", hash = "sha256:6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55", size = 28926, upload-time = "2026-02-07T10:45:32.24Z" },
+]
+
+[[package]]
+name = "text-unidecode"
+version = "1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ab/e2/e9a00f0ccb71718418230718b3d900e71a5d16e701a3dae079a21e9cd8f8/text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93", size = 76885, upload-time = "2019-08-30T21:36:45.405Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/a5/c0b6468d3824fe3fde30dbb5e1f687b291608f9473681bbf7dabbf5a87d7/text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8", size = 78154, upload-time = "2019-08-30T21:37:03.543Z" },
 ]
 
 [[package]]

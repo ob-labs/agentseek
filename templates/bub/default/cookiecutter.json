@@ -1,0 +1,11 @@
+{
+  "project_name": "My Bub Agent",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "author": "Your Name",
+  "default_model": "openai:gpt-4o-mini",
+  "gateway_port": "8088",
+  "frontend_port": "5173",
+  "copilotkit_port": "4000",
+  "_agentseek_source_path": "",
+  "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git"
+}

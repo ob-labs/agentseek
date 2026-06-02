@@ -3,12 +3,10 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
-from typing import Any
 
 from pydantic import Field
-from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic_settings.sources import DotEnvSettingsSource, EnvSettingsSource, PydanticBaseSettingsSource
+from pydantic_settings.sources import DotEnvSettingsSource, EnvSettingsSource
 
 AGENTSEEK_ENV_PREFIX = "AGENTSEEK_"
 BUB_ENV_PREFIX = "BUB_"
@@ -24,24 +22,7 @@ DEFAULT_AGENTSEEK_CONFIG = "config.yml"
 DEFAULT_PLUGIN_SANDBOX = "agentseek-project"
 
 
-class AgentseekAliasSource(PydanticBaseSettingsSource):
-    """Build BUB_* aliases from AGENTSEEK_* settings sources."""
-
-    def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
-        del field, field_name
-        return None, "", False
-
-    def __call__(self) -> dict[str, Any]:
-        aliases: dict[str, str] = {}
-        for env_vars in (
-            DotEnvSettingsSource(self.settings_cls).env_vars,
-            EnvSettingsSource(self.settings_cls).env_vars,
-        ):
-            aliases.update(_bub_aliases(env_vars))
-        return {"aliases": aliases}
-
-
-class AgentseekEnvironmentSettings(BaseSettings):
+class _AgentseekAliasProbeSettings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=".env",
@@ -50,19 +31,26 @@ class AgentseekEnvironmentSettings(BaseSettings):
         extra="ignore",
     )
 
-    aliases: dict[str, str] = Field(default_factory=dict)
 
-    @classmethod
-    def settings_customise_sources(
-        cls,
-        settings_cls: type[BaseSettings],
-        init_settings: PydanticBaseSettingsSource,
-        env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,
-        file_secret_settings: PydanticBaseSettingsSource,
-    ) -> tuple[PydanticBaseSettingsSource, ...]:
-        del init_settings, env_settings, dotenv_settings, file_secret_settings
-        return (AgentseekAliasSource(settings_cls),)
+class AgentseekSettings(BaseSettings):
+    """Runtime knobs resolved from the AGENTSEEK_* namespace."""
+
+    model_config = SettingsConfigDict(
+        env_prefix=AGENTSEEK_ENV_PREFIX,
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_ignore_empty=True,
+        extra="ignore",
+    )
+
+    # Enable local Logfire console rendering for spans/events.
+    console: bool = Field(default=False)
+
+
+def get_agentseek_settings() -> AgentseekSettings:
+    """Resolve agentseek settings from the current process environment."""
+    return AgentseekSettings()
 
 
 def apply_agentseek_env_aliases(environ: MutableMapping[str, str] | None = None) -> None:
@@ -72,7 +60,7 @@ def apply_agentseek_env_aliases(environ: MutableMapping[str, str] | None = None)
     ``BUB_PROJECT`` (under that home, see ``DEFAULT_PLUGIN_SANDBOX``) when unset.
     """
     target_environ = os.environ if environ is None else environ
-    for name, value in AgentseekEnvironmentSettings().aliases.items():
+    for name, value in _collect_agentseek_bub_aliases().items():
         target_environ.setdefault(name, value)
     _apply_agentseek_bub_location_defaults(target_environ)
 
@@ -98,6 +86,20 @@ def agentseek_config_file() -> Path:
 def default_agentseek_home() -> Path:
     """Resolved directory for Bub runtime home when ``BUB_HOME`` is unset."""
     return Path.cwd() / DEFAULT_AGENTSEEK_HOME
+
+
+def _collect_agentseek_bub_aliases() -> dict[str, str]:
+    aliases: dict[str, str] = {}
+    for env_vars in _iter_agentseek_env_vars():
+        aliases.update(_bub_aliases(env_vars))
+    return aliases
+
+
+def _iter_agentseek_env_vars() -> tuple[Mapping[str, str | None], ...]:
+    return (
+        DotEnvSettingsSource(_AgentseekAliasProbeSettings).env_vars,
+        EnvSettingsSource(_AgentseekAliasProbeSettings).env_vars,
+    )
 
 
 def _bub_aliases(env_vars: Mapping[str, str | None]) -> dict[str, str]:

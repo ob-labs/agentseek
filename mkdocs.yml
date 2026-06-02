@@ -8,10 +8,42 @@ repo_name: ob-labs/agentseek
 nav:
   - Home: index.md
   - Docs:
-      - Overview: docs/index.md
-      - Getting started: docs/getting-started.md
-      - Configuration: docs/configuration.md
-      - Extensions: docs/extensions.md
+      - Overview: docs.md
+      - Tutorials:
+          - Overview: tutorials/index.md
+          - Quick demo (CLI): tutorials/01-quick-demo-cli.md
+          - First harness app: tutorials/02-first-harness-app.md
+          - Add a skill and MCP: tutorials/03-add-a-skill-and-mcp.md
+      - How-to:
+          - Overview: how-to/index.md
+          - Configure model: how-to/configure-model.md
+          - Configure MCP: how-to/configure-mcp.md
+          - Configure docker workspace: how-to/configure-docker-workspace.md
+          - Install a plugin: how-to/install-a-plugin.md
+          - Add skills: how-to/add-skills.md
+          - Add an MCP server: how-to/add-mcp-server.md
+          - Run locally: how-to/run-locally.md
+          - Run the gateway: how-to/run-gateway.md
+          - Run with Docker Compose: how-to/run-with-docker-compose.md
+          - Build and deploy: how-to/build-and-deploy.md
+          - Use ContextSeek: how-to/use-contextseek.md
+          - Author a contrib plugin: how-to/author-a-contrib-plugin.md
+      - Explanation:
+          - Overview: explanation/index.md
+          - What agentseek is: explanation/what-agentseek-is.md
+          - Bub relationship: explanation/bub-relationship.md
+          - Runtime data model: explanation/runtime-data-model.md
+          - Extension model: explanation/extension-model.md
+          - Choosing an entry point: explanation/choosing-an-entry-point.md
+          - Where things live: explanation/where-things-live.md
+      - Reference:
+          - Overview: reference/index.md
+          - Environment variables: reference/environment.md
+          - CLI: reference/cli.md
+          - File layout: reference/file-layout.md
+          - Packages: reference/packages.md
+          - Templates: reference/templates.md
+          - Docker: reference/docker.md
   - Blog:
       - Intro: blog/index.md
       - Introducing agentseek: blog/introducing-agentseek.md
@@ -31,10 +63,11 @@ plugins:
           nav_translations:
             Home: Home
             Docs: Docs
+            Tutorials: Tutorials
+            How-to: How-to
+            Reference: Reference
+            Explanation: Explanation
             Overview: Overview
-            Getting started: Getting started
-            Configuration: Configuration
-            Extensions: Extensions
             Blog: Blog
             Intro: Intro
             Introducing agentseek: Introducing agentseek
@@ -45,14 +78,46 @@ plugins:
           nav_translations:
             Home: 首页
             Docs: 文档
+            Tutorials: 教程
+            How-to: 操作指南
+            Reference: 参考
+            Explanation: 概念解释
             Overview: 总览
-            Getting started: 快速开始
-            Configuration: 配置
-            Extensions: 扩展
             Blog: 博客
             Intro: 介绍
             Introducing agentseek: 认识 agentseek
             Hub: 目录
+            # Tutorials
+            "Quick demo (CLI)": 通过 CLI 快速演示
+            First harness app: 构建你的第一个 harness 应用
+            Add a skill and MCP: 添加 skill 和 MCP
+            # How-to
+            Configure model: 配置模型
+            Configure MCP: 配置 MCP
+            Configure docker workspace: 配置 Docker workspace
+            Install a plugin: 安装插件
+            Add skills: 添加 skill
+            Add an MCP server: 添加 MCP server
+            Run locally: 本地运行
+            Run the gateway: 运行 gateway
+            Run with Docker Compose: 使用 Docker Compose 运行
+            Build and deploy: 构建与部署
+            Use ContextSeek: 使用 ContextSeek
+            Author a contrib plugin: 编写 contrib 插件
+            # Explanation
+            What agentseek is: agentseek 是什么
+            Bub relationship: agentseek 与 Bub 的关系
+            Runtime data model: 运行时数据模型
+            Extension model: 扩展模型
+            Choosing an entry point: 选择一个入口
+            Where things live: 各样东西的位置
+            # Reference
+            Environment variables: 环境变量
+            CLI: CLI
+            File layout: 文件布局
+            Packages: 包
+            Templates: 模板
+            Docker: Docker
   - search
   - mkdocstrings:
       handlers:
