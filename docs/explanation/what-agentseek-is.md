@@ -13,10 +13,12 @@ sources:
 
 # What agentseek is
 
-> **In short:** agentseek is a **suite** that helps you ship LangChain agents to
+> **In short:** AgentSeek is a **suite** that helps you ship agents to
 > production. It comprises agentseek-cli (project scaffolding), agentseek-api
 > (Agent Protocol server), ContextSeek (semantic context layer), and
-> langchain-oceanbase (data substrate). The suite is built on a database-native
+> langchain-oceanbase (data substrate). AgentSeek is open to any Agent
+> Framework — it ships with built-in Bub and the current version is
+> LangChain-friendly out of the box. The suite is built on a database-native
 > harness — runtime data lives on one durable, queryable substrate from the
 > first turn.
 

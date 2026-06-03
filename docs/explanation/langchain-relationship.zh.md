@@ -13,11 +13,12 @@ sources:
 
 # agentseek 与 LangChain 的关系
 
-> **一句话：** AgentSeek **不是 LangChain 的替代品**，也不是又一个 Agent 框架。
-> 它补齐 LangChain 开源生态中目前缺失的三块拼图——**服务化的 ship 轴**
-> （agentseek-api）、**上下文语义层**（ContextSeek）、以及 **Agent 时代的数据底座**
-> （langchain-oceanbase + OceanBase / seekdb）。你的 LangGraph 代码不用改一行就能
-> 跑在 AgentSeek 上——不需要切换框架。
+> **一句话：** AgentSeek **不是 LangChain 的替代品**，也不是又一个智能体框架。
+> 它是一个**开放接入任何智能体框架**的数据库原生 harness——内置 Bub，当前
+> 版本对 LangChain 的集成最深。它补齐 LangChain 开源生态中目前缺失的三块拼图——
+> **服务化的 ship 轴**（agentseek-api）、**上下文语义层**（ContextSeek）、以及
+> **Agent 时代的数据底座**（langchain-oceanbase + OceanBase / seekdb）。你的
+> LangGraph 代码不用改一行就能跑在 AgentSeek 上——不需要切换框架。
 
 ## 背景
 
@@ -146,9 +147,10 @@ SQL——与 LangChain 的 SmithDB 在内部提供的结构性体验相同。
 
 ## 为什么是这样
 
-- **LangChain 优先，但不排他。** AgentSeek 最深的集成面向 LangChain——四/六的
-  模板、专用桥接插件、原生 langchain-oceanbase 支持。harness 也通过插件模型支持
-  非 LangChain agent，但主要受众就是 LangChain 社区。
+- **开放接入智能体框架，当前版本 LangChain 友好。** AgentSeek 的设计允许通过
+  插件模型对接任何智能体框架。它内置 Bub 作为原生框架，当前版本对 LangChain
+  的集成最深——四/六的模板、专用桥接插件、原生 langchain-oceanbase 支持。其他框架
+  可以通过同样的 contrib 插件模式接入。
 - **渐进式采纳。** `langchain/markdown-messages` 和 `deepagents/research` 等模板
   不带任何 agentseek 运行时依赖。开发者可以先用纯 LangChain，等准备好了再加
   harness 层，无需重写。

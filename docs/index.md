@@ -5,8 +5,9 @@ hide_sidebar: true
 # AgentSeek
 
 AgentSeek is a database-native Agent Harness for teams that want agent runtime
-data to become a first-class database workload. LangChain is the recommended
-way to start building on it.
+data to become a first-class database workload. It is open to any Agent
+Framework — the current version ships with built-in Bub and is
+LangChain-friendly out of the box.
 
 > **Prerequisites:** Python 3.12+, [uv](https://docs.astral.sh/uv/), and a
 > model provider API key. That's it.

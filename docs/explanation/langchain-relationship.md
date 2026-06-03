@@ -14,8 +14,10 @@ sources:
 # How agentseek relates to LangChain
 
 > **In short:** AgentSeek is **not a replacement for LangChain**, nor another
-> agent framework. It complements the LangChain open-source ecosystem by filling
-> three gaps that LangChain's commercial platform (LangSmith) covers but the
+> Agent Framework. It is a database-native harness **open to any Agent
+> Framework** — it ships with built-in Bub and the current version has the
+> deepest integration with LangChain. It complements the LangChain open-source
+> ecosystem by filling three gaps that LangSmith covers commercially but the
 > open-source side currently does not: a **service-layer axis** for shipping
 > graphs to production, a **semantic context layer** for memory and continual
 > learning, and an **Agent-era data substrate** backed by OceanBase / seekdb.
@@ -162,10 +164,12 @@ SmithDB provides internally.
 
 ## Why it is like this
 
-- **LangChain-first, not LangChain-only.** AgentSeek's deepest integration is
-  with LangChain — four of six templates, a dedicated bridge plugin, and native
-  langchain-oceanbase support. The harness also supports non-LangChain agents
-  via its plugin model, but the primary audience is the LangChain community.
+- **Open to Agent Frameworks, LangChain-friendly today.** AgentSeek is designed
+  to connect with any Agent Framework via its plugin model. It ships with
+  built-in Bub as its native framework, and the current version has the deepest
+  integration with LangChain — four of six templates, a dedicated bridge plugin,
+  and native langchain-oceanbase support. Other frameworks can be integrated via
+  the same contrib plugin pattern.
 - **Incremental adoption.** Templates like `langchain/markdown-messages` and
   `deepagents/research` carry zero agentseek runtime dependency. Developers can
   start pure-LangChain and add the harness layer later without rewriting.

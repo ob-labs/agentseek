@@ -4,8 +4,9 @@ hide_sidebar: true
 
 # AgentSeek
 
-AgentSeek 是一个数据库原生的 Agent Harness，适合那些希望把 agent 运行时数据变成
-一等数据库工作负载的团队。LangChain 是我们推荐的上手方式。
+AgentSeek 是一个数据库原生的 Agent Harness，适合那些希望把智能体运行时数据变成
+一等数据库工作负载的团队。它开放接入任何智能体框架——内置 Bub，当前版本
+开箱即用地支持 LangChain。
 
 > **前置条件：** Python 3.12+、[uv](https://docs.astral.sh/uv/)、一个模型 API key。就这些。
 

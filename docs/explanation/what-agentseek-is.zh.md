@@ -13,9 +13,10 @@ sources:
 
 # agentseek 是什么
 
-> **简而言之：** agentseek 是一个帮你把 LangChain agent 送上生产的**套件**。
+> **简而言之：** AgentSeek 是一个帮你把 agent 送上生产的**套件**。
 > 它包含 agentseek-cli（项目脚手架）、agentseek-api（Agent Protocol 服务）、
-> ContextSeek（语义上下文层）和 langchain-oceanbase（数据底座）。套件构建在
+> ContextSeek（语义上下文层）和 langchain-oceanbase（数据底座）。AgentSeek 开放
+> 接入任何智能体框架——内置 Bub，当前版本开箱即用地支持 LangChain。套件构建在
 > database-native 的 harness 之上——运行时数据从第一轮 turn 起就生活在持久可查的
 > 数据库里。
 
