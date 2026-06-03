@@ -105,12 +105,14 @@ the other entries are runtime plugins for the harness.
 | `agentseek-ag-ui` | Runtime plugin | AG-UI SSE channel adapter for `agentseek gateway`. |
 | `agentseek-contextseek` | Runtime plugin | ContextSeek semantic context layer. |
 | `agentseek-langchain` | Runtime plugin | Routes Bub model turns through a user-supplied LangChain `Runnable`. |
-| `agentseek-observability` | Runtime plugin | Logfire-backed tracing across the any-llm / Republic / Bub stack. |
-| `agentseek-schedule-sqlalchemy` | Runtime plugin (bundled as a hard dep of the harness) | SQLAlchemy-backed APScheduler job store. |
+| `agentseek-schedule-sqlalchemy` | Runtime plugin | SQLAlchemy-backed APScheduler job store. |
 | `agentseek-tapestore-oceanbase` | Runtime plugin | SQLAlchemy tape storage with OceanBase compatibility. |
 
 Each package owns its install, configure, run, and verify documentation. The main docs
 link out; they do not duplicate. The workspace mapping lives at `pyproject.toml:100-110`.
+
+OpenTelemetry tracing is documented in
+<https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-tapestore-otel>.
 
 ### `examples/` — runnable end-to-end demos
 

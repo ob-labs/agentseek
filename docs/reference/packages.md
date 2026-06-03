@@ -3,7 +3,7 @@ title: Packages reference
 type: reference
 audience: [A2, A3, A4]
 runs: no
-verified_on: 2026-05-29
+verified_on: 2026-06-03
 sources:
   - pyproject.toml
   - contrib/agentseek-cli/pyproject.toml
@@ -62,23 +62,19 @@ same package act as a standalone CLI on Path A and a runtime plugin (folded into
 `agentseek …`) on Path B. See [CLI reference](cli.md) for the command surface in
 each mode.
 
-## Harness core dependencies
+## Harness runtime packages
 
-These are the `requires-dist` entries of the `agentseek` package
-(`pyproject.toml:18`):
+These are the main runtime entries from `pyproject.toml`:
 
 | Package | Constraint | Source pin |
 | --- | --- | --- |
 | `bub` | `>=0.3.7` | PyPI |
 | `bub-feishu` | (no version) | `git+bub-contrib@5374c8f` (`pyproject.toml:89`) |
 | `bub-mcp` | (no version) | `git+bub-contrib@5374c8f` (`pyproject.toml:90`) |
+| `bub-tapestore-otel` | (no version) | `git+bub-contrib@75c0778` |
 | `agentseek-schedule-sqlalchemy` | (no version) | workspace |
 | `logfire` | `>=4.33.0` | PyPI |
 | `pydantic-settings` | `>=2.0.0` | PyPI |
-
-`bub-feishu`, `bub-mcp`, and `agentseek-schedule-sqlalchemy` are **not on PyPI**.
-That is the root cause of the "cannot install agentseek directly from PyPI"
-note above.
 
 ## Installing plugins
 
@@ -94,7 +90,7 @@ been removed; only `agentseek[cli]` remains as a pip extra.
 | `agentseek-ag-ui` | `agentseek install agentseek-ag-ui` | AG-UI adapter and FastAPI helpers. |
 | `agentseek-cli` | `agentseek install agentseek-cli` or `uv tool install agentseek-cli` | Project lifecycle CLI folded into the harness env (`create / run / build / deploy / api / ctx / skills`). |
 | `agentseek-langchain` | `agentseek install agentseek-langchain` | LangChain `Runnable` / agent bridge. |
-| `agentseek-observability` | `agentseek install agentseek-observability` | Logfire-backed spans. |
+| `bub-tapestore-otel` | `agentseek install bub-tapestore-otel@main` | Tape-first OpenTelemetry spans exported through OTLP HTTP. |
 | `agentseek-tapestore-oceanbase` | `agentseek install agentseek-tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility. |
 | `agentseek-contextseek` | `agentseek install agentseek-contextseek` | ContextSeek semantic context runtime plugin (also brings the lifecycle CLI for `agentseek ctx`). |
 
@@ -112,7 +108,6 @@ runtime plugin like the others.
 | `agentseek-cli` (project lifecycle CLI) | `cli` | `contrib/agentseek-cli` | [README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-cli/README.md) |
 | `agentseek-ag-ui` | n/a | `contrib/agentseek-ag-ui` | [README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-ag-ui/README.md) |
 | `agentseek-langchain` | `langchain` | `contrib/agentseek-langchain` | [README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-langchain/README.md) |
-| `agentseek-observability` | `observability` | `contrib/agentseek-observability` | [README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-observability/README.md) |
 | `agentseek-tapestore-oceanbase` | `tapestore-oceanbase` | `contrib/agentseek-tapestore-oceanbase` | [README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-tapestore-oceanbase/README.md) |
 | `agentseek-schedule-sqlalchemy` | `schedule` | `contrib/agentseek-schedule-sqlalchemy` | [README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-schedule-sqlalchemy/README.md) |
 | `agentseek-contextseek` | `contextseek` | `contrib/agentseek-contextseek` | [README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md) |
@@ -127,7 +122,6 @@ Entry points are declared by each contrib package under
 contrib/agentseek-ag-ui
 contrib/agentseek-cli
 contrib/agentseek-langchain
-contrib/agentseek-observability
 contrib/agentseek-schedule-sqlalchemy
 contrib/agentseek-tapestore-oceanbase
 contrib/agentseek-contextseek

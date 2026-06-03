@@ -135,11 +135,10 @@ make compose-up
 - [概念解释](docs/explanation/index.zh.md) — LangChain 关系、Bub 关系、运行时数据模型
 - [参考](docs/reference/index.zh.md) — 环境变量、CLI、包、模板、Docker
 
-Contrib 包的安装与使用文档在各自 README 里：
+更多包文档：
 
 - [agentseek-langchain](contrib/agentseek-langchain/README.md)
 - [agentseek-tapestore-oceanbase](contrib/agentseek-tapestore-oceanbase/README.md)
-- [agentseek-observability](contrib/agentseek-observability/README.md)
 - [agentseek-contextseek](contrib/agentseek-contextseek/README.md)
 - [agentseek-schedule-sqlalchemy](contrib/agentseek-schedule-sqlalchemy/README.md)
 

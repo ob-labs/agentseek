@@ -50,10 +50,10 @@ dev = [
 plugins = [
     "bub-feishu",
     "bub-mcp",
+    "bub-tapestore-otel",
     "agentseek-schedule-sqlalchemy",
     "agentseek-ag-ui",
     "agentseek-langchain",
-    "agentseek-observability",
     "agentseek-tapestore-oceanbase",
     "agentseek-contextseek",
 ]
@@ -81,9 +81,9 @@ index-url = "https://pypi.org/simple"
 bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-feishu" }
 bub-mcp = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-mcp" }
 bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-tapestore-sqlalchemy" }
+bub-tapestore-otel = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "75c0778c7083fc9355d1c46d2816077290ae8349", subdirectory = "packages/bub-tapestore-otel" }
 agentseek-tapestore-oceanbase = { workspace = true }
 agentseek-langchain = { workspace = true }
-agentseek-observability = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }
 agentseek-ag-ui = { workspace = true }
 agentseek-contextseek = { workspace = true }
@@ -94,7 +94,6 @@ members = [
     "contrib/agentseek-ag-ui",
     "contrib/agentseek-cli",
     "contrib/agentseek-langchain",
-    "contrib/agentseek-observability",
     "contrib/agentseek-schedule-sqlalchemy",
     "contrib/agentseek-tapestore-oceanbase",
     "contrib/agentseek-contextseek",

@@ -135,11 +135,10 @@ See [How to run with Docker Compose](docs/how-to/run-with-docker-compose.md).
 - [Explanation](docs/explanation/index.md) — LangChain relationship, Bub relationship, runtime data model
 - [Reference](docs/reference/index.md) — env vars, CLI, packages, templates, Docker
 
-Contrib packages document their setup in their own READMEs:
+More package docs:
 
 - [agentseek-langchain](contrib/agentseek-langchain/README.md)
 - [agentseek-tapestore-oceanbase](contrib/agentseek-tapestore-oceanbase/README.md)
-- [agentseek-observability](contrib/agentseek-observability/README.md)
 - [agentseek-contextseek](contrib/agentseek-contextseek/README.md)
 - [agentseek-schedule-sqlalchemy](contrib/agentseek-schedule-sqlalchemy/README.md)
 

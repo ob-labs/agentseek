@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib
 import sys
 from typing import Literal
 
@@ -19,17 +18,6 @@ apply_agentseek_env_aliases()
 apply_agentseek_cli_overrides()
 
 
-def _maybe_enable_observability() -> None:
-    try:
-        observability = importlib.import_module("agentseek_observability.plugin")
-    except ModuleNotFoundError:
-        return
-
-    instrument = getattr(observability, "instrument_agentseek_observability", None)
-    if callable(instrument):
-        instrument()
-
-
 def _logfire_console_config(enabled: bool) -> logfire.ConsoleOptions | Literal[False]:
     if not enabled:
         return False
@@ -46,7 +34,6 @@ def _instrument_agentseek() -> None:
     settings = get_agentseek_settings()
     logfire.configure(send_to_logfire=False, console=_logfire_console_config(settings.console))
     logger.add(logfire_loguru.LogfireHandler(), format="{message}")
-    _maybe_enable_observability()
 
 
 def create_cli_app() -> typer.Typer:
