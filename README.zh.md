@@ -76,14 +76,11 @@ AgentSeek 在 PyPI 上以两个互补的包形式提供，按职责拆分：
 
 ## 开源课程
 
-免费课程**《Deep Agents 实战》**教你用 LangChain / LangGraph / DeepAgents 构建生产级 AI Agent——后续所有动手实验都基于 AgentSeek。
+**《Deep Agents 实战》**——免费课程，用 LangChain / DeepAgents 构建生产级 AI Agent。后续所有动手实验基于 AgentSeek。
 
-| 资源 | 链接 |
-| --- | --- |
-| 课程网站 | [webup.github.io/deepagents-course](https://webup.github.io/deepagents-course) |
-| 视频合集（B站） | [B站合集](https://space.bilibili.com/28357052/lists/7757577?type=season) |
-| 图文合集（小红书） | [小红书合集](https://www.xiaohongshu.com/collection/item/69c4fd2a0072000000000001) |
-| 源码仓库 | [github.com/webup/deepagents-site](https://github.com/webup/deepagents-site) |
+[课程网站](https://webup.github.io/deepagents-course) · [源码仓库](https://github.com/webup/deepagents-site)
+
+课程覆盖：Agent Harness 概念、虚拟文件系统、任务规划、sub-agent、异步委派、长期记忆、Human-in-the-Loop、Skills、沙箱执行、流式前端、生产部署。
 
 ## 开发 Skills
 

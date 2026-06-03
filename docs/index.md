@@ -160,21 +160,13 @@ Full docs: [github.com/oceanbase/langchain-oceanbase](https://github.com/oceanba
 
 ## Open-source course
 
-Want to learn DeepAgents from the ground up? The free course
-**"Deep Agents 实战"** (Deep Agents in Action) teaches you to build
-production-grade AI agents with LangChain / LangGraph / DeepAgents — and uses
-AgentSeek for all hands-on labs.
+**"Deep Agents 实战"** — a free course on building production-grade AI agents with LangChain / DeepAgents. All hands-on labs use AgentSeek.
 
-| Resource | Link |
-| --- | --- |
-| Course site | [webup.github.io/deepagents-course](https://webup.github.io/deepagents-course) |
-| Video playlist (Bilibili) | [B站合集](https://space.bilibili.com/28357052/lists/7757577?type=season) |
-| Source repo | [github.com/webup/deepagents-site](https://github.com/webup/deepagents-site) |
+[Course site](https://webup.github.io/deepagents-course) · [Source repo](https://github.com/webup/deepagents-site)
 
 Topics covered: Agent Harness concepts, virtual filesystem, task planning,
 sub-agents, async delegation, long-term memory, Human-in-the-Loop, skills,
-sandboxes, streaming frontends, and production deployment — all built on
-AgentSeek templates.
+sandboxes, streaming frontends, and production deployment.
 
 ---
 
