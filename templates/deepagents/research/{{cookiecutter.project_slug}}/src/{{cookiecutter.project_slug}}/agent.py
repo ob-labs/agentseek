@@ -3,11 +3,8 @@
 This module is pure deepagents + LangChain — no agentseek dependency. It
 mirrors the upstream ``langchain-ai/deepagents/examples/deep_research/agent.py``
 with these differences:
-- ``init_chat_model`` is called with the ``openai:`` prefix so the template
-  works against any OpenAI-compatible endpoint by default.
-- The ``AGENTSEEK_*`` → ``OPENAI_*`` env bridge is included near the top so
-  the same ``.env`` that works for ``langchain/markdown-messages`` works
-  here too.
+- ``init_chat_model`` is called with explicit ``model_provider=...`` so the
+  generated app can target OpenAI, Anthropic, or Gemini from the same `.env`.
 - The orchestrator and sub-agent constants are wired to cookiecutter
   variables so they can be tuned at scaffold time.
 """
@@ -31,10 +28,64 @@ from {{ cookiecutter.project_slug }}.tools import tavily_search, think_tool
 
 load_dotenv()
 
-if os.getenv("AGENTSEEK_API_KEY") and not os.getenv("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = os.environ["AGENTSEEK_API_KEY"]
-if os.getenv("AGENTSEEK_API_BASE") and not os.getenv("OPENAI_API_BASE"):
-    os.environ["OPENAI_API_BASE"] = os.environ["AGENTSEEK_API_BASE"]
+SUPPORTED_MODEL_PROVIDERS = {
+    "openai": "openai",
+    "anthropic": "anthropic",
+    "google": "google_genai",
+    "google_genai": "google_genai",
+    "gemini": "google_genai",
+}
+
+
+def _nonempty_env(name: str) -> str | None:
+    value = os.getenv(name)
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
+
+
+def _normalize_provider(provider: str) -> str:
+    normalized = provider.strip().replace("-", "_").lower()
+    if normalized in SUPPORTED_MODEL_PROVIDERS:
+        return SUPPORTED_MODEL_PROVIDERS[normalized]
+    supported = ", ".join(sorted({"openai", "anthropic", "google_genai"}))
+    raise ValueError(
+        f"Unsupported AGENTSEEK_MODEL_PROVIDER={provider!r}. "
+        f"Expected one of: {supported}."
+    )
+
+
+def _split_prefixed_model(model_name: str) -> tuple[str | None, str]:
+    if ":" not in model_name:
+        return None, model_name
+    provider_candidate, bare_model = model_name.split(":", maxsplit=1)
+    try:
+        normalized_provider = _normalize_provider(provider_candidate)
+    except ValueError:
+        return None, model_name
+    return normalized_provider, bare_model
+
+
+DEFAULT_MODEL_RAW = (
+    os.getenv("AGENTSEEK_MODEL")
+    or os.getenv("DEEPAGENTS_MODEL")
+    or os.getenv("BUB_MODEL")
+    or "{{ cookiecutter.default_model }}"
+)
+DEFAULT_MODEL_PROVIDER_RAW = os.getenv("AGENTSEEK_MODEL_PROVIDER")
+DEFAULT_MODEL_PROVIDER_DEFAULT = "{{ cookiecutter.default_model_provider }}"
+
+prefixed_model_provider, DEFAULT_MODEL = _split_prefixed_model(DEFAULT_MODEL_RAW)
+if DEFAULT_MODEL_PROVIDER_RAW:
+    MODEL_PROVIDER = _normalize_provider(DEFAULT_MODEL_PROVIDER_RAW)
+    if prefixed_model_provider and prefixed_model_provider != MODEL_PROVIDER:
+        raise ValueError(
+            "AGENTSEEK_MODEL provider prefix does not match AGENTSEEK_MODEL_PROVIDER: "
+            f"{DEFAULT_MODEL_RAW!r} vs {DEFAULT_MODEL_PROVIDER_RAW!r}."
+        )
+else:
+    MODEL_PROVIDER = prefixed_model_provider or _normalize_provider(DEFAULT_MODEL_PROVIDER_DEFAULT)
 
 # Some OpenAI-compatible gateways can pause for longer than LangChain OpenAI's
 # default 120s chunk gap while streaming a large tool-call payload.
@@ -78,10 +129,28 @@ research_sub_agent = {
     "tools": [tavily_search, think_tool],
 }
 
-model = init_chat_model(
-    "{{ cookiecutter.default_model }}",
-    stream_chunk_timeout=STREAM_CHUNK_TIMEOUT_S,
-)
+MODEL_INIT_KWARGS: dict[str, object] = {
+    "model": DEFAULT_MODEL,
+    "model_provider": MODEL_PROVIDER,
+}
+if MODEL_PROVIDER == "openai":
+    if _nonempty_env("OPENAI_API_KEY"):
+        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("OPENAI_API_KEY")
+    if _nonempty_env("OPENAI_API_BASE"):
+        MODEL_INIT_KWARGS["base_url"] = _nonempty_env("OPENAI_API_BASE")
+    MODEL_INIT_KWARGS["stream_chunk_timeout"] = STREAM_CHUNK_TIMEOUT_S
+elif MODEL_PROVIDER == "anthropic":
+    if _nonempty_env("ANTHROPIC_API_KEY"):
+        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("ANTHROPIC_API_KEY")
+    if _nonempty_env("ANTHROPIC_API_URL"):
+        MODEL_INIT_KWARGS["base_url"] = _nonempty_env("ANTHROPIC_API_URL")
+elif MODEL_PROVIDER == "google_genai":
+    if _nonempty_env("GOOGLE_API_KEY"):
+        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("GOOGLE_API_KEY")
+    if _nonempty_env("GOOGLE_API_BASE"):
+        MODEL_INIT_KWARGS["base_url"] = _nonempty_env("GOOGLE_API_BASE")
+
+model = init_chat_model(**MODEL_INIT_KWARGS)
 
 graph = create_deep_agent(
     model=model,

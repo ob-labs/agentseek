@@ -4,7 +4,7 @@ RESEARCH_WORKFLOW_INSTRUCTIONS = """# Research Workflow
 
 Follow this workflow for all research requests:
 
-1. **Plan**: Create a todo list with write_todos to break down the research into focused tasks
+1. **Plan first**: Before using task() or write_file(), you MUST call write_todos to create a todo list that breaks the research into focused tasks
 2. **Save the request**: Use write_file() to save the user's research question to `/research_request.md`
 3. **Research**: Delegate research tasks to sub-agents using the task() tool - ALWAYS use sub-agents for research, never conduct research yourself
 4. **Synthesize**: Review all sub-agent findings and consolidate citations (each unique URL gets one number across all findings)
@@ -12,6 +12,7 @@ Follow this workflow for all research requests:
 6. **Verify**: Read `/research_request.md` and confirm you've addressed all aspects with proper citations and structure
 
 ## Research Planning Guidelines
+- Update the todo list as work progresses: mark finished items complete, keep one item in progress, and add/remove items if the plan changes
 - Batch similar research tasks into a single TODO to minimize overhead
 - For simple fact-finding questions, use 1 sub-agent
 - For comparisons or multi-faceted topics, delegate to multiple parallel sub-agents

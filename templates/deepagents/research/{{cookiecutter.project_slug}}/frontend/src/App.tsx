@@ -2,6 +2,8 @@ import { FormEvent, useMemo, useState } from "react";
 import { useStream } from "@langchain/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import TodoList, { type TodoItem } from "./TodoList";
+import ThinkingBlock from "./ThinkingBlock";
 import ToolCallCard, { type ToolCard } from "./ToolCallCard";
 
 type RawToolCall = { id?: string; name?: string; args?: unknown };
@@ -13,6 +15,12 @@ type Message = {
   tool_call_id?: string;
   name?: string;
 };
+type StreamState = {
+  messages: Message[];
+  todos?: TodoItem[];
+};
+
+const PLAN_MARKERS = ["SESSION INTENT", "SUMMARY", "NEXT STEPS", "ARTIFACTS"];
 
 function messageText(content: unknown): string {
   if (typeof content === "string") return content;
@@ -36,7 +44,14 @@ function messageText(content: unknown): string {
 // into its card).
 type Row =
   | { kind: "prose"; key: string; type: "human" | "ai"; body: string }
+  | { kind: "plan"; key: string; body: string }
   | { kind: "card"; key: string; card: ToolCard };
+
+function isPlanLikeBody(body: string): boolean {
+  const normalized = body.toUpperCase();
+  const markerHits = PLAN_MARKERS.filter((marker) => normalized.includes(marker)).length;
+  return markerHits >= 2 || (markerHits >= 1 && /the user requested/i.test(body));
+}
 
 function buildRows(messages: Message[]): Row[] {
   const rows: Row[] = [];
@@ -51,13 +66,21 @@ function buildRows(messages: Message[]): Row[] {
       });
     } else if (msg.type === "ai") {
       const calls = msg.tool_calls ?? [];
-      if (calls.length === 0) {
-        // Final or interstitial assistant prose.
-        const body = messageText(msg.content);
-        if (body.trim()) {
-          rows.push({ kind: "prose", key: msg.id ?? `a-${rows.length}`, type: "ai", body });
+      const body = messageText(msg.content);
+      const trimmedBody = body.trim();
+      if (trimmedBody) {
+        if (isPlanLikeBody(trimmedBody)) {
+          rows.push({ kind: "plan", key: msg.id ?? `p-${rows.length}`, body: trimmedBody });
+        } else {
+          rows.push({
+            kind: "prose",
+            key: msg.id ?? `a-${rows.length}`,
+            type: "ai",
+            body: trimmedBody,
+          });
         }
-      } else {
+      }
+      if (calls.length > 0) {
         // Open a new card per call. Pending until its tool message arrives.
         for (const call of calls) {
           const callId = call.id ?? `${msg.id}-${call.name}-${rows.length}`;
@@ -89,14 +112,28 @@ function buildRows(messages: Message[]): Row[] {
 export default function App() {
   const apiUrl =
     import.meta.env.VITE_LANGGRAPH_API_URL ?? "http://127.0.0.1:{{ cookiecutter.langgraph_port }}";
+  const [threadId, setThreadId] = useState<string | undefined>(
+    () => new URLSearchParams(window.location.search).get("thread") ?? undefined,
+  );
+  const sessionUrl = threadId
+    ? `${window.location.origin}${window.location.pathname}?thread=${threadId}`
+    : null;
 
-  const stream = useStream<{ messages: Message[] }>({
+  const stream = useStream<StreamState>({
     apiUrl,
     assistantId: "research",
+    threadId,
+    onThreadId: (id) => {
+      setThreadId(id);
+      const url = new URL(window.location.href);
+      url.searchParams.set("thread", id);
+      window.history.replaceState({}, "", url);
+    },
   });
 
   const [input, setInput] = useState("");
   const rows = useMemo(() => buildRows(stream.messages as Message[]), [stream.messages]);
+  const todos = Array.isArray(stream.values?.todos) ? stream.values.todos : [];
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -108,7 +145,19 @@ export default function App() {
 
   return (
     <main>
-      <h1>{{ cookiecutter.project_name }}</h1>
+      <h1>{{ cookiecutter.project_name | replace("DeepAgent", "Deep Agent") }}</h1>
+      <section className="thread-banner" aria-label="Session link">
+        <div className="thread-banner__copy">
+          <strong>{threadId ? "Session link active" : "Session link ready"}</strong>
+          <span>
+            {threadId
+              ? "Reopen this conversation later with the current URL."
+              : "After the first message, this page adds a thread URL so you can reopen the same conversation later."}
+          </span>
+        </div>
+        {sessionUrl ? <code className="thread-banner__url">{sessionUrl}</code> : null}
+      </section>
+      <TodoList todos={todos} />
 
       <section className="chat" aria-label="Research conversation">
         {rows.length === 0 && (
@@ -124,11 +173,25 @@ export default function App() {
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{row.body}</ReactMarkdown>
               </div>
             </article>
+          ) : row.kind === "plan" ? (
+            <ThinkingBlock key={row.key} body={row.body} />
           ) : (
             <ToolCallCard key={row.key} card={row.card} />
           ),
         )}
-        {stream.isLoading && <p className="hint">…researching</p>}
+        {stream.isLoading && (
+          <div className="activity-card" aria-live="polite" aria-label="Research in progress">
+            <div className="activity-card__pulse" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="activity-card__copy">
+              <strong>Research in progress</strong>
+              <span>Waiting for sub-agent results and final synthesis.</span>
+            </div>
+          </div>
+        )}
         {stream.error ? <p className="error">{String(stream.error)}</p> : null}
       </section>
 

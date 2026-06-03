@@ -321,7 +321,8 @@ def test_deepagents_research_template_metadata_and_docs_exist() -> None:
     assert (template_path / "cookiecutter.json").is_file()
     assert (template_path / "README.md").is_file()
     cookiecutter_data = json.loads((template_path / "cookiecutter.json").read_text(encoding="utf-8"))
-    assert cookiecutter_data["default_model"] == "openai:Pro/zai-org/GLM-5.1"
+    assert cookiecutter_data["default_model_provider"] == "openai"
+    assert cookiecutter_data["default_model"] == "gpt-4.1-mini"
 
     templates_index = local_root / "index.json"
     data = json.loads(templates_index.read_text(encoding="utf-8"))
@@ -344,14 +345,17 @@ def test_deepagents_research_template_renders_docs_and_streaming_frontend(
     generated = Path(output)
 
     readme = generated / "README.md"
+    pyproject = generated / "pyproject.toml"
     frontend = generated / "frontend"
     frontend_package = frontend / "package.json"
     frontend_env = frontend / ".env.example"
     frontend_app = frontend / "src" / "App.tsx"
+    frontend_todo_list = frontend / "src" / "TodoList.tsx"
     frontend_tool_card = frontend / "src" / "ToolCallCard.tsx"
     frontend_app_test = frontend / "src" / "App.test.tsx"
     frontend_tool_card_test = frontend / "src" / "ToolCallCard.test.tsx"
     agent_py = generated / "src" / "research_deepagent" / "agent.py"
+    prompts_py = generated / "src" / "research_deepagent" / "prompts.py"
     env_example = generated / ".env.example"
 
     assert readme.is_file()
@@ -361,20 +365,54 @@ def test_deepagents_research_template_renders_docs_and_streaming_frontend(
     assert "## Smoke test" in readme_text
     assert "langgraph dev" in readme_text
     assert "npm install --prefix frontend" in readme_text
+    assert "Research plan" in readme_text
+    assert "frontend/.env only needs changes if you want a non-default LangGraph URL." in readme_text
+    assert "AGENTSEEK_MODEL_PROVIDER" in readme_text
+    assert "Leave that provider's base URL empty to use the official endpoint" in readme_text
+    assert "If you switch providers, switch AGENTSEEK_MODEL to that provider's model id" in readme_text
+    assert "gpt-4.1-mini" in readme_text
 
     assert frontend_package.is_file()
     assert frontend_env.is_file()
     assert frontend_app.is_file()
+    assert frontend_todo_list.is_file()
     assert frontend_tool_card.is_file()
     assert frontend_app_test.is_file()
     assert frontend_tool_card_test.is_file()
-    assert '"test": "vitest run --environment jsdom"' in frontend_package.read_text(encoding="utf-8")
+    frontend_package_text = frontend_package.read_text(encoding="utf-8")
+    assert '"test": "vitest run --environment jsdom"' in frontend_package_text
+    pyproject_text = pyproject.read_text(encoding="utf-8")
+    assert "langchain-anthropic>=1.0" in pyproject_text
+    assert "langchain-google-genai>=4.0" in pyproject_text
+    assert "TodoList" in frontend_app.read_text(encoding="utf-8")
+    assert "Research plan" in frontend_todo_list.read_text(encoding="utf-8")
     assert agent_py.is_file()
     agent_text = agent_py.read_text(encoding="utf-8")
-    assert "stream_chunk_timeout=STREAM_CHUNK_TIMEOUT_S" in agent_text
+    prompts_text = prompts_py.read_text(encoding="utf-8")
+    env_text = env_example.read_text(encoding="utf-8")
+    assert "AGENTSEEK_MODEL" in env_example.read_text(encoding="utf-8")
+    assert "AGENTSEEK_MODEL_PROVIDER" in env_text
+    assert "gpt-4.1-mini" in env_text
+    assert "claude-3-5-sonnet-latest" in env_text
+    assert "gemini-2.5-pro" in env_text
+    assert "OPENAI_API_KEY" in env_text
+    assert "ANTHROPIC_API_KEY" in env_text
+    assert "ANTHROPIC_API_URL" in env_text
+    assert "GOOGLE_API_KEY" in env_text
+    assert "GOOGLE_API_BASE" in env_text
+    assert "Leave OPENAI_API_BASE empty" in env_text
+    assert "Leave ANTHROPIC_API_URL empty" in env_text
+    assert "Leave GOOGLE_API_BASE empty" in env_text
+    assert "MODEL_PROVIDER" in agent_text
+    assert "MODEL_INIT_KWARGS" in agent_text
+    assert "model_provider" in agent_text
+    assert "AGENTSEEK_API_KEY" not in agent_text
+    assert "Before using task() or write_file(), you MUST call write_todos" in prompts_text
+    assert "Update the todo list as work progresses" in prompts_text
+    assert 'MODEL_PROVIDER == "openai"' in agent_text
     assert "LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S" in agent_text
     assert env_example.is_file()
-    assert "LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S=300" in env_example.read_text(encoding="utf-8")
+    assert "LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S=300" in env_text
 
 
 def test_deepagents_research_fetch_helper_follows_redirects(
@@ -485,7 +523,306 @@ def test_deepagents_research_agent_invalid_timeout_env_uses_default(
     module = importlib.import_module("research_deepagent.agent")
 
     assert module.STREAM_CHUNK_TIMEOUT_S == 300.0
+    assert module.MODEL_PROVIDER == "openai"
     assert init_calls[0]["stream_chunk_timeout"] == 300.0
+
+
+@pytest.mark.parametrize(
+    ("env_values", "expected_model", "expected_provider", "expected_api_key", "expected_base_url"),
+    [
+        (
+            {
+                "AGENTSEEK_MODEL_PROVIDER": "openai",
+                "AGENTSEEK_MODEL": "gpt-4.1-mini",
+                "OPENAI_API_KEY": "openai-key",
+                "OPENAI_API_BASE": "https://openai.example/v1",
+            },
+            "gpt-4.1-mini",
+            "openai",
+            "openai-key",
+            "https://openai.example/v1",
+        ),
+        (
+            {
+                "AGENTSEEK_MODEL_PROVIDER": "anthropic",
+                "AGENTSEEK_MODEL": "claude-3-5-sonnet-latest",
+                "ANTHROPIC_API_KEY": "anthropic-key",
+                "ANTHROPIC_API_URL": "https://anthropic.example",
+            },
+            "claude-3-5-sonnet-latest",
+            "anthropic",
+            "anthropic-key",
+            "https://anthropic.example",
+        ),
+        (
+            {
+                "AGENTSEEK_MODEL_PROVIDER": "google_genai",
+                "AGENTSEEK_MODEL": "gemini-2.5-pro",
+                "GOOGLE_API_KEY": "google-key",
+                "GOOGLE_API_BASE": "https://google.example",
+            },
+            "gemini-2.5-pro",
+            "google_genai",
+            "google-key",
+            "https://google.example",
+        ),
+        (
+            {
+                "DEEPAGENTS_MODEL": "anthropic:claude-3-5-sonnet-latest",
+                "ANTHROPIC_API_KEY": "compat-key",
+            },
+            "claude-3-5-sonnet-latest",
+            "anthropic",
+            "compat-key",
+            None,
+        ),
+        (
+            {
+                "AGENTSEEK_MODEL_PROVIDER": "google_genai",
+                "BUB_MODEL": "gemini-2.5-flash",
+                "GOOGLE_API_KEY": "google-compat-key",
+            },
+            "gemini-2.5-flash",
+            "google_genai",
+            "google-compat-key",
+            None,
+        ),
+    ],
+)
+def test_deepagents_research_agent_uses_selected_provider_env(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    env_values: dict[str, str],
+    expected_model: str,
+    expected_provider: str,
+    expected_api_key: str,
+    expected_base_url: str | None,
+) -> None:
+    """Generated research agent should map env config to provider-specific kwargs."""
+    pytest.importorskip("cookiecutter")
+    from cookiecutter.main import cookiecutter
+
+    local_root = create_module._local_templates_root()
+    assert local_root is not None, "Tests must run from a git checkout"
+    template_path = local_root / "deepagents" / "research"
+
+    output = cookiecutter(str(template_path), output_dir=str(tmp_path), no_input=True)
+    generated = Path(output)
+    generated_src = str(generated / "src")
+    monkeypatch.syspath_prepend(generated_src)
+    sys.modules.pop("research_deepagent.agent", None)
+    sys.modules.pop("research_deepagent.tools", None)
+
+    dotenv_module = types.ModuleType("dotenv")
+    cast(Any, dotenv_module).load_dotenv = lambda: None
+    monkeypatch.setitem(sys.modules, "dotenv", dotenv_module)
+
+    deepagents_module = types.ModuleType("deepagents")
+    cast(Any, deepagents_module).create_deep_agent = lambda **kwargs: kwargs
+    monkeypatch.setitem(sys.modules, "deepagents", deepagents_module)
+
+    init_calls: list[dict[str, object]] = []
+
+    def fake_init_chat_model(model: str, **kwargs: object) -> dict[str, object]:
+        init_calls.append({"model": model, **kwargs})
+        return {"model": model, **kwargs}
+
+    langchain_module = types.ModuleType("langchain")
+    langchain_chat_models_module = types.ModuleType("langchain.chat_models")
+    cast(Any, langchain_chat_models_module).init_chat_model = fake_init_chat_model
+    monkeypatch.setitem(sys.modules, "langchain", langchain_module)
+    monkeypatch.setitem(sys.modules, "langchain.chat_models", langchain_chat_models_module)
+
+    fake_tools_module = types.ModuleType("research_deepagent.tools")
+    cast(Any, fake_tools_module).tavily_search = object()
+    cast(Any, fake_tools_module).think_tool = object()
+    monkeypatch.setitem(sys.modules, "research_deepagent.tools", fake_tools_module)
+
+    for env_name in (
+        "AGENTSEEK_MODEL",
+        "DEEPAGENTS_MODEL",
+        "BUB_MODEL",
+        "AGENTSEEK_MODEL_PROVIDER",
+        "OPENAI_API_KEY",
+        "OPENAI_API_BASE",
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_API_URL",
+        "GOOGLE_API_KEY",
+        "GOOGLE_API_BASE",
+    ):
+        monkeypatch.delenv(env_name, raising=False)
+    for env_name, env_value in env_values.items():
+        monkeypatch.setenv(env_name, env_value)
+
+    module = importlib.import_module("research_deepagent.agent")
+
+    assert module.DEFAULT_MODEL == expected_model
+    assert module.MODEL_PROVIDER == expected_provider
+    assert init_calls[0]["model"] == expected_model
+    assert init_calls[0]["model_provider"] == expected_provider
+    assert init_calls[0]["api_key"] == expected_api_key
+    if expected_base_url is None:
+        assert "base_url" not in init_calls[0]
+    else:
+        assert init_calls[0]["base_url"] == expected_base_url
+    if expected_provider == "openai":
+        assert init_calls[0]["stream_chunk_timeout"] == 300.0
+    else:
+        assert "stream_chunk_timeout" not in init_calls[0]
+
+
+@pytest.mark.parametrize(
+    ("provider", "base_env_name", "api_env_name"),
+    [
+        ("openai", "OPENAI_API_BASE", "OPENAI_API_KEY"),
+        ("anthropic", "ANTHROPIC_API_URL", "ANTHROPIC_API_KEY"),
+        ("google_genai", "GOOGLE_API_BASE", "GOOGLE_API_KEY"),
+    ],
+)
+def test_deepagents_research_agent_blank_provider_base_url_uses_official_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    provider: str,
+    base_env_name: str,
+    api_env_name: str,
+) -> None:
+    """Blank provider base URLs should not override official defaults."""
+    pytest.importorskip("cookiecutter")
+    from cookiecutter.main import cookiecutter
+
+    local_root = create_module._local_templates_root()
+    assert local_root is not None, "Tests must run from a git checkout"
+    template_path = local_root / "deepagents" / "research"
+
+    output = cookiecutter(str(template_path), output_dir=str(tmp_path), no_input=True)
+    generated = Path(output)
+    generated_src = str(generated / "src")
+    monkeypatch.syspath_prepend(generated_src)
+    sys.modules.pop("research_deepagent.agent", None)
+    sys.modules.pop("research_deepagent.tools", None)
+
+    dotenv_module = types.ModuleType("dotenv")
+    cast(Any, dotenv_module).load_dotenv = lambda: None
+    monkeypatch.setitem(sys.modules, "dotenv", dotenv_module)
+
+    deepagents_module = types.ModuleType("deepagents")
+    cast(Any, deepagents_module).create_deep_agent = lambda **kwargs: kwargs
+    monkeypatch.setitem(sys.modules, "deepagents", deepagents_module)
+
+    init_calls: list[dict[str, object]] = []
+
+    def fake_init_chat_model(model: str, **kwargs: object) -> dict[str, object]:
+        init_calls.append({"model": model, **kwargs})
+        return {"model": model, **kwargs}
+
+    langchain_module = types.ModuleType("langchain")
+    langchain_chat_models_module = types.ModuleType("langchain.chat_models")
+    cast(Any, langchain_chat_models_module).init_chat_model = fake_init_chat_model
+    monkeypatch.setitem(sys.modules, "langchain", langchain_module)
+    monkeypatch.setitem(sys.modules, "langchain.chat_models", langchain_chat_models_module)
+
+    fake_tools_module = types.ModuleType("research_deepagent.tools")
+    cast(Any, fake_tools_module).tavily_search = object()
+    cast(Any, fake_tools_module).think_tool = object()
+    monkeypatch.setitem(sys.modules, "research_deepagent.tools", fake_tools_module)
+
+    monkeypatch.setenv("AGENTSEEK_MODEL_PROVIDER", provider)
+    monkeypatch.setenv("AGENTSEEK_MODEL", "provider-test-model")
+    monkeypatch.setenv(api_env_name, "provider-test-key")
+    monkeypatch.setenv(base_env_name, "   ")
+
+    importlib.import_module("research_deepagent.agent")
+
+    assert "base_url" not in init_calls[0]
+
+
+def test_deepagents_research_agent_invalid_provider_fails_fast(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Invalid provider values should raise a clear startup error."""
+    pytest.importorskip("cookiecutter")
+    from cookiecutter.main import cookiecutter
+
+    local_root = create_module._local_templates_root()
+    assert local_root is not None, "Tests must run from a git checkout"
+    template_path = local_root / "deepagents" / "research"
+
+    output = cookiecutter(str(template_path), output_dir=str(tmp_path), no_input=True)
+    generated = Path(output)
+    generated_src = str(generated / "src")
+    monkeypatch.syspath_prepend(generated_src)
+    sys.modules.pop("research_deepagent.agent", None)
+    sys.modules.pop("research_deepagent.tools", None)
+
+    dotenv_module = types.ModuleType("dotenv")
+    cast(Any, dotenv_module).load_dotenv = lambda: None
+    monkeypatch.setitem(sys.modules, "dotenv", dotenv_module)
+
+    deepagents_module = types.ModuleType("deepagents")
+    cast(Any, deepagents_module).create_deep_agent = lambda **kwargs: kwargs
+    monkeypatch.setitem(sys.modules, "deepagents", deepagents_module)
+
+    langchain_module = types.ModuleType("langchain")
+    langchain_chat_models_module = types.ModuleType("langchain.chat_models")
+    cast(Any, langchain_chat_models_module).init_chat_model = lambda *args, **kwargs: kwargs
+    monkeypatch.setitem(sys.modules, "langchain", langchain_module)
+    monkeypatch.setitem(sys.modules, "langchain.chat_models", langchain_chat_models_module)
+
+    fake_tools_module = types.ModuleType("research_deepagent.tools")
+    cast(Any, fake_tools_module).tavily_search = object()
+    cast(Any, fake_tools_module).think_tool = object()
+    monkeypatch.setitem(sys.modules, "research_deepagent.tools", fake_tools_module)
+
+    monkeypatch.setenv("AGENTSEEK_MODEL_PROVIDER", "not-a-provider")
+
+    with pytest.raises(ValueError, match="Unsupported AGENTSEEK_MODEL_PROVIDER"):
+        importlib.import_module("research_deepagent.agent")
+
+
+def test_deepagents_research_agent_explicit_provider_conflict_fails_fast(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit provider env should reject a conflicting prefixed model override."""
+    pytest.importorskip("cookiecutter")
+    from cookiecutter.main import cookiecutter
+
+    local_root = create_module._local_templates_root()
+    assert local_root is not None, "Tests must run from a git checkout"
+    template_path = local_root / "deepagents" / "research"
+
+    output = cookiecutter(str(template_path), output_dir=str(tmp_path), no_input=True)
+    generated = Path(output)
+    generated_src = str(generated / "src")
+    monkeypatch.syspath_prepend(generated_src)
+    sys.modules.pop("research_deepagent.agent", None)
+    sys.modules.pop("research_deepagent.tools", None)
+
+    dotenv_module = types.ModuleType("dotenv")
+    cast(Any, dotenv_module).load_dotenv = lambda: None
+    monkeypatch.setitem(sys.modules, "dotenv", dotenv_module)
+
+    deepagents_module = types.ModuleType("deepagents")
+    cast(Any, deepagents_module).create_deep_agent = lambda **kwargs: kwargs
+    monkeypatch.setitem(sys.modules, "deepagents", deepagents_module)
+
+    langchain_module = types.ModuleType("langchain")
+    langchain_chat_models_module = types.ModuleType("langchain.chat_models")
+    cast(Any, langchain_chat_models_module).init_chat_model = lambda *args, **kwargs: kwargs
+    monkeypatch.setitem(sys.modules, "langchain", langchain_module)
+    monkeypatch.setitem(sys.modules, "langchain.chat_models", langchain_chat_models_module)
+
+    fake_tools_module = types.ModuleType("research_deepagent.tools")
+    cast(Any, fake_tools_module).tavily_search = object()
+    cast(Any, fake_tools_module).think_tool = object()
+    monkeypatch.setitem(sys.modules, "research_deepagent.tools", fake_tools_module)
+
+    monkeypatch.setenv("AGENTSEEK_MODEL_PROVIDER", "openai")
+    monkeypatch.setenv("DEEPAGENTS_MODEL", "anthropic:claude-3-5-sonnet-latest")
+
+    with pytest.raises(ValueError, match="provider prefix does not match"):
+        importlib.import_module("research_deepagent.agent")
 
 
 @pytest.mark.parametrize(

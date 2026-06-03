@@ -2,7 +2,8 @@
 
 Scaffolds a pure `deepagents.create_deep_agent(...)` research project with a
 LangGraph backend and a Vite + React frontend that streams tool calls,
-sub-agent delegation, and the final markdown report.
+sub-agent delegation, a live DeepAgents todo panel, and the final markdown
+report.
 
 ## Inputs
 
@@ -11,7 +12,8 @@ sub-agent delegation, and the final markdown report.
 | `project_name` | Human-readable project name. |
 | `project_slug` | Python package / directory name (auto-derived). |
 | `author` | Project author. |
-| `default_model` | Default `init_chat_model("<provider>:<model>")` id. Ships as `openai:Pro/zai-org/GLM-5.1`. |
+| `default_model_provider` | Default `init_chat_model(..., model_provider=...)` provider. Ships as `openai`. |
+| `default_model` | Default model id for the selected provider. Ships as `gpt-4.1-mini`. |
 | `tavily_max_results` | Default `tavily_search` result limit. |
 | `tavily_topic` | Tavily topic filter (`general`, `news`, or `finance`). |
 | `max_concurrent_research_units` | Max sub-agent tasks the orchestrator may queue concurrently. |
@@ -43,6 +45,7 @@ sub-agent delegation, and the final markdown report.
     tsconfig.node.json
     src/
       App.tsx
+      TodoList.tsx
       ToolCallCard.tsx
       main.tsx
       styles.css
@@ -53,9 +56,19 @@ sub-agent delegation, and the final markdown report.
 
 - Mirrors the upstream DeepAgents `deep_research` prompt structure and Tavily +
   `think_tool` workflow.
-- Uses `init_chat_model("openai:...")` plus the `AGENTSEEK_*` to `OPENAI_*`
-  env bridge so OpenAI-compatible endpoints work with the template defaults.
-- Defaults to `openai:Pro/zai-org/GLM-5.1` because that path was verified
-  end-to-end against the SiliconFlow-compatible backend for sub-agent streaming.
+- Uses provider-first runtime config: generated apps select `openai`,
+  `anthropic`, or `google_genai` in `.env`, then fill only the matching
+  credential block.
+- Treats blank provider base URLs as "use the official endpoint", while still
+  allowing custom compatible gateways per provider.
+- Lets generated apps override the scaffold-time model via `AGENTSEEK_MODEL`
+  (plus `DEEPAGENTS_MODEL` / `BUB_MODEL` compatibility aliases) in `.env`.
+- Defaults to provider `openai` with model `gpt-4.1-mini` so a fresh scaffold
+  works against the official OpenAI endpoint when `OPENAI_API_BASE` is blank.
+- Still supports OpenAI-compatible gateways by pointing `OPENAI_API_BASE` at
+  the compatible endpoint and swapping `AGENTSEEK_MODEL` to a model that
+  gateway actually serves.
 - Adds a frontend for streamed tool/sub-agent visibility; upstream ships only
   the backend example.
+- Surfaces DeepAgents `todos` state as a first-class progress panel instead of
+  leaving planning updates buried in generic tool-call JSON.

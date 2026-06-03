@@ -15,15 +15,29 @@ npm install --prefix frontend
 
 cp .env.example .env
 cp frontend/.env.example frontend/.env
-# Fill in either OPENAI_* or AGENTSEEK_* in .env, and set TAVILY_API_KEY.
+# Fill in backend secrets in .env:
+# - Set AGENTSEEK_MODEL_PROVIDER and AGENTSEEK_MODEL
+# - Fill only the matching provider block
+# - If you switch providers, switch AGENTSEEK_MODEL to that provider's model id
+# - Leave that provider's base URL empty to use the official endpoint
+# - Set TAVILY_API_KEY
+# frontend/.env only needs changes if you want a non-default LangGraph URL.
 ```
 
-`agent.py` bridges `AGENTSEEK_API_KEY` / `AGENTSEEK_API_BASE` into
-`OPENAI_API_KEY` / `OPENAI_API_BASE` when only the former are set, so the
-default `openai:...` model works against OpenAI-compatible gateways.
-The template also defaults `LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S=300` so
-slow tool-call streams from compatible gateways do not die after LangChain
-OpenAI's 120s default gap timeout.
+`agent.py` uses `AGENTSEEK_MODEL_PROVIDER` to choose a native LangChain
+provider integration for OpenAI, Anthropic, or Gemini. Fill only that
+provider's env block in `.env`; if its base URL is blank, the generated app
+uses the provider's official default endpoint. You can also override the
+scaffolded model name via `AGENTSEEK_MODEL` (or the compatibility aliases
+`DEEPAGENTS_MODEL` / `BUB_MODEL`) without editing code. The template still
+defaults `LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S=300` for the `openai`
+provider so slow OpenAI-compatible tool-call streams do not die after
+LangChain OpenAI's default gap timeout.
+
+If you change `AGENTSEEK_MODEL_PROVIDER`, also change `AGENTSEEK_MODEL` to a
+model served by that provider. The scaffold defaults to `openai` with
+`gpt-4.1-mini`, so leaving `OPENAI_API_BASE` blank targets the official OpenAI
+endpoint out of the box.
 
 ## Run
 
@@ -53,6 +67,7 @@ Research what LangGraph 1.0 added vs 0.x. Cite sources.
 
 Expected behavior:
 
+- A live **Research plan** todo panel appears when the agent writes todos.
 - Tool cards appear for `tavily_search` and, when the model delegates,
   `task` as a "Sub-agent: research-agent" card.
 - Each card expands while running, then collapses after its result lands.
