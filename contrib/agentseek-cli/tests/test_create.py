@@ -656,8 +656,8 @@ def test_deepagents_research_agent_uses_selected_provider_env(
 
     module = importlib.import_module("research_deepagent.agent")
 
-    assert module.DEFAULT_MODEL == expected_model
-    assert module.MODEL_PROVIDER == expected_provider
+    assert expected_model == module.DEFAULT_MODEL
+    assert expected_provider == module.MODEL_PROVIDER
     assert init_calls[0]["model"] == expected_model
     assert init_calls[0]["model_provider"] == expected_provider
     assert init_calls[0]["api_key"] == expected_api_key
