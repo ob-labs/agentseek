@@ -142,7 +142,7 @@ Compose 就是把路径 B 的 harness 为运维场景打了包。当你需要一
 下，通过 `agentseek install <package>` 安装（例如 `agentseek install agentseek-langchain`）。
 
 这些是路径 B 的**运行时 plugin**：`agentseek-ag-ui`、`agentseek-langchain`、
-`agentseek-tapestore-oceanbase`、`agentseek-observability`、
+`agentseek-tapestore-oceanbase`、`bub-tapestore-otel`、
 `agentseek-schedule-sqlalchemy`、`agentseek-contextseek`。它们扩展 harness，
 不替代 harness。详见 [扩展模型](extension-model.zh.md)。
 

@@ -156,7 +156,7 @@ top of the harness. They are listed at
 installed via `agentseek install <package>` (e.g. `agentseek install agentseek-langchain`).
 
 These are **runtime plugins** for Path B: `agentseek-ag-ui`, `agentseek-langchain`,
-`agentseek-tapestore-oceanbase`, `agentseek-observability`,
+`agentseek-tapestore-oceanbase`, `bub-tapestore-otel`,
 `agentseek-schedule-sqlalchemy`, `agentseek-contextseek`. They extend the
 harness; they do not replace it. See [The extension model](extension-model.md).
 

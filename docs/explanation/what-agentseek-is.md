@@ -13,12 +13,19 @@ sources:
 
 # What agentseek is
 
-> **In short:** agentseek is a **database-native Agent Harness**. Runtime data
-> — context, tool calls, traces, tasks, feedback — lives on one durable,
-> queryable substrate from the first turn. The harness ships as two PyPI
-> packages split by job: `agentseek-cli` (the **project lifecycle CLI**) and
-> `agentseek` (the **harness** itself, both a library you embed and a runtime
-> CLI).
+> **In short:** AgentSeek is a **suite** that helps you ship agents to
+> production. It comprises agentseek-cli (project scaffolding), agentseek-api
+> (Agent Protocol server), ContextSeek (semantic context layer), and
+> langchain-oceanbase (data substrate). AgentSeek is open to any Agent
+> Framework — it ships with built-in Bub and the current version is
+> LangChain-friendly out of the box. The suite is built on a database-native
+> harness — runtime data lives on one durable, queryable substrate from the
+> first turn.
+
+> **Coming from LangChain?** You may want to start with
+> [How agentseek relates to LangChain](langchain-relationship.md) instead — it
+> covers what AgentSeek adds to the LangChain ecosystem and which template to
+> pick.
 
 ## Context
 
@@ -108,7 +115,7 @@ what an embedded library run will produce.
 
 agentseek **does not** try to:
 
-- Replace agent frameworks like LangChain, DeepAgents, LlamaIndex, or AutoGen. Use them
+- Replace Agent Frameworks. AgentSeek is a harness, not a framework. Use them
   alongside; route their turns through the harness via `agentseek-langchain` when needed.
 - Be a generic plugin marketplace. The plugin model is Bub's; the wider catalogue lives at
   <https://hub.bub.build>. agentseek only ships and maintains the contrib packages listed

@@ -55,25 +55,6 @@ categories:
           - retrieval
           - knowledge
 
-      - name: agentseek-observability
-        description: Logfire-backed tracing that follows the `any-llm -> republic -> bub` runtime path.
-        description_zh: 基于 Logfire 的追踪集成，覆盖 `any-llm -> republic -> bub` 这条运行时链路。
-        entry_point: observability
-        install: agentseek install agentseek-observability
-        repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-observability
-        readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-observability/README.md
-        badges:
-          - label: plugin
-        tags:
-          - observability
-          - logfire
-          - telemetry
-          - tracing
-          - otel
-          - any-llm
-          - republic
-          - bub
-
       - name: agentseek-schedule-sqlalchemy
         description: SQLAlchemy-backed APScheduler job persistence exposed as the Bub `schedule` plugin.
         description_zh: 以 SQLAlchemy 为后端的 APScheduler 持久化实现，对外暴露为 Bub `schedule` 插件。

@@ -28,6 +28,7 @@ sources:
 | --- | --- |
 | [agentseek 是什么](what-agentseek-is.zh.md) | 你正在评估这个项目，需要一页式的概览：database-native harness、按职责拆分的两个包（`agentseek-cli` 与 `agentseek`），以及明确的非目标。 |
 | [agentseek 与 Bub 的关系](bub-relationship.zh.md) | 你想了解 `agentseek` 和 `bub` 如何分工、alias 模型为什么存在，以及何时直接落到 `bub`。 |
+| [agentseek 与 LangChain 的关系](langchain-relationship.zh.md) | 你已经在用 LangChain / LangGraph / DeepAgents，想了解 AgentSeek 如何补齐这个生态——它加了什么、不替代什么，以及该选哪个模板。 |
 | [运行时数据模型](runtime-data-model.zh.md) | 你即将编写一个 plugin、skill 或 tape 消费者，需要一个关于 tape、skill、MCP、plugin 和 channel 的心智模型。 |
 | [扩展模型](extension-model.zh.md) | 你想扩展 runtime，需要在打开对应操作指南之前，在 instructions、skill、plugin、MCP 和 contrib 包之间做出决策。 |
 | [选择一个入口](choosing-an-entry-point.zh.md) | 你正在路径 A（`agentseek-cli`）、路径 B（`uv sync` 后的 `agentseek`）、Docker Compose，或 contrib 包之间做选择。 |
@@ -47,8 +48,9 @@ sources:
 ## 推荐阅读顺序
 
 1. [agentseek 是什么](what-agentseek-is.zh.md) 了解定位。
-2. [agentseek 与 Bub 的关系](bub-relationship.zh.md) 了解分层。
-3. [运行时数据模型](runtime-data-model.zh.md) 了解底层基座。
-4. 当你准备开始构建时，阅读 [扩展模型](extension-model.zh.md) 和
+2. [agentseek 与 Bub 的关系](bub-relationship.zh.md) 了解内核分层。
+3. [agentseek 与 LangChain 的关系](langchain-relationship.zh.md) 如果你来自 LangChain 生态。
+4. [运行时数据模型](runtime-data-model.zh.md) 了解底层基座。
+5. 当你准备开始构建时，阅读 [扩展模型](extension-model.zh.md) 和
    [选择一个入口](choosing-an-entry-point.zh.md)。
-5. [monorepo 中各样东西的位置](where-things-live.zh.md) 作为你会反复回来查阅的参考地图。
+6. [monorepo 中各样东西的位置](where-things-live.zh.md) 作为你会反复回来查阅的参考地图。

@@ -95,9 +95,8 @@ store, a tool integration — write a plugin instead. The decision matrix is in
 ### MCP — external tools, declared in config
 
 The **Model Context Protocol** is the standard way for the agent to call tools that live
-outside the Python process. Bub's `bub-mcp` plugin (a hard dependency of agentseek,
-`pyproject.toml:21`) reads an MCP config file and exposes each declared server as a tool
-set the model can invoke.
+outside the Python process. The `bub-mcp` plugin reads an MCP config file and exposes each
+declared server as a tool set the model can invoke.
 
 The default path comes from the alias layer:
 
@@ -118,15 +117,15 @@ A **plugin** is a Python package that registers itself through the `[project.ent
 group and supplies one or more hook implementations. Plugins are how Bub gets channels,
 model providers, tape stores, schedulers, and tool packages.
 
-agentseek ships a few plugins as hard dependencies (`pyproject.toml:19-25`) — Bub itself,
-`bub-feishu`, `bub-mcp`, `agentseek-schedule-sqlalchemy`, plus `logfire` for telemetry.
-The remaining plugins are installed on demand via `agentseek install`:
+agentseek includes common runtime plugins for Feishu, MCP, tape-store OpenTelemetry,
+and SQLAlchemy-backed scheduling. Other plugins are installed on demand via
+`agentseek install`:
 
 | Command | Adds |
 | --- | --- |
 | `agentseek install agentseek-ag-ui` | AG-UI channel adapter |
 | `agentseek install agentseek-langchain` | LangChain model routing |
-| `agentseek install agentseek-observability` | Logfire tracing |
+| `agentseek install bub-tapestore-otel@main` | Tape-first OpenTelemetry tracing |
 | `agentseek install agentseek-tapestore-oceanbase` | OceanBase tape storage |
 | `agentseek install agentseek-contextseek` | ContextSeek semantic context layer |
 
@@ -139,9 +138,8 @@ plugins, not a runtime boundary.
 
 A **channel** is the surface that takes a message in and streams a response out. CLI
 (`cli`) is one; the gateway / HTTP transport is another; chat platforms like Feishu and
-Telegram are channels supplied by plugins (`bub-feishu` is a hard dependency,
-`pyproject.toml:20`). The `agentseek-ag-ui` plugin adds an AG-UI SSE channel adapter for
-front-ends like CopilotKit.
+Telegram are channels supplied by plugins. The `agentseek-ag-ui` plugin adds an AG-UI SSE
+channel adapter for front-ends like CopilotKit.
 
 agentseek's CLI override enables **all `*.lifecycle` channels** alongside whichever primary
 channel you asked for (`src/agentseek/cli.py:51-57, 83-112`). That is the mechanism that

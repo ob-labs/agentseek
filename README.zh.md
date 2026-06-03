@@ -1,4 +1,4 @@
-# agentseek
+# AgentSeek
 
 中文 | [English](README.md)
 
@@ -7,109 +7,151 @@
 
 一个由 [OceanBase](https://www.oceanbase.com/) OSS Team 提供的数据库原生 Agent Harness。
 
-## agentseek 是什么
+## AgentSeek 是什么
 
-agentseek 是一个面向团队的数据库原生 Agent Harness，适合那些希望把 agent 运行时数据变成一等数据库工作负载的场景。
+AgentSeek 是一个数据库原生的 Agent Harness，适合那些希望把智能体运行时数据变成一等数据库工作负载的团队。它开放接入任何智能体框架——内置 Bub，当前版本开箱即用地支持 LangChain。
 
 它把数据库视为承载 agent 上下文、执行历史、工具调用、任务、反馈和观测数据的自然位置。这样，同一份运行时数据就可以直接服务于调试、回放、轨迹对比、评估、分析和训练工作流，而不需要复制到多个系统中，也不需要事后重新导入。
 
-agentseek 在 PyPI 上以两个互补的包形式提供，按职责拆分：
+**AgentSeek 是一个套件**，由多个可独立使用的组件组成：
+
+| 组件 | 做什么 | 仓库 |
+| --- | --- | --- |
+| **agentseek-cli** | 生成项目、管理生命周期（`create / run / build / deploy`） | [ob-labs/agentseek](https://github.com/ob-labs/agentseek) |
+| **agentseek-api** | Agent Protocol 服务——把你的 LangGraph 零改动送上生产 | [ob-labs/agentseek-api](https://github.com/ob-labs/agentseek-api) |
+| **ContextSeek** | 语义上下文层——记忆、检索、演进、渐进式披露。自带 LangChain middleware 和 LangSmith `@traceable` 支持 | [ob-labs/contextseek](https://github.com/ob-labs/contextseek) |
+| **langchain-oceanbase** | 数据底座——checkpoint + store + 向量 + hybrid search，基于 OceanBase / seekdb / MySQL | [oceanbase/langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) |
+
+每个组件有自己的仓库和文档。本仓库描述套件层面的工作流；各组件的 API 细节请跳转上表链接。
+
+## 快速开始 — 面向 LangChain 开发者
+
+**该选哪个模板？**
+
+- **刚入门 / 想试试？** → `langchain/markdown-messages`（最小化，5 分钟）
+- **已有 graph，要交付产品？** → `langchain/default`（前端 + 飞书 IM + 完整运行时）
+- **做深度研究、需要 sub-agent？** → `deepagents/research`（Tavily + 报告生成）
+- **graph 跑在远程服务器？** → `langchain/cli-remote`
+
+```bash
+# 选一个跑：
+uvx --from agentseek-cli agentseek create langchain --template markdown-messages
+# 或者: langchain --template default
+# 或者: deepagents --template research
+```
+
+然后：`cd <项目> && uv sync && uv run langgraph dev`（最小化）或 `uv run agentseek run`（完整交付）。
+
+> **LangSmith tracing 已预配置。** 每个模板都自带 `.env.example`，里面 `LANGSMITH_TRACING=true` 和 `LANGSMITH_API_KEY` 已经写好，填入你的 key 就能在 LangSmith 里立刻看到完整的 run 观测。
+
+**Agent 跑起来之后的下一步：**
+
+- 加持久记忆 → [ContextSeek 文档](https://github.com/ob-labs/contextseek)
+- 服务化上生产 → [agentseek-api 文档](https://github.com/ob-labs/agentseek-api)
+- 换成持久数据库 → [langchain-oceanbase 文档](https://github.com/oceanbase/langchain-oceanbase)
+- 安装开发 Skills 获得引导 → 见下方[开发 Skills](#开发-skills)
+- 系统学习 DeepAgents → 见下方[开源课程](#开源课程)
+
+### 面向 OceanBase / seekdb / MySQL 开发者
+
+已经在跑 OceanBase、seekdb 或 MySQL？AgentSeek 把你的数据库变成 AI agent 的数据底座。
+
+```bash
+pip install langchain-oceanbase[pyseekdb]   # OceanBase / seekdb
+pip install langchain-oceanbase             # MySQL（checkpoint + store）
+```
+
+MySQL 用户开箱可用 checkpoint 和 store；向量搜索需要 OceanBase 或 seekdb。完整文档：[langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase)。
+
+### 其他路径
+
+AgentSeek 在 PyPI 上以两个互补的包形式提供，按职责拆分：
 
 - **`agentseek-cli`** —— **项目生命周期 CLI**（`create`、`run`、`build`、`deploy`、`api`、`ctx`、`skills`）。自包含，使用 `uv tool install agentseek-cli` 安装。
-- **`agentseek`** —— **harness** 本身。提供运行时 CLI（`chat`、`run`、`gateway`、`install`、`update`、…）以及嵌入到你应用里的库。harness 通过本仓库的 `[tool.uv.sources]` 解析，**不能**直接 `pip install agentseek`。
+- **`agentseek`** —— **harness** 本身。提供运行时 CLI（`chat`、`run`、`gateway`、`install`、`update`、…）以及嵌入到你应用里的库。通过本仓库的 `[tool.uv.sources]` 解析。
 
-两者都注册同一个名为 `agentseek` 的命令。要选哪一个，见 [`docs/index.zh.md`](docs/index.zh.md) 与 [`docs/explanation/choosing-an-entry-point.zh.md`](docs/explanation/choosing-an-entry-point.zh.md)。
+**已经在用 [Bub](https://github.com/bubbuild/bub)？** AgentSeek 是 Bub 的发行版，带有开箱即用的默认配置。试试 `agentseek create bub --template default`。详见 [AgentSeek 与 Bub 的关系](docs/explanation/bub-relationship.zh.md)。
 
-## 为什么存在
+完整路径对比见 [选择一个入口](docs/explanation/choosing-an-entry-point.zh.md)。
 
-大多数 agent 的价值都体现在运行时，但它们的运行时数据往往散落在 JSONL 日志、Markdown 笔记、SQLite 文件、tracing 系统、对象存储和离线流水线之间。第一次交互之后，这些数据再想查询、回放、比较、评估或转成训练材料，成本就会迅速上升。
+## 开源课程
 
-agentseek 从另一个前提出发：上下文、记忆、任务、工具调用、trace、反馈和评估材料，从一开始就应该共享同一个持久化底座。对 agent 系统来说，这让运行时数据具备复用价值；对数据库来说，这意味着它不再只存放最终业务结果，而是可以直接承载智能应用的工作负载。
+**《Deep Agents 实战》**——免费课程，用 LangChain / DeepAgents 构建生产级 AI Agent。后续所有动手实验基于 AgentSeek。
 
-## 快速开始
+[课程网站](https://webup.github.io/deepagents-course) · [源码仓库](https://github.com/webup/deepagents-site)
 
-两条入门路径都正式平等，按你的目的二选一。
+课程覆盖：Agent Harness 概念、虚拟文件系统、任务规划、sub-agent、异步委派、长期记忆、Human-in-the-Loop、Skills、沙箱执行、流式前端、生产部署。
 
-### 路径 A —— 安装项目生命周期 CLI
+## 开发 Skills
 
-需要生成项目、构建镜像、调用生命周期命令但不想把仓库克隆下来时，走这条。
+可安装到你的 AI 编程助手（Claude Code、Cursor 等）的引导指南：
 
-```bash
-uv tool install agentseek-cli
-agentseek --help            # create / run / build / deploy / api / ctx / skills
-agentseek create bub --template default --no-input
-cd my_bub_agent
-uv sync                     # 生成项目内部的 [tool.uv.sources] 会解析出完整 harness
-```
-
-### 路径 B —— 克隆仓库，运行 harness
-
-需要驱动 harness 本体 —— `chat`、`gateway`、`install` 等运行时命令 —— 时走这条。
+| Skill | 做什么 |
+| --- | --- |
+| **langchain-dev-guide** | LangChain / LangGraph 工程踩坑与验证过的修复方案。覆盖 DeepAgents、middleware、streaming、multi-agent 编排。 |
+| **langchain-cn-models** | 把国内大模型（DeepSeek、通义 Qwen、智谱 GLM、Moonshot 等）接入 LangChain 的分步食谱。 |
 
 ```bash
-git clone https://github.com/ob-labs/agentseek.git
-cd agentseek
-uv sync
-uv run agentseek --help     # chat / run / gateway / install / update / …
+npx skills add ob-labs/agentseek --all
 ```
 
-配置一个模型，然后启动本地 chat：
+完整说明：[skills/](skills/)
 
-```bash
-export AGENTSEEK_MODEL=openrouter:free
-export AGENTSEEK_API_KEY=sk-or-v1-your-key
-export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
-uv run agentseek chat
-```
+## 接入你的智能体框架
 
-> 注意：`pip install agentseek` 与 `uv tool install agentseek` 都会因为 harness 依赖 `bub-feishu`、`bub-mcp` 与 `contrib/` 下的 workspace 包而解析失败 —— 这些依赖通过 `[tool.uv.sources]` 接到 git source，PyPI 元数据无法携带。请使用上面两条路径之一。
+AgentSeek 的设计目标是成为任何智能体框架的底层 harness。如果你正在构建新框架，或者维护一个需要持久数据层和语义上下文的框架——欢迎接入。Bub 就是一个好例子：它正是通过这种模式内置为 AgentSeek 的原生框架。AgentSeek 提供数据底座（OceanBase / seekdb / MySQL）、语义上下文层（ContextSeek）和生产服务化（agentseek-api），让你不用自己造这些。
+
+集成模式和 `agentseek-langchain` 一样——编写 contrib 插件把你的 runnable 桥接进 harness。参见[扩展模型](docs/explanation/extension-model.zh.md)和[编写 contrib 插件](docs/how-to/author-a-contrib-plugin.zh.md)。欢迎往 `contrib/` 提 PR。
+
+## 模板
+
+模板是一个**持续增长的集合**——LangChain 和 Bub 两个系列都在不断添加和打磨。欢迎提交 PR。
+
+| 模板 | 描述 |
+| --- | --- |
+| `langchain/markdown-messages` | 纯 LangChain 聊天机器人，`langgraph dev` 后端，markdown 渲染前端。 |
+| `langchain/default` | LangChain + CopilotKit 前端 + 飞书 IM Gateway + 完整 agentseek 运行时。 |
+| `langchain/cli-remote` | 通过 `LangGraphClientRunnable` 桥接远程 LangGraph 服务。 |
+| `deepagents/research` | DeepAgents 研究 Agent，内置 Tavily 搜索和流式报告 UI。 |
+| `deepagents/default` | `create_deep_agent` 绑定到 `agentseek-langchain`。 |
+| `bub/default` | 轻量 Bub agent + CopilotKit 前端，不含 LangChain。 |
+
+详见[模板参考](docs/reference/templates.zh.md)。
 
 ## Docker Compose
-
-如果你想在容器里运行 `agentseek`，并把项目工作区挂载进去，可以直接使用仓库自带的 compose 配置：
 
 ```bash
 cp .env.example .env
 make compose-up
 ```
 
-默认情况下，compose 会：
-
-- 把当前仓库挂载到 `/workspace`
-- 复用 `.agents/skills` 和 `.agents/mcp.json`
-- 把运行时状态持久化到工作区下的 `.agentseek`
-
-如果你希望挂载其他宿主机目录作为工作区，请设置 `AGENTSEEK_DOCKER_WORKSPACE`。如果你想覆盖容器中的 MCP 配置源路径，请设置 `AGENTSEEK_MCP_CONFIG_PATH`。
+详见 [使用 Docker Compose 运行](docs/how-to/run-with-docker-compose.zh.md)。
 
 ## 文档
 
-主文档描述的是 agentseek 内置发行版这一层：
+- [首页](docs/index.zh.md) — 套件总览，多角色快速开始
+- [教程](docs/tutorials/index.zh.md) — 快速演示、第一个应用、skills 与 MCP
+- [操作指南](docs/how-to/index.zh.md) — 任务式食谱
+- [概念解释](docs/explanation/index.zh.md) — LangChain 关系、Bub 关系、运行时数据模型
+- [参考](docs/reference/index.zh.md) — 环境变量、CLI、包、模板、Docker
 
-- [Overview](docs/index.zh.md)：说明 agentseek 是什么、处在什么位置，以及整套文档的组织方式。
-- [教程](docs/tutorials/index.zh.md)：从这里开始 —— 快速 CLI 演示、第一个 harness 应用、添加 skill 与 MCP。
-- [操作指南](docs/how-to/index.zh.md)：以任务为中心的食谱，涵盖模型配置、插件安装、运行与部署。
-- [参考](docs/reference/index.zh.md)：环境变量、CLI 命令、包、文件布局、模板、Docker。
-- [概念解释](docs/explanation/index.zh.md)：agentseek 是什么、它与 Bub 的关系、运行时数据模型、扩展模型。
-- [博客入口](docs/blog/index.zh.md)：发布说明、迁移信息和更长篇的文章入口。
-- [认识 agentseek](docs/blog/introducing-agentseek.zh.md)：介绍从 bubseek 到 agentseek 的演进、数据库原生 harness 的定位，以及 Bub/tape store。
+更多包文档：
 
-各个 contrib package 的完整安装与使用方式仍然写在各自的 README 里：
-
-- [agentseek-observability](contrib/agentseek-observability/README.md)
-- [agentseek-tapestore-oceanbase](contrib/agentseek-tapestore-oceanbase/README.md)
 - [agentseek-langchain](contrib/agentseek-langchain/README.md)
+- [agentseek-tapestore-oceanbase](contrib/agentseek-tapestore-oceanbase/README.md)
+- [agentseek-contextseek](contrib/agentseek-contextseek/README.md)
 - [agentseek-schedule-sqlalchemy](contrib/agentseek-schedule-sqlalchemy/README.md)
 
 ## 工作原理
 
-- **两个包、两条路径** —— `agentseek-cli`（项目生命周期 CLI）与 `agentseek`（harness）。命令名相同，命令面不同。详见 [`docs/explanation/choosing-an-entry-point.zh.md`](docs/explanation/choosing-an-entry-point.zh.md)。
-- **Bub 作为上游 runtime** —— [Bub](https://github.com/bubbuild/bub) 提供 hook-first turn pipeline、tape store、skills、plugins 和 channel model；harness 在它上面运行。agentseek 把 Bub 作为库消费，不是对它重新包装。
-- **`.agentseek` 运行时 home** —— harness 启动时把当前工作区下的 `.agentseek/` 作为运行时 home；`agentseek install` 使用 `agentseek-project` 作为默认插件沙箱。可通过 [`docs/reference/environment.zh.md`](docs/reference/environment.zh.md) 中的环境变量覆盖。
-- **环境变量别名** —— `AGENTSEEK_*` 会为同名 `BUB_*` 提供回退值，因此项目可以使用自己的命名空间，同时保持与上游兼容。
-- **开放式 authoring model** —— `AGENTS.md`、项目级本地 skills、内置 skills 和 MCP 配置，都是一等公民的编写与扩展入口。
-- **Contrib 扩展路径** —— 数据库存储、LangChain 路由、持久化调度以及其他更大的集成，都放在 `contrib/` 下，并在各自目录维护完整用法文档。
+- **组件套件** — agentseek-cli、agentseek-api、ContextSeek、langchain-oceanbase。可组合使用，也可独立使用。
+- **Bub 作为运行时内核** — [Bub](https://github.com/bubbuild/bub) 提供 hook-first turn pipeline、tape store、skills、plugins 和 channel model。AgentSeek 把 Bub 作为库依赖消费。
+- **LangChain 桥接** — `agentseek-langchain` contrib 插件把 LangGraph runnable 透明接入 harness turn pipeline。
+- **`.agentseek` 运行时 home** — 工作区本地的配置、插件沙箱和运行时状态。
+- **环境变量别名** — `AGENTSEEK_*` 为同名 `BUB_*` 提供回退值。
+- **开放式 authoring model** — `AGENTS.md`、项目级 skills、MCP 配置都是一等扩展入口。
 
-如果你想从本地开发一路平滑走到更大的部署场景，我们推荐 [OceanBase seekdb](https://github.com/oceanbase/seekdb) 和 OceanBase。
+如果你想从本地开发一路走到更大的部署场景，我们推荐 [OceanBase seekdb](https://github.com/oceanbase/seekdb) 和 OceanBase。
 
 ## 开发
 
@@ -119,8 +161,6 @@ make check
 make test
 make docs-test
 ```
-
-各个 contrib package 的 README 里记录了它们各自的检查命令。
 
 ## License
 

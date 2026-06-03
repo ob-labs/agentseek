@@ -3,13 +3,15 @@ title: Templates reference
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-05-28
+verified_on: 2026-06-03
 sources:
   - templates/index.json
   - templates/bub/default/README.md
   - templates/langchain/default/README.md
   - templates/langchain/cli-remote/README.md
+  - templates/langchain/markdown-messages/README.md
   - templates/deepagents/default/README.md
+  - templates/deepagents/research/README.md
 ---
 
 # Templates reference
@@ -18,6 +20,11 @@ Bundled cookiecutter templates used by `agentseek create`. The catalogue lives
 in `templates/index.json`; each template is a cookiecutter project under
 `templates/<framework>/<name>/`.
 
+> **This is a growing collection.** We are continuously adding new templates and
+> polishing existing ones — for both the LangChain and Bub families. Check back
+> or watch the [templates/ directory](https://github.com/ob-labs/agentseek/tree/main/templates)
+> for updates. PRs for new templates are welcome.
+
 ## Catalogue
 
 | Spec | Framework | Name | Description |
@@ -25,9 +32,24 @@ in `templates/index.json`; each template is a cookiecutter project under
 | `bub/default` | `bub` | `default` | Lightweight Bub agent: `agentseek gateway` + CopilotKit frontend, no LangChain. |
 | `langchain/default` | `langchain` | `default` | LangChain `create_agent` + CopilotKit middleware over `agentseek-langchain`. |
 | `langchain/cli-remote` | `langchain` | `cli-remote` | Remote LangGraph CLI agent bridged via `LangGraphClientRunnable`. |
+| `langchain/markdown-messages` | `langchain` | `markdown-messages` | Pure LangChain `create_agent` + `langgraph dev` backend, `useStream` + react-markdown frontend. No agentseek runtime. |
 | `deepagents/default` | `deepagents` | `default` | Local `create_deep_agent` runnable bound to `agentseek-langchain`. |
+| `deepagents/research` | `deepagents` | `research` | Pure DeepAgents research agent with Tavily search and streamed tool/sub-agent UI. |
 
 Listing comes from `templates/index.json`.
+
+## Picking a template
+
+Different templates suit different developer profiles and use cases:
+
+| If you are… | Recommended template | Why |
+| --- | --- | --- |
+| New to LangChain and agents | `langchain/markdown-messages` | Minimal dependencies, 5-minute path from zero to a running chatbot. Add complexity later. |
+| A LangChain user wanting full delivery | `langchain/default` | Ships CopilotKit frontend + Feishu IM gateway + agentseek runtime — everything needed to hand a product to stakeholders. |
+| Building a Deep Research agent | `deepagents/research` | Pre-wired Tavily search, sub-agent delegation, streamed report UI — mirrors the upstream DeepAgents research pattern. |
+| Connecting to a remote LangGraph server | `langchain/cli-remote` | Bridges `langgraph dev` via `LangGraphClientRunnable`; useful when the graph runs elsewhere (agentseek-api, LangSmith, etc.). |
+| Wanting the lightest harness path (no LangChain) | `bub/default` | Pure Bub kernel + CopilotKit frontend; no LangChain in the dependency tree. |
+| Integrating LangChain with agentseek runtime | `deepagents/default` | `create_deep_agent` bound to `agentseek-langchain` — both the harness data layer and DeepAgents orchestration. |
 
 ## `agentseek create` argument shapes
 
@@ -85,6 +107,22 @@ Mirrors `examples/langchain_cli_remote_agent`. Runs a graph via
 | `langgraph_url` | Default LangGraph Agent Server URL. |
 | `assistant_id` | Graph / assistant id (matches `langgraph.json`). |
 
+### `langchain/markdown-messages`
+
+Pure LangChain template with no agentseek runtime dependency. Generates a
+`create_agent` backend served by `langgraph dev` and a Vite + React frontend
+that streams messages via `useStream` and renders them as markdown.
+
+| Variable | Description |
+| --- | --- |
+| `project_name` | Human-readable project name. Defaults to "Markdown Messages Agent". |
+| `project_slug` | Python package / directory name (auto-derived). |
+| `author` | Project author. |
+| `system_prompt` | System prompt baked into the agent. |
+| `default_model` | Model id passed to `init_chat_model(...)`. |
+| `langgraph_port` | Backend port for `langgraph dev`. Defaults to `2024`. |
+| `frontend_port` | Frontend dev-server port. Defaults to `5174`. |
+
 ### `deepagents/default`
 
 Mirrors `examples/langchain_deepagents`. Local `create_deep_agent(...)`
@@ -97,6 +135,37 @@ runnable bound to agentseek via `agentseek-langchain`.
 | `author` | Project author. |
 | `system_prompt` | System prompt baked into the agent. |
 | `default_model` | Default `AGENTSEEK_MODEL`. |
+
+### `deepagents/research`
+
+Pure DeepAgents research template. Scaffolds a `create_deep_agent(...)`
+project with Tavily search, sub-agent task delegation, and a streamed
+frontend showing tool calls and the final markdown report.
+
+| Variable | Description |
+| --- | --- |
+| `project_name` | Human-readable project name. |
+| `project_slug` | Python package / directory name (auto-derived). |
+| `author` | Project author. |
+| `default_model` | Default `init_chat_model("<provider>:<model>")` id. |
+| `tavily_max_results` | Default `tavily_search` result limit. |
+| `tavily_topic` | Tavily topic filter (`general`, `news`, or `finance`). |
+| `max_concurrent_research_units` | Max sub-agent tasks queued concurrently. |
+| `max_researcher_iterations` | Max search/reflection loops per research unit. |
+| `langgraph_port` | Default backend port for `langgraph dev`. |
+| `frontend_port` | Default Vite dev-server port. |
+
+## After you generate a project — next steps
+
+Once your agent is running, add capabilities from the suite:
+
+| Next step | Component | Docs |
+| --- | --- | --- |
+| Add persistent memory and semantic retrieval | ContextSeek | [github.com/ob-labs/contextseek](https://github.com/ob-labs/contextseek) |
+| Ship the graph as a production API service | agentseek-api | [github.com/ob-labs/agentseek-api](https://github.com/ob-labs/agentseek-api) |
+| Switch to OceanBase / seekdb for durable storage | langchain-oceanbase | [github.com/oceanbase/langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) |
+| Wire up ContextSeek inside the harness | agentseek-contextseek | [How to use ContextSeek](../how-to/use-contextseek.md) |
+| Connect Feishu / DingTalk / Slack | IM Gateway | [How to run the gateway](../how-to/run-gateway.md) |
 
 ## See also
 

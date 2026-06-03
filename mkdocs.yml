@@ -32,6 +32,7 @@ nav:
           - Overview: explanation/index.md
           - What agentseek is: explanation/what-agentseek-is.md
           - Bub relationship: explanation/bub-relationship.md
+          - LangChain relationship: explanation/langchain-relationship.md
           - Runtime data model: explanation/runtime-data-model.md
           - Extension model: explanation/extension-model.md
           - Choosing an entry point: explanation/choosing-an-entry-point.md
@@ -107,6 +108,7 @@ plugins:
             # Explanation
             What agentseek is: agentseek 是什么
             Bub relationship: agentseek 与 Bub 的关系
+            LangChain relationship: agentseek 与 LangChain 的关系
             Runtime data model: 运行时数据模型
             Extension model: 扩展模型
             Choosing an entry point: 选择一个入口

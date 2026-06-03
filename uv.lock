@@ -13,8 +13,6 @@ members = [
     "agentseek-cli",
     "agentseek-contextseek",
     "agentseek-langchain",
-    "agentseek-observability",
-    "agentseek-project",
     "agentseek-schedule-sqlalchemy",
     "agentseek-tapestore-oceanbase",
 ]
@@ -64,11 +62,11 @@ plugins = [
     { name = "agentseek-ag-ui" },
     { name = "agentseek-contextseek" },
     { name = "agentseek-langchain" },
-    { name = "agentseek-observability" },
     { name = "agentseek-schedule-sqlalchemy" },
     { name = "agentseek-tapestore-oceanbase" },
     { name = "bub-feishu" },
     { name = "bub-mcp" },
+    { name = "bub-tapestore-otel" },
 ]
 
 [package.metadata]
@@ -98,11 +96,11 @@ plugins = [
     { name = "agentseek-ag-ui", editable = "contrib/agentseek-ag-ui" },
     { name = "agentseek-contextseek", editable = "contrib/agentseek-contextseek" },
     { name = "agentseek-langchain", editable = "contrib/agentseek-langchain" },
-    { name = "agentseek-observability", editable = "contrib/agentseek-observability" },
     { name = "agentseek-schedule-sqlalchemy", editable = "contrib/agentseek-schedule-sqlalchemy" },
     { name = "agentseek-tapestore-oceanbase", editable = "contrib/agentseek-tapestore-oceanbase" },
     { name = "bub-feishu", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-feishu&rev=5374c8ffc8a38091a4e26dcc455c54f3c9e71aff" },
     { name = "bub-mcp", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-mcp&rev=5374c8ffc8a38091a4e26dcc455c54f3c9e71aff" },
+    { name = "bub-tapestore-otel", git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-otel&rev=75c0778c7083fc9355d1c46d2816077290ae8349" },
 ]
 
 [[package]]
@@ -181,40 +179,6 @@ requires-dist = [
     { name = "langchain-core", specifier = ">=0.3" },
     { name = "langgraph-sdk" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
-]
-
-[[package]]
-name = "agentseek-observability"
-version = "0.1.0"
-source = { editable = "contrib/agentseek-observability" }
-dependencies = [
-    { name = "any-llm-sdk" },
-    { name = "bub" },
-    { name = "logfire" },
-    { name = "republic" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "any-llm-sdk" },
-    { name = "bub", specifier = ">=0.3.7" },
-    { name = "logfire", specifier = ">=4.33.0" },
-    { name = "republic", specifier = ">=0.5.7" },
-]
-
-[[package]]
-name = "agentseek-project"
-version = "0.1.0"
-source = { virtual = ".agentseek/agentseek-project" }
-dependencies = [
-    { name = "agentseek-langchain" },
-    { name = "bub" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agentseek-langchain", editable = "contrib/agentseek-langchain" },
-    { name = "bub", specifier = ">=0.3.7" },
 ]
 
 [[package]]
@@ -575,6 +539,17 @@ source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packa
 dependencies = [
     { name = "fastmcp" },
     { name = "pydantic-settings" },
+]
+
+[[package]]
+name = "bub-tapestore-otel"
+version = "0.1.0"
+source = { git = "https://github.com/bubbuild/bub-contrib.git?subdirectory=packages%2Fbub-tapestore-otel&rev=75c0778c7083fc9355d1c46d2816077290ae8349#75c0778c7083fc9355d1c46d2816077290ae8349" }
+dependencies = [
+    { name = "bub" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-sdk" },
+    { name = "republic" },
 ]
 
 [[package]]
