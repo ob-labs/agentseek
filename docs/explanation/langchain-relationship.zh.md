@@ -147,10 +147,12 @@ SQL——与 LangChain 的 SmithDB 在内部提供的结构性体验相同。
 
 ## 为什么是这样
 
-- **开放接入智能体框架，当前版本 LangChain 友好。** AgentSeek 的设计允许通过
-  插件模型对接任何智能体框架。它内置 Bub 作为原生框架，当前版本对 LangChain
-  的集成最深——四/六的模板、专用桥接插件、原生 langchain-oceanbase 支持。其他框架
-  可以通过同样的 contrib 插件模式接入。
+- **开放接入智能体框架，当前版本 LangChain 友好。** AgentSeek 的设计目标是成为
+  任何智能体框架的底层 harness。它内置 Bub 作为原生框架，当前版本对 LangChain
+  的集成最深——四/六的模板、专用桥接插件、原生 langchain-oceanbase 支持。我们
+  欢迎其他框架（LlamaIndex、AutoGen、CrewAI、自研编排）接入——尤其是利用数据
+  底座和上下文层。集成模式和 `agentseek-langchain` 一样：编写 contrib 插件把你的
+  runnable 桥接进 harness。
 - **渐进式采纳。** `langchain/markdown-messages` 和 `deepagents/research` 等模板
   不带任何 agentseek 运行时依赖。开发者可以先用纯 LangChain，等准备好了再加
   harness 层，无需重写。

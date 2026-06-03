@@ -97,6 +97,12 @@ npx skills add ob-labs/agentseek --all
 
 完整说明：[skills/](skills/)
 
+## 接入你的智能体框架
+
+AgentSeek 的设计目标是成为任何智能体框架的底层 harness。如果你在用 LlamaIndex、AutoGen、CrewAI 或自研编排——欢迎接入。AgentSeek 提供数据底座（OceanBase / seekdb / MySQL）、语义上下文层（ContextSeek）和生产服务化（agentseek-api），让你不用自己造这些。
+
+集成模式和 `agentseek-langchain` 一样——编写 contrib 插件把你的 runnable 桥接进 harness。参见[扩展模型](docs/explanation/extension-model.zh.md)和[编写 contrib 插件](docs/how-to/author-a-contrib-plugin.zh.md)。欢迎往 `contrib/` 提 PR。
+
 ## 模板
 
 模板是一个**持续增长的集合**——LangChain 和 Bub 两个系列都在不断添加和打磨。欢迎提交 PR。

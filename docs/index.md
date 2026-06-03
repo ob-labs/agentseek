@@ -203,6 +203,37 @@ Full details: [skills/](https://github.com/ob-labs/agentseek/tree/main/skills)
 
 ---
 
+## Connect your Agent Framework
+
+AgentSeek is designed to be the harness underneath any Agent Framework — not
+just LangChain. If you maintain or build on a framework (LlamaIndex, AutoGen,
+CrewAI, custom orchestration, etc.), we welcome you to connect it.
+
+**What AgentSeek brings to your framework:**
+
+- **Data substrate** — checkpoint, persistent memory, vector search, and hybrid
+  retrieval on OceanBase / seekdb / MySQL. Your agents get durable, queryable
+  runtime data from day one without you building a storage layer.
+- **Semantic context layer** — ContextSeek handles memory accumulation,
+  retrieval, progressive disclosure, and evolution. Your framework gets
+  cross-session intelligence for free.
+- **Production serving** — agentseek-api implements Agent Protocol. Your
+  framework's runnables can serve behind standard HTTP endpoints.
+- **IM delivery & templates** — Feishu / DingTalk / Slack gateways and
+  cookiecutter project scaffolding, ready for your framework to plug into.
+
+**How to integrate:**
+
+The integration pattern is the same one `agentseek-langchain` follows — a
+contrib plugin that bridges your framework's runnable into the harness turn
+pipeline. See [The extension model](explanation/extension-model.md) and
+[How to author a contrib plugin](how-to/author-a-contrib-plugin.md).
+
+We'd love to collaborate — open an [issue](https://github.com/ob-labs/agentseek/issues)
+or a PR under `contrib/`.
+
+---
+
 ## Other paths
 
 **Already using [Bub](https://github.com/bubbuild/bub)?** AgentSeek is a

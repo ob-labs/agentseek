@@ -97,6 +97,12 @@ npx skills add ob-labs/agentseek --all
 
 Full details: [skills/](skills/)
 
+## Connect your Agent Framework
+
+AgentSeek is designed to be the harness underneath any Agent Framework. If you build on LlamaIndex, AutoGen, CrewAI, or your own orchestration — we welcome you to connect it. AgentSeek brings the data substrate (OceanBase / seekdb / MySQL), the semantic context layer (ContextSeek), and production serving (agentseek-api) so you don't have to build those yourself.
+
+The integration pattern follows `agentseek-langchain` — a contrib plugin that bridges your runnable into the harness. See [Extension model](docs/explanation/extension-model.md) and [Author a contrib plugin](docs/how-to/author-a-contrib-plugin.md). PRs to `contrib/` welcome.
+
 ## Templates
 
 Templates are a **growing collection** — we are continuously adding new ones and polishing existing ones for both the LangChain and Bub families. PRs welcome.
