@@ -2,11 +2,11 @@
 hide_sidebar: true
 ---
 
-# agentseek
+# AgentSeek
 
-AgentSeek helps you ship LangChain agents to production. It handles deployment,
-persistent memory, data storage, and IM delivery — so you focus on your agent
-logic.
+AgentSeek is a database-native Agent Harness for teams that want agent runtime
+data to become a first-class database workload. LangChain is the recommended
+way to start building on it.
 
 > **Prerequisites:** Python 3.12+, [uv](https://docs.astral.sh/uv/), and a
 > model provider API key. That's it.

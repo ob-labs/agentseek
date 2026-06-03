@@ -2,10 +2,10 @@
 hide_sidebar: true
 ---
 
-# agentseek
+# AgentSeek
 
-AgentSeek 帮你把 LangChain agent 送上生产。它负责部署、持久记忆、数据存储和
-IM 渠道——你只管写 agent 逻辑。
+AgentSeek 是一个数据库原生的 Agent Harness，适合那些希望把 agent 运行时数据变成
+一等数据库工作负载的团队。LangChain 是我们推荐的上手方式。
 
 > **前置条件：** Python 3.12+、[uv](https://docs.astral.sh/uv/)、一个模型 API key。就这些。
 
