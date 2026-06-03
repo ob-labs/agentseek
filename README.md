@@ -1,4 +1,4 @@
-# agentseek
+# AgentSeek
 
 [中文](README.zh.md) | English
 
@@ -7,107 +7,146 @@
 
 A database-native Agent Harness, by the [OceanBase](https://en.oceanbase.com/) OSS Team.
 
-## What agentseek is
+## What AgentSeek is
 
-agentseek is a database-native Agent Harness for teams that want agent runtime data to become a first-class database workload.
+AgentSeek is a database-native Agent Harness for teams that want agent runtime data to become a first-class database workload. LangChain is the recommended way to start building on it.
 
 It treats the database as the natural place to keep agent context, execution history, tool calls, tasks, feedback, and observability together. The same runtime data can then serve debugging, replay, trajectory comparison, evaluation, analysis, and training workflows without being copied into separate systems or re-ingested later.
 
-agentseek ships as two complementary packages on PyPI, split by job:
+**AgentSeek is a suite** of components that work independently or together:
+
+| Component | What it does | Repo |
+| --- | --- | --- |
+| **agentseek-cli** | Scaffold projects, manage lifecycle (`create / run / build / deploy`) | [ob-labs/agentseek](https://github.com/ob-labs/agentseek) |
+| **agentseek-api** | Agent Protocol server — ship your LangGraph to production, zero code change | [ob-labs/agentseek-api](https://github.com/ob-labs/agentseek-api) |
+| **ContextSeek** | Semantic context layer — memory, retrieval, evolution, progressive disclosure. Ships with LangChain middleware and LangSmith `@traceable` support | [ob-labs/contextseek](https://github.com/ob-labs/contextseek) |
+| **langchain-oceanbase** | Data substrate — checkpoint + store + vector + hybrid search on OceanBase / seekdb / MySQL | [oceanbase/langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) |
+
+Each component has its own repo and docs. This repo documents the suite-level workflow; for component-specific API details, follow the links above.
+
+## Quick Start — for LangChain developers
+
+**Which template should I pick?**
+
+- **Starting fresh / learning?** → `langchain/markdown-messages` (minimal, 5 min)
+- **Already have a graph, need to deliver a product?** → `langchain/default` (frontend + Feishu IM + full runtime)
+- **Need deep research with sub-agents?** → `deepagents/research` (Tavily + report generation)
+- **Graph runs on a remote server?** → `langchain/cli-remote`
+
+```bash
+# Pick one and run:
+uvx --from agentseek-cli agentseek create langchain --template markdown-messages
+# or: langchain --template default
+# or: deepagents --template research
+```
+
+Then: `cd <project> && uv sync && uv run langgraph dev` (minimal) or `uv run agentseek run` (full delivery).
+
+> **LangSmith tracing is pre-configured.** Every template ships a `.env.example` with `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` ready to fill in.
+
+**Next steps after your agent runs:**
+
+- Add persistent memory → [ContextSeek docs](https://github.com/ob-labs/contextseek)
+- Ship to production as a service → [agentseek-api docs](https://github.com/ob-labs/agentseek-api)
+- Switch to a durable database → [langchain-oceanbase docs](https://github.com/oceanbase/langchain-oceanbase)
+- Install dev skills for guided help → see [Development skills](#development-skills) below
+- Study DeepAgents systematically → see [Open-source course](#open-source-course) below
+
+### For OceanBase / seekdb / MySQL developers
+
+Already running OceanBase, seekdb, or MySQL? AgentSeek uses your database as the data substrate for AI agents.
+
+```bash
+pip install langchain-oceanbase[pyseekdb]   # OceanBase / seekdb
+pip install langchain-oceanbase             # MySQL (checkpoint + store)
+```
+
+MySQL users get checkpoint and store out of the box; vector search requires OceanBase or seekdb. Full docs: [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase).
+
+### Other paths
+
+AgentSeek ships as two complementary PyPI packages split by job:
 
 - **`agentseek-cli`** — the **project lifecycle CLI** (`create`, `run`, `build`, `deploy`, `api`, `ctx`, `skills`). Self-contained, installable with `uv tool install agentseek-cli`.
-- **`agentseek`** — the **harness** itself. Provides the runtime CLI (`chat`, `run`, `gateway`, `install`, `update`, …) and the library you embed in your application. Resolved through this repository's `[tool.uv.sources]`, not via a direct `pip install agentseek`.
+- **`agentseek`** — the **harness** itself. Provides the runtime CLI (`chat`, `run`, `gateway`, `install`, `update`, …) and the library you embed in your application. Resolved through this repository's `[tool.uv.sources]`.
 
-Both register a command named `agentseek`. See [`docs/index.md`](docs/index.md) and [`docs/explanation/choosing-an-entry-point.md`](docs/explanation/choosing-an-entry-point.md) for which one fits which job.
+**Already using [Bub](https://github.com/bubbuild/bub)?** AgentSeek is a distribution of Bub with opinionated defaults. Try `agentseek create bub --template default`. See [How AgentSeek relates to Bub](docs/explanation/bub-relationship.md).
 
-## Why it exists
+See [Choosing an entry point](docs/explanation/choosing-an-entry-point.md) for the full comparison.
 
-Most agents already prove their value at runtime, but their runtime data is often scattered across JSONL logs, Markdown notes, SQLite files, tracing systems, object storage, and offline pipelines. After the first interaction, that data becomes expensive to query, replay, compare, evaluate, or turn into training material.
+## Open-source course
 
-agentseek starts from a different assumption: context, memory, tasks, tool calls, traces, feedback, and evaluation material should share one durable substrate from the beginning. For agent systems, this makes runtime data reusable. For databases, it opens a direct path to carry intelligent-application workloads instead of only storing final business results.
+The free course **"Deep Agents 实战"** (Deep Agents in Action) teaches you to build production-grade AI agents with LangChain / LangGraph / DeepAgents — and uses AgentSeek for all hands-on labs.
 
-## Quick Start
+| Resource | Link |
+| --- | --- |
+| Course site | [webup.github.io/deepagents-course](https://webup.github.io/deepagents-course) |
+| Video playlist (Bilibili) | [B站合集](https://space.bilibili.com/28357052/lists/7757577?type=season) |
+| Source repo | [github.com/webup/deepagents-site](https://github.com/webup/deepagents-site) |
 
-Pick one of the two paths. They are both first-class.
+## Development skills
 
-### Path A — install the project lifecycle CLI
+Installable guides that live inside your AI coding agent (Claude Code, Cursor, etc.):
 
-Use this when you want to scaffold a project, build an image, or call lifecycle commands without checking the repo out.
-
-```bash
-uv tool install agentseek-cli
-agentseek --help            # create / run / build / deploy / api / ctx / skills
-agentseek create bub --template default --no-input
-cd my_bub_agent
-uv sync                     # the generated project resolves the full harness via its own [tool.uv.sources]
-```
-
-### Path B — clone the repo and run the harness
-
-Use this when you want to drive the harness itself — `chat`, `gateway`, `install`, and the rest of the runtime CLI.
+| Skill | What it does |
+| --- | --- |
+| **langchain-dev-guide** | LangChain / LangGraph engineering pitfalls and verified fixes. Covers DeepAgents, middleware, streaming, multi-agent orchestration. |
+| **langchain-cn-models** | Step-by-step recipes for integrating Chinese LLM providers (DeepSeek, Qwen, GLM, Moonshot) into LangChain. |
 
 ```bash
-git clone https://github.com/ob-labs/agentseek.git
-cd agentseek
-uv sync
-uv run agentseek --help     # chat / run / gateway / install / update / …
+npx skills add ob-labs/agentseek --all
 ```
 
-Configure a model, then start a local chat:
+Full details: [skills/](skills/)
 
-```bash
-export AGENTSEEK_MODEL=openrouter:free
-export AGENTSEEK_API_KEY=sk-or-v1-your-key
-export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
-uv run agentseek chat
-```
+## Templates
 
-> Note: `pip install agentseek` and `uv tool install agentseek` will fail to resolve, because the harness depends on `bub-feishu`, `bub-mcp`, and the workspace contrib packages, which are wired via `[tool.uv.sources]` and cannot be carried by PyPI metadata. Use one of the two paths above.
+Templates are a **growing collection** — we are continuously adding new ones and polishing existing ones for both the LangChain and Bub families. PRs welcome.
+
+| Template | Description |
+| --- | --- |
+| `langchain/markdown-messages` | Pure LangChain chatbot, `langgraph dev` backend, markdown-rendered frontend. |
+| `langchain/default` | LangChain + CopilotKit frontend + Feishu IM gateway + full agentseek runtime. |
+| `langchain/cli-remote` | Remote LangGraph server bridged via `LangGraphClientRunnable`. |
+| `deepagents/research` | DeepAgents research agent with Tavily search and streamed report UI. |
+| `deepagents/default` | `create_deep_agent` bound to `agentseek-langchain`. |
+| `bub/default` | Lightweight Bub agent with CopilotKit frontend, no LangChain. |
+
+See [Templates reference](docs/reference/templates.md) for inputs, generated layout, and next steps.
 
 ## Docker Compose
-
-If you want to run `agentseek` in a container with the project workspace mounted in, use the bundled compose setup:
 
 ```bash
 cp .env.example .env
 make compose-up
 ```
 
-By default, compose will:
-
-- mount the current repository into `/workspace`
-- reuse `.agents/skills` and `.agents/mcp.json`
-- persist runtime state under `.agentseek` in the workspace
-
-To mount a different host directory as the workspace, set `AGENTSEEK_DOCKER_WORKSPACE`. To override the MCP config source path in containers, set `AGENTSEEK_MCP_CONFIG_PATH`.
+See [How to run with Docker Compose](docs/how-to/run-with-docker-compose.md).
 
 ## Documentation
 
-The main documentation describes the built-in agentseek distribution layer:
+- [Home](docs/index.md) — suite overview, multi-persona quick starts
+- [Tutorials](docs/tutorials/index.md) — quick demo, first app, skills and MCP
+- [How-to guides](docs/how-to/index.md) — task-focused recipes
+- [Explanation](docs/explanation/index.md) — LangChain relationship, Bub relationship, runtime data model
+- [Reference](docs/reference/index.md) — env vars, CLI, packages, templates, Docker
 
-- [Overview](docs/index.md): what agentseek is, where it fits, and how the docs are structured.
-- [Tutorials](docs/tutorials/index.md): start here — quick CLI demo, first harness app, adding a skill and MCP.
-- [How-to guides](docs/how-to/index.md): task-focused recipes for configuring models, installing plugins, running, and deploying.
-- [Reference](docs/reference/index.md): environment variables, CLI commands, packages, file layout, templates, Docker.
-- [Explanation](docs/explanation/index.md): what agentseek is, how it relates to Bub, runtime data model, extension model.
-- [Blog intro](docs/blog/index.md): release notes, migrations, and longer-form posts.
-- [Introducing agentseek](docs/blog/introducing-agentseek.md): lineage from bubseek, database-native harness, and Bub/tape store.
+Contrib packages document their setup in their own READMEs:
 
-Contrib packages document their complete setup in their own README files:
-
-- [agentseek-observability](contrib/agentseek-observability/README.md)
-- [agentseek-tapestore-oceanbase](contrib/agentseek-tapestore-oceanbase/README.md)
 - [agentseek-langchain](contrib/agentseek-langchain/README.md)
+- [agentseek-tapestore-oceanbase](contrib/agentseek-tapestore-oceanbase/README.md)
+- [agentseek-observability](contrib/agentseek-observability/README.md)
+- [agentseek-contextseek](contrib/agentseek-contextseek/README.md)
 - [agentseek-schedule-sqlalchemy](contrib/agentseek-schedule-sqlalchemy/README.md)
 
 ## How it works
 
-- **Two packages, two paths** — `agentseek-cli` (project lifecycle CLI) and `agentseek` (harness). Same command name, different command surface. See [`docs/explanation/choosing-an-entry-point.md`](docs/explanation/choosing-an-entry-point.md).
-- **Bub as the upstream runtime** — [Bub](https://github.com/bubbuild/bub) provides the hook-first turn pipeline, tape store, skills, plugins, and channel model that the harness runs on. agentseek consumes Bub as a library; it is not a re-skin.
-- **`.agentseek` runtime home** — when the harness boots, it uses `.agentseek/` under the current workspace as runtime home, and `agentseek-project` as the plugin sandbox used by `agentseek install`. Override via env vars in [`docs/reference/environment.md`](docs/reference/environment.md).
-- **Environment aliases** — `AGENTSEEK_*` values act as fallbacks for matching `BUB_*` values, so projects keep their own naming namespace while staying compatible with the upstream.
-- **Open authoring model** — `AGENTS.md`, project-local skills, bundled skills, and MCP config are first-class parts of the authoring and extension workflow.
-- **Contrib extension path** — database storage, LangChain routing, persistent scheduling, and other larger integrations live under `contrib/` and keep their full usage docs there.
+- **Suite of components** — agentseek-cli, agentseek-api, ContextSeek, langchain-oceanbase. Use together or independently.
+- **Bub as the runtime kernel** — [Bub](https://github.com/bubbuild/bub) provides the hook-first turn pipeline, tape store, skills, plugins, and channel model. AgentSeek consumes Bub as a library dependency.
+- **LangChain bridge** — the `agentseek-langchain` contrib plugin connects LangGraph runnables into the harness turn pipeline transparently.
+- **`.agentseek` runtime home** — workspace-local config, plugin sandbox, and runtime state.
+- **Environment aliases** — `AGENTSEEK_*` values act as fallbacks for matching `BUB_*` values.
+- **Open authoring model** — `AGENTS.md`, project-local skills, and MCP config are first-class extension points.
 
 For a good default experience from local development to larger deployments, we recommend [OceanBase seekdb](https://github.com/oceanbase/seekdb) and OceanBase.
 
@@ -119,8 +158,6 @@ make check
 make test
 make docs-test
 ```
-
-Contrib package README files document their package-specific checks.
 
 ## License
 
