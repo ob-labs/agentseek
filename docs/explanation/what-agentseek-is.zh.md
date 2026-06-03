@@ -13,11 +13,15 @@ sources:
 
 # agentseek 是什么
 
-> **简而言之：** agentseek 是一个 **database-native 的 Agent Harness**。它按职责拆成两个
-> PyPI 包：`agentseek-cli` 是**项目生命周期 CLI**，`agentseek` 是 **harness 本身**
-> （运行时 CLI 加可嵌入库）。它打包了 [Bub](https://github.com/bubbuild/bub) 并附带
-> project-local 默认值，让 runtime 数据 —— context、tool call、trace、task、
-> feedback —— 从第一轮 turn 起就生活在同一个持久底层基座上。
+> **简而言之：** agentseek 是一个帮你把 LangChain agent 送上生产的**套件**。
+> 它包含 agentseek-cli（项目脚手架）、agentseek-api（Agent Protocol 服务）、
+> ContextSeek（语义上下文层）和 langchain-oceanbase（数据底座）。套件构建在
+> database-native 的 harness 之上——运行时数据从第一轮 turn 起就生活在持久可查的
+> 数据库里。
+
+> **来自 LangChain？** 建议先读
+> [agentseek 与 LangChain 的关系](langchain-relationship.zh.md)——它讲清楚
+> AgentSeek 为 LangChain 生态加了什么以及该选哪个模板。
 
 ## 背景
 

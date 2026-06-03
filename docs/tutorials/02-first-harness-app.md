@@ -42,10 +42,12 @@ uv run agentseek create --list-templates
 
 ```text title="expected output"
 Available deepagents templates:
-  default  Local create_deep_agent runnable bound to agentseek-langchain.
+  default   Local create_deep_agent runnable bound to agentseek-langchain.
+  research  Pure DeepAgents research agent with Tavily search and streamed tool/sub-agent UI.
 Available langchain templates:
-  cli-remote  Remote LangGraph CLI agent bridged via LangGraphClientRunnable.
-  default     LangChain create_agent + CopilotKit middleware over agentseek-langchain.
+  cli-remote          Remote LangGraph CLI agent bridged via LangGraphClientRunnable.
+  default             LangChain create_agent + CopilotKit middleware over agentseek-langchain.
+  markdown-messages   Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend.
 Available bub templates:
   default  Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain.
 ```

@@ -13,12 +13,17 @@ sources:
 
 # What agentseek is
 
-> **In short:** agentseek is a **database-native Agent Harness**. Runtime data
-> — context, tool calls, traces, tasks, feedback — lives on one durable,
-> queryable substrate from the first turn. The harness ships as two PyPI
-> packages split by job: `agentseek-cli` (the **project lifecycle CLI**) and
-> `agentseek` (the **harness** itself, both a library you embed and a runtime
-> CLI).
+> **In short:** agentseek is a **suite** that helps you ship LangChain agents to
+> production. It comprises agentseek-cli (project scaffolding), agentseek-api
+> (Agent Protocol server), ContextSeek (semantic context layer), and
+> langchain-oceanbase (data substrate). The suite is built on a database-native
+> harness — runtime data lives on one durable, queryable substrate from the
+> first turn.
+
+> **Coming from LangChain?** You may want to start with
+> [How agentseek relates to LangChain](langchain-relationship.md) instead — it
+> covers what AgentSeek adds to the LangChain ecosystem and which template to
+> pick.
 
 ## Context
 

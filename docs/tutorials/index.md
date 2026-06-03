@@ -33,6 +33,7 @@ see the [Reference](../reference/index.md).
 | --- | --- | --- |
 | A1 — a first-time evaluator | [Quick demo (CLI)](01-quick-demo-cli.md) | [What agentseek is](../explanation/what-agentseek-is.md) |
 | A2 — building an app on top of agentseek | [First harness app](02-first-harness-app.md) | [Add a skill and MCP](03-add-a-skill-and-mcp.md), then [How-to guides](../how-to/index.md) |
+| A2-LC — a LangChain / DeepAgents developer | [LangChain relationship](../explanation/langchain-relationship.md) | [Templates reference](../reference/templates.md) — pick `langchain/markdown-messages` for minimal or `langchain/default` for full delivery |
 | A3 — writing a plugin or integration | [First harness app](02-first-harness-app.md) | [Runtime data model](../explanation/runtime-data-model.md), then [Author a contrib plugin](../how-to/author-a-contrib-plugin.md) |
 | A4 — operating a deployment | [Add a skill and MCP](03-add-a-skill-and-mcp.md) | [Run with Docker Compose](../how-to/run-with-docker-compose.md), then [Environment variables](../reference/environment.md) |
 | A5 — just curious | skip tutorials | [What agentseek is](../explanation/what-agentseek-is.md) |
