@@ -99,7 +99,7 @@ Full details: [skills/](skills/)
 
 ## Connect your Agent Framework
 
-AgentSeek is designed to be the harness underneath any Agent Framework. If you build on LlamaIndex, AutoGen, CrewAI, or your own orchestration — we welcome you to connect it. AgentSeek brings the data substrate (OceanBase / seekdb / MySQL), the semantic context layer (ContextSeek), and production serving (agentseek-api) so you don't have to build those yourself.
+AgentSeek is designed to be the harness underneath any Agent Framework. If you are building a new framework or maintaining one that needs a durable data layer and semantic context — we welcome you to connect it. Bub is a good example: it ships built-in as AgentSeek's native framework through exactly this pattern. AgentSeek brings the data substrate (OceanBase / seekdb / MySQL), the semantic context layer (ContextSeek), and production serving (agentseek-api) so you don't have to build those yourself.
 
 The integration pattern follows `agentseek-langchain` — a contrib plugin that bridges your runnable into the harness. See [Extension model](docs/explanation/extension-model.md) and [Author a contrib plugin](docs/how-to/author-a-contrib-plugin.md). PRs to `contrib/` welcome.
 

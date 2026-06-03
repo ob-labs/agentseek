@@ -206,8 +206,10 @@ Full details: [skills/](https://github.com/ob-labs/agentseek/tree/main/skills)
 ## Connect your Agent Framework
 
 AgentSeek is designed to be the harness underneath any Agent Framework — not
-just LangChain. If you maintain or build on a framework (LlamaIndex, AutoGen,
-CrewAI, custom orchestration, etc.), we welcome you to connect it.
+just LangChain. If you are building a new Agent Framework or maintaining one
+that needs a durable data layer and semantic context, we welcome you to
+connect it. Bub is a good example — it ships built-in as AgentSeek's native
+framework through exactly this integration pattern.
 
 **What AgentSeek brings to your framework:**
 

@@ -115,7 +115,7 @@ what an embedded library run will produce.
 
 agentseek **does not** try to:
 
-- Replace agent frameworks like LangChain, DeepAgents, LlamaIndex, or AutoGen. Use them
+- Replace Agent Frameworks. AgentSeek is a harness, not a framework. Use them
   alongside; route their turns through the harness via `agentseek-langchain` when needed.
 - Be a generic plugin marketplace. The plugin model is Bub's; the wider catalogue lives at
   <https://hub.bub.build>. agentseek only ships and maintains the contrib packages listed

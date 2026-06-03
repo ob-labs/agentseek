@@ -199,8 +199,9 @@ npx skills add ob-labs/agentseek --skill langchain-cn-models --agent claude-code
 ## 接入你的智能体框架
 
 AgentSeek 的设计目标是成为任何智能体框架的底层 harness——不只是 LangChain。如果
-你在维护或使用其他框架（LlamaIndex、AutoGen、CrewAI、自研编排等），我们欢迎你
-接入。
+你正在构建一个新的智能体框架，或者维护一个需要持久数据层和语义上下文的框架，
+我们欢迎你接入。Bub 就是一个好例子——它正是通过这种集成模式内置为 AgentSeek
+的原生框架。
 
 **AgentSeek 能为你的框架带来什么：**
 

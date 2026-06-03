@@ -168,11 +168,11 @@ SmithDB provides internally.
   to be the harness underneath any Agent Framework via its plugin model. It
   ships with built-in Bub as its native framework, and the current version has
   the deepest integration with LangChain — four of six templates, a dedicated
-  bridge plugin, and native langchain-oceanbase support. We welcome other
-  frameworks (LlamaIndex, AutoGen, CrewAI, custom orchestration) to connect —
-  especially to leverage the data substrate and context layer. The integration
-  pattern follows `agentseek-langchain`: a contrib plugin that bridges your
-  runnable into the harness.
+  bridge plugin, and native langchain-oceanbase support. We welcome new Agent
+  Frameworks to connect — especially to leverage the data substrate and context
+  layer. Bub is a good example: it ships built-in through exactly this pattern.
+  The integration path is a contrib plugin that bridges your runnable into the
+  harness.
 - **Incremental adoption.** Templates like `langchain/markdown-messages` and
   `deepagents/research` carry zero agentseek runtime dependency. Developers can
   start pure-LangChain and add the harness layer later without rewriting.
