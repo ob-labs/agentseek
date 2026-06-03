@@ -51,6 +51,7 @@ Then: `cd <project> && uv sync && uv run langgraph dev` (minimal) or
 - Ship to production as a service → [agentseek-api docs](https://github.com/ob-labs/agentseek-api)
 - Switch to a durable database → [langchain-oceanbase docs](https://github.com/oceanbase/langchain-oceanbase)
 - Install dev skills for guided help → see [Development skills](#development-skills) below
+- Study DeepAgents systematically → see [Open-source course](#open-source-course) below
 - Understand the full relationship → [How agentseek relates to LangChain](explanation/langchain-relationship.md)
 
 ---
@@ -154,6 +155,26 @@ database (OceanBase, seekdb, or MySQL). Runtime data is queryable SQL from day
 one.
 
 Full docs: [github.com/oceanbase/langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase)
+
+---
+
+## Open-source course
+
+Want to learn DeepAgents from the ground up? The free course
+**"Deep Agents 实战"** (Deep Agents in Action) teaches you to build
+production-grade AI agents with LangChain / LangGraph / DeepAgents — and uses
+AgentSeek for all hands-on labs.
+
+| Resource | Link |
+| --- | --- |
+| Course site | [webup.github.io/deepagents-course](https://webup.github.io/deepagents-course) |
+| Video playlist (Bilibili) | [B站合集](https://space.bilibili.com/28357052/lists/7757577?type=season) |
+| Source repo | [github.com/webup/deepagents-site](https://github.com/webup/deepagents-site) |
+
+Topics covered: Agent Harness concepts, virtual filesystem, task planning,
+sub-agents, async delegation, long-term memory, Human-in-the-Loop, skills,
+sandboxes, streaming frontends, and production deployment — all built on
+AgentSeek templates.
 
 ---
 
