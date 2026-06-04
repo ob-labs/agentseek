@@ -43,12 +43,125 @@ def apply_contextseek_env_aliases(
 
     If contextseek is not importable, this is a no-op so that starting
     agentseek without the optional dependency does not raise.
+
+    When contextseek's LLM is enabled (``AGENTSEEK_CTX_LLM_PROVIDER`` is not
+    ``none``, or ``AGENTSEEK_CTX_LLM_MODEL`` is set), the agentseek gateway
+    credentials are bridged to the LangChain env vars used by contextseek:
+
+    - ``AGENTSEEK_API_KEY``  → ``OPENAI_API_KEY``  (fallback only)
+    - ``AGENTSEEK_API_BASE`` → ``OPENAI_BASE_URL``  (fallback only)
+
+    This lets contextseek's internal LLM reuse the same API endpoint as the
+    agent without duplicating credentials in ``.env``.
     """
     target = os.environ if environ is None else environ
     for env_var in _upstream_env_vars():
         aliased = target.get(f"{AGENTSEEK_CTX_PREFIX}{env_var}")
         if aliased is not None:
             target.setdefault(env_var, aliased)
+
+    _maybe_bridge_llm_credentials(target)
+
+
+# Maps a provider name → (api_key_var, base_url_var | None).
+# base_url_var is only applied for providers that accept a custom base URL.
+_PROVIDER_CREDS: dict[str, tuple[str, str | None]] = {
+    "openai": ("OPENAI_API_KEY", "OPENAI_BASE_URL"),
+    "anthropic": ("ANTHROPIC_API_KEY", None),
+    "google": ("GOOGLE_API_KEY", None),
+    "cohere": ("COHERE_API_KEY", None),
+    "mistral": ("MISTRAL_API_KEY", None),
+    "dashscope": ("DASHSCOPE_API_KEY", None),
+    "tongyi": ("DASHSCOPE_API_KEY", None),
+    "deepseek": ("DEEPSEEK_API_KEY", "DEEPSEEK_BASE_URL"),
+}
+
+# Maps a provider name → LangChain chat class path.
+_PROVIDER_CLASS_PATH: dict[str, str] = {
+    "openai": "langchain_openai.ChatOpenAI",
+    "anthropic": "langchain_anthropic.ChatAnthropic",
+    "google": "langchain_google_genai.ChatGoogleGenerativeAI",
+    "cohere": "langchain_cohere.ChatCohere",
+    "mistral": "langchain_mistralai.ChatMistralAI",
+    "dashscope": "langchain_community.chat_models.ChatTongyi",
+    "tongyi": "langchain_community.chat_models.ChatTongyi",
+    "deepseek": "langchain_openai.ChatOpenAI",
+}
+
+# Fragments of LangChain class paths → provider name (for reverse lookup).
+_CLASS_PATH_PROVIDER: dict[str, str] = {
+    "langchain_openai": "openai",
+    "langchain_anthropic": "anthropic",
+    "langchain_google_genai": "google",
+    "langchain_google_vertexai": "google",
+    "langchain_cohere": "cohere",
+    "langchain_mistralai": "mistral",
+    "chattongyi": "dashscope",
+    "tongyi": "dashscope",
+    "deepseek": "deepseek",
+}
+
+
+def _maybe_bridge_llm_credentials(target: MutableMapping[str, str]) -> None:
+    """Bridge AGENTSEEK_* → provider-specific LangChain vars when ctx LLM is enabled.
+
+    Only runs when contextseek LLM is enabled (``AGENTSEEK_CTX_LLM_PROVIDER``
+    != ``none`` or ``AGENTSEEK_CTX_LLM_MODEL`` is set).
+
+    Derives the following from ``AGENTSEEK_MODEL`` / ``AGENTSEEK_API_KEY`` /
+    ``AGENTSEEK_API_BASE`` (all as ``setdefault`` — explicit values always win):
+
+    - Provider-specific API key  (e.g. ``OPENAI_API_KEY``)
+    - Provider-specific base URL (e.g. ``OPENAI_BASE_URL``)
+    - ``LLM_CLASS_PATH``         (e.g. ``langchain_openai.ChatOpenAI``)
+    - ``LLM_MODEL``              (model name stripped of provider prefix)
+    """
+    llm_provider = target.get(f"{AGENTSEEK_CTX_PREFIX}LLM_PROVIDER", "none")
+    llm_model = target.get(f"{AGENTSEEK_CTX_PREFIX}LLM_MODEL", "")
+    if llm_provider.lower() == "none" and not llm_model:
+        return
+
+    provider = _detect_llm_provider(target)
+
+    # --- API key + base URL ---
+    agentseek_key = target.get("AGENTSEEK_API_KEY", "")
+    agentseek_base = target.get("AGENTSEEK_API_BASE", "")
+    key_var, base_var = _PROVIDER_CREDS.get(provider, ("OPENAI_API_KEY", "OPENAI_BASE_URL"))
+    if agentseek_key and not target.get(key_var):
+        target[key_var] = agentseek_key
+    if agentseek_base and base_var and not target.get(base_var):
+        target[base_var] = agentseek_base
+
+    # --- LLM_CLASS_PATH: auto-set from provider if not explicitly configured ---
+    ctx_class_path_key = f"{AGENTSEEK_CTX_PREFIX}LLM_CLASS_PATH"
+    if not target.get(ctx_class_path_key):
+        class_path = _PROVIDER_CLASS_PATH.get(provider)
+        if class_path:
+            target[ctx_class_path_key] = class_path
+
+    # --- LLM_MODEL: strip provider prefix from AGENTSEEK_MODEL if not set ---
+    ctx_model_key = f"{AGENTSEEK_CTX_PREFIX}LLM_MODEL"
+    if not target.get(ctx_model_key):
+        agentseek_model = target.get("AGENTSEEK_MODEL", "")
+        if ":" in agentseek_model:
+            target[ctx_model_key] = agentseek_model.split(":", 1)[1]
+
+
+def _detect_llm_provider(target: MutableMapping[str, str]) -> str:
+    """Return a lowercase provider name from class path or model prefix."""
+    class_path = target.get(f"{AGENTSEEK_CTX_PREFIX}LLM_CLASS_PATH", "").lower()
+    if class_path:
+        for fragment, provider in _CLASS_PATH_PROVIDER.items():
+            if fragment in class_path:
+                return provider
+
+    agentseek_model = target.get("AGENTSEEK_MODEL", "")
+    if ":" in agentseek_model:
+        prefix = agentseek_model.split(":", 1)[0].lower()
+        if prefix in _PROVIDER_CREDS:
+            return prefix
+
+    return "openai"
 
 
 @lru_cache(maxsize=1)

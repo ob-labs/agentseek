@@ -1,0 +1,42 @@
+[project]
+name = "{{ cookiecutter.project_slug }}"
+version = "0.1.0"
+description = "{{ cookiecutter.project_name }} — Bub-flavored AG-UI agent with ContextSeek semantic memory."
+authors = [{ name = "{{ cookiecutter.author }}" }]
+requires-python = ">=3.12"
+dependencies = [
+    "agentseek",
+    "agentseek-cli",
+    "agentseek-ag-ui",
+    "agentseek-contextseek",
+    "contextseek",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.scripts]
+serve = "{{ cookiecutter.project_slug }}.dev:main"
+ctx-server = "{{ cookiecutter.project_slug }}.server:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+{% if cookiecutter._agentseek_source_path %}
+agentseek = { path = "{{ cookiecutter._agentseek_source_path }}", editable = true }
+agentseek-cli = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-cli", editable = true }
+agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
+agentseek-contextseek = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-contextseek", editable = true }
+{% else %}
+agentseek = { git = "{{ cookiecutter._agentseek_source_url }}" }
+agentseek-cli = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-cli" }
+agentseek-ag-ui = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-ag-ui" }
+agentseek-contextseek = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-contextseek" }
+{% endif %}
