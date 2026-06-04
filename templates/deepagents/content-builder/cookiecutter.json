@@ -1,0 +1,12 @@
+{
+  "project_name": "Content Builder DeepAgent",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "author": "Your Name",
+  "default_model_provider": "openai",
+  "default_model": "",
+  "google_image_model": "gemini-3.1-flash-image-preview",
+  "tavily_max_results": "5",
+  "tavily_topic": "general",
+  "langgraph_port": "2024",
+  "frontend_port": "5174"
+}

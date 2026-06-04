@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "content_builder": "./src/{{ cookiecutter.project_slug }}/agent.py:graph"
+  },
+  "http": {
+    "app": "./src/{{ cookiecutter.project_slug }}/webapp.py:app"
+  },
+  "env": "./.env"
+}
