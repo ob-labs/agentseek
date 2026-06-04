@@ -3,6 +3,7 @@
   "deepagents/research": "Pure DeepAgents research agent with Tavily search and streamed tool/sub-agent UI.",
   "langchain/default": "LangChain create_agent + CopilotKit middleware over agentseek-langchain.",
   "langchain/cli-remote": "Remote LangGraph CLI agent bridged via LangGraphClientRunnable.",
+  "langchain/sandbox": "DeepAgents sandbox coding agent with LangSmith sandbox backend, tool-call cards, and join/rejoin streaming UI.",
   "langchain/markdown-messages": "Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek runtime.",
   "bub/default": "Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain."
 }
