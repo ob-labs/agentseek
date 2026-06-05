@@ -9,7 +9,7 @@ whose runtime data is durable, queryable, and ready to operate.
 
 Use these docs to answer three questions:
 
-1. Which project shape should I start from?
+1. Should I create a template project or run AgentSeek itself?
 2. Which package or adjacent project owns the capability I need?
 3. How do I move from local development to memory, storage, gateway, and serving?
 
@@ -17,21 +17,28 @@ Use these docs to answer three questions:
 
 | Goal | Start here |
 | --- | --- |
-| Create your first generated app | [Build your first harness app](tutorials/02-first-harness-app.md) |
-| Pick a template | [Templates reference](reference/templates.md) |
-| Understand CLI entry points | [Choosing an entry point](explanation/choosing-an-entry-point.md) |
+| Create a template project | [Build your first harness app](tutorials/02-first-harness-app.md) |
+| Run AgentSeek itself | [Quick demo via the CLI](tutorials/01-quick-demo-cli.md) |
+| Understand the two entry points | [Choosing an entry point](explanation/choosing-an-entry-point.md) |
 | Configure model credentials | [Configure model providers](how-to/configure-model.md) |
 | Run a generated project locally | [Run locally](how-to/run-locally.md) |
 | Build and deploy a generated project | [Build and deploy](how-to/build-and-deploy.md) |
 
-## Choose Your Path
+## Two Entry Points
 
-| You are... | Recommended path |
+| Job | Use | Start here |
 | --- | --- |
-| New to [LangChain](https://github.com/langchain-ai/langchain) or agents | Start with `langchain/markdown-messages`, then read [Build your first harness app](tutorials/02-first-harness-app.md). |
-| Building a full product surface | Start with `langchain/default`, then use [Run locally](how-to/run-locally.md) and [Build and deploy](how-to/build-and-deploy.md). |
-| Building with [DeepAgents](https://docs.langchain.com/oss/deepagents) | Compare `deepagents/research`, `deepagents/content-builder`, and `langchain/sandbox` in [Templates reference](reference/templates.md). |
-| Using [Bub](https://github.com/bubbuild/bub) directly | Start with `bub/default`, then read [How AgentSeek relates to Bub](explanation/bub-relationship.md). |
+| Create a project from templates | `agentseek-cli` and `agentseek create` | [Build your first harness app](tutorials/02-first-harness-app.md) and [Templates reference](reference/templates.md). |
+| Run AgentSeek itself | `agentseek` harness runtime | [Quick demo via the CLI](tutorials/01-quick-demo-cli.md), then [Run locally](how-to/run-locally.md). |
+
+After that, choose the specific application or operation you need:
+
+| Need | Start here |
+| --- | --- |
+| A minimal [LangChain](https://github.com/langchain-ai/langchain) app | `langchain/markdown-messages` in [Templates reference](reference/templates.md). |
+| A full product-shaped generated app | `langchain/default`, then [Run locally](how-to/run-locally.md) and [Build and deploy](how-to/build-and-deploy.md). |
+| A [DeepAgents](https://docs.langchain.com/oss/deepagents) project | Compare `deepagents/research`, `deepagents/content-builder`, and `langchain/sandbox` in [Templates reference](reference/templates.md). |
+| A [Bub](https://github.com/bubbuild/bub) app without LangChain | Start with `bub/default`, then read [How AgentSeek relates to Bub](explanation/bub-relationship.md). |
 | Adding persistent memory | Use [agentseek-contextseek](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-contextseek) or the [ContextSeek](https://github.com/ob-labs/contextseek) project. |
 | Choosing a database backend | Read [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) and [runtime data model](explanation/runtime-data-model.md). |
 
@@ -58,6 +65,9 @@ uvx --from agentseek-cli agentseek create --template
 
 # Create a minimal LangChain project
 uvx --from agentseek-cli agentseek create langchain/markdown-messages
+
+# Run AgentSeek itself from this repository
+uv run agentseek chat
 
 # Run repository checks
 make check

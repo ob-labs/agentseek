@@ -9,7 +9,7 @@ agent 应用。
 
 这套文档主要回答三个问题：
 
-1. 我应该从哪个项目形态开始？
+1. 我应该创建模板项目，还是运行 AgentSeek 本身？
 2. 我需要的能力属于哪个包或相邻项目？
 3. 如何从本地开发走到 memory、storage、gateway 和 serving？
 
@@ -17,21 +17,28 @@ agent 应用。
 
 | 目标 | 从这里开始 |
 | --- | --- |
-| 创建第一个生成项目 | [构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md) |
-| 选择模板 | [模板参考](reference/templates.zh.md) |
-| 理清 CLI 入口 | [选择一个入口](explanation/choosing-an-entry-point.zh.md) |
+| 创建模板项目 | [构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md) |
+| 运行 AgentSeek 本身 | [通过 CLI 快速演示](tutorials/01-quick-demo-cli.zh.md) |
+| 理清两个入口 | [选择一个入口](explanation/choosing-an-entry-point.zh.md) |
 | 配置模型凭证 | [配置模型提供方](how-to/configure-model.zh.md) |
 | 本地运行生成项目 | [本地运行](how-to/run-locally.zh.md) |
 | 构建和部署生成项目 | [构建和部署](how-to/build-and-deploy.zh.md) |
 
-## 选择路径
+## 两个入口
 
-| 你是... | 推荐路径 |
+| 事情 | 使用 | 从这里开始 |
 | --- | --- |
-| 刚接触 [LangChain](https://github.com/langchain-ai/langchain) 或 agents | 从 `langchain/markdown-messages` 开始，然后读[构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md)。 |
-| 要构建完整产品界面 | 从 `langchain/default` 开始，然后读[本地运行](how-to/run-locally.zh.md)和[构建和部署](how-to/build-and-deploy.zh.md)。 |
-| 要使用 [DeepAgents](https://docs.langchain.com/oss/deepagents) | 在[模板参考](reference/templates.zh.md)里比较 `deepagents/research`、`deepagents/content-builder` 和 `langchain/sandbox`。 |
-| 直接使用 [Bub](https://github.com/bubbuild/bub) | 从 `bub/default` 开始，然后读 [AgentSeek 与 Bub 的关系](explanation/bub-relationship.zh.md)。 |
+| 从模板创建项目 | `agentseek-cli` 与 `agentseek create` | [构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md)和[模板参考](reference/templates.zh.md)。 |
+| 运行 AgentSeek 本身 | `agentseek` harness runtime | [通过 CLI 快速演示](tutorials/01-quick-demo-cli.zh.md)，然后读[本地运行](how-to/run-locally.zh.md)。 |
+
+之后再按具体应用或操作选择：
+
+| 需要 | 从这里开始 |
+| --- | --- |
+| 最小 [LangChain](https://github.com/langchain-ai/langchain) 应用 | [模板参考](reference/templates.zh.md)里的 `langchain/markdown-messages`。 |
+| 完整产品形态的生成项目 | `langchain/default`，然后读[本地运行](how-to/run-locally.zh.md)和[构建和部署](how-to/build-and-deploy.zh.md)。 |
+| [DeepAgents](https://docs.langchain.com/oss/deepagents) 项目 | 在[模板参考](reference/templates.zh.md)里比较 `deepagents/research`、`deepagents/content-builder` 和 `langchain/sandbox`。 |
+| 不带 LangChain 的 [Bub](https://github.com/bubbuild/bub) 应用 | 从 `bub/default` 开始，然后读 [AgentSeek 与 Bub 的关系](explanation/bub-relationship.zh.md)。 |
 | 要加入持久记忆 | 使用 [agentseek-contextseek](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-contextseek) 或 [ContextSeek](https://github.com/ob-labs/contextseek)。 |
 | 要选择数据库后端 | 阅读 [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) 和[运行时数据模型](explanation/runtime-data-model.zh.md)。 |
 
@@ -57,6 +64,9 @@ uvx --from agentseek-cli agentseek create --template
 
 # Create a minimal LangChain project
 uvx --from agentseek-cli agentseek create langchain/markdown-messages
+
+# Run AgentSeek itself from this repository
+uv run agentseek chat
 
 # Run repository checks
 make check
