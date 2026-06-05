@@ -20,6 +20,8 @@ Spec resolution (mirrors bub ``install``'s ``_build_requirement`` pattern):
 * ``agentseek create langchain/cli-remote``           — ``templates/langchain/cli-remote``.
 * ``agentseek create langchain --list-templates``     — list templates available for the type.
 * ``agentseek create langchain --template cli-remote``— same as ``langchain/cli-remote``.
+* ``agentseek create langchain --template``           — list templates for the type (same as --list-templates).
+* ``agentseek create --template``                     — list all templates across all types.
 * ``agentseek create https://github.com/x/y.git``    — passthrough to cookiecutter.
 * ``agentseek create /path/to/template``              — passthrough to cookiecutter.
 """
@@ -66,6 +68,8 @@ app = typer.Typer(
 
 KNOWN_TYPES: tuple[str, ...] = ("deepagents", "langchain", "bub")
 DEFAULT_TYPE = "deepagents"
+
+_TEMPLATE_LIST_SENTINEL = "__list__"
 
 # The canonical GitHub repo URL used when templates are not found locally.
 REPO_URL = "https://github.com/ob-labs/agentseek"
@@ -194,18 +198,40 @@ def _load_template_descriptions() -> dict[str, str]:
     return {str(k): str(v) for k, v in data.items()}
 
 
-def _print_templates_table(project_type: str, templates: list[str]) -> None:
+def _print_templates_table(
+    project_type: str,
+    templates: list[str],
+    descriptions: dict[str, str] | None = None,
+) -> None:
     if not templates:
         typer.echo(f"No templates found for type {project_type!r}.")
         return
-    descriptions = _load_template_descriptions()
-    typer.echo(f"Available {project_type} templates:")
-    width = max(len(name) for name in templates)
+    if descriptions is None:
+        descriptions = _load_template_descriptions()
+    typer.echo(f"\n  {project_type} ({len(templates)} templates)")
+    typer.echo(f"  {'─' * 60}")
     for name in templates:
         key = f"{project_type}/{name}"
         desc = descriptions.get(key, "")
-        suffix = f"  {desc}" if desc else ""
-        typer.echo(f"  {name:<{width}}{suffix}")
+        typer.echo(f"    {key}")
+        if desc:
+            typer.echo(f"      {desc}")
+
+
+def _print_all_templates() -> None:
+    """Print all templates across all types with usage hints."""
+    descriptions = _load_template_descriptions()
+    total = 0
+    for project_type in KNOWN_TYPES:
+        templates = _list_templates(project_type)
+        total += len(templates)
+        _print_templates_table(project_type, templates, descriptions)
+    if total:
+        typer.echo("\n  Usage:")
+        typer.echo("    agentseek create <type>/<name>          e.g. agentseek create langchain/cli-remote")
+        typer.echo("    agentseek create <type>                 use default template for the type")
+        typer.echo("    agentseek create                        interactive selection")
+        typer.echo()
 
 
 # ---------------------------------------------------------------------------
@@ -240,9 +266,13 @@ def _coerce_type_choice(raw: str) -> str:
 def _prompt_template_name(project_type: str, templates: list[str]) -> str:
     if len(templates) == 1:
         return templates[0]
+    descriptions = _load_template_descriptions()
     typer.echo(f"Available {project_type} templates:")
+    width = max(len(name) for name in templates)
     for index, name in enumerate(templates, start=1):
-        typer.echo(f"  {index}. {name}")
+        desc = descriptions.get(f"{project_type}/{name}", "")
+        suffix = f"  — {desc}" if desc else ""
+        typer.echo(f"  {index}. {name:<{width}}{suffix}")
     raw = typer.prompt(f"Choose template [1-{len(templates)}]", default="1")
     cleaned = raw.strip()
     if cleaned in templates:
@@ -318,8 +348,13 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--template",
+        nargs="?",
         default=None,
-        help="Named template under the chosen type (e.g. --template cli-remote).",
+        const=_TEMPLATE_LIST_SENTINEL,
+        help=(
+            "Named template under the chosen type (e.g. --template cli-remote). "
+            "Pass --template with no value to list available templates."
+        ),
     )
     parser.add_argument(
         "--checkout",
@@ -362,8 +397,8 @@ def create(ctx: typer.Context) -> None:
     # --- Parse spec into (type, name) ---
     project_type, template_name = _split_spec(args)
 
-    # --- --list-templates ---
-    if args.list_templates:
+    # --- --list-templates or --template (no value) ---
+    if args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL:
         _show_templates(project_type)
         return
 
@@ -424,11 +459,11 @@ def _validate_project_type(project_type: str) -> None:
 
 def _show_templates(project_type: str | None) -> None:
     if project_type is None:
-        for known in KNOWN_TYPES:
-            _print_templates_table(known, _list_templates(known))
+        _print_all_templates()
         return
     _validate_project_type(project_type)
     _print_templates_table(project_type, _list_templates(project_type))
+    typer.echo()
 
 
 __all__ = ["DEFAULT_TYPE", "KNOWN_TYPES", "REPO_URL", "TemplateSource", "app"]

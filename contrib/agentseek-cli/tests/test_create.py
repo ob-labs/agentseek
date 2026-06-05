@@ -32,7 +32,7 @@ def test_unknown_type_exits_2() -> None:
 def test_list_templates_for_type_prints_bundled_names() -> None:
     result = _runner().invoke(build_app(), ["create", "langchain", "--list-templates"])
     assert result.exit_code == 0
-    assert "Available langchain templates" in result.output
+    assert "langchain" in result.output
     assert "default" in result.output
     assert "cli-remote" in result.output
     assert "markdown-messages" in result.output
@@ -42,7 +42,25 @@ def test_list_templates_without_type_lists_all_known_types() -> None:
     result = _runner().invoke(build_app(), ["create", "--list-templates"])
     assert result.exit_code == 0
     for project_type in create_module.KNOWN_TYPES:
-        assert f"Available {project_type} templates" in result.output
+        assert project_type in result.output
+
+
+def test_template_flag_no_value_lists_all_templates() -> None:
+    """``agentseek create --template`` (no value) should list all templates."""
+    result = _runner().invoke(build_app(), ["create", "--template"])
+    assert result.exit_code == 0
+    for project_type in create_module.KNOWN_TYPES:
+        assert project_type in result.output
+    assert "Usage:" in result.output
+
+
+def test_template_flag_no_value_with_type_lists_type_templates() -> None:
+    """``agentseek create langchain --template`` should list langchain templates only."""
+    result = _runner().invoke(build_app(), ["create", "langchain", "--template"])
+    assert result.exit_code == 0
+    assert "langchain" in result.output
+    assert "cli-remote" in result.output
+    assert "Usage:" not in result.output
 
 
 # -- template resolution ---------------------------------------------------
