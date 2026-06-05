@@ -109,8 +109,10 @@ agentseek ctx serve --port 8001 --mcp
 # create — scaffold a project from a bundled cookiecutter template
 agentseek create                                  # interactive type + template
 agentseek create deepagents                       # default template (no prompt for type)
-agentseek create langchain --list-templates       # list templates under a type
-agentseek create --list-templates                 # list every bundled template
+agentseek create langchain/cli-remote             # type/name shorthand
+agentseek create --template                       # list every bundled template
+agentseek create langchain --template             # list templates under a type
+agentseek create langchain --list-templates       # same as above (legacy flag)
 agentseek create bub --template default --no-input
 
 # run — start the project locally and open the frontend
@@ -229,10 +231,10 @@ uvx --from contrib/agentseek-cli/dist/agentseek_cli-0.0.2-*.whl agentseek --help
   docker compose up) and registry interaction. For now, generate the
   YAML, review/commit it, and apply it with your existing toolchain.
 - **`create` ships bundled templates.** Templates live under
-  `agentseek_cli/templates/<type>/<name>/` and are listed by directory
+  `templates/<type>/<name>/` and are listed by directory
   scan; add new templates by dropping a folder with a `cookiecutter.json`.
-  Bundled today: `deepagents/default`, `langchain/default`,
-  `langchain/cli-remote`, `bub/default`.
+  Run `agentseek create --template` to see all available templates with
+  descriptions.
 - **No Windows wheels for `npx-skills`** until upstream publishes them;
   see [npx-skills](https://pypi.org/project/npx-skills/) for current
   platform support.

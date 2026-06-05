@@ -61,7 +61,7 @@ because the generated project depends on it).
     | Argument / Flag | Type | Default | Description |
     | --- | --- | --- | --- |
     | `spec` | TEXT | — | Framework type (`deepagents`, `langchain`, `bub`), `type/name`, git URL, or local path. |
-    | `--template` | TEXT | — | Named template under the chosen type (e.g. `cli-remote`). |
+    | `--template` | TEXT (optional value) | — | Named template under the chosen type (e.g. `--template cli-remote`). Pass with no value to list available templates. |
     | `--checkout` | TEXT | — | Branch / tag / commit for remote fetches. |
     | `--list-templates` | flag | — | List templates available for the type and exit. |
     | `--no-input` | flag | off | Skip cookiecutter prompts. |

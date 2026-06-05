@@ -38,6 +38,10 @@ in `templates/index.json`; each template is a cookiecutter project under
 
 Listing comes from `templates/index.json`.
 
+> **Tip — browse from the terminal.** Run `agentseek create --template` to see
+> all templates with descriptions, or `agentseek create langchain --template` to
+> filter by framework type.
+
 ## Picking a template
 
 Different templates suit different developer profiles and use cases:
@@ -55,12 +59,15 @@ Different templates suit different developer profiles and use cases:
 
 | Form | Meaning |
 | --- | --- |
-| `agentseek create bub` | Default template for the framework (`bub/default`). |
+| `agentseek create --template` | List all templates across all types with descriptions. |
+| `agentseek create langchain --template` | List templates for the given type. |
 | `agentseek create langchain/cli-remote` | Specific `type/name` spec. |
 | `agentseek create langchain --template cli-remote` | Equivalent named-template form. |
+| `agentseek create bub` | Default template for the framework (`bub/default`). |
+| `agentseek create` | Interactive type + template selection. |
+| `agentseek create <type> --list-templates` | List templates for the type (same as `--template` with no value). |
 | `agentseek create <git-url>` | Fetch a remote cookiecutter; combine with `--checkout`. |
 | `agentseek create <local-path>` | Use a local cookiecutter directory. |
-| `agentseek create <type> --list-templates` | List templates for the type and exit. |
 
 See `cli.md#agentseek-create-spec` for the full flag table.
 

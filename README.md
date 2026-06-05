@@ -34,10 +34,13 @@ Each component has its own repo and docs. This repo documents the suite-level wo
 - **Graph runs on a remote server?** → `langchain/cli-remote`
 
 ```bash
+# Browse all available templates:
+uvx --from agentseek-cli agentseek create --template
+
 # Pick one and run:
-uvx --from agentseek-cli agentseek create langchain --template markdown-messages
-# or: langchain --template default
-# or: deepagents --template research
+uvx --from agentseek-cli agentseek create langchain/markdown-messages
+# or: agentseek create langchain/default
+# or: agentseek create deepagents/research
 ```
 
 Then: `cd <project> && uv sync && uv run langgraph dev` (minimal) or `uv run agentseek run` (full delivery).
@@ -112,9 +115,14 @@ Templates are a **growing collection** — we are continuously adding new ones a
 | `langchain/markdown-messages` | Pure LangChain chatbot, `langgraph dev` backend, markdown-rendered frontend. |
 | `langchain/default` | LangChain + CopilotKit frontend + Feishu IM gateway + full agentseek runtime. |
 | `langchain/cli-remote` | Remote LangGraph server bridged via `LangGraphClientRunnable`. |
+| `langchain/sandbox` | DeepAgents sandbox coding agent with LangSmith sandbox backend. |
 | `deepagents/research` | DeepAgents research agent with Tavily search and streamed report UI. |
+| `deepagents/content-builder` | DeepAgents content builder with brand memory, skills, and image generation. |
 | `deepagents/default` | `create_deep_agent` bound to `agentseek-langchain`. |
 | `bub/default` | Lightweight Bub agent with CopilotKit frontend, no LangChain. |
+| `bub/contextseek` | Bub agent with ContextSeek semantic memory layer. |
+
+Run `agentseek create --template` to see the full list with descriptions.
 
 See [Templates reference](docs/reference/templates.md) for inputs, generated layout, and next steps.
 
