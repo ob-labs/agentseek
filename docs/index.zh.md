@@ -49,8 +49,8 @@ uvx --from agentseek-cli agentseek create langchain --template markdown-messages
 - 加持久记忆 → [ContextSeek 文档](https://github.com/ob-labs/contextseek)
 - 服务化上生产 → [agentseek-api 文档](https://github.com/ob-labs/agentseek-api)
 - 换成持久数据库 → [langchain-oceanbase 文档](https://github.com/oceanbase/langchain-oceanbase)
-- 安装开发 Skills 获得引导 → 见下方[开发 Skills](#开发-skills)
-- 系统学习 DeepAgents → 见下方[开源课程](#开源课程)
+- 安装开发 Skills 获得引导 → 见下方“开发 Skills”
+- 系统学习 DeepAgents → 见下方“开源课程”
 - 了解整体关系 → [agentseek 与 LangChain 的关系](explanation/langchain-relationship.zh.md)
 
 ---

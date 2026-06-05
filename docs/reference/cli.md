@@ -22,7 +22,7 @@ command surface you see depends on which one is active.
 | Source package | `agentseek` resolves to | When you see it |
 | --- | --- | --- |
 | `agentseek-cli` (project lifecycle CLI) | `agentseek_cli.standalone:app` (`contrib/agentseek-cli/pyproject.toml:18`) | Path A — `uv tool install agentseek-cli` |
-| `agentseek` (harness) | `agentseek.__main__:app` (`pyproject.toml:49`) | Path B — `git clone … && uv sync && uv run agentseek` |
+| `agentseek` (harness) | `agentseek.__main__:app` (`pyproject.toml:29`) | Path B — `git clone … && uv sync && uv run agentseek` |
 
 `agentseek_cli.standalone:app` (`contrib/agentseek-cli/src/agentseek_cli/standalone.py:24-32`)
 resolves lazily on each invocation:
@@ -150,14 +150,14 @@ because the generated project depends on it).
 
 ### `agentseek skills`
 
-:   Manage agent skills via the upstream `vercel-labs/skills` CLI (run with
-    `npx`).
+:   Manage agent skills via the upstream `vercel-labs/skills` CLI through
+    the `npx-skills` executable.
 
     | Flag | Type | Default | Description |
     | --- | --- | --- | --- |
     | `--dir` | PATH | `$PWD` | Workspace directory to run `skills` in. |
 
-    Subcommands (each forwards to `npx skills`): `add`, `list`, `find`,
+    Subcommands (each forwards to `npx-skills`): `add`, `list`, `find`,
     `update`, `remove`, `init`.
 
 ## Harness runtime commands

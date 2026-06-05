@@ -1,6 +1,6 @@
 [project]
 name = "agentseek-cli"
-version = "0.0.1"
+version = "0.0.2"
 description = "Project-lifecycle CLI for AgentSeek (scaffold, run, build, deploy, skills, api)"
 readme = "README.md"
 authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]

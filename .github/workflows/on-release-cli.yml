@@ -21,6 +21,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
+      - name: Validate tag version
+        working-directory: contrib/agentseek-cli
+        run: |
+          release_version="${GITHUB_REF_NAME#cli-v}"
+          project_version="$(python -c 'import pathlib, tomllib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"])')"
+          if [ "${project_version}" != "${release_version}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} expects version ${release_version}, but pyproject.toml has ${project_version}." >&2
+            exit 1
+          fi
+
       - name: Build agentseek-cli sdist and wheel
         working-directory: contrib/agentseek-cli
         run: python -m build

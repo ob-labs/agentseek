@@ -64,11 +64,21 @@ uv tool install agentseek-cli
 
 ### 路径 B —— `agentseek`（harness）
 
-harness 是一个普通的 Python 项目，但**不能**直接从 PyPI 安装：`requires-dist`
-里有 `bub-feishu`、`bub-mcp` 与 `agentseek-schedule-sqlalchemy`，它们通过
-`[tool.uv.sources]` 接到 git source / workspace，而 PyPI metadata 无法携带
-source 覆盖。因此 `pip install agentseek` 与 `uv tool install agentseek` 都
-会解析失败。请使用一个自带这些 source 的项目：
+harness 是一个普通的 Python 包。只需要 harness 命令面时，安装发布到 PyPI 的
+运行时包：
+
+```bash
+pip install agentseek
+```
+
+如果你希望同一个环境里同时折叠进项目生命周期命令，使用 `cli` extra：
+
+```bash
+pip install 'agentseek[cli]'
+```
+
+如果你在开发本仓库，或者需要这个 checkout 里的 workspace contrib 包，请同步一个
+拥有 `[tool.uv.sources]` 映射的项目：
 
 ```bash
 # 方式 1 —— 克隆本仓库。
@@ -83,9 +93,9 @@ cd my_bub_agent
 uv sync
 ```
 
-两种方式下，`uv run agentseek` 最终都调用
-`agentseek.__main__:app`（`pyproject.toml:49`、
-`src/agentseek/__main__.py:52-69`），它启动 `BubFramework`、加载所有 Bub
+在已同步的项目里，`uv run agentseek` 最终调用
+`agentseek.__main__:app`（`pyproject.toml:29`、
+`src/agentseek/__main__.py:39-53`），它启动 `BubFramework`、加载所有 Bub
 plugin，并暴露 **harness 运行时**命令面：
 
 `chat / run / gateway / install / uninstall / update / mcp / login / onboard`。

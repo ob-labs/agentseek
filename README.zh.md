@@ -68,7 +68,7 @@ MySQL 用户开箱可用 checkpoint 和 store；向量搜索需要 OceanBase 或
 AgentSeek 在 PyPI 上以两个互补的包形式提供，按职责拆分：
 
 - **`agentseek-cli`** —— **项目生命周期 CLI**（`create`、`run`、`build`、`deploy`、`api`、`ctx`、`skills`）。自包含，使用 `uv tool install agentseek-cli` 安装。
-- **`agentseek`** —— **harness** 本身。提供运行时 CLI（`chat`、`run`、`gateway`、`install`、`update`、…）以及嵌入到你应用里的库。通过本仓库的 `[tool.uv.sources]` 解析。
+- **`agentseek`** —— **harness** 本身。提供运行时 CLI（`chat`、`run`、`gateway`、`install`、`update`、…）以及嵌入到你应用里的库。可用 `pip install agentseek` 安装；如果还需要同一环境里的生命周期 CLI，使用 `pip install 'agentseek[cli]'`。
 
 **已经在用 [Bub](https://github.com/bubbuild/bub)？** AgentSeek 是 Bub 的发行版，带有开箱即用的默认配置。试试 `agentseek create bub --template default`。详见 [AgentSeek 与 Bub 的关系](docs/explanation/bub-relationship.zh.md)。
 

@@ -22,7 +22,7 @@ sources:
 | 源包 | `agentseek` 解析到 | 何时看到它 |
 | --- | --- | --- |
 | `agentseek-cli`（项目生命周期 CLI） | `agentseek_cli.standalone:app`（`contrib/agentseek-cli/pyproject.toml:18`） | 路径 A —— `uv tool install agentseek-cli` |
-| `agentseek`（harness） | `agentseek.__main__:app`（`pyproject.toml:49`） | 路径 B —— `git clone … && uv sync && uv run agentseek` |
+| `agentseek`（harness） | `agentseek.__main__:app`（`pyproject.toml:29`） | 路径 B —— `git clone … && uv sync && uv run agentseek` |
 
 `agentseek_cli.standalone:app`（`contrib/agentseek-cli/src/agentseek_cli/standalone.py:24-32`）
 在每次调用时惰性解析：
@@ -139,13 +139,14 @@ sources:
 
 ### `agentseek skills`
 
-:   通过上游 `vercel-labs/skills` CLI 管理 agent skills（使用 `npx` 运行）。
+:   通过 `npx-skills` 可执行文件转发到上游 `vercel-labs/skills` CLI，管理
+    agent skills。
 
     | 参数 | 类型 | 默认值 | 描述 |
     | --- | --- | --- | --- |
     | `--dir` | PATH | `$PWD` | 运行 `skills` 的 workspace 目录。 |
 
-    子命令（每个都转发给 `npx skills`）：`add`、`list`、`find`、
+    子命令（每个都转发给 `npx-skills`）：`add`、`list`、`find`、
     `update`、`remove`、`init`。
 
 ## Harness 运行时命令

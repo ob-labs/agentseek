@@ -31,7 +31,7 @@ wheels = [
 
 [[package]]
 name = "agentseek"
-version = "0.1.0"
+version = "0.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "bub" },
@@ -124,7 +124,7 @@ requires-dist = [
 
 [[package]]
 name = "agentseek-cli"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "contrib/agentseek-cli" }
 dependencies = [
     { name = "bub" },

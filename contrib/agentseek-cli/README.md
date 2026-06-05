@@ -12,7 +12,7 @@ as a Bub plugin on the main `agentseek` framework CLI.
 | Python package       | `agentseek_cli`                             |
 | Bub entry point      | `cli` (`agentseek_cli.plugin:main`)         |
 | Console script       | `agentseek` (`agentseek_cli.standalone:app`)|
-| Install path         | `pip install agentseek-cli` / `uvx agentseek-cli` |
+| Install path         | `pip install agentseek-cli` / `uv tool install agentseek-cli` |
 | Test target          | `make test-agentseek-cli`                   |
 
 Top-level command groups: `create`, `run`, `build`, `deploy`, `api`, `ctx`,
@@ -37,10 +37,10 @@ This package does **not** own:
 
 ## Install
 
-### Standalone (uvx)
+### Standalone
 
 ```bash
-uvx agentseek-cli --help
+uvx --from agentseek-cli agentseek --help
 # or pin to this repo's working copy
 uvx --from ./contrib/agentseek-cli agentseek --help
 ```
@@ -139,20 +139,19 @@ agentseek deploy --dry-run --mode both --slug myproj --port 9000
   (`agentseek_cli.standalone:app`) and the Bub plugin
   (`agentseek_cli.plugin:main`) call `agentseek_cli.app.build_app()`
   / `iter_command_groups()`, so the surface stays in lockstep.
-- **Idempotent plugin mount.** `register_cli_commands` skips any group
+- **Plugin mount with a deliberate `run` override.** `register_cli_commands` skips any group
   whose name is already attached to the root Typer, matching the existing
-  pattern in `agentseek-langchain`. It additionally skips
-  `FRAMEWORK_OWNED_NAMES` (currently `{"run"}`) because Typer silently
-  overwrites duplicate group names and the framework's own built-in
-  `run` (driven by `bub.builtin.cli`) is far more useful than this
-  package's v1 stub. `agentseek run` therefore behaves like:
-  - under `uvx agentseek-cli` (framework absent) — our v1 "coming soon" stub;
-  - under monorepo / shared env (framework present) — the framework's
-    `run` ("Run one inbound message through the framework pipeline").
+  pattern in `agentseek-langchain`. `run` is the exception:
+  `CLI_OVERRIDE_NAMES = {"run"}` removes Bub's single-message `run` group and
+  mounts this package's local project runner instead. `agentseek run`
+  therefore behaves like:
+  - under `uvx --from agentseek-cli agentseek` (framework absent) — the
+    project lifecycle runner;
+  - under monorepo / shared env (framework present) — the same project
+    lifecycle runner mounted through the Bub plugin.
 - **`skills` is a thin pass-through.** It invokes
-  `uvx npx-skills <subcommand> [...args]`. `npx-skills` ships its own
-  Node runtime, so no global Node install is required, but `uvx`
-  (shipped with `uv`) must be on `PATH`.
+  `npx-skills <subcommand> [...args]`. `npx-skills` ships as a Python
+  dependency of this package and provides the executable on `PATH`.
 - **`api` migrated from `agentseek-langchain`.** The same Protocol-based
   duck-typing forwards `dev / serve / dockerfile / build / up / version`
   to `agentseek_api.cli.main(argv, prog, cwd)`. A missing dependency
@@ -208,7 +207,7 @@ End-to-end smoke checks:
 ```bash
 uv sync && uv run agentseek --help              # plugin mount
 uv build contrib/agentseek-cli                  # build wheel
-uvx --from contrib/agentseek-cli/dist/agentseek_cli-0.1.0-*.whl agentseek --help
+uvx --from contrib/agentseek-cli/dist/agentseek_cli-0.0.2-*.whl agentseek --help
 ```
 
 ## Limitations
@@ -224,7 +223,7 @@ uvx --from contrib/agentseek-cli/dist/agentseek_cli-0.1.0-*.whl agentseek --help
   skills land in `./<agent>/skills/` (e.g. `./.claude/skills/`,
   `./.codex/skills/`) and global skills in `~/<agent>/skills/`.
   AgentSeek does not rewrite those paths. `--dir <path>` only controls
-  the working directory `uvx npx-skills` runs in.
+  the working directory `npx-skills` runs in.
 - **`deploy` is dry-run only in v1.** The flags and rendered manifest
   shape are stable; future versions will add `--apply` (kubectl apply /
   docker compose up) and registry interaction. For now, generate the

@@ -68,7 +68,7 @@ MySQL users get checkpoint and store out of the box; vector search requires Ocea
 AgentSeek ships as two complementary PyPI packages split by job:
 
 - **`agentseek-cli`** — the **project lifecycle CLI** (`create`, `run`, `build`, `deploy`, `api`, `ctx`, `skills`). Self-contained, installable with `uv tool install agentseek-cli`.
-- **`agentseek`** — the **harness** itself. Provides the runtime CLI (`chat`, `run`, `gateway`, `install`, `update`, …) and the library you embed in your application. Resolved through this repository's `[tool.uv.sources]`.
+- **`agentseek`** — the **harness** itself. Provides the runtime CLI (`chat`, `run`, `gateway`, `install`, `update`, …) and the library you embed in your application. Install it with `pip install agentseek`, or use `pip install 'agentseek[cli]'` when you also want the lifecycle CLI in the same environment.
 
 **Already using [Bub](https://github.com/bubbuild/bub)?** AgentSeek is a distribution of Bub with opinionated defaults. Try `agentseek create bub --template default`. See [How AgentSeek relates to Bub](docs/explanation/bub-relationship.md).
 
