@@ -17,9 +17,12 @@ It is built for teams that want to move from a local
 [Bub](https://github.com/bubbuild/bub) prototype to a maintainable agent
 application with a clear runtime, storage, context, and serving story.
 
+> **"Deep Agents 实战"**: a free LangChain / DeepAgents course with AgentSeek labs.
+> [Course site](https://webup.github.io/deepagents-course) · [Source repo](https://github.com/webup/deepagents-site)
+
 ## Two Entry Points
 
-Most users start in one of two ways:
+The two entry points serve different jobs:
 
 | Goal | Start here | Use it when |
 | --- | --- | --- |
