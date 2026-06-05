@@ -9,9 +9,9 @@ whose runtime data is durable, queryable, and ready to operate.
 
 Use these docs to answer three questions:
 
-1. Should I create a template project or run AgentSeek itself?
-2. Which package or adjacent project owns the capability I need?
-3. How do I move from local development to memory, storage, gateway, and serving?
+1. Where should I start?
+2. Which guide covers the task in front of me?
+3. Where do I find reference details after the first run works?
 
 ## Fast Paths
 
@@ -19,19 +19,18 @@ Use these docs to answer three questions:
 | --- | --- |
 | Create a template project | [Build your first harness app](tutorials/02-first-harness-app.md) |
 | Run AgentSeek itself | [Quick demo via the CLI](tutorials/01-quick-demo-cli.md) |
-| Understand the two entry points | [Choosing an entry point](explanation/choosing-an-entry-point.md) |
 | Configure model credentials | [Configure model providers](how-to/configure-model.md) |
 | Run a generated project locally | [Run locally](how-to/run-locally.md) |
 | Build and deploy a generated project | [Build and deploy](how-to/build-and-deploy.md) |
 
-## Two Entry Points
+## Start With One Flow
 
-| Job | Use | Start here |
+| Flow | Start here | Use it when |
 | --- | --- |
-| Create a project from templates | `agentseek-cli` and `agentseek create` | [Build your first harness app](tutorials/02-first-harness-app.md) and [Templates reference](reference/templates.md). |
-| Run AgentSeek itself | `agentseek` harness runtime | [Quick demo via the CLI](tutorials/01-quick-demo-cli.md), then [Run locally](how-to/run-locally.md). |
+| Create a project from templates | [Build your first harness app](tutorials/02-first-harness-app.md) | You want a working application scaffold. |
+| Run AgentSeek itself | [Quick demo via the CLI](tutorials/01-quick-demo-cli.md) | You want to evaluate or operate the harness runtime. |
 
-After that, choose the specific application or operation you need:
+After the first run works, continue with the guide that matches the next job:
 
 | Need | Start here |
 | --- | --- |
@@ -42,20 +41,14 @@ After that, choose the specific application or operation you need:
 | Adding persistent memory | Use [agentseek-contextseek](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-contextseek) or the [ContextSeek](https://github.com/ob-labs/contextseek) project. |
 | Choosing a database backend | Read [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) and [runtime data model](explanation/runtime-data-model.md). |
 
-## Component Boundaries
+## Reference Details
 
-AgentSeek is a suite, not a single monolith. The split matters when you are
-choosing where to configure, extend, or debug something.
-
-| Component | Boundary |
+| Need | Reference |
 | --- | --- |
-| `agentseek` | Runtime harness, gateway, skills/plugins, environment aliases, and local runtime state. |
-| `agentseek-cli` | Project lifecycle commands: `create`, `run`, `build`, `deploy`, `api`, `ctx`, and `skills`. |
-| Templates | Cookiecutter project starters under `templates/<framework>/<name>/`. |
-| `contrib/` | Bridge packages such as `agentseek-langchain`, storage plugins, and ContextSeek integration. |
-| agentseek-api | Separate production Agent Protocol server for LangGraph apps. |
-| ContextSeek | Separate semantic context and memory system with HTTP, MCP, Python SDK, and LangChain middleware. |
-| langchain-oceanbase | Separate LangChain storage integrations for OceanBase, seekdb, and MySQL. |
+| Why there are two entry points | [Choosing an entry point](explanation/choosing-an-entry-point.md) |
+| Every command and flag | [CLI reference](reference/cli.md) |
+| Every template | [Templates reference](reference/templates.md) |
+| Package and repository boundaries | [Packages reference](reference/packages.md) |
 
 ## Common Commands
 
@@ -68,11 +61,6 @@ uvx --from agentseek-cli agentseek create langchain/markdown-messages
 
 # Run AgentSeek itself from this repository
 uv run agentseek chat
-
-# Run repository checks
-make check
-make test
-make docs-test
 ```
 
 ## Documentation Map

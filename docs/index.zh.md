@@ -9,9 +9,9 @@ agent 应用。
 
 这套文档主要回答三个问题：
 
-1. 我应该创建模板项目，还是运行 AgentSeek 本身？
-2. 我需要的能力属于哪个包或相邻项目？
-3. 如何从本地开发走到 memory、storage、gateway 和 serving？
+1. 我应该从哪里开始？
+2. 当前任务应该读哪篇指南？
+3. 首次跑通后，细节参考在哪里？
 
 ## 快速入口
 
@@ -19,19 +19,18 @@ agent 应用。
 | --- | --- |
 | 创建模板项目 | [构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md) |
 | 运行 AgentSeek 本身 | [通过 CLI 快速演示](tutorials/01-quick-demo-cli.zh.md) |
-| 理清两个入口 | [选择一个入口](explanation/choosing-an-entry-point.zh.md) |
 | 配置模型凭证 | [配置模型提供方](how-to/configure-model.zh.md) |
 | 本地运行生成项目 | [本地运行](how-to/run-locally.zh.md) |
 | 构建和部署生成项目 | [构建和部署](how-to/build-and-deploy.zh.md) |
 
-## 两个入口
+## 先选一个流程
 
-| 事情 | 使用 | 从这里开始 |
+| 流程 | 从这里开始 | 适合场景 |
 | --- | --- |
-| 从模板创建项目 | `agentseek-cli` 与 `agentseek create` | [构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md)和[模板参考](reference/templates.zh.md)。 |
-| 运行 AgentSeek 本身 | `agentseek` harness runtime | [通过 CLI 快速演示](tutorials/01-quick-demo-cli.zh.md)，然后读[本地运行](how-to/run-locally.zh.md)。 |
+| 从模板创建项目 | [构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md) | 你需要一个可运行的应用脚手架。 |
+| 运行 AgentSeek 本身 | [通过 CLI 快速演示](tutorials/01-quick-demo-cli.zh.md) | 你要评估或运维 harness runtime。 |
 
-之后再按具体应用或操作选择：
+首次跑通之后，再按下一步任务选择：
 
 | 需要 | 从这里开始 |
 | --- | --- |
@@ -42,19 +41,14 @@ agent 应用。
 | 要加入持久记忆 | 使用 [agentseek-contextseek](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-contextseek) 或 [ContextSeek](https://github.com/ob-labs/contextseek)。 |
 | 要选择数据库后端 | 阅读 [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) 和[运行时数据模型](explanation/runtime-data-model.zh.md)。 |
 
-## 组件边界
+## 参考细节
 
-AgentSeek 是一个套件，不是一个单体项目。配置、扩展和排查问题时，先确认能力属于哪个边界。
-
-| 组件 | 边界 |
+| 需要 | 参考 |
 | --- | --- |
-| `agentseek` | Runtime harness、gateway、skills/plugins、环境变量别名和本地 runtime state。 |
-| `agentseek-cli` | 项目生命周期命令：`create`、`run`、`build`、`deploy`、`api`、`ctx`、`skills`。 |
-| Templates | `templates/<framework>/<name>/` 下的 Cookiecutter 项目模板。 |
-| `contrib/` | 桥接包，例如 `agentseek-langchain`、存储插件和 ContextSeek 集成。 |
-| agentseek-api | 独立的生产 Agent Protocol server，用于服务 LangGraph 应用。 |
-| ContextSeek | 独立的语义上下文和 memory 系统，提供 HTTP、MCP、Python SDK 和 LangChain middleware。 |
-| langchain-oceanbase | 独立的 LangChain 存储集成，面向 OceanBase、seekdb 和 MySQL。 |
+| 理解为什么有两个入口 | [选择一个入口](explanation/choosing-an-entry-point.zh.md) |
+| 查看所有命令和参数 | [CLI 参考](reference/cli.zh.md) |
+| 查看所有模板 | [模板参考](reference/templates.zh.md) |
+| 理清包和仓库边界 | [包参考](reference/packages.zh.md) |
 
 ## 常用命令
 
@@ -67,11 +61,6 @@ uvx --from agentseek-cli agentseek create langchain/markdown-messages
 
 # Run AgentSeek itself from this repository
 uv run agentseek chat
-
-# Run repository checks
-make check
-make test
-make docs-test
 ```
 
 ## 文档地图
