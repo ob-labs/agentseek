@@ -55,9 +55,9 @@ sources:
     | 参数 / 标志 | 类型 | 默认值 | 描述 |
     | --- | --- | --- | --- |
     | `spec` | TEXT | — | 框架类型（`deepagents`、`langchain`、`bub`）、`type/name`、git URL，或本地路径。 |
-    | `--template` | TEXT | — | 所选类型下的具名模板（例如 `cli-remote`）。 |
+    | `--template` | TEXT（可省略值） | — | 所选类型下的具名模板（例如 `--template cli-remote`）。不带值传入时列出可用模板。 |
     | `--checkout` | TEXT | — | 远程拉取的 branch / tag / commit。 |
-    | `--list-templates` | flag | — | 列出该类型可用的模板并退出。 |
+    | `--list-templates` | flag | — | 列出所选类型的模板；未给类型时列出全部模板，然后退出。 |
     | `--no-input` | flag | off | 跳过 cookiecutter 的交互提示。 |
 
     捆绑模板列表请参见 [模板参考](templates.zh.md)。

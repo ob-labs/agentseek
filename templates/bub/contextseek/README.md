@@ -16,8 +16,8 @@ that pre-loads example knowledge on first boot.
 | `frontend_port` | Vite dev server port (default `5173`). |
 | `copilotkit_port` | CopilotKit Express runtime port (default `4000`). |
 | `ctx_server_port` | FastAPI ctx HTTP server port (default `8089`). |
-| `contextseek_storage_backend` | Storage backend (`memory` or `oceanbase`). |
-| `contextseek_storage_path` | Local store path when using `memory` backend. |
+| `contextseek_storage_backend` | Storage backend. Defaults to `seekdb`; generated `.env.example` also includes optional OceanBase settings. |
+| `contextseek_storage_path` | Reserved local ContextSeek store path input. |
 | `contextseek_tenant` | ContextSeek tenant identifier. |
 
 ## Generated layout

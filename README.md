@@ -108,7 +108,7 @@ The integration pattern follows `agentseek-langchain` — a contrib plugin that 
 
 ## Templates
 
-Templates are a **growing collection** — we are continuously adding new ones and polishing existing ones for both the LangChain and Bub families. PRs welcome.
+Templates are a **growing collection** — we are continuously adding new ones and polishing existing ones across LangChain, DeepAgents, and Bub. PRs welcome.
 
 | Template | Description |
 | --- | --- |
