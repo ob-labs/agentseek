@@ -20,6 +20,43 @@ def _runner() -> CliRunner:
     return CliRunner()
 
 
+def _mock_remote_template_repo(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    index: dict[str, str],
+    *,
+    cached: bool = False,
+) -> list[tuple[str, str | None, str, bool]]:
+    cookiecutters_dir = tmp_path / "cookiecutters"
+    repo_root = cookiecutters_dir / "agentseek" if cached else tmp_path / "downloaded-agentseek"
+    templates_root = repo_root / "templates"
+    templates_root.mkdir(parents=True)
+    (templates_root / "index.json").write_text(json.dumps(index), encoding="utf-8")
+    for template in index:
+        template_dir = templates_root / template
+        template_dir.mkdir(parents=True)
+        (template_dir / "cookiecutter.json").write_text("{}", encoding="utf-8")
+    clone_calls: list[tuple[str, str | None, str, bool]] = []
+
+    def fake_get_user_config() -> dict[str, str]:
+        return {"cookiecutters_dir": str(cookiecutters_dir)}
+
+    def fake_clone(
+        repo_url: str,
+        *,
+        checkout: str | None = None,
+        clone_to_dir: Path | str = ".",
+        no_input: bool = False,
+    ) -> str:
+        clone_calls.append((repo_url, checkout, str(clone_to_dir), no_input))
+        return str(repo_root)
+
+    monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
+    monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
+    monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
+    return clone_calls
+
+
 # -- spec validation / error paths -----------------------------------------
 
 
@@ -63,25 +100,74 @@ def test_template_flag_no_value_with_type_lists_type_templates() -> None:
     assert "Usage:" not in result.output
 
 
+def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypatch, tmp_path: Path) -> None:
+    """Installed CLI should download templates before listing them."""
+    clone_calls = _mock_remote_template_repo(
+        monkeypatch,
+        tmp_path,
+        {
+            "deepagents/default": "Default DeepAgents template.",
+            "langchain/remote-only": "Remote-only LangChain template.",
+            "bub/default": "Default Bub template.",
+        },
+    )
+
+    result = _runner().invoke(build_app(), ["create", "--template"])
+
+    assert result.exit_code == 0, result.output
+    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
+    assert "deepagents/default" in result.output
+    assert "langchain/remote-only" in result.output
+    assert "Remote-only LangChain template." in result.output
+    assert "Usage:" in result.output
+
+
+def test_template_flag_no_value_for_type_uses_remote_checkout(monkeypatch, tmp_path: Path) -> None:
+    """``--checkout`` should be forwarded to cookiecutter's clone path."""
+    clone_calls = _mock_remote_template_repo(
+        monkeypatch,
+        tmp_path,
+        {"langchain/remote-only": "Remote-only LangChain template."},
+    )
+
+    result = _runner().invoke(build_app(), ["create", "langchain", "--template", "--checkout", "release/next"])
+
+    assert result.exit_code == 0, result.output
+    assert clone_calls == [(create_module.REPO_URL, "release/next", str(tmp_path / "cookiecutters"), True)]
+    assert "langchain/remote-only" in result.output
+    assert "Usage:" not in result.output
+
+
+def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path: Path) -> None:
+    """Installed CLI should use the cookiecutter cache before cloning."""
+    clone_calls = _mock_remote_template_repo(
+        monkeypatch,
+        tmp_path,
+        {"langchain/cached": "Cached LangChain template."},
+        cached=True,
+    )
+
+    result = _runner().invoke(build_app(), ["create", "langchain", "--template"])
+
+    assert result.exit_code == 0, result.output
+    assert clone_calls == []
+    assert "langchain/cached" in result.output
+    assert "Cached LangChain template." in result.output
+
+
 # -- template resolution ---------------------------------------------------
 
 
 def test_resolve_type_template_local() -> None:
     """Local repo should resolve to an on-disk path with cookiecutter.json."""
-    source = create_module._resolve_type_template("bub", "default")
+    local_root = create_module._local_templates_root()
+    assert local_root is not None
+    source = create_module._resolve_type_template("bub", "default", templates_root=local_root)
     # When running from the repo, template should be a local path.
     template_path = Path(source.template)
     assert template_path.is_dir()
     assert (template_path / "cookiecutter.json").is_file()
     assert source.directory is None  # local path — no directory needed
-
-
-def test_resolve_type_template_remote_fallback(monkeypatch) -> None:
-    """When there's no local repo, should fall back to remote URL."""
-    monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
-    source = create_module._resolve_type_template("deepagents", "default")
-    assert source.template == create_module.REPO_URL
-    assert source.directory == "templates/deepagents/default"
 
 
 def test_list_templates_returns_names() -> None:
@@ -160,13 +246,8 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
     assert result.exit_code == 0, result.output
     source = captured["source"]
     assert isinstance(source, TemplateSource)
-    # May resolve locally (path with deepagents/default) or remotely (URL + directory).
-    if source.directory is not None:
-        # Remote fallback: directory carries the subpath.
-        assert "deepagents/default" in source.directory
-    else:
-        # Local: template path ends with deepagents/default.
-        assert "deepagents" in source.template and "default" in source.template
+    assert source.directory is None
+    assert "deepagents" in source.template and "default" in source.template
     assert captured["no_input"] is True
     assert Path(str(captured["output_dir"])) == tmp_path
     assert (tmp_path / "fake-project" / "README.md").read_text(encoding="utf-8") == "ok"
@@ -190,11 +271,8 @@ def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path
     assert result.exit_code == 0, result.output
     source = captured["source"]
     assert isinstance(source, TemplateSource)
-    # May resolve locally or remotely.
-    if source.directory is not None:
-        assert "langchain/cli-remote" in source.directory
-    else:
-        assert "langchain" in source.template and "cli-remote" in source.template
+    assert source.directory is None
+    assert "langchain" in source.template and "cli-remote" in source.template
 
 
 def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> None:
