@@ -49,8 +49,9 @@ def build_app() -> typer.Typer:
         no_args_is_help=True,
     )
     for sub in iter_command_groups():
-        panel = COMMAND_PANELS.get(sub.info.name)
-        app.add_typer(sub, name=sub.info.name, rich_help_panel=panel)
+        name = sub.info.name or ""
+        panel = COMMAND_PANELS.get(name)
+        app.add_typer(sub, name=name, rich_help_panel=panel)
     return app
 
 

@@ -58,14 +58,13 @@ class AgentSeekCliPlugin:
         # Tag Bub's existing commands with their panels.
         for group in app.registered_groups:
             name = getattr(group, "name", None) or (group.typer_instance.info.name if group.typer_instance else None)
-            if name and name in BUB_COMMAND_PANELS:
-                if group.typer_instance:
-                    group.typer_instance.info.rich_help_panel = BUB_COMMAND_PANELS[name]
+            if name and name in BUB_COMMAND_PANELS and group.typer_instance:
+                group.typer_instance.info.rich_help_panel = BUB_COMMAND_PANELS[name]
 
         for cmd in app.registered_commands:
-            name = getattr(cmd, "name", None)
+            name: str | None = getattr(cmd, "name", None)
             if not name and cmd.callback:
-                name = cmd.callback.__name__
+                name = getattr(cmd.callback, "__name__", None)
             if name and name in BUB_COMMAND_PANELS:
                 cmd.rich_help_panel = BUB_COMMAND_PANELS[name]
 

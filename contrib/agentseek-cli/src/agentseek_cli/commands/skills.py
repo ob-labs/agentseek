@@ -96,9 +96,12 @@ def _forward(ctx: typer.Context, command: str) -> None:
 # Maintenance: if upstream `npx-skills add` introduces new flags with required
 # values, add them here — otherwise the value may be mistaken for a source arg.
 _FLAGS_WITH_VALUE = frozenset({
-    "-s", "--skill",
-    "-a", "--agent",
-    "-o", "--output",
+    "-s",
+    "--skill",
+    "-a",
+    "--agent",
+    "-o",
+    "--output",
     "--dir",
 })
 
