@@ -41,6 +41,15 @@ sources:
 
 本页列出每一个子命令，并标注它属于哪一面。
 
+命令在 `--help` 中按面板分组显示：
+
+| 面板 | 命令 | 用途 |
+| --- | --- | --- |
+| **Project** | `create`, `run`, `build`, `deploy` | 创建、运行、构建、部署 |
+| **Services** | `api`, `ctx`, `skills` | 外部服务集成 |
+| **Runtime** | `chat`, `gateway` | Agent 交互 |
+| **Environment** | `install`, `uninstall`, `update`, `onboard`, `login` | 插件和认证管理 |
+
 ## 项目生命周期命令
 
 这些命令来自 `agentseek-cli`

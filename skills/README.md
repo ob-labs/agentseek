@@ -4,34 +4,32 @@ Curated skills for agent-assisted development with AgentSeek templates.
 
 ## Install
 
-### All skills (recommended)
+### Via `agentseek` CLI (recommended)
+
+The `agentseek skills` subcommand defaults to this repo — no need to type the source:
+
+```bash
+# All skills, globally
+agentseek skills add --all --global
+
+# Specific skill
+agentseek skills add --skill langsmith-trace --global --yes
+
+# Specific agent
+agentseek skills add --all --global --agent claude-code
+```
+
+### Via `npx skills` directly
 
 ```bash
 npx skills add ob-labs/agentseek --all --global
-```
-
-This installs every skill globally via symlink so they're available across all projects and agents. Updates via `npx skills update -g` take effect immediately.
-
-### Specific skills
-
-```bash
 npx skills add ob-labs/agentseek --skill langsmith-trace --global --yes
-npx skills add ob-labs/agentseek --skill langchain-dev-guide --global --yes
-npx skills add ob-labs/agentseek --skill langchain-cn-models --global --yes
-npx skills add ob-labs/agentseek --skill github-repo-cards --global --yes
-```
-
-### Specific agent only
-
-```bash
-npx skills add ob-labs/agentseek --all --global --agent claude-code
-npx skills add ob-labs/agentseek --all --global --agent cursor
 ```
 
 ### Project-local (for shared repos)
 
 ```bash
-npx skills add ob-labs/agentseek --all
+agentseek skills add --all
 ```
 
 Omit `--global` to install into the current project only.
@@ -39,7 +37,7 @@ Omit `--global` to install into the current project only.
 ### Standalone copies (CI / airgapped)
 
 ```bash
-npx skills add ob-labs/agentseek --all --global --copy
+agentseek skills add --all --global --copy
 ```
 
 ## Available Skills
@@ -54,6 +52,8 @@ npx skills add ob-labs/agentseek --all --global --copy
 ## Update & Remove
 
 ```bash
-npx skills update -g              # update all global skills
+agentseek skills update           # update all
+agentseek skills remove           # interactive remove
+npx skills update -g              # update global (alternative)
 npx skills remove --all --global  # remove everything
 ```

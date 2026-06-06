@@ -45,6 +45,15 @@ present alongside the harness.
 
 This page lists every subcommand and notes which surface owns it.
 
+Commands are organized into panels in `--help`:
+
+| Panel | Commands | Purpose |
+| --- | --- | --- |
+| **Project** | `create`, `run`, `build`, `deploy` | Scaffold, run, build, and ship |
+| **Services** | `api`, `ctx`, `skills` | External service integrations |
+| **Runtime** | `chat`, `gateway` | Agent interaction |
+| **Environment** | `install`, `uninstall`, `update`, `onboard`, `login` | Plugin and auth management |
+
 ## Project lifecycle commands
 
 These commands come from `agentseek-cli`
@@ -150,15 +159,19 @@ because the generated project depends on it).
 
 ### `agentseek skills`
 
-:   Manage agent skills via the upstream `vercel-labs/skills` CLI through
-    the `npx-skills` executable.
+:   Manage agent skills. Wraps the `vercel-labs/skills` CLI (uses `npx-skills`
+    if available, falls back to `npx`).
 
     | Flag | Type | Default | Description |
     | --- | --- | --- | --- |
     | `--dir` | PATH | `$PWD` | Workspace directory to run `skills` in. |
 
-    Subcommands (each forwards to `npx-skills`): `add`, `list`, `find`,
-    `update`, `remove`, `init`.
+    Subcommands: `add`, `list`, `find`, `update`, `remove`, `init`.
+
+    `add` defaults to `ob-labs/agentseek` when no source is specified:
+
+        agentseek skills add --all --global        # installs all AgentSeek skills
+        agentseek skills add other/repo --all      # explicit source
 
 ## Harness runtime commands
 

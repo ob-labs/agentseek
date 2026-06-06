@@ -13,6 +13,16 @@ from agentseek_cli.commands import api, build, create, ctx, deploy, run, skills
 
 CLI_HELP = "AgentSeek project-lifecycle CLI. Scaffold, run, build, deploy, manage API services, skills, and context."
 
+COMMAND_PANELS: dict[str, str] = {
+    "create": "Project",
+    "run": "Project",
+    "build": "Project",
+    "deploy": "Project",
+    "api": "Services",
+    "ctx": "Services",
+    "skills": "Services",
+}
+
 
 def iter_command_groups() -> tuple[typer.Typer, ...]:
     """Return the top-level Typer groups that make up the AgentSeek CLI.
@@ -39,7 +49,9 @@ def build_app() -> typer.Typer:
         no_args_is_help=True,
     )
     for sub in iter_command_groups():
-        app.add_typer(sub, name=sub.info.name)
+        name = sub.info.name or ""
+        panel = COMMAND_PANELS.get(name)
+        app.add_typer(sub, name=name, rich_help_panel=panel)
     return app
 
 
