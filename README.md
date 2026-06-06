@@ -32,7 +32,7 @@ The two entry points serve different jobs:
 ### Create a template project
 
 ```bash
-uvx --from agentseek-cli agentseek create --template
+uvx --from agentseek-cli agentseek create --list-templates
 uvx --from agentseek-cli agentseek create langchain/markdown-messages
 cd markdown_messages_agent
 cp .env.example .env
@@ -46,10 +46,8 @@ LangChain, DeepAgents, and Bub starters.
 ### Run AgentSeek itself
 
 ```bash
-git clone https://github.com/ob-labs/agentseek.git
-cd agentseek
-uv sync
-uv run agentseek chat
+uv tool install agentseek
+agentseek chat
 ```
 
 Use this path when you want the harness runtime directly: a chat loop, gateway,

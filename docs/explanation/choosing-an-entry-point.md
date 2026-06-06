@@ -70,37 +70,23 @@ cleanly from PyPI.
 
 ### Path B — `agentseek` (the harness)
 
-The harness is a regular Python package. Install the published runtime when you
-only need the harness surface:
+Install the published runtime as an isolated uv tool when you only need the
+harness command surface:
 
 ```bash
-pip install agentseek
-```
-
-Use the `cli` extra when you want the project lifecycle groups folded into the
-same environment:
-
-```bash
-pip install 'agentseek[cli]'
+uv tool install agentseek
 ```
 
 For repository development, or when you need workspace contrib packages from
 this checkout, sync a project that owns the `[tool.uv.sources]` map:
 
 ```bash
-# Option 1 — clone this repository.
 git clone https://github.com/ob-labs/agentseek.git
 cd agentseek
 uv sync
-
-# Option 2 — generate a project via Path A, then sync inside it.
-uv tool install agentseek-cli
-agentseek create bub --template default --no-input
-cd my_bub_agent
-uv sync
 ```
 
-In a synced project, `uv run agentseek` ends up calling
+In an installed tool or synced project, `agentseek` ends up calling
 `agentseek.__main__:app` (`pyproject.toml:29`,
 `src/agentseek/__main__.py:39-53`), which bootstraps `BubFramework`, loads
 every Bub plugin, and exposes the **harness runtime** command surface:

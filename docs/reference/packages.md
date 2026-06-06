@@ -23,7 +23,7 @@ which package is active in the current environment.
 
 | Package | Role | Source | Console script | How to install |
 | --- | --- | --- | --- | --- |
-| `agentseek` | Harness — runtime CLI and embeddable library (`chat`, `run`, `gateway`, `install`, `update`, …) | `pyproject.toml:2`, `src/agentseek/` | `agentseek = "agentseek.__main__:app"` (`pyproject.toml:29`) | `pip install agentseek`; use `pip install 'agentseek[cli]'` to include the lifecycle CLI. |
+| `agentseek` | Harness — runtime CLI and embeddable library (`chat`, `run`, `gateway`, `install`, `update`, …) | `pyproject.toml:2`, `src/agentseek/` | `agentseek = "agentseek.__main__:app"` (`pyproject.toml:29`) | `uv tool install agentseek` for the runtime CLI; add `agentseek` as a project dependency when embedding it as a library. |
 | `agentseek-cli` | Project lifecycle CLI (`create`, `run`, `build`, `deploy`, `api`, `ctx`, `skills`) | `contrib/agentseek-cli/pyproject.toml:2`, `contrib/agentseek-cli/src/agentseek_cli/` | `agentseek = "agentseek_cli.standalone:app"` (`contrib/agentseek-cli/pyproject.toml:18`) | `uv tool install agentseek-cli` (preferred), or pulled in as the `cli` extra from inside this repo |
 
 `[tool.uv.sources]` in this repository is a development-time resolver map for

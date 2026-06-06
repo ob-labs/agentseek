@@ -22,7 +22,7 @@ sources:
 | 源包 | `agentseek` 解析到 | 何时看到它 |
 | --- | --- | --- |
 | `agentseek-cli`（项目生命周期 CLI） | `agentseek_cli.standalone:app`（`contrib/agentseek-cli/pyproject.toml:18`） | 路径 A —— `uv tool install agentseek-cli` |
-| `agentseek`（harness） | `agentseek.__main__:app`（`pyproject.toml:29`） | 路径 B —— `git clone … && uv sync && uv run agentseek` |
+| `agentseek`（harness） | `agentseek.__main__:app`（`pyproject.toml:29`） | 路径 B —— `uv tool install agentseek` |
 
 `agentseek_cli.standalone:app`（`contrib/agentseek-cli/src/agentseek_cli/standalone.py:24-32`）
 在每次调用时惰性解析：
@@ -262,9 +262,18 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     | `--manual` | flag | off | 粘贴 callback URL 或 code，而不是等待本地回调服务器。 |
     | `--timeout` | FLOAT | `300.0` | OAuth 等待超时（秒）。 |
 
-## 实际执行的 help 命令
+## help 命令检查
 
-以下命令是从仓库根目录（路径 B，启用所有 extras）运行以填充本页内容的：
+仅运行路径 B 时，使用隔离 tool install 检查：
+
+```bash
+uv tool install agentseek
+agentseek --help
+agentseek chat --help
+agentseek gateway --help
+```
+
+仓库开发检查使用合并后的开发命令面：
 
 ```bash
 uv run agentseek --help

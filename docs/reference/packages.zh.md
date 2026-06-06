@@ -23,7 +23,7 @@ agentseek 在 PyPI 上以**两个互补的包**形式提供，按职责拆分。
 
 | 包 | 角色 | 源码 | Console script | 安装方式 |
 | --- | --- | --- | --- | --- |
-| `agentseek` | Harness —— 运行时 CLI 与可嵌入的库（`chat`、`run`、`gateway`、`install`、`update`、…） | `pyproject.toml:2`、`src/agentseek/` | `agentseek = "agentseek.__main__:app"`（`pyproject.toml:29`） | `pip install agentseek`；如需同时带入生命周期 CLI，使用 `pip install 'agentseek[cli]'`。 |
+| `agentseek` | Harness —— 运行时 CLI 与可嵌入的库（`chat`、`run`、`gateway`、`install`、`update`、…） | `pyproject.toml:2`、`src/agentseek/` | `agentseek = "agentseek.__main__:app"`（`pyproject.toml:29`） | 运行时 CLI 使用 `uv tool install agentseek`；作为库嵌入时，把 `agentseek` 加入项目依赖。 |
 | `agentseek-cli` | 项目生命周期 CLI（`create`、`run`、`build`、`deploy`、`api`、`ctx`、`skills`） | `contrib/agentseek-cli/pyproject.toml:2`、`contrib/agentseek-cli/src/agentseek_cli/` | `agentseek = "agentseek_cli.standalone:app"`（`contrib/agentseek-cli/pyproject.toml:18`） | `uv tool install agentseek-cli`（首选），或在本仓库内以 `cli` extra 拉入 |
 
 本仓库的 `[tool.uv.sources]` 是开发期解析 workspace 和 git-sourced plugin 包的

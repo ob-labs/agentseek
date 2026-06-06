@@ -22,7 +22,7 @@ command surface you see depends on which one is active.
 | Source package | `agentseek` resolves to | When you see it |
 | --- | --- | --- |
 | `agentseek-cli` (project lifecycle CLI) | `agentseek_cli.standalone:app` (`contrib/agentseek-cli/pyproject.toml:18`) | Path A — `uv tool install agentseek-cli` |
-| `agentseek` (harness) | `agentseek.__main__:app` (`pyproject.toml:29`) | Path B — `git clone … && uv sync && uv run agentseek` |
+| `agentseek` (harness) | `agentseek.__main__:app` (`pyproject.toml:29`) | Path B — `uv tool install agentseek` |
 
 `agentseek_cli.standalone:app` (`contrib/agentseek-cli/src/agentseek_cli/standalone.py:24-32`)
 resolves lazily on each invocation:
@@ -279,10 +279,18 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     | `--manual` | flag | off | Paste the callback URL or code instead of waiting for a local callback server. |
     | `--timeout` | FLOAT | `300.0` | OAuth wait timeout in seconds. |
 
-## Help commands actually executed
+## Help command checks
 
-The following commands were run from the repository root (Path B, with all
-extras) to populate this page:
+Runtime-only Path B checks use an isolated tool install:
+
+```bash
+uv tool install agentseek
+agentseek --help
+agentseek chat --help
+agentseek gateway --help
+```
+
+Repository checks use the merged development command surface:
 
 ```bash
 uv run agentseek --help
