@@ -50,7 +50,22 @@ def create_cli_app() -> typer.Typer:
         def _help() -> None:
             typer.echo("No CLI command loaded.")
 
+    _register_version_command(app)
     return app
+
+
+def _register_version_command(app: typer.Typer) -> None:
+    """Register ``version`` if not already provided by agentseek-cli plugin."""
+    existing = {getattr(c, "name", None) for c in app.registered_commands}
+    if "version" in existing:
+        return
+
+    from agentseek.cli import agentseek_version
+
+    @app.command("version")
+    def version_cmd() -> None:
+        """Show version information."""
+        typer.echo(f"agentseek {agentseek_version()}")
 
 
 app = create_cli_app()
