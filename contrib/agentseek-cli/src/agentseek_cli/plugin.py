@@ -20,7 +20,7 @@ from __future__ import annotations
 import typer
 from bub import hookimpl
 
-from agentseek_cli.app import COMMAND_PANELS, iter_command_groups
+from agentseek_cli.app import COMMAND_PANELS, iter_command_groups, register_version_command
 
 # Names where agentseek-cli intentionally overrides the framework's built-in
 # command. When ``run`` is encountered, we remove the existing registration
@@ -67,6 +67,8 @@ class AgentSeekCliPlugin:
                 name = getattr(cmd.callback, "__name__", None)
             if name and name in BUB_COMMAND_PANELS:
                 cmd.rich_help_panel = BUB_COMMAND_PANELS[name]
+
+        register_version_command(app)
 
 
 main = AgentSeekCliPlugin()
