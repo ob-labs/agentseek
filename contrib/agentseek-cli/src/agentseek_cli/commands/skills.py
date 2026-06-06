@@ -27,6 +27,15 @@ import typer
 
 DEFAULT_SOURCE = "ob-labs/agentseek"
 
+# Embedded catalogue — avoids cloning the full repo just to list skills.
+# Update this when adding/removing skills in the skills/ directory.
+SKILLS_CATALOGUE: tuple[tuple[str, str], ...] = (
+    ("langsmith-trace", "LangSmith CLI setup, tracing, and trace debugging for AgentSeek backends"),
+    ("langchain-dev-guide", "LangChain / LangGraph engineering pitfalls and verified fixes"),
+    ("langchain-cn-models", "Integrate Chinese LLM providers (DeepSeek, Qwen, GLM) into LangChain"),
+    ("github-repo-cards", "Generate visual GitHub repo cards for documentation and social sharing"),
+)
+
 SKILLS_COMMANDS: tuple[str, ...] = ("add", "list", "find", "update", "remove", "init")
 
 _PASSTHROUGH_CONTEXT_SETTINGS = {
@@ -124,15 +133,45 @@ def _has_positional_source(args: list[str]) -> bool:
 
 @app.command("add", context_settings=_PASSTHROUGH_CONTEXT_SETTINGS)
 def skills_add(ctx: typer.Context) -> None:
-    """Install skills. Defaults to ob-labs/agentseek when no source is given."""
+    """Install skills. Defaults to ob-labs/agentseek --all --global --yes."""
     cwd = ctx.ensure_object(dict).get("cwd", Path.cwd())
     base = _find_skills_cmd()
     args = list(ctx.args)
     if not _has_positional_source(args):
         args.insert(0, DEFAULT_SOURCE)
+        # When using our default source, add sensible defaults if not specified.
+        if "--all" not in args and not any(a in args for a in ("-s", "--skill")):
+            args.append("--all")
+        if "--global" not in args and "-g" not in args:
+            args.append("--global")
+        if "--yes" not in args and "-y" not in args:
+            args.append("--yes")
     cmd = [*base, "add", *args]
     completed = subprocess.run(cmd, cwd=str(cwd), check=False)  # noqa: S603
     raise typer.Exit(completed.returncode)
+
+
+@app.command("list", context_settings=_PASSTHROUGH_CONTEXT_SETTINGS)
+def skills_list(ctx: typer.Context) -> None:
+    """List available AgentSeek skills. Use --installed or --global for local state."""
+    args = list(ctx.args)
+    if "--installed" in args or "--global" in args or "-g" in args:
+        # Passthrough to upstream for installed/global views.
+        cwd = ctx.ensure_object(dict).get("cwd", Path.cwd())
+        base = _find_skills_cmd()
+        args = [a for a in args if a != "--installed"]
+        cmd = [*base, "list", *args]
+        completed = subprocess.run(cmd, cwd=str(cwd), check=False)  # noqa: S603
+        raise typer.Exit(completed.returncode)
+
+    # Default: show the embedded catalogue (no network required).
+    typer.echo(f"\n  AgentSeek Skills ({DEFAULT_SOURCE})\n")
+    for name, description in SKILLS_CATALOGUE:
+        typer.echo(f"    {name}")
+        typer.echo(f"      {description}\n")
+    typer.echo("  Install:")
+    typer.echo("    agentseek skills add --all --global        # all skills")
+    typer.echo("    agentseek skills add --skill <name> -g     # one skill\n")
 
 
 def _passthrough(command: str):
@@ -145,7 +184,7 @@ def _passthrough(command: str):
 
 
 for _command_name in SKILLS_COMMANDS:
-    if _command_name == "add":
+    if _command_name in {"add", "list"}:
         continue
     app.command(_command_name, context_settings=_PASSTHROUGH_CONTEXT_SETTINGS)(_passthrough(_command_name))
 
