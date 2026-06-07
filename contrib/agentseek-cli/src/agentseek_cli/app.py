@@ -7,26 +7,29 @@ through this function so the two entry shapes stay in sync.
 
 from __future__ import annotations
 
+import contextlib
 from importlib.metadata import PackageNotFoundError
-from importlib.metadata import version as _pkg_version
+from importlib.metadata import version as package_version
 
 import typer
 
 from agentseek_cli.commands import api, build, create, ctx, deploy, run, skills
 
 CLI_HELP = "AgentSeek project-lifecycle CLI. Scaffold, run, build, deploy, manage API services, skills, and context."
+VERSION_COMMAND_NAME = "version"
+
+
+def _get_package_version(package_name: str) -> str | None:
+    with contextlib.suppress(PackageNotFoundError):
+        return package_version(package_name)
+    return None
 
 
 def _get_version_string() -> str:
-    import contextlib
-
-    parts: list[str] = []
-    try:
-        parts.append(f"agentseek-cli {_pkg_version('agentseek-cli')}")
-    except PackageNotFoundError:
-        parts.append("agentseek-cli (unknown)")
-    with contextlib.suppress(PackageNotFoundError):
-        parts.append(f"agentseek {_pkg_version('agentseek')}")
+    cli_version = _get_package_version("agentseek-cli") or "(unknown)"
+    parts = [f"agentseek-cli {cli_version}"]
+    if agentseek_version := _get_package_version("agentseek"):
+        parts.append(f"agentseek {agentseek_version}")
     return "\n".join(parts)
 
 
@@ -59,8 +62,10 @@ def iter_command_groups() -> tuple[typer.Typer, ...]:
 
 def register_version_command(app: typer.Typer) -> None:
     """Add ``agentseek version`` to the given app."""
+    if any(getattr(command, "name", None) == VERSION_COMMAND_NAME for command in app.registered_commands):
+        return
 
-    @app.command("version", rich_help_panel="Environment")
+    @app.command(VERSION_COMMAND_NAME, rich_help_panel="Environment")
     def version_cmd() -> None:
         """Show version information."""
         typer.echo(_get_version_string())
