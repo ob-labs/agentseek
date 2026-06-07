@@ -47,7 +47,7 @@ def test_skills_add_forwards_to_npx_skills(monkeypatch, tmp_path) -> None:
     assert Path(str(captured["cwd"])).resolve() == tmp_path.resolve()
 
 
-def test_skills_add_bare_defaults_to_all_global_yes(monkeypatch, tmp_path) -> None:
+def test_skills_add_bare_defaults_to_agentseek_all(monkeypatch, tmp_path) -> None:
     captured: dict[str, object] = {}
     _stub_find_skills_cmd(monkeypatch)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
@@ -63,8 +63,6 @@ def test_skills_add_bare_defaults_to_all_global_yes(monkeypatch, tmp_path) -> No
         "add",
         "ob-labs/agentseek",
         "--all",
-        "--global",
-        "--yes",
     ]
 
 

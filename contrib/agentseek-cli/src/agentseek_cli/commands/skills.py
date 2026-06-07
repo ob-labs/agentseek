@@ -8,8 +8,8 @@ with whatever the upstream CLI adds without us re-issuing patches.
 
 **Default source for ``add``:** When the first ``add`` argument is not an
 explicit source, ``ob-labs/agentseek`` is inserted before the user-provided
-arguments. A bare ``agentseek skills add`` also installs all AgentSeek skills
-globally with confirmation skipped.
+arguments. A bare ``agentseek skills add`` selects all AgentSeek skills while
+leaving scope and confirmation to upstream.
 
 Install paths follow upstream conventions: project-scope skills land in
 ``./<agent>/skills/`` (e.g. ``./.claude/skills/``), global skills in
@@ -117,7 +117,7 @@ def skills_add(ctx: typer.Context) -> None:
     elif args:
         cmd = [*base, "add", DEFAULT_SOURCE, *args]
     else:
-        cmd = [*base, "add", DEFAULT_SOURCE, "--all", "--global", "--yes"]
+        cmd = [*base, "add", DEFAULT_SOURCE, "--all"]
     completed = subprocess.run(cmd, cwd=str(cwd), check=False)  # noqa: S603
     raise typer.Exit(completed.returncode)
 
