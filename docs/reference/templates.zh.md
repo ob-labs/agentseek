@@ -92,6 +92,7 @@ sources:
 | `default_model` | 默认 `AGENTSEEK_MODEL`。 |
 | `gateway_port` | `agentseek gateway` 的默认端口。 |
 | `frontend_port` | 前端 Vite dev server 端口。 |
+| `copilotkit_port` | CopilotKit Express runtime 端口。 |
 
 ### `bub/contextseek`
 
@@ -124,6 +125,9 @@ sources:
 | `author` | 项目作者。 |
 | `system_prompt` | 烘焙到 agent 中的 system prompt。 |
 | `default_model` | 默认 `AGENTSEEK_MODEL`。 |
+| `gateway_port` | AG-UI 的默认 gateway 端口。 |
+| `frontend_port` | 前端 Vite dev server 端口。 |
+| `copilotkit_port` | CopilotKit Express runtime 端口。 |
 
 ### `langchain/cli-remote`
 

@@ -9,7 +9,7 @@ layer is required.
 ```text
 Browser (CopilotKit v2)
   -> Vite dev server :{{ frontend_port }}  (/api/copilotkit/* proxied)
-    -> Copilot Runtime (Express) :4000  /api/copilotkit
+    -> Copilot Runtime (Express) :{{ copilotkit_port }}  /api/copilotkit
       -> HttpAgent (AG-UI client)
         -> agentseek gateway :{{ gateway_port }}  /agent  (AG-UI channel)
           -> configured agentseek model provider
@@ -19,7 +19,7 @@ Two processes start via `concurrently`:
 
 | Process | Default port | Role |
 | --- | --- | --- |
-| `tsx server.ts` | `4000` | CopilotKit runtime (`CopilotRuntime` + `createCopilotExpressHandler`). |
+| `tsx server.ts` | `{{ copilotkit_port }}` | CopilotKit runtime (`CopilotRuntime` + `createCopilotExpressHandler`). |
 | `vite` | `{{ frontend_port }}` | React app; proxies `/api/copilotkit` to the runtime. |
 
 ## Inputs
@@ -32,6 +32,7 @@ Two processes start via `concurrently`:
 | `default_model` | Default `AGENTSEEK_MODEL`. |
 | `gateway_port` | Default port for `agentseek gateway`. |
 | `frontend_port` | Vite dev server port for the frontend. |
+| `copilotkit_port` | CopilotKit Express runtime port. |
 
 ## Generated layout
 
@@ -65,5 +66,5 @@ Two processes start via `concurrently`:
 | --- | --- | --- |
 | `AGENTSEEK_MODEL` | — | Model id for the gateway (e.g. `openai:gpt-4o-mini`). |
 | `AGENTSEEK_STREAM_OUTPUT` | `false` | Set `true` for token-by-token streaming in the gateway. |
-| `COPILOTKIT_PORT` | `4000` | Port for the Express Copilot runtime. |
+| `COPILOTKIT_PORT` | `{{ copilotkit_port }}` | Port for the Express Copilot runtime. |
 | `AGENTSEEK_AG_UI_AGENT_URL` | `http://127.0.0.1:{{ gateway_port }}/agent` | URL passed to `HttpAgent`; must match the gateway AG-UI endpoint. |

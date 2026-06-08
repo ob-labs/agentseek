@@ -95,6 +95,7 @@ Generates an AG-UI gateway plus a CopilotKit-based frontend.
 | `default_model` | Default `AGENTSEEK_MODEL`. |
 | `gateway_port` | Default port for `agentseek gateway`. |
 | `frontend_port` | Vite dev server port for the frontend. |
+| `copilotkit_port` | CopilotKit Express runtime port. |
 
 ### `bub/contextseek`
 
@@ -127,6 +128,9 @@ CopilotKit middleware bound to agentseek via `agentseek-langchain`.
 | `author` | Project author. |
 | `system_prompt` | System prompt baked into the agent. |
 | `default_model` | Default `AGENTSEEK_MODEL`. |
+| `gateway_port` | Default gateway port for AG-UI. |
+| `frontend_port` | Vite dev server port for the frontend. |
+| `copilotkit_port` | CopilotKit Express runtime port. |
 
 ### `langchain/cli-remote`
 

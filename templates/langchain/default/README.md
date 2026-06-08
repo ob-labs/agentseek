@@ -8,8 +8,8 @@ includes a first-class Feishu gateway path.
 
 ```text
 Browser (CopilotKit v2)
-  -> Vite dev server :5174  (/api/copilotkit/* proxied)
-    -> Copilot Runtime (Express) :4001  /api/copilotkit
+  -> Vite dev server :{{ frontend_port }}  (/api/copilotkit/* proxied)
+    -> Copilot Runtime (Express) :{{ copilotkit_port }}  /api/copilotkit
       -> HttpAgent (AG-UI client)
         -> agentseek gateway :{{ gateway_port }}  /agent  (AG-UI channel)
           -> agentseek-langchain messages_spec(...)
@@ -32,6 +32,8 @@ Browser (CopilotKit v2)
 | `system_prompt` | System prompt baked into the agent. |
 | `default_model` | Default `AGENTSEEK_MODEL`. |
 | `gateway_port` | Default gateway port for AG-UI. |
+| `frontend_port` | Vite dev server port for the frontend. |
+| `copilotkit_port` | CopilotKit Express runtime port. |
 
 ## Generated layout
 
