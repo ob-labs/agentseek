@@ -117,10 +117,10 @@ OpenTelemetry tracing is documented in
 
 Outside the package source trees on purpose, so each example shows the install + run shape
 of a user workspace. Today the catalogue (from [examples/](https://github.com/ob-labs/agentseek/tree/main/examples))
-is `ag-ui`, `ag_ui_langchain`, `agentseek_api_remote_agent`, `langchain_otel_sidecar`,
-`langchain_deepagents`, and `langchain_cli_remote_agent`. They are the right starting
+is `agentseek_api_remote_agent` and `langchain_otel_sidecar`. They are the right starting
 point when you want to see the whole assembly — gateway + frontend + LangChain + agentseek
-— rather than the harness alone.
+— rather than the harness alone. Other common patterns (AG-UI, LangChain default, CLI
+remote, DeepAgents) are covered by the `agentseek create` templates.
 
 ### `templates/` — project scaffolds
 

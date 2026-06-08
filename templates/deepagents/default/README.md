@@ -1,7 +1,18 @@
 # DeepAgents — default template
 
 Scaffolds a local `create_deep_agent(...)` runnable bound to AgentSeek through
-`agentseek-langchain`. Mirrors the `examples/langchain_deepagents` example.
+`agentseek-langchain`.
+
+## Architecture
+
+```text
+uv run agentseek run / agentseek gateway
+  -> agentseek-langchain
+    -> messages_spec(...)
+      -> create_deep_agent(...)
+```
+
+The binding export is `{{ project_slug }}.demo_binding:build_spec`.
 
 ## Inputs
 
@@ -25,4 +36,24 @@ Scaffolds a local `create_deep_agent(...)` runnable bound to AgentSeek through
     __init__.py
     demo_binding.py
     settings.py
+```
+
+## Key code patterns
+
+The core binding is two layers — build the DeepAgents runnable, then wrap it
+with `messages_spec`:
+
+```python
+from agentseek_langchain import messages_spec
+from deepagents import create_deep_agent
+
+def build_agent():
+    return create_deep_agent(
+        model=settings.require_model(),
+        tools=[outline_answer],
+        system_prompt="You are a pragmatic engineering assistant.",
+    )
+
+def build_spec():
+    return messages_spec(build_agent(), include_agents_md=True)
 ```

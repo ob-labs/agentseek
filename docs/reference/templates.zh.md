@@ -82,7 +82,7 @@ sources:
 
 ### `bub/default`
 
-镜像 `examples/ag-ui`。生成一个 AG-UI gateway 以及基于 CopilotKit 的前端。
+生成一个 AG-UI gateway 以及基于 CopilotKit 的前端。
 
 | 变量 | 描述 |
 | --- | --- |
@@ -114,7 +114,7 @@ sources:
 
 ### `langchain/default`
 
-镜像 `examples/ag_ui_langchain`。生成一个 `create_agent` 项目，通过
+生成一个 `create_agent` 项目，通过
 `agentseek-langchain` 绑定到 agentseek，并附带 CopilotKit middleware。
 
 | 变量 | 描述 |
@@ -127,8 +127,7 @@ sources:
 
 ### `langchain/cli-remote`
 
-镜像 `examples/langchain_cli_remote_agent`。通过 `langgraph dev` 运行 graph，
-并通过 `LangGraphClientRunnable` 进行桥接。
+通过 `langgraph dev` 运行 graph，并通过 `LangGraphClientRunnable` 进行桥接。
 
 | 变量 | 描述 |
 | --- | --- |
@@ -173,8 +172,7 @@ Vite + React 前端。
 
 ### `deepagents/default`
 
-镜像 `examples/langchain_deepagents`。通过 `agentseek-langchain` 绑定到 agentseek 的
-本地 `create_deep_agent(...)` runnable。
+通过 `agentseek-langchain` 绑定到 agentseek 的本地 `create_deep_agent(...)` runnable。
 
 | 变量 | 描述 |
 | --- | --- |

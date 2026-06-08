@@ -1,7 +1,5 @@
 # LangChain OTEL + agentseek Sidecar
 
-English | [中文](README.zh.md)
-
 This is a **How-to Guide**. It shows how to keep a LangChain application as a normal business
 service, export OpenTelemetry traces to Jaeger, and use an `agentseek` sidecar to analyze those
 traces through `opentelemetry-mcp-server`.
@@ -172,6 +170,4 @@ This example is not the right fit when:
 
 Related examples:
 
-- Direct LangChain integration: [`../langchain_deepagents/README.md`](../langchain_deepagents/README.md)
-- Remote `langgraph dev`: [`../langchain_cli_remote_agent/README.md`](../langchain_cli_remote_agent/README.md)
-- AG-UI + LangChain: [`../ag_ui_langchain/README.md`](../ag_ui_langchain/README.md)
+- agentseek-api remote agent: [`../agentseek_api_remote_agent/README.md`](../agentseek_api_remote_agent/README.md)

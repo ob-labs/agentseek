@@ -34,7 +34,7 @@ Use this example when:
 - you still want local `agentseek` transport, CLI, and gateway behavior around
   that remote runtime.
 
-Like the `langchain_cli_remote_agent` example, this bridge sends a compact
+Like the `langchain/cli-remote` template, this bridge sends a compact
 messages-only state dict:
 
 ```python
@@ -62,6 +62,8 @@ Run from the repository root:
 uv sync --extra langchain
 uv pip install -e references/agentseek-api
 uv pip install -r examples/agentseek_api_remote_agent/requirements.txt
+cp examples/agentseek_api_remote_agent/.env.example examples/agentseek_api_remote_agent/.env
+# edit .env to set AGENTSEEK_MODEL, AGENTSEEK_API_KEY, AGENTSEEK_API_BASE
 ```
 
 ## Step 2: Prepare a SeekDB-Compatible Checkpoint Backend
@@ -99,7 +101,7 @@ In the first terminal, reuse the existing model configuration and start
 ```bash
 mkdir -p .tmp
 set -a
-source examples/ag_ui_langchain/.env
+source examples/agentseek_api_remote_agent/.env
 set +a
 export METADATA_DB_URL=sqlite+aiosqlite:///$(pwd)/.tmp/agentseek-api-example.db
 export METADATA_DB_BACKEND=sqlite
@@ -131,7 +133,7 @@ In the second terminal, return to the repository root and run this command:
 
 ```bash
 set -a
-source examples/ag_ui_langchain/.env
+source examples/agentseek_api_remote_agent/.env
 set +a
 export PYTHONPATH=.
 export AGENTSEEK_LANGCHAIN_SPEC=examples.agentseek_api_remote_agent.gateway_binding:build_spec
@@ -193,7 +195,7 @@ The same binding can also be used behind `agentseek gateway`:
 
 ```bash
 set -a
-source examples/ag_ui_langchain/.env
+source examples/agentseek_api_remote_agent/.env
 set +a
 export PYTHONPATH=.
 export AGENTSEEK_LANGCHAIN_SPEC=examples.agentseek_api_remote_agent.gateway_binding:build_spec
@@ -217,7 +219,7 @@ Runtime check:
 
 ```bash
 set -a
-source examples/ag_ui_langchain/.env
+source examples/agentseek_api_remote_agent/.env
 set +a
 export PYTHONPATH=.
 export AGENTSEEK_LANGCHAIN_SPEC=examples.agentseek_api_remote_agent.gateway_binding:build_spec
@@ -249,6 +251,4 @@ This example is not the right fit when:
 
 Related examples:
 
-- Remote `langgraph dev`: [`../langchain_cli_remote_agent/README.md`](../langchain_cli_remote_agent/README.md)
-- Local DeepAgents: [`../langchain_deepagents/README.md`](../langchain_deepagents/README.md)
-- AG-UI + LangChain: [`../ag_ui_langchain/README.md`](../ag_ui_langchain/README.md)
+- OTEL sidecar: [`../langchain_otel_sidecar/README.md`](../langchain_otel_sidecar/README.md)

@@ -111,9 +111,10 @@ OpenTelemetry tracing 文档位于
 
 故意位于包源代码树之外，这样每个示例都展示用户 workspace 的安装 + 运行形态。
 今天的目录（来自 [examples/](https://github.com/ob-labs/agentseek/tree/main/examples)）是
-`ag-ui`、`ag_ui_langchain`、`agentseek_api_remote_agent`、`langchain_otel_sidecar`、
-`langchain_deepagents` 和 `langchain_cli_remote_agent`。当你想要看整套组装 ——
+`agentseek_api_remote_agent` 和 `langchain_otel_sidecar`。当你想要看整套组装 ——
 gateway + 前端 + LangChain + agentseek —— 而不是只看 harness 时，它们是正确的起点。
+其他常见模式（AG-UI、LangChain 默认、CLI remote、DeepAgents）已被 `agentseek create`
+模板覆盖。
 
 ### `templates/` —— 项目脚手架
 
