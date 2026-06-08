@@ -5,7 +5,7 @@ audience: [A2, A3]
 runs: yes
 verified_on: 2026-05-28
 sources:
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
   - src/agentseek/env.py
 ---
 
@@ -42,7 +42,7 @@ Plugins install into the **plugin sandbox**, a uv-managed project at
 
 3. Install the plugin. The first call initialises the sandbox via
    `uv init --bare --name agentseek-project --app` and adds the Bub
-   requirement (`src/agentseek/cli.py:134`).
+   requirement (`src/agentseek/cli/runtime.py:134`).
 
    ```bash title="not executed in this run"
    uv run agentseek plugin install bub-feishu@main
@@ -81,7 +81,7 @@ uv run agentseek plugin update bub-feishu   # update one
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `FileNotFoundError` on first install | Sandbox path missing | agentseek's `_ensure_plugin_sandbox` (`src/agentseek/cli.py:123`) creates it; if you see this, file a bug. |
+| `FileNotFoundError` on first install | Sandbox path missing | agentseek's `_ensure_plugin_sandbox` (`src/agentseek/cli/runtime.py:123`) creates it; if you see this, file a bug. |
 | Plugin loads but not picked up by runtime | Plugin is in the sandbox but the runtime is reading a different `BUB_PROJECT` | Confirm `${BUB_PROJECT}` matches the path you installed into. |
 
 ## Rollback

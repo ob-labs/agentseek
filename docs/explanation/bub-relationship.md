@@ -6,7 +6,7 @@ runs: no
 verified_on: 2026-05-28
 sources:
   - src/agentseek/env.py
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
   - src/agentseek/__main__.py
   - pyproject.toml
   - entrypoint.sh
@@ -44,7 +44,7 @@ When you run `agentseek …`, the entry point does three things, in order
 1. `apply_agentseek_env_aliases()` — copy `AGENTSEEK_*` values into the matching `BUB_*`
    names so the rest of the stack reads its config from one prefix.
 2. `apply_agentseek_runtime_overrides()` — rebrand the onboard banner, swap the chat command so
-   lifecycle channels are enabled, adjust plugin-install defaults, and route AgentSeek package
+   Bub support channels are enabled, adjust plugin-install defaults, and route AgentSeek package
    requirements directly.
 3. `create_cli_app()` instantiates `BubFramework(config_file=agentseek_config_file())` and
    asks it for a Typer app. From that point on the runtime is plain Bub.
@@ -83,18 +83,18 @@ lives in [Environment variables reference](../reference/environment.md).
 The CLI starts from Bub's app, then AgentSeek applies a small command-layout layer:
 
 - The onboarding banner reads `AGENTSEEK` instead of `BUB`
-  (`src/agentseek/cli.py:23-32`, `74-80`). No workflow change.
-- `chat` is replaced so lifecycle channels (`*.lifecycle`) are enabled alongside `cli`
-  (`src/agentseek/cli.py:83-112`). This is what lets MCP and similar helpers boot inside a
+  (`src/agentseek/cli/runtime.py:23-32`, `74-80`). No workflow change.
+- `chat` is replaced so Bub support channels (`*.lifecycle`) are enabled alongside `cli`
+  (`src/agentseek/cli/runtime.py:83-112`). This is what lets MCP and similar helpers boot inside a
   CLI chat session.
 - `plugin install` resolves a fresh plugin sandbox under `.agentseek/agentseek-project` instead of
   Bub's `bub-project`, by replacing `_ensure_project` with `_ensure_plugin_sandbox`
-  (`src/agentseek/cli.py:115-140`). The directory is `uv init --bare --name agentseek-project`-ed
+  (`src/agentseek/cli/runtime.py:115-140`). The directory is `uv init --bare --name agentseek-project`-ed
   on demand if it does not exist.
 - Bub's root `run` command is exposed as `agentseek turn`.
 - Bub's root plugin mutation commands are grouped under `agentseek plugin`.
 
-Project lifecycle commands are mounted by `src/agentseek/lifecycle/app.py`; runtime behavior still
+AgentSeek-owned project commands are mounted by `src/agentseek/cli/surface.py`; runtime behavior still
 flows through Bub.
 
 ## Why it is like this
@@ -113,7 +113,7 @@ flows through Bub.
 ## Consequences for users
 
 - You can compare `uv run bub --help` and `uv run agentseek --help` when debugging, but the
-  command surfaces are intentionally not identical. AgentSeek adds lifecycle groups and
+  command surfaces are intentionally not identical. AgentSeek adds project command groups and
   normalizes ambiguous root commands.
 - Whatever you put in `AGENTSEEK_*` will leak into `BUB_*` for the duration of the process,
   unless `BUB_*` was already set. This matters when you debug a plugin that only documents
@@ -122,7 +122,7 @@ flows through Bub.
   show up the first time you run any `agentseek` command in a workspace. Operators who
   prefer system-wide layouts should set `BUB_HOME` and `BUB_PROJECT` explicitly.
 - If a problem reproduces under `agentseek` but not under `bub`, the suspect is one of the
-  overrides in `src/agentseek/cli.py` or the alias step in
+  overrides in `src/agentseek/cli/runtime.py` or the alias step in
   `src/agentseek/env.py:56`. Bisect by running the same command with `bub` directly.
 
 ## When to use `bub` directly
@@ -137,8 +137,8 @@ Reach for the upstream CLI when:
 - You are diagnosing whether a bug lives in Bub or in the agentseek overrides.
 
 Reach for `agentseek` when you want the opinionated defaults: a workspace-local home, the
-AgentSeek plugin install sandbox, lifecycle channels in chat mode, lifecycle command groups, and
-the `AGENTSEEK_*` naming.
+AgentSeek plugin install sandbox, Bub support channels in chat mode, project command groups,
+and the `AGENTSEEK_*` naming.
 
 ## Related
 

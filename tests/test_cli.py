@@ -17,8 +17,6 @@ from typer.testing import CliRunner
 from agentseek.cli import (
     AGENTSEEK_ONBOARD_BANNER,
     AGENTSEEK_ONBOARD_WELCOME,
-    _finish_cli_stream_once,
-    _install_single_cli_log_sink,
     agentseek_version,
     apply_agentseek_chat_channel_defaults,
     apply_agentseek_install_project_defaults,
@@ -27,6 +25,7 @@ from agentseek.cli import (
     apply_agentseek_runtime_overrides,
     resolve_enabled_channels,
 )
+from agentseek.cli.runtime import _finish_cli_stream_once, _install_single_cli_log_sink
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
 
 runner = CliRunner()
@@ -89,10 +88,10 @@ def test_apply_agentseek_runtime_overrides_runs_onboard_then_install(monkeypatch
     def fake_requirement() -> None:
         order.append("requirement")
 
-    monkeypatch.setattr("agentseek.cli.apply_agentseek_onboard_branding", fake_onboard)
-    monkeypatch.setattr("agentseek.cli.apply_agentseek_chat_channel_defaults", fake_chat)
-    monkeypatch.setattr("agentseek.cli.apply_agentseek_install_project_defaults", fake_install)
-    monkeypatch.setattr("agentseek.cli.apply_agentseek_install_requirement_resolution", fake_requirement)
+    monkeypatch.setattr("agentseek.cli.runtime.apply_agentseek_onboard_branding", fake_onboard)
+    monkeypatch.setattr("agentseek.cli.runtime.apply_agentseek_chat_channel_defaults", fake_chat)
+    monkeypatch.setattr("agentseek.cli.runtime.apply_agentseek_install_project_defaults", fake_install)
+    monkeypatch.setattr("agentseek.cli.runtime.apply_agentseek_install_requirement_resolution", fake_requirement)
 
     apply_agentseek_runtime_overrides()
 
@@ -153,7 +152,7 @@ class _FakeFramework(BubFramework):
         }
 
 
-def test_resolve_enabled_channels_adds_lifecycle_channels() -> None:
+def test_resolve_enabled_channels_adds_bub_support_channels() -> None:
     enabled = resolve_enabled_channels(_FakeFramework(), ["cli"])
 
     assert enabled == ["cli", "mcp.lifecycle", "skills.lifecycle"]
@@ -165,7 +164,7 @@ def test_resolve_enabled_channels_preserves_explicit_entries() -> None:
     assert enabled == ["cli", "mcp.lifecycle", "skills.lifecycle"]
 
 
-def test_apply_agentseek_chat_channel_defaults_enables_lifecycle_channels(monkeypatch) -> None:
+def test_apply_agentseek_chat_channel_defaults_enables_bub_support_channels(monkeypatch) -> None:
     import asyncio
 
     import bub.builtin.cli as bub_cli

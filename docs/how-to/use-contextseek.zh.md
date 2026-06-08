@@ -5,7 +5,7 @@ audience: [A2]
 runs: yes
 verified_on: 2026-05-28
 sources:
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
   - contrib/agentseek-contextseek/README.md
 ---
 

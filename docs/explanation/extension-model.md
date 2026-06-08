@@ -9,7 +9,7 @@ sources:
   - AGENTS.md
   - contrib/README.md
   - pyproject.toml
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
 ---
 
 # The extension model
@@ -42,7 +42,7 @@ how-tos can stay short.
 | Durable project instructions (channels, conventions, runtime rules) | **Project instructions** | One Markdown file | [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) | When the rule depends on runtime state or a specific tool call — that is a skill or plugin. |
 | Task-specific behaviour, workflow knowledge, small script the agent should know how to call | **Agent Skill** | `SKILL.md` (+ optional scripts) in a folder | `.agents/skills/` (project), `src/skills/` (bundled) | When you need a new hook, channel, store, or tool registration. |
 | Runtime hooks, channels, tools, stores, schedulers, model providers | **Bub-compatible plugin** | Python package with `[project.entry-points.bub]` | Installed into the same venv as agentseek; sandbox at `.agentseek/agentseek-project` | When the integration is large enough to own docs, tests, and optional deps — that is a contrib package. |
-| External tool or service that already speaks MCP | **MCP server entry** | JSON entry in `mcp.json` | `.agentseek/mcp.json` (default) or `.agents/mcp.json` | When the integration needs lifecycle hooks of its own — write a plugin. |
+| External tool or service that already speaks MCP | **MCP server entry** | JSON entry in `mcp.json` | `.agentseek/mcp.json` (default) or `.agents/mcp.json` | When the integration needs runtime hooks of its own — write a plugin. |
 | Larger maintained integration with its own deps, config, examples | **Contrib package** | Python package under `contrib/agentseek-*/` | Monorepo workspace member; opt-in extra in `pyproject.toml:27-46` | This is the terminal step; contrib packages own their own docs. |
 
 ### Why one row, not many
@@ -69,7 +69,7 @@ the contrib monorepo (`contrib/README.md`) sets the standard for the heaviest st
   [How agentseek relates to Bub](bub-relationship.md): `${BUB_HOME}/mcp.json` by default, override
   via `AGENTSEEK_MCP_CONFIG_PATH`.
 - The install sandbox at `.agentseek/agentseek-project` is created on demand by
-  `src/agentseek/cli.py:115-140`. Plugins land in that sandbox's environment, not in a
+  `src/agentseek/cli/runtime.py:115-140`. Plugins land in that sandbox's environment, not in a
   runtime-isolated unit.
 
 ## Why it is like this

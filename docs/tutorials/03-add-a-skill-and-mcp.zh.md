@@ -5,7 +5,7 @@ audience: [A2, A4]
 runs: yes
 verified_on: 2026-05-28
 sources:
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
   - src/agentseek/env.py
   - .agents/skills/local-greeting/SKILL.md
   - .agents/mcp.json

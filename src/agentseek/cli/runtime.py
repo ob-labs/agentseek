@@ -59,7 +59,7 @@ def _brand_onboard_echo(original_echo):
 
 
 def resolve_enabled_channels(framework, primary_channels: Iterable[str]) -> list[str]:
-    """Enable requested channels plus all lifecycle channels exposed by the framework."""
+    """Enable requested channels plus Bub support channels exposed as ``*.lifecycle``."""
     enabled = list(dict.fromkeys(primary_channels))
     for channel_name in framework.get_channels(lambda _message: None):
         if channel_name.endswith(".lifecycle") and channel_name not in enabled:
@@ -91,7 +91,7 @@ def apply_agentseek_onboard_branding() -> None:
 
 
 def apply_agentseek_chat_channel_defaults() -> None:
-    """Include lifecycle channels in chat mode so MCP and similar helpers can boot."""
+    """Include Bub support channels in chat mode so MCP and similar helpers can boot."""
     import bub.builtin.cli as bub_cli
     from bub.channels.cli import CliChannel
     from bub.channels.cli.renderer import CliRenderer

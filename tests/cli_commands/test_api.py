@@ -5,8 +5,8 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from agentseek.lifecycle.commands import api as api_module
-from tests.lifecycle.helpers import build_lifecycle_app
+from agentseek.cli.commands import api as api_module
+from tests.cli_commands.helpers import build_command_app
 
 
 class _FakeAgentSeekApiCliModule:
@@ -28,7 +28,7 @@ class _FakeAgentSeekApiCliModule:
 
 
 def test_api_help_lists_documented_verbs() -> None:
-    result = CliRunner().invoke(build_lifecycle_app(), ["api", "--help"])
+    result = CliRunner().invoke(build_command_app(), ["api", "--help"])
     assert result.exit_code == 0
     for verb in api_module.API_COMMANDS:
         assert verb in result.stdout
@@ -40,7 +40,7 @@ def test_api_forwards_arguments_to_agentseek_api(monkeypatch) -> None:
 
     monkeypatch.setattr(api_module.importlib, "import_module", lambda name: fake_module)
 
-    result = CliRunner().invoke(build_lifecycle_app(), ["api", "dev", "--port", "9911", "--no-reload"])
+    result = CliRunner().invoke(build_command_app(), ["api", "dev", "--port", "9911", "--no-reload"])
 
     assert result.exit_code == 7
     assert captured["argv"] == ["dev", "--port", "9911", "--no-reload"]
@@ -54,7 +54,7 @@ def test_api_reports_missing_agentseek_api_dependency(monkeypatch) -> None:
 
     monkeypatch.setattr(api_module.importlib, "import_module", fail_import)
 
-    result = CliRunner().invoke(build_lifecycle_app(), ["api", "version"])
+    result = CliRunner().invoke(build_command_app(), ["api", "version"])
 
     assert result.exit_code == 1
     assert "agentseek-api" in result.stderr
@@ -66,7 +66,7 @@ def test_api_reraises_unrelated_module_errors(monkeypatch) -> None:
 
     monkeypatch.setattr(api_module.importlib, "import_module", fail_import)
 
-    result = CliRunner().invoke(build_lifecycle_app(), ["api", "version"])
+    result = CliRunner().invoke(build_command_app(), ["api", "version"])
     # Should not have been masked as missing-agentseek-api error.
     assert result.exit_code != 0
     assert isinstance(result.exception, ModuleNotFoundError)

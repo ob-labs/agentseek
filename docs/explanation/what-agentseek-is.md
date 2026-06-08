@@ -8,7 +8,7 @@ sources:
   - README.md
   - pyproject.toml
   - src/agentseek/__main__.py
-  - src/agentseek/lifecycle/app.py
+  - src/agentseek/cli/surface.py
 ---
 
 # What agentseek is
@@ -20,7 +20,7 @@ evaluation.
 
 The public command surface is:
 
-- `agentseek new/dev/build/deploy` for project lifecycle management.
+- `agentseek new/dev/build/deploy` for project management.
 - `agentseek chat/turn/gateway` for runtime execution.
 - `agentseek plugin/ctx/skills/api` for extensions and service bridges.
 
@@ -41,7 +41,7 @@ as a first-class workload.
    skills, plugins, and base CLI behavior.
 2. **AgentSeek** layers product defaults on top: `.agentseek/` runtime home,
    environment aliases, onboarding branding, the plugin sandbox, command layout,
-   lifecycle commands, and bundled skills.
+   project commands, and bundled skills.
 3. **Contrib packages and applications** add storage backends, LangChain
    bridges, UI adapters, context systems, schedules, and the actual application
    code.
@@ -54,7 +54,7 @@ as a first-class workload.
 - **Database-native, not database-coupled.** Local SQLite is useful for
   development; OceanBase-backed storage can be introduced through contrib
   packages when scale or compatibility matters.
-- **One entry point.** Project lifecycle and runtime commands share `agentseek`
+- **One entry point.** Project management and runtime commands share `agentseek`
   so users do not have to remember which package or binary owns a task.
 - **Bub underneath.** AgentSeek composes Bub instead of hiding it. You can still
   drop to Bub when you need upstream behavior.

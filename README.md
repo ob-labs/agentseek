@@ -64,7 +64,7 @@ AgentSeek harness.
 
 | Piece | Role |
 | --- | --- |
-| `agentseek` | Unified CLI, harness runtime, lifecycle commands, and embeddable library. |
+| `agentseek` | Unified CLI, harness runtime, project commands, and embeddable library. |
 | Templates | Cookiecutter starters for common application shapes. |
 | `contrib/` | Optional integrations for frameworks, storage, and context systems. |
 

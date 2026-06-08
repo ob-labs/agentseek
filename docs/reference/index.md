@@ -5,7 +5,7 @@ audience: [A2, A3, A4]
 runs: no
 verified_on: 2026-05-28
 sources:
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
 ---
 
 # Reference
@@ -17,7 +17,7 @@ the source file wins.
 | Page | Mirrors |
 | --- | --- |
 | [Environment variables](environment.md) | `src/agentseek/env.py` — `AGENTSEEK_*` / `BUB_*` aliases. |
-| [CLI](cli.md) | `src/agentseek/cli.py` plus `agentseek <subcommand> --help`. |
+| [CLI](cli.md) | `src/agentseek/cli/runtime.py` plus `agentseek <subcommand> --help`. |
 | [File layout](file-layout.md) | `.agentseek/`, `.agents/`, plugin sandbox. |
 | [Packages](packages.md) | `pyproject.toml` — extras, workspace members, contrib entry points. |
 | [Templates](templates.md) | `templates/index.json` and each `templates/<framework>/<name>/`. |

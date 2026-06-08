@@ -166,7 +166,7 @@ SQL——与 LangChain 的 SmithDB 在内部提供的结构性体验相同。
 - 想要 IM 渠道送达（飞书、钉钉），而不想自己写适配器。
 - 想要 Agent Engineering 闭环（ship → observe → refine）通过 agentseek-api +
   ContextSeek 开箱即用。
-- 想要 harness CLI 管理项目生命周期（`new / dev / build / deploy`）。
+- 想要 harness CLI 管理项目（`new / dev / build / deploy`）。
 
 单独用 LangChain **不加** agentseek harness，当你：
 

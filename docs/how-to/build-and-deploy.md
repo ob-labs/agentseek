@@ -5,8 +5,8 @@ audience: [A4]
 runs: yes
 verified_on: 2026-06-08
 sources:
-  - src/agentseek/lifecycle/commands/build.py
-  - src/agentseek/lifecycle/commands/deploy.py
+  - src/agentseek/cli/commands/build.py
+  - src/agentseek/cli/commands/deploy.py
   - Dockerfile
 ---
 

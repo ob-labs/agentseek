@@ -38,7 +38,7 @@ agentseek/
 
 - runtime 默认值和 `AGENTSEEK_*` 别名；
 - 对 Bub 命令的 CLI 布局规范化；
-- 位于 `src/agentseek` 的项目命令；
+- 位于 `src/agentseek/cli` 的项目命令；
 - 公开 `agentseek` console entry point。
 
 ## `contrib`

@@ -7,13 +7,17 @@ import logfire
 import logfire.integrations.loguru as logfire_loguru
 import typer
 
-from agentseek.cli import apply_agentseek_runtime_command_layout, apply_agentseek_runtime_overrides
+from agentseek.cli import (
+    AGENTSEEK_CLI_HELP,
+    apply_agentseek_runtime_command_layout,
+    apply_agentseek_runtime_overrides,
+    mount_agentseek_commands,
+)
 from agentseek.env import (
     agentseek_config_file,
     apply_agentseek_env_aliases,
     get_agentseek_settings,
 )
-from agentseek.lifecycle.app import LIFECYCLE_HELP, mount_lifecycle_commands
 
 apply_agentseek_env_aliases()
 apply_agentseek_runtime_overrides()
@@ -45,8 +49,8 @@ def create_cli_app() -> typer.Typer:
     framework.load_hooks()
     app = framework.create_cli_app()
     apply_agentseek_runtime_command_layout(app)
-    mount_lifecycle_commands(app)
-    app.info.help = LIFECYCLE_HELP
+    mount_agentseek_commands(app)
+    app.info.help = AGENTSEEK_CLI_HELP
 
     if not app.registered_commands:
 

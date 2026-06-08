@@ -9,7 +9,7 @@ sources:
   - AGENTS.md
   - contrib/README.md
   - pyproject.toml
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
 ---
 
 # 扩展模型
@@ -40,7 +40,7 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
 | 持久性的项目 instructions（channel、约定、runtime 规则） | **项目 instructions** | 一个 Markdown 文件 | [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) | 当规则依赖 runtime 状态或某次具体 tool call 时 —— 那就是一个 skill 或 plugin。 |
 | 任务专属行为、工作流知识、agent 应该知道如何调用的小脚本 | **Agent Skill** | 一个文件夹里的 `SKILL.md`（外加可选脚本） | `.agents/skills/`（项目）、`src/skills/`（捆绑） | 当你需要一个新的 hook、channel、store 或 tool 注册时。 |
 | Runtime hook、channel、tool、store、scheduler、model provider | **Bub 兼容的 plugin** | 带 `[project.entry-points.bub]` 的 Python 包 | 安装到与 agentseek 同一个 venv；sandbox 在 `.agentseek/agentseek-project` | 当集成大到足以拥有自己的文档、测试和可选依赖时 —— 那就是一个 contrib 包。 |
-| 已经能说 MCP 的外部工具或服务 | **MCP server entry** | `mcp.json` 中的一条 JSON entry | `.agentseek/mcp.json`（默认）或 `.agents/mcp.json` | 当集成需要自己的 lifecycle hook 时 —— 写一个 plugin。 |
+| 已经能说 MCP 的外部工具或服务 | **MCP server entry** | `mcp.json` 中的一条 JSON entry | `.agentseek/mcp.json`（默认）或 `.agents/mcp.json` | 当集成需要自己的 runtime hook 时 —— 写一个 plugin。 |
 | 带有自己依赖、配置、示例的较大维护性集成 | **Contrib 包** | `contrib/agentseek-*/` 下的 Python 包 | Monorepo workspace 成员；`pyproject.toml:27-46` 中的可选 extra | 这是终点；contrib 包拥有自己的文档。 |
 
 ### 为什么是一行，而不是多行
@@ -62,7 +62,7 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
   （捆绑的 `src/skills` 通过 `pyproject.toml:73-77` 被包含进 build）。
 - MCP 配置路径遵循 [agentseek 与 Bub 的关系](bub-relationship.zh.md) 中的 alias 模型：默认是
   `${BUB_HOME}/mcp.json`，通过 `AGENTSEEK_MCP_CONFIG_PATH` override。
-- 位于 `.agentseek/agentseek-project` 的 install sandbox 由 `src/agentseek/cli.py:115-140`
+- 位于 `.agentseek/agentseek-project` 的 install sandbox 由 `src/agentseek/cli/runtime.py:115-140`
   按需创建。Plugin 落到那个 sandbox 的环境里，并非 runtime 隔离单元。
 
 ## 为什么是这样

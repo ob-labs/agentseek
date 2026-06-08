@@ -12,9 +12,9 @@ from typing import Any, cast
 import pytest
 from typer.testing import CliRunner
 
-from agentseek.lifecycle.commands import new as create_module
-from agentseek.lifecycle.commands.new import TemplateSource
-from tests.lifecycle.helpers import build_lifecycle_app
+from agentseek.cli.commands import new as create_module
+from agentseek.cli.commands.new import TemplateSource
+from tests.cli_commands.helpers import build_command_app
 
 
 def _runner() -> CliRunner:
@@ -62,19 +62,19 @@ def _mock_remote_template_repo(
 
 
 def test_help_exits_0() -> None:
-    result = _runner().invoke(build_lifecycle_app(), ["new", "--help"])
+    result = _runner().invoke(build_command_app(), ["new", "--help"])
     assert result.exit_code == 0
     assert "agentseek new" in result.output
 
 
 def test_unknown_type_exits_2() -> None:
-    result = _runner().invoke(build_lifecycle_app(), ["new", "not-a-real-type"])
+    result = _runner().invoke(build_command_app(), ["new", "not-a-real-type"])
     assert result.exit_code == 2
     assert "Unknown framework type" in result.output
 
 
 def test_list_templates_for_type_prints_bundled_names() -> None:
-    result = _runner().invoke(build_lifecycle_app(), ["new", "langchain", "--list-templates"])
+    result = _runner().invoke(build_command_app(), ["new", "langchain", "--list-templates"])
     assert result.exit_code == 0
     assert "langchain" in result.output
     assert "default" in result.output
@@ -83,7 +83,7 @@ def test_list_templates_for_type_prints_bundled_names() -> None:
 
 
 def test_list_templates_without_type_lists_all_known_types() -> None:
-    result = _runner().invoke(build_lifecycle_app(), ["new", "--list-templates"])
+    result = _runner().invoke(build_command_app(), ["new", "--list-templates"])
     assert result.exit_code == 0
     for project_type in create_module.KNOWN_TYPES:
         assert project_type in result.output
@@ -91,7 +91,7 @@ def test_list_templates_without_type_lists_all_known_types() -> None:
 
 def test_template_flag_no_value_lists_all_templates() -> None:
     """``agentseek new --template`` (no value) should list all templates."""
-    result = _runner().invoke(build_lifecycle_app(), ["new", "--template"])
+    result = _runner().invoke(build_command_app(), ["new", "--template"])
     assert result.exit_code == 0
     for project_type in create_module.KNOWN_TYPES:
         assert project_type in result.output
@@ -100,7 +100,7 @@ def test_template_flag_no_value_lists_all_templates() -> None:
 
 def test_template_flag_no_value_with_type_lists_type_templates() -> None:
     """``agentseek new langchain --template`` should list langchain templates only."""
-    result = _runner().invoke(build_lifecycle_app(), ["new", "langchain", "--template"])
+    result = _runner().invoke(build_command_app(), ["new", "langchain", "--template"])
     assert result.exit_code == 0
     assert "langchain" in result.output
     assert "cli-remote" in result.output
@@ -119,7 +119,7 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
         },
     )
 
-    result = _runner().invoke(build_lifecycle_app(), ["new", "--template"])
+    result = _runner().invoke(build_command_app(), ["new", "--template"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
@@ -137,7 +137,7 @@ def test_template_flag_no_value_for_type_uses_remote_checkout(monkeypatch, tmp_p
         {"langchain/remote-only": "Remote-only LangChain template."},
     )
 
-    result = _runner().invoke(build_lifecycle_app(), ["new", "langchain", "--template", "--checkout", "release/next"])
+    result = _runner().invoke(build_command_app(), ["new", "langchain", "--template", "--checkout", "release/next"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, "release/next", str(tmp_path / "cookiecutters"), True)]
@@ -154,7 +154,7 @@ def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path:
         cached=True,
     )
 
-    result = _runner().invoke(build_lifecycle_app(), ["new", "langchain", "--template"])
+    result = _runner().invoke(build_command_app(), ["new", "langchain", "--template"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == []
@@ -246,7 +246,7 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
     monkeypatch.chdir(tmp_path)
 
     result = _runner().invoke(
-        build_lifecycle_app(),
+        build_command_app(),
         ["new", "deepagents", "--template", "default", "--no-input"],
     )
 
@@ -271,7 +271,7 @@ def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path
     monkeypatch.chdir(tmp_path)
 
     result = _runner().invoke(
-        build_lifecycle_app(),
+        build_command_app(),
         ["new", "langchain/cli-remote", "--no-input"],
     )
 
@@ -293,7 +293,7 @@ def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> Non
     monkeypatch.chdir(tmp_path)
 
     result = _runner().invoke(
-        build_lifecycle_app(),
+        build_command_app(),
         ["new", "https://github.com/foo/bar.git", "--no-input"],
     )
 

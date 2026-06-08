@@ -8,8 +8,8 @@ sources:
   - README.md
   - pyproject.toml
   - src/agentseek/__main__.py
-  - src/agentseek/cli.py
-  - src/agentseek/lifecycle/app.py
+  - src/agentseek/cli/runtime.py
+  - src/agentseek/cli/surface.py
   - entrypoint.sh
 ---
 
@@ -17,16 +17,16 @@ sources:
 
 AgentSeek now has one public CLI entry point: `agentseek`.
 
-The design keeps one command name while separating command groups by lifecycle:
+The design keeps one command name while separating command groups by job:
 
 | Job | Commands | Use when |
 | --- | --- | --- |
-| Project lifecycle | `new`, `dev`, `build`, `deploy` | You are creating, running, packaging, or deploying a project. |
+| Project management | `new`, `dev`, `build`, `deploy` | You are creating, running, packaging, or deploying a project. |
 | Runtime | `chat`, `turn`, `gateway` | You are interacting with the harness. |
 | Extension and services | `plugin`, `ctx`, `skills`, `api`, `mcp` | You are connecting plugins, context, skills, APIs, or MCP servers. |
 
-This shape matches the way AgentSeek is used in practice: project lifecycle
-management is important enough to be first-class, but it should not require a
+This shape matches the way AgentSeek is used in practice: project management
+is important enough to be first-class, but it should not require a
 separate package or a separate command name. The runtime stays equally visible
 because the same package is also an executable harness.
 
@@ -61,7 +61,7 @@ gateway` unless the workspace provides a custom startup script.
 
 ## Consequences
 
-- Install and document `agentseek`, not a companion lifecycle package.
+- Install and document `agentseek`, not a companion CLI package.
 - Old root forms are intentionally invalid; do not rely on aliases.
 - Contrib packages remain optional runtime extensions, not alternative entry
   points.

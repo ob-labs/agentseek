@@ -61,7 +61,7 @@ MCP，或者作为可嵌入的 Python 包。
 
 | 部分 | 职责 |
 | --- | --- |
-| `agentseek` | 统一 CLI、harness runtime、生命周期命令和可嵌入的库。 |
+| `agentseek` | 统一 CLI、harness runtime、项目命令和可嵌入的库。 |
 | Templates | 面向常见应用形状的 Cookiecutter starter。 |
 | `contrib/` | 面向框架、存储和上下文系统的可选集成。 |
 

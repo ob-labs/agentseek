@@ -7,8 +7,8 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
-from agentseek.lifecycle.commands import dev as dev_module
-from tests.lifecycle.helpers import build_lifecycle_app
+from agentseek.cli.commands import dev as dev_module
+from tests.cli_commands.helpers import build_command_app
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -71,7 +71,7 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_missing_env_exits_2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
-    result = CliRunner().invoke(build_lifecycle_app(), ["dev"])
+    result = CliRunner().invoke(build_command_app(), ["dev"])
     assert result.exit_code == 2
     assert "Missing .env" in result.stderr
 
@@ -84,7 +84,7 @@ def test_missing_env_exits_2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
 def test_unknown_mode_exits_2_when_auto_cannot_detect(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _write_env(tmp_path)
     monkeypatch.chdir(tmp_path)
-    result = CliRunner().invoke(build_lifecycle_app(), ["dev"])
+    result = CliRunner().invoke(build_command_app(), ["dev"])
     assert result.exit_code == 2
     assert "auto-detect" in result.stderr
 
@@ -116,7 +116,7 @@ def test_no_browser_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(dev_module, "_compose_down", lambda cwd: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_lifecycle_app(), ["dev", "--no-browser"])
+    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser"])
 
     assert result.exit_code == 0, result.stderr
     assert browser_calls == []
@@ -149,7 +149,7 @@ def test_compose_mode_invokes_compose_up(tmp_path: Path, monkeypatch: pytest.Mon
     monkeypatch.setattr(dev_module, "_compose_down", lambda cwd: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_lifecycle_app(), ["dev", "--no-browser"])
+    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser"])
 
     assert result.exit_code == 0, result.stderr
     assert captured["cmd"] == ["/bin/docker", "compose", "up"]
@@ -177,7 +177,7 @@ def test_wait_ready_timeout_exits_nonzero(tmp_path: Path, monkeypatch: pytest.Mo
     monkeypatch.setattr(dev_module, "_compose_down", lambda cwd: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_lifecycle_app(), ["dev", "--no-browser", "--wait-timeout", "0"])
+    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser", "--wait-timeout", "0"])
 
     assert result.exit_code == 1
     assert "did not become ready" in result.stderr
@@ -212,7 +212,7 @@ def test_python_mode_picks_app_py_entry(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.setattr(dev_module.webbrowser, "open", lambda url: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_lifecycle_app(), ["dev", "--no-browser", "--mode", "python"])
+    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser", "--mode", "python"])
 
     assert result.exit_code == 0, result.stderr
     assert captured["cmd"] == [sys.executable, "app.py"]
@@ -240,7 +240,7 @@ def test_auto_mode_detects_project_script_entry(tmp_path: Path, monkeypatch: pyt
     monkeypatch.setattr(dev_module.webbrowser, "open", lambda url: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_lifecycle_app(), ["dev", "--no-browser"])
+    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser"])
 
     assert result.exit_code == 0, result.stderr
     assert captured["cmd"] == [sys.executable, "serve"]

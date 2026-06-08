@@ -5,8 +5,8 @@ audience: [A2]
 runs: yes
 verified_on: 2026-06-08
 sources:
-  - src/agentseek/lifecycle/commands/new.py
-  - src/agentseek/lifecycle/commands/dev.py
+  - src/agentseek/cli/commands/new.py
+  - src/agentseek/cli/commands/dev.py
   - templates/index.json
   - templates/bub/default/cookiecutter.json
   - templates/bub/default/{{cookiecutter.project_slug}}/pyproject.toml
@@ -86,7 +86,7 @@ uv run agentseek dev --no-browser
 ## 你现在拥有
 
 - 一个有独立 `.venv`、`.env` 和源码树的 standalone project。
-- 通过 `agentseek new` 和 `agentseek dev` 验证过的生命周期路径。
+- 通过 `agentseek new` 和 `agentseek dev` 验证过的项目命令路径。
 - 一个可以继续编辑、且不需要改 AgentSeek 仓库的应用项目。
 
 ## 下一步

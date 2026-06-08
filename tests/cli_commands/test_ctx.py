@@ -12,7 +12,7 @@ from collections.abc import Sequence
 import pytest
 from typer.testing import CliRunner
 
-from agentseek.lifecycle.commands import ctx as ctx_module
+from agentseek.cli.commands import ctx as ctx_module
 
 
 class _RunCliRecorder:

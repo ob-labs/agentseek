@@ -5,8 +5,8 @@ audience: [A2, A4]
 runs: yes
 verified_on: 2026-06-08
 sources:
-  - src/agentseek/cli.py
-  - src/agentseek/lifecycle/commands/dev.py
+  - src/agentseek/cli/runtime.py
+  - src/agentseek/cli/commands/dev.py
 ---
 
 # 如何本地运行 agentseek

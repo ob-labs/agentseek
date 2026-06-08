@@ -7,9 +7,9 @@ verified_on: 2026-06-08
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
-  - src/agentseek/cli.py
-  - src/agentseek/lifecycle/app.py
-  - src/agentseek/lifecycle/commands/
+  - src/agentseek/cli/runtime.py
+  - src/agentseek/cli/surface.py
+  - src/agentseek/cli/commands/
 ---
 
 # CLI 参考
@@ -20,7 +20,7 @@ AgentSeek 只有一个公开 CLI 入口：
 agentseek [OPTIONS] COMMAND [ARGS]...
 ```
 
-同一个 `agentseek` 命令同时承载项目生命周期、运行时执行，以及扩展 / 服务桥接。
+同一个 `agentseek` 命令同时承载项目管理、运行时执行，以及扩展 / 服务桥接。
 
 | 区域 | 命令 | 用途 |
 | --- | --- | --- |
@@ -32,9 +32,9 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 旧的根命令形式不是别名。使用 `turn` 替代 Bub 的根级 `run`，使用
 `plugin install`、`plugin uninstall`、`plugin update` 替代根级插件变更命令。
 
-## 项目生命周期
+## 项目管理
 
-生命周期命令由 `src/agentseek/lifecycle/app.py` 挂载，是主 `agentseek` 包的一部分。
+项目命令由 `src/agentseek/cli/surface.py` 挂载，是主 `agentseek` 包的一部分。
 
 ### `agentseek new [SPEC]`
 
@@ -92,11 +92,11 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 
 ## 运行时
 
-运行时命令来自 Bub，并由 `src/agentseek/cli.py` 规范化命令布局。
+运行时命令来自 Bub，并由 `src/agentseek/cli/runtime.py` 规范化命令布局。
 
 ### `agentseek chat`
 
-启动交互式 CLI chat。AgentSeek 会启用 lifecycle channels，让 MCP 和 skill helper
+启动交互式 CLI chat。AgentSeek 会启用 Bub 支持通道，让 MCP 和 skill helper
 可以随 CLI channel 一起启动。
 
 ### `agentseek turn MESSAGE`

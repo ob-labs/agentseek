@@ -5,7 +5,7 @@ audience: [A2, A3]
 runs: yes
 verified_on: 2026-05-28
 sources:
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
   - src/agentseek/env.py
 ---
 
@@ -42,7 +42,7 @@ plugin 会安装到 **plugin sandbox**，即位于 `AGENTSEEK_PROJECT` /
 
 3. 安装 plugin。第一次调用通过
    `uv init --bare --name agentseek-project --app` 初始化 sandbox，并加入 Bub
-   依赖 (`src/agentseek/cli.py:134`)。
+   依赖 (`src/agentseek/cli/runtime.py:134`)。
 
    ```bash title="not executed in this run"
    uv run agentseek plugin install bub-feishu@main
@@ -81,7 +81,7 @@ uv run agentseek plugin update bub-feishu   # update one
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
-| 首次安装报 `FileNotFoundError` | sandbox 路径缺失 | agentseek 的 `_ensure_plugin_sandbox` (`src/agentseek/cli.py:123`) 会创建它；若仍出现，请提 bug。 |
+| 首次安装报 `FileNotFoundError` | sandbox 路径缺失 | agentseek 的 `_ensure_plugin_sandbox` (`src/agentseek/cli/runtime.py:123`) 会创建它；若仍出现，请提 bug。 |
 | plugin 已加载但未被运行时识别 | plugin 在 sandbox 中，但运行时读取了不同的 `BUB_PROJECT` | 确认 `${BUB_PROJECT}` 与安装目标路径一致。 |
 
 ## 回退

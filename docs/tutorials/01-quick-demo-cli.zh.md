@@ -5,7 +5,7 @@ audience: [A1]
 runs: yes
 verified_on: 2026-06-08
 sources:
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
   - src/agentseek/env.py
   - pyproject.toml
   - README.md

@@ -7,9 +7,9 @@ verified_on: 2026-06-08
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
-  - src/agentseek/cli.py
-  - src/agentseek/lifecycle/app.py
-  - src/agentseek/lifecycle/commands/
+  - src/agentseek/cli/runtime.py
+  - src/agentseek/cli/surface.py
+  - src/agentseek/cli/commands/
 ---
 
 # CLI reference
@@ -20,7 +20,7 @@ AgentSeek has one public console entry point:
 agentseek [OPTIONS] COMMAND [ARGS]...
 ```
 
-The same `agentseek` command owns project lifecycle management, runtime
+The same `agentseek` command owns project management, runtime
 execution, and extension/service bridges. The command groups are intentionally
 separated by job:
 
@@ -35,9 +35,9 @@ Legacy root forms are not aliases. Use `turn` instead of Bub's root `run`,
 and use `plugin install`, `plugin uninstall`, and `plugin update` instead of
 root-level plugin commands.
 
-## Project lifecycle
+## Project management
 
-Lifecycle commands are mounted by `src/agentseek/lifecycle/app.py` and are part
+Project commands are mounted by `src/agentseek/cli/surface.py` and are part
 of the main `agentseek` package.
 
 ### `agentseek new [SPEC]`
@@ -99,11 +99,11 @@ required, so the command writes files but does not apply them.
 
 ## Runtime
 
-Runtime commands are created by Bub and normalized by `src/agentseek/cli.py`.
+Runtime commands are created by Bub and normalized by `src/agentseek/cli/runtime.py`.
 
 ### `agentseek chat`
 
-Start an interactive CLI chat session. AgentSeek enables lifecycle channels so
+Start an interactive CLI chat session. AgentSeek enables Bub support channels so
 MCP and skill helpers can start with the CLI channel.
 
 | Flag | Type | Default | Description |

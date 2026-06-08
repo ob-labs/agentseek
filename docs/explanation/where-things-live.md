@@ -39,7 +39,7 @@ The published `agentseek` package. It contains:
 
 - runtime defaults and `AGENTSEEK_*` aliases;
 - CLI normalization over Bub commands;
-- project commands in `src/agentseek`;
+- project commands in `src/agentseek/cli`;
 - the public `agentseek` console entry point.
 
 ## `contrib`

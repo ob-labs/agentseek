@@ -25,7 +25,7 @@ harness library。
 
 ## 核心依赖
 
-运行时依赖同时覆盖 harness runtime 和单入口 CLI 需要的生命周期工具：
+运行时依赖同时覆盖 harness runtime 和单入口 CLI 需要的项目命令工具：
 
 | Package | 用途 |
 | --- | --- |

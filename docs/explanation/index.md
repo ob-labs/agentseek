@@ -18,7 +18,7 @@ single CLI entry point.
 | Page | Read it when |
 | --- | --- |
 | [What AgentSeek is](what-agentseek-is.md) | You need the high-level framing and non-goals. |
-| [CLI surface](choosing-an-entry-point.md) | You want to understand why project lifecycle and runtime commands share `agentseek`. |
+| [CLI surface](choosing-an-entry-point.md) | You want to understand why project management and runtime commands share `agentseek`. |
 | [Bub relationship](bub-relationship.md) | You want the boundary between Bub and AgentSeek. |
 | [LangChain relationship](langchain-relationship.md) | You use LangChain, LangGraph, or DeepAgents and want the integration model. |
 | [Runtime data model](runtime-data-model.md) | You are reasoning about tapes, skills, plugins, MCP, and channels. |

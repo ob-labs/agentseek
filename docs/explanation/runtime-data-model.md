@@ -6,7 +6,7 @@ runs: no
 verified_on: 2026-05-28
 sources:
   - src/agentseek/__main__.py
-  - src/agentseek/cli.py
+  - src/agentseek/cli/runtime.py
   - pyproject.toml
   - contrib/README.md
   - blog/introducing-agentseek.md
@@ -108,8 +108,8 @@ The default path comes from the alias layer:
   (`entrypoint.sh:11-15, 37-39`).
 
 MCP servers are good for tool integrations that should be **declared, not coded** — issue
-trackers, search backends, internal services. When the tool integration needs lifecycle
-behaviour or its own hooks, reach for a plugin.
+trackers, search backends, internal services. When the tool integration needs runtime hooks
+of its own, reach for a plugin.
 
 ### Plugins — the runtime extension surface
 
@@ -141,10 +141,10 @@ A **channel** is the surface that takes a message in and streams a response out.
 Telegram are channels supplied by plugins. The `agentseek-ag-ui` plugin adds an AG-UI SSE
 channel adapter for front-ends like CopilotKit.
 
-agentseek's CLI override enables **all `*.lifecycle` channels** alongside whichever primary
-channel you asked for (`src/agentseek/cli.py:51-57, 83-112`). That is the mechanism that
+agentseek's CLI override enables **all Bub support channels (`*.lifecycle`)** alongside whichever primary
+channel you asked for (`src/agentseek/cli/runtime.py:51-57, 83-112`). That is the mechanism that
 lets MCP and other helpers boot inside an interactive `agentseek chat` session — they
-register themselves on a lifecycle channel and the manager wakes them up before the first
+register themselves on a Bub support channel and the manager wakes them up before the first
 turn.
 
 ## Why it is like this

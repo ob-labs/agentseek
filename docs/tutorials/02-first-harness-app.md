@@ -5,8 +5,8 @@ audience: [A2]
 runs: yes
 verified_on: 2026-06-08
 sources:
-  - src/agentseek/lifecycle/commands/new.py
-  - src/agentseek/lifecycle/commands/dev.py
+  - src/agentseek/cli/commands/new.py
+  - src/agentseek/cli/commands/dev.py
   - templates/index.json
   - templates/bub/default/cookiecutter.json
   - templates/bub/default/{{cookiecutter.project_slug}}/pyproject.toml
@@ -88,7 +88,7 @@ Open `http://127.0.0.1:5173` when the frontend is ready.
 ## What you have now
 
 - A standalone project with its own `.venv`, `.env`, and source tree.
-- A verified lifecycle path through `agentseek new` and `agentseek dev`.
+- A verified project command path through `agentseek new` and `agentseek dev`.
 - A project you can edit without touching the AgentSeek repository.
 
 ## Next
