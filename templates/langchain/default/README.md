@@ -40,15 +40,18 @@ Browser (CopilotKit v2)
   README.md
   pyproject.toml
   requirements.txt
-  .env.example
   Dockerfile
+  .env.example
   src/{{ project_slug }}/
     __init__.py
     demo_binding.py
     middleware.py
     settings.py
+    feishu.py
     dev.py
   frontend/
+    README.md
+    .env.example
     index.html
     package.json
     server.ts
@@ -59,6 +62,7 @@ Browser (CopilotKit v2)
       langchainCopilotKitUi.tsx
       main.tsx
       style.css
+      vite-env.d.ts
 ```
 
 ## Key code patterns

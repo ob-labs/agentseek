@@ -39,12 +39,14 @@ Two processes start via `concurrently`:
 {{ project_slug }}/
   README.md
   pyproject.toml
-  requirements.txt
+  Dockerfile
   .env.example
   src/{{ project_slug }}/
     __init__.py
     dev.py
   frontend/
+    README.md
+    .env.example
     index.html
     package.json
     server.ts
@@ -54,6 +56,7 @@ Two processes start via `concurrently`:
       App.tsx
       main.tsx
       style.css
+      vite-env.d.ts
 ```
 
 ## Key runtime variables

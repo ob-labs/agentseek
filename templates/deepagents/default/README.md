@@ -31,6 +31,7 @@ The binding export is `{{ project_slug }}.demo_binding:build_spec`.
   README.md
   pyproject.toml
   requirements.txt
+  Dockerfile
   .env.example
   src/{{ project_slug }}/
     __init__.py
