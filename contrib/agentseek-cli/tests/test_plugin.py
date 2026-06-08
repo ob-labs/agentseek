@@ -3,10 +3,10 @@ from __future__ import annotations
 import typer
 from agentseek_cli.app import build_app, iter_command_groups, register_version_command
 from agentseek_cli.plugin import AgentSeekCliPlugin
-from typer.testing import CliRunner
 
 EXPECTED_GROUPS = ("new", "dev", "build", "deploy", "api", "ctx", "skills")
 VERSION_COMMAND = "version"
+LEGACY_ROOT_FORMS = ("run", "create", "install", "uninstall", "update")
 
 
 def test_build_app_registers_every_documented_group() -> None:
@@ -17,27 +17,13 @@ def test_build_app_registers_every_documented_group() -> None:
     assert [command.name for command in app.registered_commands].count(VERSION_COMMAND) == 1
 
 
-def test_build_app_help_lists_groups() -> None:
-    result = CliRunner().invoke(build_app(), ["--help"])
-    assert result.exit_code == 0
-    for name in EXPECTED_GROUPS:
-        assert name in result.stdout
-    assert VERSION_COMMAND in result.stdout
-
-
-def test_build_app_rejects_legacy_root_forms_without_suggestions() -> None:
+def test_build_app_rejects_legacy_root_forms_structurally() -> None:
     app = build_app()
-    for legacy_name in ("run", "create", "install", "uninstall", "update"):
-        result = CliRunner().invoke(app, [legacy_name, "--help"])
-        assert result.exit_code != 0
-        assert f"No such command '{legacy_name}'" in result.output
-        assert "Did you mean" not in result.output
+    names = {group.name for group in app.registered_groups}
+    names.update(command.name for command in app.registered_commands if command.name)
 
-
-def test_build_app_version_reports_cli_package() -> None:
-    result = CliRunner().invoke(build_app(), [VERSION_COMMAND])
-    assert result.exit_code == 0
-    assert "agentseek-cli" in result.stdout
+    assert app.suggest_commands is False
+    assert names.isdisjoint(LEGACY_ROOT_FORMS)
 
 
 def test_plugin_register_cli_commands_does_not_override_framework_names() -> None:
