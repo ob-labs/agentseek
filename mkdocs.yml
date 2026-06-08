@@ -35,7 +35,7 @@ nav:
           - LangChain relationship: explanation/langchain-relationship.md
           - Runtime data model: explanation/runtime-data-model.md
           - Extension model: explanation/extension-model.md
-          - Choosing an entry point: explanation/choosing-an-entry-point.md
+          - CLI surface: explanation/choosing-an-entry-point.md
           - Where things live: explanation/where-things-live.md
       - Reference:
           - Overview: reference/index.md
@@ -111,7 +111,7 @@ plugins:
             LangChain relationship: agentseek 与 LangChain 的关系
             Runtime data model: 运行时数据模型
             Extension model: 扩展模型
-            Choosing an entry point: 选择一个入口
+            CLI surface: CLI 命令面
             Where things live: 各样东西的位置
             # Reference
             Environment variables: 环境变量

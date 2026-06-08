@@ -128,10 +128,9 @@ SPEC = messages_spec(runnable)
 
 ## API Commands
 
-The `agentseek api` command group is now provided by
-[`agentseek-cli`](../agentseek-cli/README.md). Install that contrib package
-to forward `agentseek api dev | serve | build | ...` into the optional
-`agentseek-api` runtime.
+The `agentseek api` command group is part of the main `agentseek` command
+surface. Install the optional `agentseek-api` runtime when you want
+`agentseek api dev | serve | build | ...` to forward into that service.
 
 ## Runtime Behavior
 

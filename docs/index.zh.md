@@ -45,7 +45,7 @@ agent 应用。
 
 | 需要 | 参考 |
 | --- | --- |
-| 理解为什么有两个入口 | [选择一个入口](explanation/choosing-an-entry-point.zh.md) |
+| 理解为什么有两个入口 | [CLI 命令面](explanation/choosing-an-entry-point.zh.md) |
 | 查看所有命令和参数 | [CLI 参考](reference/cli.zh.md) |
 | 查看所有模板 | [模板参考](reference/templates.zh.md) |
 | 理清包和仓库边界 | [包参考](reference/packages.zh.md) |
@@ -54,10 +54,10 @@ agent 应用。
 
 ```bash
 # Browse templates
-uvx --from agentseek-cli agentseek new --list-templates
+uvx agentseek new --list-templates
 
 # Create a minimal LangChain project
-uvx --from agentseek-cli agentseek new langchain/markdown-messages
+uvx agentseek new langchain/markdown-messages
 
 # Run AgentSeek itself
 uv tool install agentseek

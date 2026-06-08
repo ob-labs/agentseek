@@ -7,7 +7,6 @@ verified_on: 2026-06-03
 sources:
   - templates/index.json
   - contrib/agentseek-langchain/README.md
-  - contrib/agentseek-cli/src/agentseek_cli/app.py
   - pyproject.toml
 ---
 
@@ -71,7 +70,7 @@ LangSmith 为付费客户解决了这三块。AgentSeek 为开源社区解决同
 | **[ContextSeek](https://github.com/ob-labs/contextseek)** | 语义上下文层——统一 `ContextItem`、L0/L1/L2 渐进式披露、EvolutionEngine、DreamEngine。补齐 LangSmith Context Hub 在开源端的空白。 | [README](https://github.com/ob-labs/contextseek#readme) |
 | **[langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase)** | LangGraph checkpoint + store + vectorstore + hybrid search，基于 OceanBase / seekdb / MySQL。运行时数据从第一天起就是可查 SQL。 | [README](https://github.com/oceanbase/langchain-oceanbase#readme) |
 | **IM Gateway** | 飞书 / 钉钉 / Slack 渠道适配器。Agent 出现在用户真正待着的地方。 | 内置于模板 |
-| **[agentseek-cli](https://github.com/ob-labs/agentseek)** | 生成项目、生命周期管理（`new / dev / build / deploy`）。消灭每次新建 agent 项目时的脚手架税。 | [模板参考](../reference/templates.zh.md) |
+| **[agentseek](https://github.com/ob-labs/agentseek)** | 生成项目、生命周期管理（`new / dev / build / deploy`）。消灭每次新建 agent 项目时的脚手架税。 | [模板参考](../reference/templates.zh.md) |
 | **开发 Skills** | 可安装到你的编程助手（Claude Code、Cursor）的引导指南：`langchain-dev-guide`（踩坑与修复）、`langchain-cn-models`（国内模型接入）。AI 助手在你写代码时自动引用。 | [skills/](https://github.com/ob-labs/agentseek/tree/main/skills) |
 
 每个组件有自己的仓库和文档。本站覆盖的是**套件层面的工作流**——各组件如何协同。
@@ -181,7 +180,7 @@ SQL——与 LangChain 的 SmithDB 在内部提供的结构性体验相同。
 
 - 概念解释：[agentseek 是什么](what-agentseek-is.zh.md)、
   [agentseek 与 Bub 的关系](bub-relationship.zh.md)、
-  [选择一个入口](choosing-an-entry-point.zh.md)
+  [CLI 命令面](choosing-an-entry-point.zh.md)
 - 参考：[模板参考](../reference/templates.zh.md)、
   [包参考](../reference/packages.zh.md)
 - 操作指南：[使用 ContextSeek](../how-to/use-contextseek.zh.md)、

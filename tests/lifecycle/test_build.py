@@ -7,9 +7,10 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
-from agentseek_cli.app import build_app
-from agentseek_cli.commands import build as build_module
 from typer.testing import CliRunner
+
+from agentseek.lifecycle.commands import build as build_module
+from tests.lifecycle.helpers import build_lifecycle_app
 
 
 def _make_dockerfile(directory: Path) -> Path:
@@ -81,7 +82,7 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def test_no_dockerfile_exits_2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
-    result = CliRunner().invoke(build_app(), ["build", "--dry-run"])
+    result = CliRunner().invoke(build_lifecycle_app(), ["build", "--dry-run"])
     assert result.exit_code == 2
     assert "Dockerfile" in result.stderr
 
@@ -96,7 +97,7 @@ def test_dry_run_prints_command_no_subprocess(project: Path, monkeypatch: pytest
     monkeypatch.setattr(subprocess, "run", _fail)
 
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["build", "--dry-run", "--tag", "demo:1.0"],
     )
     assert result.exit_code == 0, result.stdout + result.stderr
@@ -108,7 +109,7 @@ def test_dry_run_prints_command_no_subprocess(project: Path, monkeypatch: pytest
 def test_build_args_forwarded(project: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(subprocess, "run", lambda *a, **kw: None)
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         [
             "build",
             "--dry-run",
@@ -127,7 +128,7 @@ def test_build_args_forwarded(project: Path, monkeypatch: pytest.MonkeyPatch) ->
 
 def test_platform_list_uses_buildx(project: Path) -> None:
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         [
             "build",
             "--dry-run",
@@ -144,7 +145,7 @@ def test_platform_list_uses_buildx(project: Path) -> None:
 
 def test_push_flag_invokes_push_after_build(project: Path) -> None:
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["build", "--dry-run", "--push", "--tag", "demo:1.0"],
     )
     assert result.exit_code == 0, result.stdout + result.stderr
@@ -159,7 +160,7 @@ def test_missing_docker_exits_1(project: Path, monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(_shutil, "which", lambda _name: None)
 
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["build", "--tag", "demo:1.0"],
     )
     assert result.exit_code == 1
@@ -181,7 +182,7 @@ def test_real_subprocess_invocation_returncode_propagates(project: Path, monkeyp
     monkeypatch.setattr("shutil.which", lambda _name: "/usr/bin/docker")
 
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["build", "--tag", "demo:1.0"],
     )
     assert result.exit_code == 7

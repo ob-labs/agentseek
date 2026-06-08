@@ -3,9 +3,10 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from agentseek_cli.app import build_app
-from agentseek_cli.commands import skills as skills_module
 from typer.testing import CliRunner
+
+from agentseek.lifecycle.commands import skills as skills_module
+from tests.lifecycle.helpers import build_lifecycle_app
 
 
 class _CompletedProcessStub:
@@ -33,7 +34,7 @@ def test_skills_add_forwards_to_npx_skills(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["skills", "--dir", str(tmp_path), "add", "vercel-labs/agent-skills", "--list"],
     )
 
@@ -53,7 +54,7 @@ def test_skills_add_bare_defaults_to_agentseek_all(monkeypatch, tmp_path) -> Non
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["skills", "--dir", str(tmp_path), "add"],
     )
 
@@ -72,7 +73,7 @@ def test_skills_add_flags_default_to_agentseek_source(monkeypatch, tmp_path) -> 
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["skills", "--dir", str(tmp_path), "add", "--all", "--global"],
     )
 
@@ -92,7 +93,7 @@ def test_skills_add_skill_flags_default_to_agentseek_source(monkeypatch, tmp_pat
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["skills", "add", "--skill", "langsmith-trace", "--global", "--yes"],
     )
 
@@ -114,7 +115,7 @@ def test_skills_add_does_not_override_explicit_source(monkeypatch, tmp_path) -> 
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["skills", "add", "langchain-ai/langsmith-skills", "--skill", "*", "--yes"],
     )
 
@@ -132,7 +133,7 @@ def test_skills_add_does_not_override_explicit_source(monkeypatch, tmp_path) -> 
 def test_skills_list_shows_embedded_catalogue_by_default(monkeypatch) -> None:
     monkeypatch.setattr(skills_module, "_find_skills_cmd", lambda: (_ for _ in ()).throw(AssertionError))
 
-    result = CliRunner().invoke(build_app(), ["skills", "list"])
+    result = CliRunner().invoke(build_lifecycle_app(), ["skills", "list"])
 
     assert result.exit_code == 0
     assert "langsmith-trace" in result.output
@@ -146,7 +147,7 @@ def test_skills_list_with_args_passes_through(monkeypatch) -> None:
     _stub_find_skills_cmd(monkeypatch)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
-    result = CliRunner().invoke(build_app(), ["skills", "list", "--global", "--json"])
+    result = CliRunner().invoke(build_lifecycle_app(), ["skills", "list", "--global", "--json"])
 
     assert result.exit_code == 0
     assert captured["cmd"] == ["/usr/bin/npx-skills", "list", "--global", "--json"]
@@ -157,7 +158,7 @@ def test_skills_list_agent_filter_passes_through(monkeypatch) -> None:
     _stub_find_skills_cmd(monkeypatch)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
-    result = CliRunner().invoke(build_app(), ["skills", "list", "--agent", "OpenClaw"])
+    result = CliRunner().invoke(build_lifecycle_app(), ["skills", "list", "--agent", "OpenClaw"])
 
     assert result.exit_code == 0
     assert captured["cmd"] == ["/usr/bin/npx-skills", "list", "--agent", "OpenClaw"]
@@ -168,7 +169,7 @@ def test_skills_propagates_non_zero_exit_code(monkeypatch) -> None:
     _stub_find_skills_cmd(monkeypatch)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=42))
 
-    result = CliRunner().invoke(build_app(), ["skills", "find", "typescript"])
+    result = CliRunner().invoke(build_lifecycle_app(), ["skills", "find", "typescript"])
     assert result.exit_code == 42
 
 
@@ -179,7 +180,7 @@ def test_skills_falls_back_to_npx(monkeypatch) -> None:
     monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npx" if name == "npx" else None)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
-    result = CliRunner().invoke(build_app(), ["skills", "list", "--global"])
+    result = CliRunner().invoke(build_lifecycle_app(), ["skills", "list", "--global"])
     assert result.exit_code == 0
     assert captured["cmd"] == ["/usr/bin/npx", "skills", "list", "--global"]
 
@@ -189,7 +190,7 @@ def test_skills_reports_missing_both(monkeypatch) -> None:
 
     monkeypatch.setattr(shutil, "which", lambda name: None)
 
-    result = CliRunner().invoke(build_app(), ["skills", "add", "--all"])
+    result = CliRunner().invoke(build_lifecycle_app(), ["skills", "add", "--all"])
     assert result.exit_code == 1
     assert "npx-skills" in result.output or "npx" in result.output
 
@@ -203,7 +204,7 @@ def test_skills_passes_all_passthrough_subcommands(monkeypatch) -> None:
     # add and list have custom handlers; the rest are pure passthrough
     passthrough_commands = [s for s in skills_module.SKILLS_COMMANDS if s not in {"add", "list"}]
     for sub in passthrough_commands:
-        result = runner.invoke(build_app(), ["skills", sub])
+        result = runner.invoke(build_lifecycle_app(), ["skills", sub])
         assert result.exit_code == 0, sub
         cmd = captured["cmd"]
         assert isinstance(cmd, list)

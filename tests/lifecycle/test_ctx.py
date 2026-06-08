@@ -10,8 +10,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import pytest
-from agentseek_cli.commands import ctx as ctx_module
 from typer.testing import CliRunner
+
+from agentseek.lifecycle.commands import ctx as ctx_module
 
 
 class _RunCliRecorder:

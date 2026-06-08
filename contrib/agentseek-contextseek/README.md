@@ -31,8 +31,7 @@ Standalone from workspace:
 uv pip install './contrib/agentseek-contextseek'
 ```
 
-CLI note: `agentseek ctx ...` commands are provided by
-[`agentseek-cli`](../agentseek-cli/README.md).
+CLI note: `agentseek ctx ...` is part of the main `agentseek` command surface.
 
 ## Configure
 

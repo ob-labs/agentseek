@@ -40,8 +40,8 @@ skill），以及 CLI 的品牌。这并不意味着替换、扩展或隐藏 Bub
 
 1. `apply_agentseek_env_aliases()` —— 把 `AGENTSEEK_*` 的值复制到对应的 `BUB_*` 名称下，
    这样栈中其余部分就只从一个前缀读取配置。
-2. `apply_agentseek_cli_overrides()` —— 重新品牌 onboard banner，替换 chat 命令以启用
-   lifecycle channel，并替换 plugin-install sandbox factory。
+2. `apply_agentseek_runtime_overrides()` —— 重新品牌 onboard banner，替换 chat 命令以启用
+   lifecycle channel，调整 plugin-install 默认值，并直接解析 AgentSeek package requirement。
 3. `create_cli_app()` 实例化 `BubFramework(config_file=agentseek_config_file())` 并向它请求
    一个 Typer app。从这一刻起，runtime 就是普通的 Bub。
 
@@ -75,18 +75,19 @@ alias 规则位于
 
 ### CLI override
 
-CLI 的行为与 Bub 的一致，但有三处刻意的改动（`src/agentseek/cli.py:74-152`）：
+CLI 从 Bub app 出发，然后 AgentSeek 叠加一层小的命令布局：
 
 - onboarding banner 读作 `AGENTSEEK` 而不是 `BUB`
   （`src/agentseek/cli.py:23-32`、`74-80`）。流程上没有变化。
 - `chat` 被替换，让 lifecycle channel（`*.lifecycle`）与 `cli` 一同启用
   （`src/agentseek/cli.py:83-112`）。这就是让 MCP 等 helper 能在 CLI chat 会话中启动的机制。
-- `install` 通过用 `_ensure_plugin_sandbox` 替换 `_ensure_project`，将一个全新的 plugin sandbox
+- `plugin install` 通过用 `_ensure_plugin_sandbox` 替换 `_ensure_project`，将一个全新的 plugin sandbox
   解析到 `.agentseek/agentseek-project` 下，而不是 Bub 的 `bub-project`
   （`src/agentseek/cli.py:115-140`）。如果目录不存在，按需执行 `uv init --bare --name agentseek-project`。
+- Bub 的根级 `run` 命令在 AgentSeek 中暴露为 `agentseek turn`。
+- Bub 的根级 plugin 变更命令收敛到 `agentseek plugin` 下。
 
-其余一切 —— `run`、`gateway`、`onboard`、`uninstall`、`update`、`login`，加上由 contrib
-提供的子命令 —— 都是 Bub 自己的代码。
+项目生命周期命令由 `src/agentseek/lifecycle/app.py` 挂载；运行时行为仍然流经 Bub。
 
 ## 为什么是这样
 
@@ -102,15 +103,15 @@ CLI 的行为与 Bub 的一致，但有三处刻意的改动（`src/agentseek/cl
 
 ## 对用户的影响
 
-- 你可以自由混用两个 CLI。`uv run bub --help` 和 `uv run agentseek --help` 显示同一组命令；
-  差异在于 banner、chat channel 集合，以及 install sandbox 路径。
+- Debug 时可以对比 `uv run bub --help` 和 `uv run agentseek --help`，但两者命令面并不刻意相同。
+  AgentSeek 增加生命周期命令组，并规范化有歧义的根命令。
 - 不论你在 `AGENTSEEK_*` 中放什么，在进程持续期间都会渗入 `BUB_*`，除非 `BUB_*` 已经被设置。
   当你 debug 一个只记录了 `BUB_*` 名称的 plugin 时，这一点很重要。
 - alias 层应用的默认值（`.agentseek` home、`agentseek-project` sandbox）会在你在一个 workspace
   中首次运行任何 `agentseek` 命令时显现出来。偏好系统级布局的运维人员应该显式设置 `BUB_HOME`
   和 `BUB_PROJECT`。
 - 如果某个问题在 `agentseek` 下能复现但在 `bub` 下不能，嫌疑目标就是
-  `src/agentseek/cli.py:74-152` 中的三处 override，或 `src/agentseek/env.py:56` 中的
+  `src/agentseek/cli.py` 中的 override，或 `src/agentseek/env.py:56` 中的
   alias 步骤。通过直接用 `bub` 跑同一条命令来二分定位。
 
 ## 何时直接使用 `bub`
@@ -125,7 +126,7 @@ CLI 的行为与 Bub 的一致，但有三处刻意的改动（`src/agentseek/cl
 - 你在诊断一个 bug 究竟出在 Bub 还是出在 agentseek 的 override 里。
 
 当你想要 opinionated 默认值时使用 `agentseek`：一个 workspace-local 的 home、agentseek
-install sandbox、chat 模式下的 lifecycle channel，以及 `AGENTSEEK_*` 命名。
+plugin install sandbox、chat 模式下的 lifecycle channel、生命周期命令组，以及 `AGENTSEEK_*` 命名。
 
 ## 相关
 

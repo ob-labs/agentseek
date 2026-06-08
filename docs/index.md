@@ -45,7 +45,7 @@ After the first run works, continue with the guide that matches the next job:
 
 | Need | Reference |
 | --- | --- |
-| Why there are two entry points | [Choosing an entry point](explanation/choosing-an-entry-point.md) |
+| How the CLI is organized | [CLI surface](explanation/choosing-an-entry-point.md) |
 | Every command and flag | [CLI reference](reference/cli.md) |
 | Every template | [Templates reference](reference/templates.md) |
 | Package and repository boundaries | [Packages reference](reference/packages.md) |
@@ -54,10 +54,10 @@ After the first run works, continue with the guide that matches the next job:
 
 ```bash
 # Browse templates
-uvx --from agentseek-cli agentseek new --list-templates
+uvx agentseek new --list-templates
 
 # Create a minimal LangChain project
-uvx --from agentseek-cli agentseek new langchain/markdown-messages
+uvx agentseek new langchain/markdown-messages
 
 # Run AgentSeek itself
 uv tool install agentseek

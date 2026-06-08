@@ -3,99 +3,57 @@ title: How to run with Docker Compose
 type: how-to
 audience: [A4]
 runs: yes
-verified_on: 2026-05-28
+verified_on: 2026-06-08
 sources:
   - Dockerfile
   - docker-compose.yml
   - entrypoint.sh
-  - docs/index.md
 ---
 
 # How to run with Docker Compose
 
-Use this when you want the bundled gateway, MCP wiring, and skills layout
-without installing Python locally. Operationally, this is **Path B packaged for
-operators**: the container ends up running the harness runtime CLI, not the
-standalone Path A lifecycle CLI.
+Use this when you want the AgentSeek gateway, MCP wiring, and skills layout in
+a container.
 
 ## Prerequisites
 
-- Docker (with the `compose` subcommand) installed.
-- The repository checked out (Compose builds from `.`).
-- A `.env` next to `docker-compose.yml` with at least an `AGENTSEEK_MODEL`
-  and an `AGENTSEEK_API_KEY`. See [How to configure the model provider](configure-model.md).
+- Docker with the `compose` subcommand.
+- The repository checked out.
+- A `.env` beside `docker-compose.yml` with at least `AGENTSEEK_MODEL` and
+  `AGENTSEEK_API_KEY`.
 
-## Steps
-
-1. (Optional) Point the workspace mount at a host directory other than the
-   repo root:
-
-   ```bash title=".env"
-   AGENTSEEK_DOCKER_WORKSPACE=/srv/agentseek-data
-   ```
-
-   Compose substitutes this into `${AGENTSEEK_DOCKER_WORKSPACE:-.}:/workspace`
-   (`docker-compose.yml:15`).
-
-2. Build the image and start the service:
-
-   ```bash title="not executed in this run"
-   docker compose up --build
-   ```
-
-   The entrypoint exports `BUB_*` and `AGENTSEEK_*` to the values from the
-   compose `environment:` block, prepares `.agentseek/` and `.agents/skills`,
-   and either runs `${workspace}/startup.sh` if present, or
-   `agentseek gateway` by default (`entrypoint.sh:41`, `:45`).
-
-3. Tail the logs in another shell:
-
-   ```bash title="not executed in this run"
-   docker compose logs -f
-   ```
-
-### Workspace conventions inside the container
-
-| Host (default) | Container | Source |
-| --- | --- | --- |
-| repo root | `/workspace` | `docker-compose.yml:15`, `entrypoint.sh:5` |
-| `.agentseek/` | `/workspace/.agentseek/` | `docker-compose.yml:9` |
-| `.agents/skills/` | `/workspace/.agents/skills/` | `docker-compose.yml:11` |
-| `.agents/mcp.json` (if present) | linked into `/workspace/.agentseek/mcp.json` | `entrypoint.sh:13`, `:37` |
-
-### Replacing the default command
-
-Put an executable script at `${workspace}/startup.sh`. The entrypoint will
-`exec bash startup.sh` instead of `agentseek gateway` (`entrypoint.sh:41`).
-Use this to run `agentseek chat` in a one-off container, or a project-defined
-binary.
-
-### CLI shortcut
+## Start
 
 ```bash title="not executed in this run"
-docker compose up --build       # build + start
-docker compose logs -f          # watch
-docker compose down             # stop + remove
+docker compose up --build
 ```
+
+The entrypoint prepares `.agentseek/`, links `.agents/mcp.json` when present,
+and starts `agentseek gateway` by default.
+
+## Mount another workspace
+
+```bash title=".env"
+AGENTSEEK_DOCKER_WORKSPACE=/srv/agentseek-data
+```
+
+Compose mounts that host directory to `/workspace`.
+
+## Replace the default command
+
+Put a `startup.sh` in the mounted workspace. The entrypoint executes it instead
+of the default `agentseek gateway`.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `uv sync --frozen --no-dev` fails during build | `uv.lock` out of sync with `pyproject.toml` workspace members | Re-run `uv sync` on the host to refresh the lock; rebuild. |
-| Workspace data not persisted | `AGENTSEEK_DOCKER_WORKSPACE` left at default `.` | Mount a real data directory. |
-| You expected `create` / `build` / `deploy` inside the container | Compose starts the harness runtime path by default | Run those lifecycle commands from Path A or from a merged dev environment, not from the default container entrypoint. |
-
-## Rollback
-
-```bash title="not executed in this run"
-docker compose down
-docker image rm agentseek-app   # if you no longer need the image
-```
-
-Remove `.env` entries you added.
+| Build fails with a frozen lock error | `uv.lock` is out of sync | Run `uv sync` or `uv lock` on the host, then rebuild. |
+| Workspace data is not persisted where expected | Default workspace mount points at `.` | Set `AGENTSEEK_DOCKER_WORKSPACE`. |
+| Container starts a custom command | `startup.sh` exists | Remove or edit `startup.sh`. |
 
 ## Related
 
-- How-to: [How to configure the Docker workspace](configure-docker-workspace.md), [How to build and deploy](build-and-deploy.md)
-- Reference: [Docker reference](../reference/docker.md), [Environment variables reference](../reference/environment.md)
+- [Docker reference](../reference/docker.md)
+- [Environment variables](../reference/environment.md)
+- [Build and deploy](build-and-deploy.md)

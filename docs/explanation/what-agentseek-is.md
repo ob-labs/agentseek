@@ -3,137 +3,71 @@ title: What agentseek is
 type: explanation
 audience: [A1, A2, A5]
 runs: no
-verified_on: 2026-05-28
+verified_on: 2026-06-08
 sources:
   - README.md
-  - blog/introducing-agentseek.md
   - pyproject.toml
   - src/agentseek/__main__.py
+  - src/agentseek/lifecycle/app.py
 ---
 
 # What agentseek is
 
-> **In short:** AgentSeek is a **suite** that helps you ship agents to
-> production. It comprises agentseek-cli (project scaffolding), agentseek-api
-> (Agent Protocol server), ContextSeek (semantic context layer), and
-> langchain-oceanbase (data substrate). AgentSeek is open to any Agent
-> Framework — it ships with built-in Bub and the current version is
-> LangChain-friendly out of the box. The suite is built on a database-native
-> harness — runtime data lives on one durable, queryable substrate from the
-> first turn.
+AgentSeek is a database-native agent harness with one CLI entry point and an
+embeddable Python runtime. It helps teams build, run, and operate agent
+applications whose runtime data is durable, queryable, and ready for replay or
+evaluation.
 
-> **Coming from LangChain?** You may want to start with
-> [How agentseek relates to LangChain](langchain-relationship.md) instead — it
-> covers what AgentSeek adds to the LangChain ecosystem and which template to
-> pick.
+The public command surface is:
+
+- `agentseek new/dev/build/deploy` for project lifecycle management.
+- `agentseek chat/turn/gateway` for runtime execution.
+- `agentseek plugin/ctx/skills/api` for extensions and service bridges.
 
 ## Context
 
-Most agents prove their value at runtime, then their data scatters: session context in one
-place, tool calls in another, logs and eval artefacts in more pipelines. After the first
-consumer, it is expensive to query, replay, compare, evaluate, or turn into training
-material — see [Introducing agentseek](../blog/introducing-agentseek.md).
+Agent data tends to scatter after the first demo: session context, tool calls,
+logs, eval artifacts, feedback, and traces land in different systems. AgentSeek
+starts from the opposite assumption: those runtime facts should share one
+durable substrate from the beginning.
 
-agentseek starts from a different assumption: context, memory, tasks, tool calls, traces,
-feedback, and evaluation material should share **one durable substrate from the beginning**.
-That substrate is naturally a database — hence "database-native". The harness shape exists
-because most teams do not want to invent a runtime; they want to plug their app into one
-that already treats runtime data as a first-class workload.
+That substrate is naturally a database. The harness exists so teams can keep
+their preferred agent framework while adopting a runtime layer that treats data
+as a first-class workload.
 
 ## How it works
 
-Three pieces sit on top of each other:
+1. **Bub** supplies the hook-first runtime kernel: channels, turns, tapes,
+   skills, plugins, and base CLI behavior.
+2. **AgentSeek** layers product defaults on top: `.agentseek/` runtime home,
+   environment aliases, onboarding branding, the plugin sandbox, command layout,
+   lifecycle commands, and bundled skills.
+3. **Contrib packages and applications** add storage backends, LangChain
+   bridges, UI adapters, context systems, schedules, and the actual application
+   code.
 
-1. **Bub** is the upstream runtime: a hook-first turn pipeline, channels, a
-   tape store, skills, and a plugin model. agentseek consumes Bub as a regular
-   library dependency (`pyproject.toml:18`). See
-   <https://github.com/bubbuild/bub>.
-2. **`agentseek` (the harness)** runs on top of Bub. It owns the runtime CLI
-   (`chat`, `turn`, `gateway`, `plugin`, …), the embeddable library
-   surface, runtime defaults (`.agentseek/` runtime home, the
-   `.agentseek/agentseek-project` install sandbox, the alias layer from
-   `AGENTSEEK_*` to `BUB_*`), and the bundled skills under `src/skills/`. See
-   `src/agentseek/__main__.py:52-69` for the boot sequence.
-3. **`agentseek-cli` (the project lifecycle CLI)** is the second PyPI package.
-   It owns scaffolding and lifecycle commands (`new / dev / build / deploy
-   / api / ctx / skills`). On its own it is self-contained and small; alongside
-   the harness it folds in as a Bub plugin so the same `agentseek` command
-   exposes the union of both surfaces. See
-   [Choosing an entry point](choosing-an-entry-point.md).
-4. **Contrib packages and your app** sit on top: storage backends, model
-   routing, observability, channel adapters, and the application code that
-   actually wants to run on the harness. The contrib monorepo is indexed at
-   [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib).
+## Design choices
 
-In practice, most application teams depend on `agentseek` (the harness) from
-their own project and let application code drive turns. The runtime CLI is a
-thin Typer app over the same framework — a CLI run is a faithful preview of
-what an embedded library run will produce.
+- **Harness, not framework.** AgentSeek does not dictate how agents are written.
+  LangChain, DeepAgents, Bub-native apps, and custom orchestrators can run on
+  top of it.
+- **Database-native, not database-coupled.** Local SQLite is useful for
+  development; OceanBase-backed storage can be introduced through contrib
+  packages when scale or compatibility matters.
+- **One entry point.** Project lifecycle and runtime commands share `agentseek`
+  so users do not have to remember which package or binary owns a task.
+- **Bub underneath.** AgentSeek composes Bub instead of hiding it. You can still
+  drop to Bub when you need upstream behavior.
 
-## Why it is like this
+## Non-goals
 
-- **Harness, not framework.** A harness gives you a runtime substrate and gets out of the
-  way; a framework dictates how you write your agent. agentseek is intentionally the
-  former, so teams that already use LangChain, DeepAgents, or their own orchestration can
-  keep that and only adopt the harness underneath. The `agentseek-langchain` contrib package
-  exists for exactly this case.
-- **Database-native, not database-coupled.** The harness clarifies *write paths and
-  semantics*; the actual store is a deployment concern. Local SQLite works out of the box;
-  OceanBase / [seekdb](https://github.com/oceanbase/seekdb) is the recommended scaling path
-  and ships as a contrib plugin (`agentseek-tapestore-oceanbase`).
-- **Two packages, one job each.** `agentseek-cli` exists so teams that only
-  need scaffolding and lifecycle commands do not have to install the harness's
-  full dependency tree on their laptop or in CI; `agentseek` exists so the
-  harness itself stays a regular Python package you embed in your application.
-  The trade-offs and the "same name, merged surface when both are installed"
-  mechanic are in [Choosing an entry point](choosing-an-entry-point.md).
-- **Bub underneath, agentseek on top.** Rather than fork or replace Bub,
-  agentseek consumes it as a regular library. The reasoning and the alias
-  rules are in [How agentseek relates to Bub](bub-relationship.md).
-
-## Consequences for users
-
-- Pick the package that matches your job. `agentseek-cli` is for project lifecycle
-  work without the harness runtime on the host; `agentseek` is the harness itself
-  and is what you run after `uv sync` in this repo or inside a generated project.
-- Most evaluators start with Path B and `agentseek chat`
-  ([01 — Quick demo via the CLI](../tutorials/01-quick-demo-cli.md)).
-  Most application teams start with Path A to scaffold, then Path B inside the
-  generated project
-  ([02 — Build your first harness app](../tutorials/02-first-harness-app.md)).
-- Anywhere the documentation looks plain — environment variables, file
-  layout, install sandbox semantics — that plainness is intentional. The
-  complexity is concentrated in the runtime substrate (Bub + tape) and in
-  optional contrib packages, not in agentseek itself.
-- Tutorials, how-tos, and reference pages all assume that, once the harness
-  is running, your project has a `.agentseek/` directory and that
-  `AGENTSEEK_*` variables drive configuration. The why and the alias rules
-  are in [How agentseek relates to Bub](bub-relationship.md); the exact tables are
-  in [Environment variables reference](../reference/environment.md).
-
-## Explicit non-goals
-
-agentseek **does not** try to:
-
-- Replace Agent Frameworks. AgentSeek is a harness, not a framework. Use them
-  alongside; route their turns through the harness via `agentseek-langchain` when needed.
-- Be a generic plugin marketplace. The plugin model is Bub's; the wider catalogue lives at
-  <https://hub.bub.build>. agentseek only ships and maintains the contrib packages listed
-  in [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib).
-- Ship a UI. Frontend examples live under `examples/` and use CopilotKit, AG-UI, or your
-  own UI of choice.
-- Hide Bub. You can always drop down to `bub …` directly when you need upstream behaviour
-  unmodified — see [How agentseek relates to Bub](bub-relationship.md).
-- Provide a hosted service. Deployment is operator-owned; the harness gives you the
-  building blocks, not a SaaS.
+AgentSeek does not try to replace agent frameworks, become a generic plugin
+marketplace, ship a hosted SaaS, or force a specific UI. It provides the harness
+and the runtime substrate; application and deployment choices remain explicit.
 
 ## Related
 
-- Tutorial: [02 — Build your first harness app](../tutorials/02-first-harness-app.md)
-- Explanation: [How agentseek relates to Bub](bub-relationship.md),
-  [Choosing an entry point](choosing-an-entry-point.md)
-- Reference: [Environment variables reference](../reference/environment.md),
-  [Packages reference](../reference/packages.md)
-- External: [Introducing agentseek (blog)](../blog/introducing-agentseek.md),
-  [Bub repository](https://github.com/bubbuild/bub),
-  [Tape Systems](https://tape.systems/)
+- [CLI surface](choosing-an-entry-point.md)
+- [How AgentSeek relates to Bub](bub-relationship.md)
+- [How AgentSeek relates to LangChain](langchain-relationship.md)
+- [Runtime data model](runtime-data-model.md)

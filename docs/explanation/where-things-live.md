@@ -3,115 +3,68 @@ title: Where things live in the monorepo
 type: explanation
 audience: [A2, A3, A4, A5]
 runs: no
-verified_on: 2026-05-28
+verified_on: 2026-06-08
 sources:
   - README.md
-  - docs/index.md
   - pyproject.toml
-  - contrib/agentseek-cli/pyproject.toml
   - contrib/README.md
-  - examples/README.md
-  - src/skills/README.md
-  - skills/README.md
-  - docs/hub.md
 ---
 
 # Where things live in the monorepo
 
-> **In short:** the agentseek repository is a uv workspace that ships two top-level packages:
-> `agentseek` (the harness) and `agentseek-cli` (the project lifecycle CLI). Core code lives
-> under `src/`, larger integrations under `contrib/`, runnable end-to-end demos under
-> `examples/`, project scaffolds under `templates/`, supporting skill repos under `skills/`,
-> vendored upstream code under `references/`, and the published documentation under `docs/`.
-
-## Context
-
-agentseek is a monorepo on purpose: the harness, the bundled plugins, the contrib
-integrations, the examples, and the documentation all evolve together. The directory names
-look familiar but each one has a specific role; mixing them up is the most common reason a
-new contributor adds a file in the wrong place.
-
-This page is the annotated map. For exact install commands and entry points, jump out to
-the referenced READMEs rather than reading this page end-to-end.
-
-## How it works
+AgentSeek is a uv workspace. Core package code lives under `src/`, optional
+integrations under `contrib/`, project templates under `templates/`, runnable
+examples under `examples/`, and documentation under `docs/`.
 
 ```text
 agentseek/
 ├── src/
-│   ├── agentseek/        ← harness package (PyPI: agentseek)
-│   └── skills/           ← bundled skills shipped with the wheel
-├── contrib/
-│   ├── README.md         ← contrib README standard + package index
-│   ├── agentseek-cli/    ← project lifecycle CLI (PyPI: agentseek-cli)
-│   └── agentseek-*/      ← runtime plugin packages (workspace members)
+│   ├── agentseek/        ← main package: runtime, CLI, project commands
+│   └── skills/           ← skills bundled into the wheel
+├── contrib/              ← optional runtime integration packages
 ├── examples/             ← runnable end-to-end demos
-├── templates/            ← project scaffolds used by `agentseek new`
-├── skills/               ← stand-alone skills, separate from `src/skills`
-├── references/           ← vendored upstream sources for reading, not editing
-├── docs/                 ← published documentation (Diátaxis: tutorials/how-to/reference/explanation)
-├── scripts/              ← project scripts (currently empty)
+├── templates/            ← Cookiecutter sources for `agentseek new`
+├── skills/               ← standalone skills maintained beside the project
+├── references/           ← upstream source snapshots for reading
+├── docs/                 ← published documentation
 ├── tests/                ← top-level tests
 ├── entrypoint.sh         ← Docker entrypoint
 ├── docker-compose.yml    ← Compose definition
-├── pyproject.toml        ← harness pyproject (deps, plugins, workspace members)
-└── README.md             ← repo README; entry point for the project
+└── pyproject.toml        ← package, dependency, and workspace source of truth
 ```
 
-### `src/agentseek/` — the harness package
+## `src/agentseek`
 
-The Python package published to PyPI as `agentseek` (the harness itself). Its
-core runtime dependencies resolve from PyPI, so `pip install agentseek` installs
-the harness package. Use `pip install 'agentseek[cli]'` when you also want the
-project lifecycle CLI folded into the same environment. Clone this repo and run
-`uv sync` when you need workspace contrib packages or the development
-`[tool.uv.sources]` mappings. See
-[Choosing an entry point](choosing-an-entry-point.md).
+The published `agentseek` package. It contains:
 
-Three files matter:
+- runtime defaults and `AGENTSEEK_*` aliases;
+- CLI normalization over Bub commands;
+- project commands in `src/agentseek`;
+- the public `agentseek` console entry point.
 
-- `src/agentseek/env.py` — alias rules from `AGENTSEEK_*` to `BUB_*` plus the location
-  defaults (`.agentseek/`, `.agentseek/agentseek-project`). The mechanics are explained in
-  [How agentseek relates to Bub](bub-relationship.md).
-- `src/agentseek/cli.py` — the three Typer monkeypatches that brand onboarding, enable
-  lifecycle channels in `chat`, and re-point the install sandbox.
-- `src/agentseek/__main__.py` — the boot sequence that runs the alias step, applies the CLI
-  overrides, and constructs a `BubFramework`.
+## `contrib`
 
-This is the only place core harness code lives. Everything bigger goes under `contrib/`.
+Optional packages that extend the runtime through Bub entry points or provide
+framework/storage integrations. Each package owns its README, tests, and
+configuration reference.
 
-### `src/skills/` — bundled skills
+## `templates`
 
-Skills shipped inside the distribution because `pyproject.toml:65-69` includes `src/skills`
-in the build. As of this writing the directory contains `plugin-creator/`, plus skills
-imported at build time from external repos via `[tool.pdm.build].skills`
-(`pyproject.toml:70-72`) — currently `friendly-python` and `piglet` from
-<https://github.com/PsiACE/skills>. See [src/skills/](https://github.com/ob-labs/agentseek/tree/main/src/skills)
-for the bundled skill list and [The runtime data model](runtime-data-model.md) for what a
-skill is.
+Cookiecutter sources used by `agentseek new`. Templates can generate Bub,
+LangChain, or DeepAgents projects, and may depend on AgentSeek or remain
+self-contained depending on their purpose.
 
-### `contrib/` — larger integrations
+## `skills`
 
-Workspace member packages, each a regular Python distribution with its own README. The
-index and the README standard live at [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib).
-`agentseek-cli` is a top-level PyPI package in its own right (the project
-lifecycle CLI of Path A — see [Choosing an entry point](choosing-an-entry-point.md));
-the other entries are runtime plugins for the harness.
+`src/skills` contains skills bundled with the wheel. Top-level `skills/`
+contains standalone skills maintained beside the project.
 
-| Directory | Role | Purpose |
-| --- | --- | --- |
-| `agentseek-cli` | **Project lifecycle CLI** (top-level PyPI package) | `new / dev / build / deploy / api / ctx / skills`. Installable via `uv tool install agentseek-cli`; when present alongside the harness it folds into the same `agentseek` command surface. |
-| `agentseek-ag-ui` | Runtime plugin | AG-UI SSE channel adapter for `agentseek gateway`. |
-| `agentseek-contextseek` | Runtime plugin | ContextSeek semantic context layer. |
-| `agentseek-langchain` | Runtime plugin | Routes Bub model turns through a user-supplied LangChain `Runnable`. |
-| `agentseek-schedule-sqlalchemy` | Runtime plugin | SQLAlchemy-backed APScheduler job store. |
-| `agentseek-tapestore-oceanbase` | Runtime plugin | SQLAlchemy tape storage with OceanBase compatibility. |
+## `references`
 
-Each package owns its install, configure, run, and verify documentation. The main docs
-link out; they do not duplicate. The workspace mapping lives at `pyproject.toml:92-101`.
+Read-only upstream source snapshots used for local inspection. They are search
+targets, not dependencies.
 
-OpenTelemetry tracing is documented in
-<https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-tapestore-otel>.
+## Rule of thumb
 
 ### `examples/` — runnable end-to-end demos
 
@@ -120,12 +73,12 @@ of a user workspace. Today the catalogue (from [examples/](https://github.com/ob
 is `agentseek_api_remote_agent` and `langchain_otel_sidecar`. They are the right starting
 point when you want to see the whole assembly — gateway + frontend + LangChain + agentseek
 — rather than the harness alone. Other common patterns (AG-UI, LangChain default, CLI
-remote, DeepAgents) are covered by the `agentseek create` templates.
+remote, DeepAgents) are covered by the `agentseek new` templates.
 
 ### `templates/` — project scaffolds
 
-Cookiecutter sources used by `agentseek new` (provided by `agentseek-cli`). The
-catalogue lives at `templates/index.json`:
+Cookiecutter sources used by `agentseek new`. The catalogue lives at
+`templates/index.json`:
 
 | Template | Purpose |
 | --- | --- |
@@ -179,11 +132,10 @@ the source of the navigation/where-things-live picture used across the site.
 
 ## Why it is like this
 
-- **Two packages, one workspace.** The uv workspace lets the harness
-  (`agentseek`) and the project lifecycle CLI (`agentseek-cli`) ship as two
-  PyPI packages while contrib plugins evolve at their own pace. Plugins are
-  installed via `agentseek plugin install <package>`, making adoption a single
-  command.
+- **One package, one CLI.** The published harness package (`agentseek`) owns
+  the runtime, the public CLI entry point, and project commands. Contrib
+  plugins still evolve at their own pace and are installed via
+  `agentseek plugin install <package>`.
 - **Bundled vs project-local skills.** Bundling skills inside the wheel makes them
   reproducible (`src/skills/`); workspace-local skills (`.agents/skills/`) make them
   hackable. Stand-alone skill repos (`skills/`) sit in between for skills that should be
@@ -209,14 +161,6 @@ the source of the navigation/where-things-live picture used across the site.
 
 ## Related
 
-- How-to: [How to install a plugin](../how-to/install-a-plugin.md),
-  [How to add skills](../how-to/add-skills.md),
-  [How to author a contrib plugin](../how-to/author-a-contrib-plugin.md)
-- Reference: [File layout reference](../reference/file-layout.md),
-  [Packages reference](../reference/packages.md),
-  [Templates reference](../reference/templates.md)
-- Explanation: [The extension model](extension-model.md),
-  [Choosing an entry point](choosing-an-entry-point.md)
-- External: [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md),
-  [examples catalogue](https://github.com/ob-labs/agentseek/tree/main/examples),
-  [Hub page](../hub.md)
+- [Packages reference](../reference/packages.md)
+- [File layout reference](../reference/file-layout.md)
+- [CLI surface](choosing-an-entry-point.md)

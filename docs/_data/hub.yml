@@ -19,25 +19,6 @@ categories:
           - frontend
           - ui
 
-      - name: agentseek-cli
-        description: Project-lifecycle CLI for agentseek (`new`, `dev`, `build`, `deploy`, `api`, `ctx`, `skills`), installable via `uv tool install agentseek-cli` or foldable into the merged `agentseek` command surface.
-        description_zh: agentseek 的项目生命周期 CLI（`new`、`dev`、`build`、`deploy`、`api`、`ctx`、`skills`），既可通过 `uv tool install agentseek-cli` 独立安装，也可在与 harness 共存时折叠进同一个 `agentseek` 命令面。
-        entry_point: cli
-        install: agentseek plugin install agentseek-cli
-        repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-cli
-        readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-cli/README.md
-        badges:
-          - label: plugin
-        tags:
-          - cli
-          - scaffold
-          - run
-          - build
-          - deploy
-          - skills
-          - api
-          - uv tool install
-
       - name: agentseek-contextseek
         description: Semantic context layer that retrieves relevant past knowledge before each model turn and writes new knowledge back afterward.
         description_zh: 语义化的上下文层，在每次模型轮次前检索相关的历史知识，并在轮次后回写新知识。

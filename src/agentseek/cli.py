@@ -228,7 +228,7 @@ def apply_agentseek_runtime_command_layout(app: typer.Typer) -> None:
     _tag_registered_command_panels(app)
 
 
-def apply_agentseek_cli_overrides() -> None:
+def apply_agentseek_runtime_overrides() -> None:
     """Patch ``bub.builtin.cli`` before ``BubFramework.create_cli_app`` registers commands.
 
     Apply onboarding branding first, then chat channel defaults and install sandbox behavior; all
@@ -245,10 +245,10 @@ __all__ = [
     "AGENTSEEK_ONBOARD_WELCOME",
     "agentseek_version",
     "apply_agentseek_chat_channel_defaults",
-    "apply_agentseek_cli_overrides",
     "apply_agentseek_install_project_defaults",
     "apply_agentseek_install_requirement_resolution",
     "apply_agentseek_onboard_branding",
     "apply_agentseek_runtime_command_layout",
+    "apply_agentseek_runtime_overrides",
     "resolve_enabled_channels",
 ]

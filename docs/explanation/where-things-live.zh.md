@@ -1,111 +1,65 @@
 ---
-title: monorepo 中各样东西的位置
+title: 各样东西的位置
 type: explanation
 audience: [A2, A3, A4, A5]
 runs: no
-verified_on: 2026-05-28
+verified_on: 2026-06-08
 sources:
   - README.md
-  - docs/index.md
   - pyproject.toml
-  - contrib/agentseek-cli/pyproject.toml
   - contrib/README.md
-  - examples/README.md
-  - src/skills/README.md
-  - skills/README.md
-  - docs/hub.md
 ---
 
-# monorepo 中各样东西的位置
+# 各样东西的位置
 
-> **简而言之：** agentseek repository 是一个 uv workspace，并在其中发布两个顶层包：
-> `agentseek`（harness）与 `agentseek-cli`（项目生命周期 CLI）。核心代码位于 `src/`，
-> 更大的集成位于 `contrib/`，可运行的端到端 demo 位于 `examples/`，项目脚手架位于
-> `templates/`，配套的 skill repo 位于 `skills/`，vendor 进来的上游代码位于
-> `references/`，发布的文档位于 `docs/`。
-
-## 背景
-
-agentseek 有意是一个 monorepo：harness、捆绑的 plugin、contrib 集成、示例和文档一同演进。
-目录名看起来很熟悉，但每一个都有特定角色；把它们搞混是新贡献者把文件放错位置的最常见原因。
-
-本页是带注释的地图。要获取确切的安装命令和 entry point，请跳到引用的 README，而不是从头到尾
-读这一页。
-
-## 工作原理
+AgentSeek 是一个 uv workspace。核心包代码在 `src/`，可选集成在 `contrib/`，
+项目模板在 `templates/`，可运行示例在 `examples/`，文档在 `docs/`。
 
 ```text
 agentseek/
 ├── src/
-│   ├── agentseek/        ← harness 包（PyPI: agentseek）
-│   └── skills/           ← 随 wheel 一起发布的捆绑 skill
-├── contrib/
-│   ├── README.md         ← contrib README 标准与包索引
-│   ├── agentseek-cli/    ← 项目生命周期 CLI（PyPI: agentseek-cli）
-│   └── agentseek-*/      ← 运行时 plugin 包（workspace 成员）
-├── examples/             ← 可运行的端到端 demo
-├── templates/            ← `agentseek new` 使用的项目脚手架
-├── skills/               ← 独立 skill，独立于 `src/skills`
-├── references/           ← vendor 进来的上游源，仅供阅读
-├── docs/                 ← 发布文档（Diátaxis：tutorials/how-to/reference/explanation）
-├── scripts/              ← 项目脚本（目前为空）
+│   ├── agentseek/        ← 主包：runtime、CLI、项目命令
+│   └── skills/           ← 打进 wheel 的内置 skills
+├── contrib/              ← 可选 runtime 集成包
+├── examples/             ← 可运行端到端示例
+├── templates/            ← `agentseek new` 使用的 Cookiecutter 源
+├── skills/               ← 随项目维护的 standalone skills
+├── references/           ← 供阅读的上游源码快照
+├── docs/                 ← 发布文档
 ├── tests/                ← 顶层测试
 ├── entrypoint.sh         ← Docker entrypoint
 ├── docker-compose.yml    ← Compose 定义
-├── pyproject.toml        ← harness pyproject（依赖、plugin、workspace 成员）
-└── README.md             ← 仓库 README；项目入口
+└── pyproject.toml        ← package、依赖和 workspace 的事实来源
 ```
 
-### `src/agentseek/` —— harness 包
+## `src/agentseek`
 
-发布到 PyPI 时名为 `agentseek`（harness 本身）的 Python 包。它的核心运行时
-依赖可从 PyPI 解析，因此 `pip install agentseek` 会安装 harness 包。如果你还
-需要把项目生命周期 CLI 折叠进同一环境，使用 `pip install 'agentseek[cli]'`。
-需要 workspace contrib 包或开发期 `[tool.uv.sources]` 映射时，再克隆本仓库并
-执行 `uv sync`。详见 [选择一个入口](choosing-an-entry-point.zh.md)。
+发布到 PyPI 的 `agentseek` 包。它包含：
 
-三个文件重要：
+- runtime 默认值和 `AGENTSEEK_*` 别名；
+- 对 Bub 命令的 CLI 布局规范化；
+- 位于 `src/agentseek` 的项目命令；
+- 公开 `agentseek` console entry point。
 
-- `src/agentseek/env.py` —— `AGENTSEEK_*` 到 `BUB_*` 的 alias 规则，加上位置默认值
-  （`.agentseek/`、`.agentseek/agentseek-project`）。机制在
-  [agentseek 与 Bub 的关系](bub-relationship.zh.md) 中解释。
-- `src/agentseek/cli.py` —— 给 onboarding 加品牌、在 `chat` 中启用 lifecycle channel，
-  以及重新指向 install sandbox 的三处 Typer monkeypatch。
-- `src/agentseek/__main__.py` —— 跑 alias 步骤、应用 CLI override 并构造 `BubFramework`
-  的启动顺序。
+## `contrib`
 
-这是 core harness 代码唯一存在的地方。任何更大的东西都进入 `contrib/`。
+通过 Bub entry point 扩展 runtime 或提供 framework / storage 集成的可选包。每个包维护自己的
+README、测试和配置参考。
 
-### `src/skills/` —— 捆绑的 skill
+## `templates`
 
-由于 `pyproject.toml:65-69` 将 `src/skills` 包含进 build，因此在 distribution 内部发布的 skill。
-撰写本文时该目录包含 `plugin-creator/`，加上通过 `[tool.pdm.build].skills` 在 build 时从外部
-repo 导入的 skill（`pyproject.toml:70-72`）—— 当前是来自
-<https://github.com/PsiACE/skills> 的 `friendly-python` 和 `piglet`。
-捆绑 skill 列表见 [src/skills/](https://github.com/ob-labs/agentseek/tree/main/src/skills)；
-关于 skill 是什么，见 [运行时数据模型](runtime-data-model.zh.md)。
+`agentseek new` 使用的 Cookiecutter 源。模板可以生成 Bub、LangChain 或 DeepAgents 项目；
+根据目的不同，有些依赖 AgentSeek，有些保持自包含。
 
-### `contrib/` —— 较大的集成
+## `skills`
 
-Workspace member 包，每一个都是一个带自己 README 的常规 Python 包。索引和 README
-标准位于 [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib)。
-`agentseek-cli` 自己也是一个顶层 PyPI 包（路径 A 的项目生命周期 CLI ——
-见 [选择一个入口](choosing-an-entry-point.zh.md)），其余项是 harness 的运行时 plugin。
+`src/skills` 是随 wheel 发布的内置 skills；顶层 `skills/` 是随项目维护的 standalone skills。
 
-| 目录 | 角色 | 用途 |
-| --- | --- | --- |
-| `agentseek-cli` | **项目生命周期 CLI**（顶层 PyPI 包） | `new / dev / build / deploy / api / ctx / skills`。通过 `uv tool install agentseek-cli` 安装；与 harness 共存时会折叠进同一个 `agentseek` 命令面。 |
-| `agentseek-ag-ui` | 运行时 plugin | 为 `agentseek gateway` 提供 AG-UI SSE channel 适配器。 |
-| `agentseek-contextseek` | 运行时 plugin | ContextSeek 语义 context 层。 |
-| `agentseek-langchain` | 运行时 plugin | 把 Bub model turn 路由到用户提供的 LangChain `Runnable`。 |
-| `agentseek-schedule-sqlalchemy` | 运行时 plugin | SQLAlchemy 支撑的 APScheduler job store。 |
-| `agentseek-tapestore-oceanbase` | 运行时 plugin | SQLAlchemy tape 存储，兼容 OceanBase。 |
+## `references`
 
-每个包拥有自己的安装、配置、运行和验证文档。主文档链接出去；它们不重复。workspace 映射位于
-`pyproject.toml:92-101`。
+只读的上游源码快照，用于本地阅读和搜索，不是依赖。
 
-OpenTelemetry tracing 文档位于
-<https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-tapestore-otel>。
+## 判断规则
 
 ### `examples/` —— 可运行的端到端 demo
 
@@ -113,13 +67,12 @@ OpenTelemetry tracing 文档位于
 今天的目录（来自 [examples/](https://github.com/ob-labs/agentseek/tree/main/examples)）是
 `agentseek_api_remote_agent` 和 `langchain_otel_sidecar`。当你想要看整套组装 ——
 gateway + 前端 + LangChain + agentseek —— 而不是只看 harness 时，它们是正确的起点。
-其他常见模式（AG-UI、LangChain 默认、CLI remote、DeepAgents）已被 `agentseek create`
+其他常见模式（AG-UI、LangChain 默认、CLI remote、DeepAgents）已被 `agentseek new`
 模板覆盖。
 
 ### `templates/` —— 项目脚手架
 
-`agentseek new`（由 `agentseek-cli` 提供）使用的 Cookiecutter 源。目录位于
-`templates/index.json`：
+`agentseek new` 使用的 Cookiecutter 源。目录位于 `templates/index.json`：
 
 | 模板 | 用途 |
 | --- | --- |
@@ -168,10 +121,9 @@ navigation/where-things-live 图景的来源。
 
 ## 为什么是这样
 
-- **两个包，一个 workspace。** uv workspace 让 harness（`agentseek`）和项目
-  生命周期 CLI（`agentseek-cli`）以两个 PyPI 包形式发布，同时 contrib
-  plugin 按自己的节奏演进。通过 `agentseek plugin install <package>` 安装 plugin，
-  采用它们只需一条命令。
+- **一个包，一个 CLI。** 发布的 harness 包（`agentseek`）同时拥有 runtime、公开 CLI
+  入口和项目命令。contrib plugin 仍可按自己的节奏演进，并通过
+  `agentseek plugin install <package>` 安装。
 - **捆绑 vs project-local skill。** 把 skill 捆绑进 wheel 让它们可重现（`src/skills/`）；
   workspace-local skill（`.agents/skills/`）让它们可被 hack。独立的 skill repo
   （`skills/`）介于两者之间，适合应该按需安装的 skill。
@@ -196,14 +148,6 @@ navigation/where-things-live 图景的来源。
 
 ## 相关
 
-- 操作指南：[如何安装插件](../how-to/install-a-plugin.zh.md),
-  [如何添加 skill](../how-to/add-skills.zh.md),
-  [如何编写 contrib 插件](../how-to/author-a-contrib-plugin.zh.md)
-- 参考：[文件布局参考](../reference/file-layout.zh.md),
-  [包参考](../reference/packages.zh.md),
-  [模板参考](../reference/templates.zh.md)
-- 概念解释：[扩展模型](extension-model.zh.md),
-  [选择一个入口](choosing-an-entry-point.zh.md)
-- 外部：[contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md),
-  [examples catalogue](https://github.com/ob-labs/agentseek/tree/main/examples),
-  [Hub 页面](../hub.zh.md)
+- [包参考](../reference/packages.zh.md)
+- [文件布局参考](../reference/file-layout.zh.md)
+- [CLI 命令面](choosing-an-entry-point.zh.md)

@@ -6,7 +6,6 @@ authors = [{ name = "{{ cookiecutter.author }}" }]
 requires-python = ">=3.12"
 dependencies = [
     "agentseek",
-    "agentseek-cli",
     "agentseek-ag-ui",
     "agentseek-contextseek",
     "contextseek",
@@ -31,12 +30,10 @@ where = ["src"]
 [tool.uv.sources]
 {% if cookiecutter._agentseek_source_path %}
 agentseek = { path = "{{ cookiecutter._agentseek_source_path }}", editable = true }
-agentseek-cli = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-cli", editable = true }
 agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
 agentseek-contextseek = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-contextseek", editable = true }
 {% else %}
 agentseek = { git = "{{ cookiecutter._agentseek_source_url }}" }
-agentseek-cli = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-cli" }
 agentseek-ag-ui = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-ag-ui" }
 agentseek-contextseek = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-contextseek" }
 {% endif %}

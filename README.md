@@ -20,20 +20,23 @@ application with a clear runtime, storage, context, and serving story.
 > **"Deep Agents 实战"**: a free LangChain / DeepAgents course with AgentSeek labs.
 > [Course site](https://webup.github.io/deepagents-course) · [Source repo](https://github.com/webup/deepagents-course)
 
-## Two Entry Points
+## One CLI Entry Point
 
-The two entry points serve different jobs:
+AgentSeek is a database-native agent harness with one CLI entry point:
+`agentseek`.
 
-| Goal | Start here | Use it when |
+| Goal | Command family | Use it when |
 | --- | --- | --- |
-| Create a project from templates | `agentseek new` | You want a working application scaffold. |
-| Run AgentSeek itself | `agentseek chat` or `agentseek gateway` | You want to evaluate, embed, or operate the harness runtime. |
+| Manage projects | `agentseek new/dev/build/deploy` | You want to scaffold, run, package, or deploy an application. |
+| Run the harness | `agentseek chat/turn/gateway` | You want to evaluate, embed, or operate the runtime. |
+| Extend the runtime | `agentseek plugin/ctx/skills/api` | You want plugins, context, skills, or service bridges. |
 
 ### Create a template project
 
 ```bash
-uvx --from agentseek-cli agentseek new --list-templates
-uvx --from agentseek-cli agentseek new langchain/markdown-messages
+uv tool install agentseek
+agentseek new --list-templates
+agentseek new langchain/markdown-messages
 cd markdown_messages_agent
 cp .env.example .env
 uv sync
@@ -43,18 +46,16 @@ uv run langgraph dev
 Use this path when you want a generated application shape first. Templates cover
 LangChain, DeepAgents, and Bub starters.
 
-### Run AgentSeek itself
+### Run the harness
 
 ```bash
-uv tool install agentseek
 agentseek chat
 ```
 
 Use this path when you want the harness runtime directly: a chat loop, gateway,
 plugins, MCP, or an embeddable Python package.
 
-For install choices and command ownership, see
-[Choosing an entry point](docs/explanation/choosing-an-entry-point.md).
+For the full command surface, see [CLI reference](docs/reference/cli.md).
 
 ## What Is In This Repository
 
@@ -63,8 +64,7 @@ AgentSeek harness.
 
 | Piece | Role |
 | --- | --- |
-| `agentseek` | Harness runtime and embeddable library. |
-| `agentseek-cli` | Project creation and lifecycle commands. |
+| `agentseek` | Unified CLI, harness runtime, lifecycle commands, and embeddable library. |
 | Templates | Cookiecutter starters for common application shapes. |
 | `contrib/` | Optional integrations for frameworks, storage, and context systems. |
 

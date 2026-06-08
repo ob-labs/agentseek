@@ -3,97 +3,55 @@ title: 如何使用 Docker Compose 运行
 type: how-to
 audience: [A4]
 runs: yes
-verified_on: 2026-05-28
+verified_on: 2026-06-08
 sources:
   - Dockerfile
   - docker-compose.yml
   - entrypoint.sh
-  - docs/index.md
 ---
 
 # 如何使用 Docker Compose 运行
 
-当你不想本地装 Python，仍希望获得捆绑的 gateway、MCP 连线与
-skills 布局时使用本指南。从职责上说，这就是**给运维打包过的路径 B**：
-容器里最终运行的是 harness 运行时 CLI，而不是独立的路径 A 生命周期 CLI。
+当你希望在容器中运行 AgentSeek gateway、MCP wiring 和 skills layout 时使用本页。
 
 ## 前置条件
 
-- 已安装 Docker (含 `compose` 子命令)。
-- 已 checkout 该仓库 (Compose 从 `.` 构建)。
-- 在 `docker-compose.yml` 旁的 `.env` 中至少配置了
-  `AGENTSEEK_MODEL` 与 `AGENTSEEK_API_KEY`。见 [如何配置模型提供商](configure-model.zh.md)。
+- Docker，且支持 `compose` 子命令。
+- 已 checkout 本仓库。
+- `docker-compose.yml` 旁边有 `.env`，至少包含 `AGENTSEEK_MODEL` 和 `AGENTSEEK_API_KEY`。
 
-## 步骤
-
-1. (可选) 把 workspace 挂载指向仓库根目录之外的宿主目录：
-
-   ```bash title=".env"
-   AGENTSEEK_DOCKER_WORKSPACE=/srv/agentseek-data
-   ```
-
-   Compose 会把它代入 `${AGENTSEEK_DOCKER_WORKSPACE:-.}:/workspace`
-   (`docker-compose.yml:15`)。
-
-2. 构建镜像并启动服务：
-
-   ```bash title="not executed in this run"
-   docker compose up --build
-   ```
-
-   entrypoint 会把 `BUB_*` 与 `AGENTSEEK_*` 导出为 compose
-   `environment:` 块中的值，准备 `.agentseek/` 与 `.agents/skills`，
-   并在存在 `${workspace}/startup.sh` 时运行之，否则默认运行
-   `agentseek gateway` (`entrypoint.sh:41`, `:45`)。
-
-3. 在另一个 shell 中查看日志：
-
-   ```bash title="not executed in this run"
-   docker compose logs -f
-   ```
-
-### 容器内的 workspace 约定
-
-| 宿主 (默认) | 容器 | 来源 |
-| --- | --- | --- |
-| 仓库根 | `/workspace` | `docker-compose.yml:15`, `entrypoint.sh:5` |
-| `.agentseek/` | `/workspace/.agentseek/` | `docker-compose.yml:9` |
-| `.agents/skills/` | `/workspace/.agents/skills/` | `docker-compose.yml:11` |
-| `.agents/mcp.json` (若存在) | 链接到 `/workspace/.agentseek/mcp.json` | `entrypoint.sh:13`, `:37` |
-
-### 替换默认命令
-
-在 `${workspace}/startup.sh` 放一个可执行脚本。entrypoint 会
-`exec bash startup.sh` 而不是 `agentseek gateway` (`entrypoint.sh:41`)。
-用它来在一次性容器里运行 `agentseek chat`，或运行项目自定义的
-二进制。
-
-### CLI 快捷方式
+## 启动
 
 ```bash title="not executed in this run"
-docker compose up --build       # build + start
-docker compose logs -f          # watch
-docker compose down             # stop + remove
+docker compose up --build
 ```
 
-## 故障排查
+entrypoint 会准备 `.agentseek/`，在存在 `.agents/mcp.json` 时创建链接，并默认启动
+`agentseek gateway`。
 
-| 现象 | 可能原因 | 解决 |
+## 挂载其他 workspace
+
+```bash title=".env"
+AGENTSEEK_DOCKER_WORKSPACE=/srv/agentseek-data
+```
+
+Compose 会把该主机目录挂载到 `/workspace`。
+
+## 替换默认命令
+
+在挂载的 workspace 放入 `startup.sh`。entrypoint 会执行它，而不是默认的
+`agentseek gateway`。
+
+## 排障
+
+| 现象 | 可能原因 | 处理 |
 | --- | --- | --- |
-| 构建期 `uv sync --frozen --no-dev` 失败 | `uv.lock` 与 `pyproject.toml` workspace 成员脱节 | 在宿主上重跑 `uv sync` 刷新 lock；再重新构建。 |
-| workspace 数据未持久化 | `AGENTSEEK_DOCKER_WORKSPACE` 仍是默认 `.` | 挂载一个真实的数据目录。 |
-| 你期待在容器里直接拿到 `create` / `build` / `deploy` | Compose 默认启动的是 harness 运行时路径 | 这些生命周期命令请在路径 A，或在本地的合并开发环境里执行，不走默认容器 entrypoint。 |
-
-## 回退
-
-```bash title="not executed in this run"
-docker compose down
-docker image rm agentseek-app   # if you no longer need the image
-```
-
-删除你添加的 `.env` 条目。
+| 构建时报 frozen lock 错误 | `uv.lock` 与项目不同步 | 在 host 上运行 `uv sync` 或 `uv lock` 后重建。 |
+| workspace 数据没有落到预期位置 | 默认 workspace mount 指向 `.` | 设置 `AGENTSEEK_DOCKER_WORKSPACE`。 |
+| 容器启动了自定义命令 | 存在 `startup.sh` | 删除或修改 `startup.sh`。 |
 
 ## 相关
 
-- 操作指南: [如何配置 Docker 工作区](configure-docker-workspace.zh.md), [如何构建和部署](build-and-deploy.zh.md)
-- 参考: [Docker 参考](../reference/docker.zh.md), [环境变量参考](../reference/environment.zh.md)
+- [Docker 参考](../reference/docker.zh.md)
+- [环境变量](../reference/environment.zh.md)
+- [构建与部署](build-and-deploy.zh.md)

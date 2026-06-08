@@ -23,8 +23,8 @@ contrib 包提供；`agentseek ctx` 会转发到其底层 `contextseek` CLI。
   agentseek plugin install agentseek-contextseek
   ```
 
-  该命令同时拉入 `agentseek-cli` (用于 CLI 挂载点)
-  与 `agentseek-contextseek`。
+  该命令会安装 ContextSeek runtime plugin，并让同一环境里的 `agentseek ctx`
+  转发命令可用。
 
 - 已配置 ContextSeek 自身的 backend。见
   [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)。

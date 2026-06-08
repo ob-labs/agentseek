@@ -18,9 +18,8 @@ OpenAI 兼容 gateway、本地 server 等) 时使用本指南。agentseek 不
 
 ## 前置条件
 
-- 一个可用的 **harness** 环境：要么是本仓库里 `uv sync` 之后的环境，
-  要么是生成项目里各自 `uv sync` 之后的环境。单独安装 `agentseek-cli`
-  并不提供 `chat`。
+- 一个可用的 AgentSeek 环境：本仓库 `uv sync` 之后的环境、生成项目里各自
+  `uv sync` 之后的环境，或已安装的 `agentseek` tool。
 - 所选提供方的有效 API key。
 
 ## 步骤

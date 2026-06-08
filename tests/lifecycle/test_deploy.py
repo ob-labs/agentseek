@@ -3,8 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from agentseek_cli.app import build_app
-from agentseek_cli.commands.deploy import (
+from typer.testing import CliRunner
+
+from agentseek.lifecycle.commands.deploy import (
     _COMPOSE_TEMPLATE,
     DeployContext,
     DeployMode,
@@ -15,7 +16,7 @@ from agentseek_cli.commands.deploy import (
     _resolve_image,
     _resolve_slug,
 )
-from typer.testing import CliRunner
+from tests.lifecycle.helpers import build_lifecycle_app
 
 
 def _ctx(**overrides: object) -> DeployContext:
@@ -31,7 +32,7 @@ def _ctx(**overrides: object) -> DeployContext:
 
 
 def test_no_dry_run_exits_2() -> None:
-    result = CliRunner().invoke(build_app(), ["deploy", "--mode", "docker-compose"])
+    result = CliRunner().invoke(build_lifecycle_app(), ["deploy", "--mode", "docker-compose"])
     assert result.exit_code == 2
     assert "--dry-run" in result.stderr
 
@@ -39,7 +40,7 @@ def test_no_dry_run_exits_2() -> None:
 def test_dry_run_compose_writes_compose_yaml(tmp_path: Path) -> None:
     out = tmp_path / "deploy"
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         [
             "deploy",
             "--dry-run",
@@ -69,7 +70,7 @@ def test_dry_run_compose_writes_compose_yaml(tmp_path: Path) -> None:
 def test_dry_run_k8s_writes_two_yamls(tmp_path: Path) -> None:
     out = tmp_path / "deploy"
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["deploy", "--dry-run", "--mode", "k8s", "--output", str(out), "--slug", "demo"],
     )
     assert result.exit_code == 0, result.stdout + result.stderr
@@ -86,7 +87,7 @@ def test_dry_run_k8s_writes_two_yamls(tmp_path: Path) -> None:
 def test_dry_run_both_writes_three_files(tmp_path: Path) -> None:
     out = tmp_path / "deploy"
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["deploy", "--dry-run", "--mode", "both", "--output", str(out), "--slug", "demo"],
     )
     assert result.exit_code == 0, result.stdout + result.stderr
@@ -98,7 +99,7 @@ def test_dry_run_both_writes_three_files(tmp_path: Path) -> None:
 def test_replicas_appears_in_deployment(tmp_path: Path) -> None:
     out = tmp_path / "deploy"
     CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         [
             "deploy",
             "--dry-run",
@@ -119,7 +120,7 @@ def test_replicas_appears_in_deployment(tmp_path: Path) -> None:
 def test_namespace_in_service(tmp_path: Path) -> None:
     out = tmp_path / "deploy"
     CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         [
             "deploy",
             "--dry-run",
@@ -143,7 +144,7 @@ def test_slug_inferred_from_cwd(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(project)
     out = tmp_path / "deploy"
     result = CliRunner().invoke(
-        build_app(),
+        build_lifecycle_app(),
         ["deploy", "--dry-run", "--mode", "docker-compose", "--output", str(out)],
     )
     assert result.exit_code == 0, result.stdout + result.stderr

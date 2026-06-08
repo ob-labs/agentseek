@@ -1,7 +1,7 @@
 """``agentseek skills`` — thin wrapper around the ``npx-skills`` CLI.
 
 `npx-skills <https://pypi.org/project/npx-skills/>`_ is bundled as a direct
-dependency of ``agentseek-cli``. We expose its subcommands verbatim — ``add``,
+dependency of ``agentseek``. We expose its subcommands verbatim — ``add``,
 ``list``, ``find``, ``update``, ``remove``, ``init`` — and forward every flag
 through, including those we don't know about. This keeps AgentSeek aligned
 with whatever the upstream CLI adds without us re-issuing patches.

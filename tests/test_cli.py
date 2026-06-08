@@ -21,10 +21,10 @@ from agentseek.cli import (
     _install_single_cli_log_sink,
     agentseek_version,
     apply_agentseek_chat_channel_defaults,
-    apply_agentseek_cli_overrides,
     apply_agentseek_install_project_defaults,
     apply_agentseek_onboard_branding,
     apply_agentseek_runtime_command_layout,
+    apply_agentseek_runtime_overrides,
     resolve_enabled_channels,
 )
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
@@ -74,7 +74,7 @@ def test_agentseek_onboard_branding_replaces_bub_banner(monkeypatch) -> None:
     assert messages == [AGENTSEEK_ONBOARD_WELCOME, "unchanged"]
 
 
-def test_apply_agentseek_cli_overrides_runs_onboard_then_install(monkeypatch) -> None:
+def test_apply_agentseek_runtime_overrides_runs_onboard_then_install(monkeypatch) -> None:
     order: list[str] = []
 
     def fake_onboard() -> None:
@@ -86,13 +86,17 @@ def test_apply_agentseek_cli_overrides_runs_onboard_then_install(monkeypatch) ->
     def fake_install() -> None:
         order.append("install")
 
+    def fake_requirement() -> None:
+        order.append("requirement")
+
     monkeypatch.setattr("agentseek.cli.apply_agentseek_onboard_branding", fake_onboard)
     monkeypatch.setattr("agentseek.cli.apply_agentseek_chat_channel_defaults", fake_chat)
     monkeypatch.setattr("agentseek.cli.apply_agentseek_install_project_defaults", fake_install)
+    monkeypatch.setattr("agentseek.cli.apply_agentseek_install_requirement_resolution", fake_requirement)
 
-    apply_agentseek_cli_overrides()
+    apply_agentseek_runtime_overrides()
 
-    assert order == ["onboard", "chat", "install"]
+    assert order == ["onboard", "chat", "install", "requirement"]
 
 
 def test_runtime_command_layout_moves_ambiguous_root_commands() -> None:

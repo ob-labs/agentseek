@@ -1,6 +1,6 @@
 # Contributing a template
 
-This directory holds [cookiecutter](https://cookiecutter.readthedocs.io/) projects that `agentseek new` scaffolds for users. Templates are discovered by `_local_templates_root()` in `contrib/agentseek-cli/src/agentseek_cli/commands/new.py`; the CLI resolves `<type>/<name>` to `templates/<type>/<name>/`.
+This directory holds [cookiecutter](https://cookiecutter.readthedocs.io/) projects that `agentseek new` scaffolds for users. Templates are discovered by `_local_templates_root()` in `src/agentseek/lifecycle/commands/new.py`; the CLI resolves `<type>/<name>` to `templates/<type>/<name>/`.
 
 ## Layout
 
@@ -19,7 +19,7 @@ Jinja substitution is active inside file contents and inside directory/file name
 
 ## Naming convention
 
-- `<type>` is one of `bub`, `deepagents`, `langchain` (the values in `KNOWN_TYPES` at `contrib/agentseek-cli/src/agentseek_cli/commands/new.py`).
+- `<type>` is one of `bub`, `deepagents`, `langchain` (the values in `KNOWN_TYPES` at `src/agentseek/lifecycle/commands/new.py`).
 - `<name>` is descriptive (`markdown-messages`, `research`, `skills`), not generic.
 - The name `default` is reserved for the **agentseek-wrapped** variant when a type ships both wrapped and pure variants. New templates should pick a descriptive name; do not introduce more `default` templates.
 - When a type has both a wrapped and a pure variant of the same pattern, suffix the non-canonical one with `-agentseek` or `-pure`. The canonical (unsuffixed) form is the one we expect most users to start from.
@@ -92,5 +92,5 @@ The wrapped template's README must include a **"What's different vs. pure"** sec
 ## After adding a template
 
 1. Add an entry to `templates/index.json` keyed by `<type>/<name>` with a one-line description.
-2. Run the render check: `uv run --package agentseek-cli pytest contrib/agentseek-cli/tests/test_templates_render.py -v`. Your template should appear as a new parametrize case and pass.
+2. Run the render check: `uv run pytest tests/lifecycle/test_templates_render.py -v`. Your template should appear as a new parametrize case and pass.
 3. Run `agentseek new <type>/<name> --no-input` in a scratch directory and inspect the output by hand.

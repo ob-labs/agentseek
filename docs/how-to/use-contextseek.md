@@ -24,8 +24,8 @@ forwards to its underlying `contextseek` CLI.
   agentseek plugin install agentseek-contextseek
   ```
 
-  This pulls in both `agentseek-cli` (for the CLI mount point) and
-  `agentseek-contextseek`.
+  This installs the ContextSeek runtime plugin and makes the `agentseek ctx`
+  forwarding commands usable in the same environment.
 
 - ContextSeek's own backend configured. See the
   [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md).

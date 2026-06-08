@@ -3,323 +3,149 @@ title: CLI 参考
 type: reference
 audience: [A1, A2, A3, A4]
 runs: yes
-verified_on: 2026-05-29
+verified_on: 2026-06-08
 sources:
-  - src/agentseek/cli.py
-  - src/agentseek/__main__.py
-  - contrib/agentseek-cli/src/agentseek_cli/standalone.py
-  - contrib/agentseek-cli/src/agentseek_cli/plugin.py
-  - contrib/agentseek-cli/src/agentseek_cli/app.py
   - pyproject.toml
-  - contrib/agentseek-cli/pyproject.toml
+  - src/agentseek/__main__.py
+  - src/agentseek/cli.py
+  - src/agentseek/lifecycle/app.py
+  - src/agentseek/lifecycle/commands/
 ---
 
 # CLI 参考
 
-两个 PyPI 包都注册了同名的 console script `agentseek`。你看到的命令面，取决于
-当前环境里哪一个是活跃的。
+AgentSeek 只有一个公开 CLI 入口：
 
-| 源包 | `agentseek` 解析到 | 何时看到它 |
+```bash
+agentseek [OPTIONS] COMMAND [ARGS]...
+```
+
+同一个 `agentseek` 命令同时承载项目生命周期、运行时执行，以及扩展 / 服务桥接。
+
+| 区域 | 命令 | 用途 |
 | --- | --- | --- |
-| `agentseek-cli`（项目生命周期 CLI） | `agentseek_cli.standalone:app`（`contrib/agentseek-cli/pyproject.toml:18`） | 路径 A —— `uv tool install agentseek-cli` |
-| `agentseek`（harness） | `agentseek.__main__:app`（`pyproject.toml:29`） | 路径 B —— `uv tool install agentseek` |
+| Project | `new`, `dev`, `build`, `deploy` | 创建、运行、构建和打包项目。 |
+| Runtime | `chat`, `turn`, `gateway` | 与 harness 交互。 |
+| Environment | `plugin`, `mcp`, `onboard`, `login` | 管理运行时配置和插件。 |
+| Services | `api`, `ctx`, `skills` | 桥接可选服务和 skill 工具。 |
 
-`agentseek_cli.standalone:app`（`contrib/agentseek-cli/src/agentseek_cli/standalone.py:24-32`）
-在每次调用时惰性解析：
+旧的根命令形式不是别名。使用 `turn` 替代 Bub 的根级 `run`，使用
+`plugin install`、`plugin uninstall`、`plugin update` 替代根级插件变更命令。
 
-- 如果 **harness**（`agentseek`）**无法**被导入，它会调用
-  `agentseek_cli.app.build_app()`，只暴露项目生命周期组。
-- 如果 harness **可以**被导入，它会让位给
-  `agentseek.__main__.create_cli_app()`。该函数会启动 `BubFramework` 并加载
-  所有 Bub plugin —— 包括 `agentseek_cli.plugin:main` —— 因此无论你是从
-  `agentseek` 还是 `agentseek-cli` 启动脚本，最终的 CLI 表面是一致的。
+## 项目生命周期
 
-`contrib/agentseek-cli/src/agentseek_cli/plugin.py` 中的 Bub plugin 会
-把项目生命周期组挂到 framework app 上，但不会覆盖 framework 已有命令名。
-
-本页列出每一个子命令，并标注它属于哪一面。
-
-命令在 `--help` 中按面板分组显示：
-
-| 面板 | 命令 | 用途 |
-| --- | --- | --- |
-| **Project** | `new`, `dev`, `build`, `deploy` | 创建、开发、构建、部署 |
-| **Services** | `api`, `ctx`, `skills` | 外部服务集成 |
-| **Runtime** | `chat`, `gateway`, `turn` | Agent 交互 |
-| **Environment** | `plugin`, `mcp`, `onboard`, `login` | 插件、MCP 和认证管理 |
-
-## 项目生命周期命令
-
-这些命令来自 `agentseek-cli`
-（`contrib/agentseek-cli/src/agentseek_cli/app.py:22-30`）。它们在**路径 A**
-开箱可用；在**路径 B**下，只要 harness 环境里装了 `agentseek-cli`
-（例如通过 `agentseek plugin install agentseek-cli`，或者生成的项目本身依赖它），它们也会出现。
+生命周期命令由 `src/agentseek/lifecycle/app.py` 挂载，是主 `agentseek` 包的一部分。
 
 ### `agentseek new [SPEC]`
 
-:   从预构建的模板（位于 `templates/` 下的 cookiecutter）创建一个新的 agent project。
+从内置或外部模板创建项目。
 
-    | 参数 / 标志 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `spec` | TEXT | — | 框架类型（`deepagents`、`langchain`、`bub`）、`type/name`、git URL，或本地路径。 |
-    | `--template` | TEXT（可省略值） | — | 所选类型下的具名模板（例如 `--template cli-remote`）。不带值传入时列出可用模板。 |
-    | `--checkout` | TEXT | — | 远程拉取的 branch / tag / commit。 |
-    | `--list-templates` | flag | — | 列出所选类型的模板；未给类型时列出全部模板，然后退出。 |
-    | `--no-input` | flag | off | 跳过 cookiecutter 的交互提示。 |
-
-    捆绑模板列表请参见 [模板参考](templates.zh.md)。
+| 参数 / 选项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `spec` | TEXT | - | 模板 family、`family/name`、git URL 或本地路径。 |
+| `--template` | TEXT | - | 所选 family 下的模板名。 |
+| `--checkout` | TEXT | - | 远程模板的 branch、tag 或 commit。 |
+| `--list-templates` | flag | off | 列出模板并退出。 |
+| `--no-input` | flag | off | 跳过 Cookiecutter 交互提示。 |
 
 ### `agentseek dev`
 
-:   完成 `.env` 配置后，在本地启动项目。
+在本地运行生成的项目。
 
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--port` | INTEGER | `.env` 中的 `$PORT`，否则为 `3000` | 前端端口。 |
-    | `--host` | TEXT | `127.0.0.1` | 探测就绪状态的主机。 |
-    | `--no-browser` | flag | off | 跳过打开默认浏览器。 |
-    | `--wait-timeout` | INTEGER | `30` | 等待前端的秒数。 |
-    | `--mode` | `auto\|compose\|python` | `auto` | 启动模式覆盖。 |
+| 选项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `--port` | INTEGER | `$PORT` 或 `3000` | 前端端口。 |
+| `--host` | TEXT | `127.0.0.1` | readiness probe 使用的 host。 |
+| `--no-browser` | flag | off | 不打开浏览器。 |
+| `--wait-timeout` | INTEGER | `30` | 等待 ready 的秒数。 |
+| `--mode` | `auto\|compose\|python` | `auto` | 启动模式。 |
 
 ### `agentseek build`
 
-:   将 project 构建为容器镜像（封装 `docker build` / `docker buildx build`）。
-    顶层命令 — 尽管 `--help` 中出现了 `COMMAND [ARGS]...` 这一行，但它没有子命令。
+把当前项目构建为容器镜像。
 
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--tag`, `-t` | TEXT | `<cwd-slug>:latest` | 镜像 tag。 |
-    | `--file`, `-f` | PATH | （由 `agentseek-cli` 解析） | Dockerfile 的路径。 |
-    | `--context` | PATH | `.` | 构建上下文目录。 |
-    | `--platform` | TEXT | — | 以逗号分隔的目标平台。 |
-    | `--push` | flag | off | 构建成功后推送。 |
-    | `--no-cache` | flag | off | 构建时不使用缓存。 |
-    | `--build-arg` | TEXT (repeatable) | — | `KEY=VALUE` 形式的构建时变量。 |
-    | `--dry-run` | flag | off | 打印解析后的命令而不执行。 |
+| 选项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `--tag`, `-t` | TEXT | `<cwd-slug>:latest` | 镜像 tag。 |
+| `--file`, `-f` | PATH | `Dockerfile` | Dockerfile 路径。 |
+| `--context` | PATH | `.` | 构建上下文。 |
+| `--platform` | TEXT | - | 逗号分隔的目标平台。 |
+| `--push` | flag | off | 构建成功后推送。 |
+| `--no-cache` | flag | off | 禁用构建缓存。 |
+| `--build-arg` | TEXT | 可重复 | 构建期 `KEY=VALUE` 变量。 |
+| `--dry-run` | flag | off | 打印解析后的 Docker 命令。 |
 
 ### `agentseek deploy`
 
-:   生成部署清单（docker-compose / k8s）。顶层命令 — 尽管 `--help` 中出现了
-    `COMMAND [ARGS]...` 这一行，但它没有子命令。在 v1 中，`--dry-run` 是必填的。
+生成部署清单。当前实现要求 `--dry-run`，因此只写文件，不执行 apply。
 
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--dry-run` | flag | v1 中必填 | 生成清单但不部署。 |
-    | `--mode` | `docker-compose\|k8s\|both` | `both` | 部署目标。 |
-    | `--output` | DIRECTORY | `deploy` | 清单写入位置。 |
-    | `--image` | TEXT | `<project-slug>:latest` | 容器镜像引用。 |
-    | `--slug` | TEXT | 从 cwd 推断 | 用于 service / deployment 名称的 project slug。 |
-    | `--port` | INTEGER | `8000` | 服务端口。 |
-    | `--replicas` | INTEGER (≥1) | `1` | k8s Deployment 副本数。 |
-    | `--namespace` | TEXT | `default` | k8s namespace。 |
-
-### `agentseek api`
-
-:   当安装了 `agentseek-api` 时，将 API 运行时命令转发给它。若环境中没有
-    `agentseek-api`，所有子命令都会失败并提示：
-
-    ```text title="output"
-    The `agentseek api` commands require `agentseek-api` in the current environment.
-    Install it first, for example: `uv pip install -e references/agentseek-api`.
-    ```
-
-    子命令（每个都将同名命令转发给 `agentseek-api`）：
-    `dev`、`serve`、`dockerfile`、`build`、`up`、`version`。
-
-### `agentseek ctx`
-
-:   ContextSeek — 语义上下文层。转发给 `contextseek` CLI。当
-    `agentseek-contextseek` 在 path 上时可用（例如在路径 B 上通过
-    `agentseek plugin install agentseek-contextseek`，或在路径 A 上由生成项目拉入）。
-
-    子命令包括 `add`、`retrieve`、`expand`、`compact`、
-    `forget`、`delete`、`overview`、`tools`、`metrics`、`dream`、`feedback`、
-    `upstream`、`evidence-chain`、`chain-confidence`、`skill-tools`、
-    `skill-context`、`skill-import`、`items`。
-
-    用法参见 [如何使用 ContextSeek](../how-to/use-contextseek.zh.md) 以及
-    [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)。
-
-### `agentseek skills`
-
-:   通过 `npx-skills` 可执行文件转发到上游 `vercel-labs/skills` CLI，管理
-    agent skills。
-
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--dir` | PATH | `$PWD` | 运行 `skills` 的 workspace 目录。 |
-
-    子命令（每个都转发给 `npx-skills`）：`add`、`list`、`find`、
-    `update`、`remove`、`init`。
-
-## Harness 运行时命令
-
-这些命令来自 harness（`agentseek`），只在**路径 B**下可用（或在生成项目里
-`uv sync` 之后可用）。仅 `uv tool install agentseek-cli` 不会带入它们。
-
-### 顶层选项
-
-```text
-Usage: agentseek [OPTIONS] COMMAND [ARGS]...
-```
-
-| 参数 | 类型 | 默认值 | 描述 |
+| 选项 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `--workspace`, `-w` | TEXT | (unset) | workspace 的路径。 |
-| `--help` | flag | — | 显示顶层帮助并退出。 |
+| `--dry-run` | flag | required | 只生成清单。 |
+| `--mode` | `docker-compose\|k8s\|both` | `both` | 清单目标。 |
+| `--output` | DIRECTORY | `deploy` | 输出目录。 |
+| `--image` | TEXT | `<project-slug>:latest` | 容器镜像引用。 |
+| `--slug` | TEXT | inferred | 服务或 deployment 名称前缀。 |
+| `--port` | INTEGER | `8000` | 服务端口。 |
+| `--replicas` | INTEGER | `1` | Kubernetes replica 数量。 |
+| `--namespace` | TEXT | `default` | Kubernetes namespace。 |
+
+## 运行时
+
+运行时命令来自 Bub，并由 `src/agentseek/cli.py` 规范化命令布局。
 
 ### `agentseek chat`
 
-:   通过 CLI channel 使用 Bub 内置的 chat；agentseek 增加了 lifecycle channels
-    （`src/agentseek/cli.py:83`）。
-
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--chat-id` | TEXT | `local` | Chat id。 |
-    | `--session-id` | TEXT | `None` | 可选的 session id。 |
-
-### `agentseek onboard`
-
-:   交互式收集 plugin 配置并写入 Bub 的配置文件。使用 `src/agentseek/cli.py:23`
-    中的 agentseek 品牌横幅。
-
-    除 `--help` 外不接收其他参数。
-
-### `agentseek gateway`
-
-:   启动消息监听器（例如 telegram）。
-
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--enable-channel` | TEXT (repeatable) | all | 要为 CLI 启用的 channels（默认：all）。 |
+启动交互式 CLI chat。AgentSeek 会启用 lifecycle channels，让 MCP 和 skill helper
+可以随 CLI channel 一起启动。
 
 ### `agentseek turn MESSAGE`
 
-:   让运行时处理一条入站消息。
+让一条输入消息经过运行时。
 
-    | 参数 / 标志 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `MESSAGE` | TEXT | — | 要处理的用户消息。 |
-    | `--channel` | TEXT | `cli` | 入站消息使用的 channel 名。 |
-    | `--chat-id` | TEXT | `local` | Chat id。 |
-    | `--sender-id` | TEXT | `user` | Sender id。 |
-    | `--session-id` | TEXT | `None` | 可选的 session id。 |
+### `agentseek gateway`
+
+启动已配置 channel 的消息监听。
+
+## 环境
 
 ### `agentseek plugin install [SPECS]...`
 
-:   将 plugin 安装到 Bub 的环境中，或者在没有提供规格时同步环境。agentseek 将安装
-    sandbox 替换为 `DEFAULT_PLUGIN_SANDBOX = "agentseek-project"`
-    （`src/agentseek/cli.py:115`、`src/agentseek/env.py:22`）。
-
-    | 参数 / 标志 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `SPECS` | TEXT… | `[]` | Git URL、`owner/repo`，或 bub-contrib 中的 `name@branch`。 |
-    | `--project` | PATH | `${BUB_PROJECT}`（默认为 `${BUB_HOME}/agentseek-project`） | project 目录的路径。 |
-
-    帮助文本仍打印上游默认值 `~/.bub/bub-project`。运行时默认值是 agentseek sandbox，
-    因为 `apply_agentseek_env_aliases` 在 Typer 读取默认值之前就设置了 `BUB_PROJECT`
-    （`src/agentseek/env.py:73`）。
+安装运行时插件到 AgentSeek 插件 sandbox。默认 sandbox 为
+`.agentseek/agentseek-project`。
 
 ### `agentseek plugin uninstall PACKAGES...`
 
-:   从 Bub 的环境中卸载 plugin。`PACKAGES` 是必填项。
-
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--project` | PATH | `${BUB_PROJECT}` | project 目录的路径。 |
+从插件 sandbox 移除 package。
 
 ### `agentseek plugin update [PACKAGES]...`
 
-:   更新指定的包，或在未提供参数时更新 Bub 环境中的所有包。
+更新指定插件，或在未指定 package 时更新 sandbox。
 
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--project` | PATH | `${BUB_PROJECT}` | project 目录的路径。 |
+### `agentseek onboard`
 
-### `agentseek mcp`
+运行交互式配置流程并写入运行时配置。
 
-:   管理已解析到的 `mcp.json` 中的 MCP server（路径由 `bub-mcp` 从
-    `${BUB_MCP_CONFIG_PATH}` / `${AGENTSEEK_MCP_CONFIG_PATH}` 解析，
-    默认为 `${BUB_HOME}/mcp.json`）。
+## 服务
 
-    子命令：`list`、`add`、`remove`。
+### `agentseek api`
 
-    `agentseek mcp list` —— 列出已注册的 MCP 工具。除 `--help` 外没有其他参数。
+在安装 `agentseek-api` 后转发 API 服务命令。
 
-    `agentseek mcp add NAME TARGET...` 的参数：
+### `agentseek ctx`
 
-    | 参数 / 标志 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `NAME` | TEXT | — | server 名称（必填）。 |
-    | `TARGET` | TARGET… | — | 远端 server 的 URL，或 stdio 形式的 `-- <command>`（必填）。 |
-    | `--transport` | `http\|sse\|stdio` | — | MCP transport（必填）。 |
-    | `--env` | TEXT（可重复） | — | stdio server 使用的 `KEY=VALUE` 环境变量。 |
-    | `--header` | TEXT（可重复） | — | http 或 sse server 使用的 `Name: Value` 请求头。 |
+在安装 ContextSeek CLI 后转发 ContextSeek 命令。
 
-    `agentseek mcp remove NAME` —— 按名称删除 server。`NAME` 必填，
-    没有其他参数。
+### `agentseek skills`
 
-    端到端流程见 [如何配置 MCP server](../how-to/configure-mcp.zh.md) 与
-    [如何添加 MCP server](../how-to/add-mcp-server.zh.md)。
+通过 `npx-skills` 管理 skills，必要时回退到 `npx`。
 
-### `agentseek login`
-
-:   认证命令。
-
-    子命令：`openai` — 使用 OpenAI OAuth 登录。
-
-    `agentseek login openai` 的参数：
-
-    | 参数 | 类型 | 默认值 | 描述 |
-    | --- | --- | --- | --- |
-    | `--codex-home` | PATH | — | 存储 Codex OAuth 凭证的目录。 |
-    | `--browser` / `--no-browser` | flag | `--browser` | 在浏览器中打开 OAuth URL。 |
-    | `--manual` | flag | off | 粘贴 callback URL 或 code，而不是等待本地回调服务器。 |
-    | `--timeout` | FLOAT | `300.0` | OAuth 等待超时（秒）。 |
-
-## help 命令检查
-
-仅运行路径 B 时，使用隔离 tool install 检查：
-
-```bash
-uv tool install agentseek
-agentseek --help
-agentseek chat --help
-agentseek gateway --help
-```
-
-仓库开发检查使用合并后的开发命令面：
+## 验证
 
 ```bash
 uv run agentseek --help
-uv run agentseek turn --help
-uv run agentseek chat --help
-uv run agentseek onboard --help
-uv run agentseek gateway --help
-uv run agentseek plugin install --help
-uv run agentseek plugin uninstall --help
-uv run agentseek plugin update --help
 uv run agentseek new --help
-uv run agentseek dev --help
-uv run agentseek build --help
-uv run agentseek deploy --help
-uv run agentseek api --help
-uv run agentseek api dev --help
-uv run agentseek ctx --help
-uv run agentseek skills --help
-uv run agentseek skills add --help
-uv run agentseek mcp --help
-uv run agentseek mcp list --help
-uv run agentseek mcp add --help
-uv run agentseek mcp remove --help
-uv run agentseek login --help
-uv run agentseek login openai --help
+uv run agentseek chat --help
+uv run agentseek turn --help
+uv run agentseek plugin --help
 ```
-
-## 另请参阅
-
-- 概览：[agentseek](../index.zh.md)
-- 概念解释：[选择一个入口](../explanation/choosing-an-entry-point.zh.md)
-- 操作指南：[如何安装插件](../how-to/install-a-plugin.zh.md)、[如何本地运行 agentseek](../how-to/run-locally.zh.md)、
-  [如何运行 gateway](../how-to/run-gateway.zh.md)、[如何构建和部署](../how-to/build-and-deploy.zh.md)
-- 参考：[环境变量参考](environment.zh.md)、[包参考](packages.zh.md)

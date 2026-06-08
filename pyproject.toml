@@ -17,18 +17,16 @@ classifiers = [
 ]
 dependencies = [
     "bub>=0.3.7",
+    "cookiecutter>=2.5",
+    "jinja2>=3.1",
     "logfire>=4.33.0",
+    "npx-skills>=1.5",
     "pydantic-settings>=2.0.0",
-]
-
-[project.optional-dependencies]
-cli = [
-    "agentseek-cli",
+    "typer>=0.12",
 ]
 
 [project.scripts]
 agentseek = "agentseek.__main__:app"
-bub = "agentseek.__main__:app"
 
 [project.urls]
 Repository = "https://github.com/ob-labs/agentseek"
@@ -87,12 +85,10 @@ agentseek-langchain = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }
 agentseek-ag-ui = { workspace = true }
 agentseek-contextseek = { workspace = true }
-agentseek-cli = { workspace = true }
 
 [tool.uv.workspace]
 members = [
     "contrib/agentseek-ag-ui",
-    "contrib/agentseek-cli",
     "contrib/agentseek-langchain",
     "contrib/agentseek-schedule-sqlalchemy",
     "contrib/agentseek-tapestore-oceanbase",

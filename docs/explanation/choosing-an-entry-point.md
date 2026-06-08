@@ -1,210 +1,74 @@
 ---
-title: Choosing an entry point
+title: CLI surface
 type: explanation
 audience: [A1, A2, A4, A5]
 runs: no
-verified_on: 2026-05-29
+verified_on: 2026-06-08
 sources:
   - README.md
-  - docs/index.md
   - pyproject.toml
-  - contrib/agentseek-cli/pyproject.toml
   - src/agentseek/__main__.py
   - src/agentseek/cli.py
-  - contrib/agentseek-cli/src/agentseek_cli/standalone.py
-  - contrib/agentseek-cli/src/agentseek_cli/plugin.py
+  - src/agentseek/lifecycle/app.py
   - entrypoint.sh
 ---
 
-# Choosing an entry point
+# CLI surface
 
-> **In short:** agentseek ships as **two PyPI packages** split by job —
-> `agentseek-cli` is the **project lifecycle CLI** (scaffold, develop, build,
-> deploy); `agentseek` is the **harness** itself (chat, gateway, runtime,
-> embeddable library). Pick the one that fits the job. Docker Compose and the
-> contrib packages are deployment / extension surfaces *on top of* the harness,
-> not separate entry points.
+AgentSeek now has one public CLI entry point: `agentseek`.
 
-## Context
+The design keeps one command name while separating command groups by lifecycle:
 
-People meet agentseek in different ways. Some scaffold a project on a laptop or
-in CI and never need the harness on the host. Some want a chat REPL or a
-gateway running locally so they can debug a turn. Some embed the harness in a
-service they already own. Some operate a long-running gateway behind a
-container. The two packages exist so the first two jobs have a sharp, isolated
-entry point; the last two run the same harness with different launchers.
+| Job | Commands | Use when |
+| --- | --- | --- |
+| Project lifecycle | `new`, `dev`, `build`, `deploy` | You are creating, running, packaging, or deploying a project. |
+| Runtime | `chat`, `turn`, `gateway` | You are interacting with the harness. |
+| Extension and services | `plugin`, `ctx`, `skills`, `api`, `mcp` | You are connecting plugins, context, skills, APIs, or MCP servers. |
 
-This page lays out the two paths so the choice stays about fit rather than
-reputation.
+This shape matches the way AgentSeek is used in practice: project lifecycle
+management is important enough to be first-class, but it should not require a
+separate package or a separate command name. The runtime stays equally visible
+because the same package is also an executable harness.
 
-## The two paths
+## Why command groups are separated
 
-### Path A — `agentseek-cli` (project lifecycle CLI)
+- `new / dev / build / deploy` are project operations. They can work before a
+  long-running harness is started.
+- `chat / turn / gateway` are runtime operations. They execute the harness.
+- `plugin / ctx / skills / api / mcp` connect the runtime to optional services
+  and tools.
 
-Install it directly from PyPI:
+This avoids ambiguous root commands. Bub's root `run` becomes `agentseek turn`,
+and root plugin mutation commands move under `agentseek plugin`.
 
-```bash
-uv tool install agentseek-cli
-```
+## Generated projects
 
-`uv tool install` creates an isolated venv for `agentseek-cli` and exposes a
-single console script named `agentseek`. The Typer app is built by
-`agentseek_cli.app.build_app()`
-(`contrib/agentseek-cli/src/agentseek_cli/app.py:33-43`) and contains only the
-project lifecycle groups:
-
-`new / dev / build / deploy / api / ctx / skills`.
-
-Path A fits when:
-
-- You want to **scaffold a project** with `agentseek new …` and you do not
-  want to clone the repository to do it.
-- You operate **CI** that only needs `build` / `deploy` — the harness runtime
-  is not pulled in.
-- You manage projects with `dev`, build images, generate deployment
-  manifests, or invoke `ctx` / `skills` from outside the harness env.
-
-Path A intentionally does **not** include the harness runtime CLI
-(`chat / turn / gateway / plugin / …`). The dependency tree is small and resolves
-cleanly from PyPI.
-
-### Path B — `agentseek` (the harness)
-
-Install the published runtime as an isolated uv tool when you only need the
-harness command surface:
+Generated projects depend on `agentseek` and therefore receive the same command
+surface after `uv sync`. The normal loop is:
 
 ```bash
-uv tool install agentseek
-```
-
-For repository development, or when you need workspace contrib packages from
-this checkout, sync a project that owns the `[tool.uv.sources]` map:
-
-```bash
-git clone https://github.com/ob-labs/agentseek.git
-cd agentseek
+uv run agentseek new langchain/default
+cd my-agent
 uv sync
+uv run agentseek dev
 ```
 
-In an installed tool or synced project, `agentseek` ends up calling
-`agentseek.__main__:app` (`pyproject.toml:29`,
-`src/agentseek/__main__.py:39-53`), which bootstraps `BubFramework`, loads
-every Bub plugin, and exposes the **harness runtime** command surface:
+## Docker Compose
 
-`chat / turn / gateway / plugin / mcp / login / onboard`.
+Compose packages the runtime for operators. `entrypoint.sh` prepares the
+runtime home, maps `AGENTSEEK_*` variables to Bub, and starts `agentseek
+gateway` unless the workspace provides a custom startup script.
 
-Path B fits when:
+## Consequences
 
-- You want to **evaluate** the project end-to-end —
-  [01 — Quick demo via the CLI](../tutorials/01-quick-demo-cli.md) is
-  the shortest route.
-- You **embed** the harness in your own application. `agentseek` is a regular
-  Python package; the harness boots when your app starts. See
-  [02 — Build your first harness app](../tutorials/02-first-harness-app.md).
-- You drive **long-running** workloads — a local `gateway`, an MCP server, or
-  Bub plugin development.
-
-### Both at once — same name, merged surface
-
-When `agentseek-cli` and the harness are installed in the **same** environment
-(typical inside this repository, or inside a project generated by Path A),
-both compete for the console script name. Whichever is installed last wins,
-but the user-visible behaviour is identical:
-
-- If `agentseek-cli` wins, `agentseek_cli.standalone.app`
-  (`contrib/agentseek-cli/src/agentseek_cli/standalone.py:24-32`) detects that
-  the harness is importable and defers to
-  `agentseek.__main__.create_cli_app()`.
-- That function boots `BubFramework`, which loads `agentseek_cli.plugin:main`
-  via the `[project.entry-points.bub]` declaration in
-  `contrib/agentseek-cli/pyproject.toml:20-21`.
-- The plugin
-  (`contrib/agentseek-cli/src/agentseek_cli/plugin.py:28-42`) mounts every
-  project lifecycle group onto the framework app without overriding existing
-  framework-owned names.
-- The harness layout moves Bub's single-message dispatch from root `run` to
-  `turn`, and moves Bub's `install` / `uninstall` / `update` under
-  `plugin install` / `plugin uninstall` / `plugin update`.
-
-End result: a single `agentseek …` exposes the union of both surfaces, but the
-old root forms are not aliases and are not valid commands. See
-[CLI reference](../reference/cli.md) for the per-command attribution.
-
-## Deployment and extension surfaces
-
-These are not separate entry points; they are ways to package or extend Path B.
-
-### Docker Compose — operate the harness in a container
-
-`entrypoint.sh:5-26` resolves `BUB_*`/`AGENTSEEK_*` pairs, ensures the home
-and project directories exist, optionally symlinks `.agents/skills` and
-`.agents/mcp.json` into the runtime paths (`entrypoint.sh:30-39`), and finally
-execs either a workspace-provided `startup.sh` or `agentseek gateway`
-(`entrypoint.sh:41-45`).
-
-Compose is the path B harness, packaged for operators. Use it when you want a
-mounted workspace plus a long-running gateway without managing a Python
-environment on the host. End-to-end walkthrough:
-[How to run with Docker Compose](../how-to/run-with-docker-compose.md).
-
-### Contrib packages — feature-scoped extensions
-
-Each `contrib/agentseek-*/` package is a Python distribution you can install on
-top of the harness. They are listed at
-[contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib) and
-installed via `agentseek plugin install <package>` (e.g. `agentseek plugin install agentseek-langchain`).
-
-These are **runtime plugins** for Path B: `agentseek-ag-ui`, `agentseek-langchain`,
-`agentseek-tapestore-oceanbase`, `bub-tapestore-otel`,
-`agentseek-schedule-sqlalchemy`, `agentseek-contextseek`. They extend the
-harness; they do not replace it. See [The extension model](extension-model.md).
-
-`agentseek-cli` is also under `contrib/`, but it is **not** a runtime plugin —
-it is the standalone project lifecycle CLI of Path A, which happens to also
-register a Bub plugin for the dual-mode behaviour described above.
-
-## Why it is like this
-
-- **One job per package.** Path A's audience does not want the harness's
-  dependency tree on their laptop; Path B's audience does. Splitting them
-  keeps each install reasonable and each surface honest.
-- **Same name on purpose.** A user that goes from Path A to Path B (e.g. by
-  `uv sync`-ing inside a generated project) keeps typing `agentseek …`. The
-  command surface grows, but the command name stays.
-- **Plugin override over hard-coding.** The harness does not special-case
-  `agentseek-cli`. The CLI plugin is just another Bub plugin, governed by the
-  same `register_cli_commands` hook anyone else uses.
-
-## Consequences for users
-
-- If you are an **evaluator (A1)**, Path B against a free model is the
-  shortest path to a working turn
-  ([01 — Quick demo via the CLI](../tutorials/01-quick-demo-cli.md)).
-- If you are an **application developer (A2)**, Path A scaffolds the project,
-  then Path B runs the harness from inside it
-  ([02 — Build your first harness app](../tutorials/02-first-harness-app.md)).
-- If you are a **plugin author (A3)**, you live in Path B. Test under both
-  `agentseek` and `bub` (see [How agentseek relates to Bub](bub-relationship.md)) so
-  you catch accidental coupling to agentseek defaults.
-- If you are an **operator (A4)**, Compose on top of Path B is the right
-  starting point; Path B's CLI is the inner-loop tool for poking at the
-  runtime.
-- If you ever wonder why `agentseek …` has different commands in two
-  environments, look at [CLI reference](../reference/cli.md): each
-  command lists the package that owns it.
+- Install and document `agentseek`, not a companion lifecycle package.
+- Old root forms are intentionally invalid; do not rely on aliases.
+- Contrib packages remain optional runtime extensions, not alternative entry
+  points.
 
 ## Related
 
-- Overview: [agentseek](../index.md)
-- Tutorial: [01 — Quick demo via the CLI](../tutorials/01-quick-demo-cli.md),
-  [02 — Build your first harness app](../tutorials/02-first-harness-app.md)
-- How-to: [How to run agentseek locally](../how-to/run-locally.md),
-  [How to run with Docker Compose](../how-to/run-with-docker-compose.md),
-  [How to install a plugin](../how-to/install-a-plugin.md)
-- Reference: [CLI reference](../reference/cli.md),
-  [Packages reference](../reference/packages.md),
-  [Docker reference](../reference/docker.md),
-  [Templates reference](../reference/templates.md)
-- Explanation: [What agentseek is](what-agentseek-is.md),
-  [How agentseek relates to Bub](bub-relationship.md),
-  [Where things live in the monorepo](where-things-live.md)
+- [CLI reference](../reference/cli.md)
+- [Packages reference](../reference/packages.md)
+- [How AgentSeek relates to Bub](bub-relationship.md)
+- [Where things live](where-things-live.md)

@@ -19,9 +19,8 @@ turn can run.
 
 ## Prerequisites
 
-- A working **harness** environment: either this repository after `uv sync`,
-  or a generated project after its own `uv sync`. `agentseek-cli` on its own
-  does not provide `chat`.
+- A working AgentSeek environment: either this repository after `uv sync`,
+  a generated project after its own `uv sync`, or an installed `agentseek` tool.
 - A valid API key for your chosen provider.
 
 ## Steps
