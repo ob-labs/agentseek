@@ -18,7 +18,7 @@ It is built for teams that want to move from a local
 application with a clear runtime, storage, context, and serving story.
 
 > **"Deep Agents 实战"**: a free LangChain / DeepAgents course with AgentSeek labs.
-> [Course site](https://webup.github.io/deepagents-course) · [Source repo](https://github.com/webup/deepagents-site)
+> [Course site](https://webup.github.io/deepagents-course) · [Source repo](https://github.com/webup/deepagents-course)
 
 ## Two Entry Points
 
