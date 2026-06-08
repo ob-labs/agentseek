@@ -39,7 +39,7 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 | OpenAI-compatible model / `ChatOpenAI` not working | model-integration issue 1 |
 | Reasoning model / `reasoning_content` / chain-of-thought lost | model-integration issue 2 |
 | Chinese model / CN provider / DeepSeek / Qwen / GLM / Moonshot | cn-models README |
-| `langchain-cn-models` (merged) / generate integration class | cn-models README |
+| `langchain-cn-models` (embedded) / generate integration class | cn-models README |
 | Middleware order messed up / before/after counterintuitive | middleware issue 1 |
 | `state_schema` fields not merged / input/output control | middleware issue 2 |
 | `interrupt` resume value missing / HITL | middleware issue 3 |
