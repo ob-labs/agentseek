@@ -1,6 +1,6 @@
 ---
 name: langchain-dev-guide
-description: "LangChain / LangGraph engineering pitfalls and verified fixes. Covers DeepAgents, OpenAI-compatible model integration, middleware, streaming, multi-agent orchestration, and other common development issues. Use when hitting unexpected behavior or making architecture decisions during LangChain development."
+description: "LangChain / LangGraph engineering pitfalls and verified fixes. Covers DeepAgents, OpenAI-compatible model integration (including Chinese provider adapters: DeepSeek, Qwen, GLM, etc.), middleware, streaming, multi-agent orchestration, and other common development issues. Use when hitting unexpected behavior, making architecture decisions, or integrating Chinese LLM providers during LangChain development."
 ---
 
 # LangChain Dev Guide
@@ -22,6 +22,7 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 |----------|------|-------------------|
 | Deep Agents | [reference/deepagents.md](reference/deepagents.md) | Model selection, filesystem backend, disabling the general-purpose sub-agent, file permissions, long-term memory |
 | OpenAI-compatible Model Integration | [reference/model-integration.md](reference/model-integration.md) | Pitfalls when using `ChatOpenAI` against OpenAI-compatible providers, integrating Reasoning models (chain-of-thought / `reasoning_content`) |
+| CN Model Integration | [reference/cn-models/README.md](reference/cn-models/README.md) | Generating LangChain integration classes for Chinese providers (DeepSeek, Qwen, GLM, Moonshot). Template at [template/chat_model.py](template/chat_model.py), DeepSeek reference at [reference/cn-models/deepseek/](reference/cn-models/deepseek/) |
 | Middleware | [reference/middleware.md](reference/middleware.md) | Middleware execution order, `state_schema` merging, HITL `resume` values, modifying state from `wrap_model_call` |
 | Streaming Output | [reference/streaming.md](reference/streaming.md) | Choosing between `stream_events` and `stream`, distinguishing tokens from multiple LLMs, disabling streaming, custom progress events |
 | Multi-Agent Orchestration | [reference/multi-agent.md](reference/multi-agent.md) | subagents vs handoffs, tool-per-agent vs dispatch, retrieving subagent state, trimming subagent boilerplate, quickly building handoff setups |
@@ -37,6 +38,8 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 | Long-term memory / store | deepagents issue 5 |
 | OpenAI-compatible model / `ChatOpenAI` not working | model-integration issue 1 |
 | Reasoning model / `reasoning_content` / chain-of-thought lost | model-integration issue 2 |
+| Chinese model / CN provider / DeepSeek / Qwen / GLM / Moonshot | cn-models README |
+| `langchain-cn-models` / generate integration class | cn-models README |
 | Middleware order messed up / before/after counterintuitive | middleware issue 1 |
 | `state_schema` fields not merged / input/output control | middleware issue 2 |
 | `interrupt` resume value missing / HITL | middleware issue 3 |

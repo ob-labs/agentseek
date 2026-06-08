@@ -137,7 +137,6 @@ def test_skills_list_shows_embedded_catalogue_by_default(monkeypatch) -> None:
     assert result.exit_code == 0
     assert "langsmith-trace" in result.output
     assert "langchain-dev-guide" in result.output
-    assert "langchain-cn-models" in result.output
     assert "github-repo-cards" in result.output
     assert "agentseek skills add" in result.output
 

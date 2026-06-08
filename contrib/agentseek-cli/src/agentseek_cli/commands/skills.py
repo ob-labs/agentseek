@@ -32,8 +32,7 @@ DEFAULT_SOURCE = "ob-labs/agentseek"
 # Update this when adding/removing skills in the skills/ directory.
 SKILLS_CATALOGUE: tuple[tuple[str, str], ...] = (
     ("langsmith-trace", "LangSmith CLI setup, tracing, and trace debugging for AgentSeek backends"),
-    ("langchain-dev-guide", "LangChain / LangGraph engineering pitfalls and verified fixes"),
-    ("langchain-cn-models", "Integrate Chinese LLM providers (DeepSeek, Qwen, GLM) into LangChain"),
+    ("langchain-dev-guide", "LangChain / LangGraph / DeepAgents pitfalls and fixes, plus CN model integration"),
     ("github-repo-cards", "Generate visual GitHub repo cards for documentation and social sharing"),
 )
 

@@ -45,8 +45,7 @@ agentseek skills add --all --global --copy
 | Skill | Purpose |
 |-------|---------|
 | `langsmith-trace` | LangSmith CLI setup, tracing, and trace debugging for AgentSeek backends |
-| `langchain-dev-guide` | Engineering pitfalls and verified fixes for LangChain/LangGraph |
-| `langchain-cn-models` | Integrating Chinese LLM providers (Qwen, GLM, DeepSeek) with LangChain |
+| `langchain-dev-guide` | LangChain / LangGraph / DeepAgents pitfalls and fixes, plus CN model integration (DeepSeek, Qwen, GLM) |
 | `github-repo-cards` | Generate visual repo cards for documentation and social sharing |
 
 ## Update & Remove

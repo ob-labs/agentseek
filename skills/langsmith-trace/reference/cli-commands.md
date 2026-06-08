@@ -1,5 +1,8 @@
 # LangSmith CLI Command Reference
 
+> [!CAUTION]
+> All commands below assume `LANGSMITH_API_KEY` is set in the environment. **Never use `--api-key` CLI flags** — this leaks secrets into shell history and agent logs.
+
 ## Command Tree
 
 ```

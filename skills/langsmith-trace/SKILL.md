@@ -10,6 +10,9 @@ Add tracing to your agent and query traces for debugging. Supports Python and Ty
 > [!IMPORTANT]
 > This skill is tuned for AgentSeek template backends (LangGraph + middleware stacks). For general LangSmith concepts, see the upstream [langsmith-skills](https://github.com/langchain-ai/langsmith-skills) repo.
 
+> [!CAUTION]
+> **Never pass `--api-key` as a CLI flag or expose API keys in shell commands / tool calls.** The CLI reads `LANGSMITH_API_KEY` from the environment automatically. Using `--api-key <value>` leaks secrets into shell history, process listings, and agent tool-call logs. Always rely on the environment variable set in your shell profile or `.env` file.
+
 ## Installation & Setup
 
 ### 1. Install the CLI
@@ -25,15 +28,17 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-### 2. Set your API key
+### 2. Set your API key (environment variable only)
 
-Add to `~/.zshrc` (or the template's `.env` file):
+Add to `~/.zshrc` (or the template's `.env` file) — the user must fill in their own key:
 
 ```bash
-export LANGSMITH_API_KEY=lsv2_pt_your_key_here
+export LANGSMITH_API_KEY=<your-key-here>  # starts with lsv2_pt_
 ```
 
 Key format must start with `lsv2_pt_`. Get yours at https://smith.langchain.com/settings.
+
+**The CLI reads this env var automatically — never use `--api-key` flags.** Do not echo, print, or pass the key value in any shell command or tool call argument.
 
 ### 3. Verify
 
@@ -54,7 +59,7 @@ Just set environment variables — no code changes needed:
 
 ```bash
 export LANGSMITH_TRACING=true
-export LANGSMITH_API_KEY=lsv2_pt_...
+export LANGSMITH_API_KEY=<your-key-here>  # must be set; do NOT pass via --api-key flag
 export LANGSMITH_PROJECT=my-project  # optional, defaults to "default"
 ```
 

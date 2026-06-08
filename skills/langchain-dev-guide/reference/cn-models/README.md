@@ -1,9 +1,4 @@
----
-name: langchain-cn-models
-description: "Integrate Chinese LLM providers (DeepSeek, Qwen, GLM, etc.) into LangChain. Use when a developer asks to connect a Chinese model via LangChain or wire up a Chinese provider with langchain."
----
-
-# LangChain CN Models
+# CN Model Integration Guide
 
 Help developers write LangChain integration classes for a specified Chinese model (e.g., Qwen, GLM, DeepSeek, Moonshot) using the OpenAI-compatible interface.
 
@@ -39,16 +34,16 @@ Additionally, inspect the project directory structure to determine the Python pa
 
 ## Step 3: Check if DeepSeek
 
-**If the model is DeepSeek**, first check whether `langchain-deepseek` is installed; install it if not. Then copy `chat_model.py` and `__init__.py` from `reference/deepseek/` into the target subdirectory. Skip all subsequent steps.
+**If the model is DeepSeek**, first check whether `langchain-deepseek` is installed; install it if not. Then copy `chat_model.py` and `__init__.py` from [deepseek/](deepseek/) into the target subdirectory. Skip all subsequent steps.
 
-DeepSeek has an official integration `langchain_deepseek.ChatDeepSeek` whose `_get_request_payload` handles content list conversion and Azure `tool_choice` compatibility, but it does **NOT write back `reasoning_content`**. The code in `reference/` subclasses the official class, only overriding `_get_request_payload` to inject reasoning write-back logic. No other methods need overriding.
+DeepSeek has an official integration `langchain_deepseek.ChatDeepSeek` whose `_get_request_payload` handles content list conversion and Azure `tool_choice` compatibility, but it does **NOT write back `reasoning_content`**. The code in [deepseek/](deepseek/) subclasses the official class, only overriding `_get_request_payload` to inject reasoning write-back logic. No other methods need overriding.
 
 **If the model is another provider**, continue with the steps below.
 
 ## Step 4: Copy the Template
 
 1. Check whether `langchain-openai` is installed; install it if not.
-2. Copy `template/chat_model.py` into the target subdirectory.
+2. Copy the template from [../../template/chat_model.py](../../template/chat_model.py) into the target subdirectory.
 3. Create `__init__.py`: `from .chat_model import <CHAT_CLASS_NAME>`
 
 ## Step 5: Replace Placeholders
@@ -82,9 +77,9 @@ On success, a `data/_profiles.py` file is generated under the model directory, w
 
 ## Step 7: Write Integration Tests
 
-After the model class is complete, you must write integration tests. See the detailed guide at [reference/integration-tests.md](reference/integration-tests.md).
+After the model class is complete, you must write integration tests. See the detailed guide at [integration-tests.md](integration-tests.md).
 
 > [!IMPORTANT]
 > **Before running integration tests, you must remind the user to edit the `.env` file themselves and fill in the required API Key and other environment variables.**
 >
-> When running tests, you will likely encounter common setup issues (package not importable, async test mode, etc.). Refer to the "Common Issues" section at the end of [reference/integration-tests.md](reference/integration-tests.md) for fixes.
+> When running tests, you will likely encounter common setup issues (package not importable, async test mode, etc.). Refer to the "Common Issues" section at the end of [integration-tests.md](integration-tests.md) for fixes.
