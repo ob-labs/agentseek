@@ -7,13 +7,29 @@ Help developers write LangChain integration classes for a specified Chinese mode
 
 ## Step 1: Gather Information
 
-First, confirm the following details with the user:
+Confirm the following details with the user. If the user does not explicitly provide any of these, use reasonable defaults from the provider's documentation.
+
+<!-- gather
+prompt: "Confirm the following details for the model integration:"
+fields:
+  - name: model_name
+    question: "Model name (lowercase, used for directory and class names)"
+    example: "qwen"
+    required: true
+  - name: api_base
+    question: "API base URL (OpenAI-compatible endpoint)"
+    example: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    required: true
+  - name: api_key_env
+    question: "API key environment variable name"
+    example: "QWEN_API_KEY"
+    required: true
+fallback: "Use reasonable defaults from the provider's documentation."
+-->
 
 1. **Model Name** — lowercase, e.g., `qwen`, `glm`, `deepseek`. Used for directory names, class names, and `_llm_type`.
 2. **API Base URL** — the model's OpenAI-compatible endpoint URL.
 3. **API Key Environment Variable Name** — e.g., `QWEN_API_KEY`.
-
-If the user does not explicitly provide any of these, use reasonable defaults.
 
 Additionally, inspect the project directory structure to determine the Python package manager (`uv.lock` → uv, `poetry.lock` → poetry, `requirements.txt` → pip, etc.).
 
