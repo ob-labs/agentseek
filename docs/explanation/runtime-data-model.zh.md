@@ -104,18 +104,18 @@ MCP server 适合那些应该被 **声明而非编码** 的 tool 集成 —— i
 方式。
 
 agentseek 包含 Feishu、MCP、tape-store OpenTelemetry 与 SQLAlchemy-backed scheduling
-这些常用运行时 plugins。其余 plugin 通过 `agentseek install` 按需安装：
+这些常用运行时 plugins。其余 plugin 通过 `agentseek plugin install` 按需安装：
 
 | 命令 | 添加 |
 | --- | --- |
-| `agentseek install agentseek-ag-ui` | AG-UI channel 适配器 |
-| `agentseek install agentseek-langchain` | LangChain model 路由 |
-| `agentseek install bub-tapestore-otel@main` | Tape-first OpenTelemetry tracing |
-| `agentseek install agentseek-tapestore-oceanbase` | OceanBase tape 存储 |
-| `agentseek install agentseek-contextseek` | ContextSeek 语义 context 层 |
+| `agentseek plugin install agentseek-ag-ui` | AG-UI channel 适配器 |
+| `agentseek plugin install agentseek-langchain` | LangChain model 路由 |
+| `agentseek plugin install bub-tapestore-otel@main` | Tape-first OpenTelemetry tracing |
+| `agentseek plugin install agentseek-tapestore-oceanbase` | OceanBase tape 存储 |
+| `agentseek plugin install agentseek-contextseek` | ContextSeek 语义 context 层 |
 
 Plugin 被安装到与 agentseek **相同的 Python 环境** 中；它们不是 sandbox runtime 单元。
-位于 `.agentseek/agentseek-project` 的 `agentseek install` sandbox
+位于 `.agentseek/agentseek-project` 的 `agentseek plugin install` sandbox
 （见 [agentseek 与 Bub 的关系](bub-relationship.zh.md)）是一个用于解析和添加 plugin 的 uv 项目，
 不是 runtime 边界。
 

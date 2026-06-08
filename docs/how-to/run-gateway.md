@@ -72,7 +72,7 @@ API for the gateway.
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `agentseek gateway` not found | You are on Path A with only `agentseek-cli` installed | Use a harness environment, or Docker Compose on top of it. |
-| Channel never receives messages | Plugin missing in the runtime env | `uv run agentseek install <plugin>` to add it to the sandbox. |
+| Channel never receives messages | Plugin missing in the runtime env | `uv run agentseek plugin install <plugin>` to add it to the sandbox. |
 | Gateway exits immediately | Channel credentials missing | Inspect the log for the channel name; add the credential to `.env`. |
 | Multiple gateways race in Docker | `startup.sh` and the default entrypoint both ran | Pick one; `startup.sh` replaces, it does not chain. |
 

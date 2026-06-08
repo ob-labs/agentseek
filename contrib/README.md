@@ -21,7 +21,7 @@ agentseek follows Bub's extension conventions. `AGENTSEEK_*` environment variabl
 | Package | Bub entry point | Purpose |
 | --- | --- | --- |
 | [agentseek-ag-ui](agentseek-ag-ui/README.md) | n/a | AG-UI protocol adapter and FastAPI endpoint helpers for Bub/agentseek runtimes. |
-| [agentseek-cli](agentseek-cli/README.md) | `cli` | Project-lifecycle CLI (`create / run / build / deploy / api / ctx / skills`); installable standalone via `uvx` or mounted onto the main `agentseek` CLI as a Bub plugin. |
+| [agentseek-cli](agentseek-cli/README.md) | `cli` | Project-lifecycle CLI (`new / dev / build / deploy / api / ctx / skills`); installable standalone via `uvx` or mounted onto the main `agentseek` CLI as a Bub plugin. |
 | [agentseek-tapestore-oceanbase](agentseek-tapestore-oceanbase/README.md) | `tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility and optional vector retrieval. |
 | [agentseek-langchain](agentseek-langchain/README.md) | `langchain` | Route Bub model turns through a user-provided LangChain `Runnable` or agent. |
 | [agentseek-schedule-sqlalchemy](agentseek-schedule-sqlalchemy/README.md) | `schedule` | Persist APScheduler jobs in a SQLAlchemy-backed store. |
@@ -39,7 +39,7 @@ Use this section order for package READMEs:
 
 1. `At A Glance`: distribution name, Python package, Bub entry point, config section or surface, install path, and test target.
 2. `When To Use It`: the user problem the package solves and what it does not own.
-3. `Install`: `agentseek install` command or workspace install, plus standalone local/Git install when supported.
+3. `Install`: `agentseek plugin install` command or workspace install, plus standalone local/Git install when supported.
 4. `Configure`: environment variables, config file sections, precedence, and defaults.
 5. `Run`: minimal command sequence and package-specific examples.
 6. `Runtime Behavior`: hooks, lifecycle behavior, storage behavior, and fallback behavior.

@@ -19,7 +19,7 @@ sources:
 
 # 模板参考
 
-`agentseek create` 使用的捆绑 Cookiecutter 模板。目录清单位于 `templates/index.json`；
+`agentseek new` 使用的捆绑 Cookiecutter 模板。目录清单位于 `templates/index.json`；
 每个模板都是位于 `templates/<framework>/<name>/` 下的一个 cookiecutter project。
 
 > **这是一个持续增长的集合。** 我们在不断添加新模板和打磨已有模板——LangChain、
@@ -43,8 +43,8 @@ sources:
 
 清单来自 `templates/index.json`。
 
-> **终端里浏览。** 运行 `agentseek create --template` 可以查看所有模板和描述；
-> 运行 `agentseek create langchain --template` 可以只看某个框架类型。
+> **终端里浏览。** 运行 `agentseek new --template` 可以查看所有模板和描述；
+> 运行 `agentseek new langchain --template` 可以只看某个框架类型。
 
 ## 选择模板
 
@@ -62,19 +62,19 @@ sources:
 | 想要 Bub 加语义记忆 | `bub/contextseek` | 在 Bub 路径上加入 ContextSeek memory、ctx HTTP API 和 seed 脚本。 |
 | 要把 LangChain 和 agentseek 运行时打通 | `deepagents/default` | `create_deep_agent` 绑定到 `agentseek-langchain`——harness 数据层和 DeepAgents 编排一起拿到。 |
 
-## `agentseek create` 参数形态
+## `agentseek new` 参数形态
 
 | 形式 | 含义 |
 | --- | --- |
-| `agentseek create --template` | 列出所有类型下的全部模板，并显示描述。 |
-| `agentseek create langchain --template` | 只列出给定类型下的模板。 |
-| `agentseek create --list-templates` | 列出所有类型下的全部模板，并显示描述。 |
-| `agentseek create <type> --list-templates` | 列出该类型的模板并退出（等价于不带值的 `--template`）。 |
-| `agentseek create bub` | 该框架的默认模板（`bub/default`）。 |
-| `agentseek create langchain/cli-remote` | 指定的 `type/name` spec。 |
-| `agentseek create langchain --template cli-remote` | 等价的命名模板形式。 |
-| `agentseek create <git-url>` | 拉取远程 cookiecutter；可与 `--checkout` 组合。 |
-| `agentseek create <local-path>` | 使用本地 cookiecutter 目录。 |
+| `agentseek new --template` | 列出所有类型下的全部模板，并显示描述。 |
+| `agentseek new langchain --template` | 只列出给定类型下的模板。 |
+| `agentseek new --list-templates` | 列出所有类型下的全部模板，并显示描述。 |
+| `agentseek new <type> --list-templates` | 列出该类型的模板并退出（等价于不带值的 `--template`）。 |
+| `agentseek new bub` | 该框架的默认模板（`bub/default`）。 |
+| `agentseek new langchain/cli-remote` | 指定的 `type/name` spec。 |
+| `agentseek new langchain --template cli-remote` | 等价的命名模板形式。 |
+| `agentseek new <git-url>` | 拉取远程 cookiecutter；可与 `--checkout` 组合。 |
+| `agentseek new <local-path>` | 使用本地 cookiecutter 目录。 |
 
 完整的标志表参见 [CLI 参考](cli.zh.md)。
 

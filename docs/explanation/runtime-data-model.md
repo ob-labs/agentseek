@@ -119,18 +119,18 @@ model providers, tape stores, schedulers, and tool packages.
 
 agentseek includes common runtime plugins for Feishu, MCP, tape-store OpenTelemetry,
 and SQLAlchemy-backed scheduling. Other plugins are installed on demand via
-`agentseek install`:
+`agentseek plugin install`:
 
 | Command | Adds |
 | --- | --- |
-| `agentseek install agentseek-ag-ui` | AG-UI channel adapter |
-| `agentseek install agentseek-langchain` | LangChain model routing |
-| `agentseek install bub-tapestore-otel@main` | Tape-first OpenTelemetry tracing |
-| `agentseek install agentseek-tapestore-oceanbase` | OceanBase tape storage |
-| `agentseek install agentseek-contextseek` | ContextSeek semantic context layer |
+| `agentseek plugin install agentseek-ag-ui` | AG-UI channel adapter |
+| `agentseek plugin install agentseek-langchain` | LangChain model routing |
+| `agentseek plugin install bub-tapestore-otel@main` | Tape-first OpenTelemetry tracing |
+| `agentseek plugin install agentseek-tapestore-oceanbase` | OceanBase tape storage |
+| `agentseek plugin install agentseek-contextseek` | ContextSeek semantic context layer |
 
 Plugins are installed into the **same Python environment** as agentseek; they are not
-sandboxed runtime units. The `agentseek install` sandbox at `.agentseek/agentseek-project`
+sandboxed runtime units. The `agentseek plugin install` sandbox at `.agentseek/agentseek-project`
 (see [How agentseek relates to Bub](bub-relationship.md)) is a uv project used to resolve and add
 plugins, not a runtime boundary.
 
@@ -170,7 +170,7 @@ turn.
 - If you want a **new place the agent can be reached from**, write or install a channel
   plugin.
 - Hard dependencies (Bub, `bub-feishu`, `bub-mcp`, `agentseek-schedule-sqlalchemy`) are
-  always present in any agentseek install; everything else is opt-in.
+  always present in any agentseek plugin install; everything else is opt-in.
 
 ## Related
 

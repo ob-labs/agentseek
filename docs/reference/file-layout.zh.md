@@ -32,7 +32,7 @@ Bub plugins 的 uv project）。
     mcp.json                       # MCP server definitions (read by bub-mcp)
     agentseek-project/             # AGENTSEEK_PROJECT / BUB_PROJECT
       pyproject.toml               # `uv init --bare --name agentseek-project --app`
-      ...                          # plugins installed by `agentseek install`
+      ...                          # plugins installed by `agentseek plugin install`
   .agents/
     skills/                        # project-local skills (Bub discovers from here)
     mcp.json                       # optional alternate MCP path
@@ -67,7 +67,7 @@ entrypoint 会固定下面的变量：
 
 ## Plugin sandbox 语义
 
-`agentseek install` 会在 `AGENTSEEK_PROJECT` / `BUB_PROJECT` 所在目录内运行。
+`agentseek plugin install` 会在 `AGENTSEEK_PROJECT` / `BUB_PROJECT` 所在目录内运行。
 首次调用使用 `_ensure_plugin_sandbox`（`src/agentseek/cli.py:123`）：
 
 1. 对 project 路径执行 `mkdir -p`。
@@ -81,7 +81,7 @@ entrypoint 会固定下面的变量：
 默认 sandbox 的 basename 必须与 `uv init --name` 匹配
 （`src/agentseek/env.py:22` 与 `src/agentseek/cli.py:134`）。
 
-`agentseek install` 属于 harness 运行时 CLI。只装了 `agentseek-cli` 的路径 A
+`agentseek plugin install` 属于 harness 运行时 CLI。只装了 `agentseek-cli` 的路径 A
 环境本身不会创建或管理这个 sandbox。
 
 ## 捆绑 skills（`src/skills`）

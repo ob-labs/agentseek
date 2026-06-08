@@ -23,8 +23,8 @@ agentseek 在 PyPI 上以**两个互补的包**形式提供，按职责拆分。
 
 | 包 | 角色 | 源码 | Console script | 安装方式 |
 | --- | --- | --- | --- | --- |
-| `agentseek` | Harness —— 运行时 CLI 与可嵌入的库（`chat`、`run`、`gateway`、`install`、`update`、…） | `pyproject.toml:2`、`src/agentseek/` | `agentseek = "agentseek.__main__:app"`（`pyproject.toml:29`） | 运行时 CLI 使用 `uv tool install agentseek`；作为库嵌入时，把 `agentseek` 加入项目依赖。 |
-| `agentseek-cli` | 项目生命周期 CLI（`create`、`run`、`build`、`deploy`、`api`、`ctx`、`skills`） | `contrib/agentseek-cli/pyproject.toml:2`、`contrib/agentseek-cli/src/agentseek_cli/` | `agentseek = "agentseek_cli.standalone:app"`（`contrib/agentseek-cli/pyproject.toml:18`） | `uv tool install agentseek-cli`（首选），或在本仓库内以 `cli` extra 拉入 |
+| `agentseek` | Harness —— 运行时 CLI 与可嵌入的库（`chat`、`turn`、`gateway`、`plugin`、…） | `pyproject.toml:2`、`src/agentseek/` | `agentseek = "agentseek.__main__:app"`（`pyproject.toml:29`） | 运行时 CLI 使用 `uv tool install agentseek`；作为库嵌入时，把 `agentseek` 加入项目依赖。 |
+| `agentseek-cli` | 项目生命周期 CLI（`new`、`dev`、`build`、`deploy`、`api`、`ctx`、`skills`） | `contrib/agentseek-cli/pyproject.toml:2`、`contrib/agentseek-cli/src/agentseek_cli/` | `agentseek = "agentseek_cli.standalone:app"`（`contrib/agentseek-cli/pyproject.toml:18`） | `uv tool install agentseek-cli`（首选），或在本仓库内以 `cli` extra 拉入 |
 
 本仓库的 `[tool.uv.sources]` 是开发期解析 workspace 和 git-sourced plugin 包的
 映射。发布到 PyPI 的 `agentseek` wheel 的核心运行时依赖不需要它。
@@ -66,7 +66,7 @@ agentseek 在 PyPI 上以**两个互补的包**形式提供，按职责拆分。
 
 ## 安装插件
 
-插件通过 `agentseek install` 命令安装。之前的 `[optional-dependencies]` extras
+插件通过 `agentseek plugin install` 命令安装。之前的 `[optional-dependencies]` extras
 （例如 `pip install agentseek[langchain]`）已被移除；只有 `agentseek[cli]` 作为
 pip extra 保留。
 
@@ -75,12 +75,12 @@ pip extra 保留。
 
 | 插件包 | 安装命令 | 用途 |
 | --- | --- | --- |
-| `agentseek-ag-ui` | `agentseek install agentseek-ag-ui` | AG-UI 适配器与 FastAPI helpers。 |
-| `agentseek-cli` | `agentseek install agentseek-cli` 或 `uv tool install agentseek-cli` | 把项目生命周期 CLI 合并进 harness 环境（`create / run / build / deploy / api / ctx / skills`）。 |
-| `agentseek-langchain` | `agentseek install agentseek-langchain` | LangChain `Runnable` / agent 桥接。 |
-| `bub-tapestore-otel` | `agentseek install bub-tapestore-otel@main` | 以 tape 为源的 OpenTelemetry spans，通过 OTLP HTTP 导出。 |
-| `agentseek-tapestore-oceanbase` | `agentseek install agentseek-tapestore-oceanbase` | 兼容 OceanBase 的 SQLAlchemy tape 存储。 |
-| `agentseek-contextseek` | `agentseek install agentseek-contextseek` | ContextSeek 语义上下文运行时 plugin（同时带入 `agentseek ctx` 所需的项目生命周期 CLI）。 |
+| `agentseek-ag-ui` | `agentseek plugin install agentseek-ag-ui` | AG-UI 适配器与 FastAPI helpers。 |
+| `agentseek-cli` | `agentseek plugin install agentseek-cli` 或 `uv tool install agentseek-cli` | 把项目生命周期 CLI 合并进 harness 环境（`new / dev / build / deploy / api / ctx / skills`）。 |
+| `agentseek-langchain` | `agentseek plugin install agentseek-langchain` | LangChain `Runnable` / agent 桥接。 |
+| `bub-tapestore-otel` | `agentseek plugin install bub-tapestore-otel@main` | 以 tape 为源的 OpenTelemetry spans，通过 OTLP HTTP 导出。 |
+| `agentseek-tapestore-oceanbase` | `agentseek plugin install agentseek-tapestore-oceanbase` | 兼容 OceanBase 的 SQLAlchemy tape 存储。 |
+| `agentseek-contextseek` | `agentseek plugin install agentseek-contextseek` | ContextSeek 语义上下文运行时 plugin（同时带入 `agentseek ctx` 所需的项目生命周期 CLI）。 |
 
 ## Contrib 包
 
@@ -115,7 +115,7 @@ contrib/agentseek-contextseek
 ```
 
 末尾的 `.agentseek/agentseek-project` 是 **默认 plugin sandbox**；将其作为 workspace
-成员，可以让 uv 针对同一 lockfile 解析由 `agentseek install` 安装的 plugins
+成员，可以让 uv 针对同一 lockfile 解析由 `agentseek plugin install` 安装的 plugins
 （`pyproject.toml:100`）。
 
 ## 构建时捆绑的 skills

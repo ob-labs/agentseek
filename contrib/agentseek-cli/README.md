@@ -15,7 +15,7 @@ as a Bub plugin on the main `agentseek` framework CLI.
 | Install path         | `pip install agentseek-cli` / `uv tool install agentseek-cli` |
 | Test target          | `make test-agentseek-cli`                   |
 
-Top-level command groups: `create`, `run`, `build`, `deploy`, `api`, `ctx`,
+Top-level command groups: `new`, `dev`, `build`, `deploy`, `api`, `ctx`,
 `skills`.
 
 ## When To Use It
@@ -106,20 +106,20 @@ agentseek ctx init --backend memory
 agentseek ctx retrieve --scope acme/db/eng --query "distributed database"
 agentseek ctx serve --port 8001 --mcp
 
-# create — scaffold a project from a bundled cookiecutter template
-agentseek create                                  # interactive type + template
-agentseek create deepagents                       # default template (no prompt for type)
-agentseek create langchain/cli-remote             # type/name shorthand
-agentseek create --template                       # list every bundled template
-agentseek create langchain --template             # list templates under a type
-agentseek create langchain --list-templates       # same as above (legacy flag)
-agentseek create bub --template default --no-input
+# new — scaffold a project from a bundled cookiecutter template
+agentseek new                                  # interactive type + template
+agentseek new deepagents                       # default template (no prompt for type)
+agentseek new langchain/cli-remote             # type/name shorthand
+agentseek new --template                       # list every bundled template
+agentseek new langchain --template             # list templates under a type
+agentseek new langchain --list-templates       # same as above (legacy flag)
+agentseek new bub --template default --no-input
 
-# run — start the project locally and open the frontend
-agentseek run                                     # auto-detect compose / python entry
-agentseek run --no-browser                        # skip opening a browser tab
-agentseek run --mode compose --port 8080          # explicit mode override
-agentseek run --wait-timeout 60                   # extend readiness budget
+# dev — start the project locally and open the frontend
+agentseek dev                                     # auto-detect compose / python entry
+agentseek dev --no-browser                        # skip opening a browser tab
+agentseek dev --mode compose --port 8080          # explicit mode override
+agentseek dev --wait-timeout 60                   # extend readiness budget
 
 # build — package the project into a Docker image
 agentseek build                                   # default tag: <cwd-slug>:latest
@@ -141,11 +141,8 @@ agentseek deploy --dry-run --mode both --slug myproj --port 9000
   (`agentseek_cli.standalone:app`) and the Bub plugin
   (`agentseek_cli.plugin:main`) call `agentseek_cli.app.build_app()`
   / `iter_command_groups()`, so the surface stays in lockstep.
-- **Plugin mount with a deliberate `run` override.** `register_cli_commands` skips any group
-  whose name is already attached to the root Typer, matching the existing
-  pattern in `agentseek-langchain`. `run` is the exception:
-  `CLI_OVERRIDE_NAMES = {"run"}` removes Bub's single-message `run` group and
-  mounts this package's local project runner instead. `agentseek run`
+- **Plugin mount without framework overrides.** `register_cli_commands` skips
+  any group whose name is already attached to the root Typer. `agentseek dev`
   therefore behaves like:
   - under `uvx --from agentseek-cli agentseek` (framework absent) — the
     project lifecycle runner;
@@ -178,14 +175,14 @@ agentseek deploy --dry-run --mode both --slug myproj --port 9000
   successful build; `--dry-run` prints the resolved command(s) without
   invoking docker. Missing `docker` exits with `1` and a clear install
   hint; a missing `Dockerfile` exits with `2` and points at
-  `agentseek create`.
-- **`run` auto-detects launch mode.** The presence of
+  `agentseek new`.
+- **`dev` auto-detects launch mode.** The presence of
   `docker-compose.yml` / `compose.yaml` selects compose mode; otherwise
   the command looks for `pyproject.toml` plus an `app.py` / `main.py`
   entry or a `serve` / `dev` script. `--mode compose|python` overrides
   detection. The frontend URL is built from `--host` (default
   `127.0.0.1`) and `--port` (defaults to `PORT` from `.env`, then
-  `3000`); `agentseek run` polls it once per second until the readiness
+  `3000`); `agentseek dev` polls it once per second until the readiness
   timeout (`--wait-timeout`, default `30s`) and then opens the default
   browser unless `--no-browser` is passed. On exit (Ctrl-C or child
   termination) the spawned process is `terminate()`d with a
@@ -230,10 +227,10 @@ uvx --from contrib/agentseek-cli/dist/agentseek_cli-0.0.2-*.whl agentseek --help
   shape are stable; future versions will add `--apply` (kubectl apply /
   docker compose up) and registry interaction. For now, generate the
   YAML, review/commit it, and apply it with your existing toolchain.
-- **`create` ships bundled templates.** Templates live under
+- **`new` ships bundled templates.** Templates live under
   `templates/<type>/<name>/` and are listed by directory
   scan; add new templates by dropping a folder with a `cookiecutter.json`.
-  Run `agentseek create --template` to see all available templates with
+  Run `agentseek new --template` to see all available templates with
   descriptions.
 - **No Windows wheels for `npx-skills`** until upstream publishes them;
   see [npx-skills](https://pypi.org/project/npx-skills/) for current

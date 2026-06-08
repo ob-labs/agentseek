@@ -20,7 +20,7 @@ contrib 包提供；`agentseek ctx` 会转发到其底层 `contextseek` CLI。
 - 已安装 `agentseek-contextseek` 插件：
 
   ```bash title="not executed in this run"
-  agentseek install agentseek-contextseek
+  agentseek plugin install agentseek-contextseek
   ```
 
   该命令同时拉入 `agentseek-cli` (用于 CLI 挂载点)
@@ -70,7 +70,7 @@ contrib 包提供；`agentseek ctx` 会转发到其底层 `contextseek` CLI。
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
-| `agentseek ctx` 报 command not found | 未安装 `agentseek-contextseek` | `agentseek install agentseek-contextseek`。 |
+| `agentseek ctx` 报 command not found | 未安装 `agentseek-contextseek` | `agentseek plugin install agentseek-contextseek`。 |
 | `contextseek` 报 backend 缺失 | 配置未就绪 | 见 [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md)。 |
 
 ## 回退

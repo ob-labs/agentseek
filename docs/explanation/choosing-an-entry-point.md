@@ -53,11 +53,11 @@ single console script named `agentseek`. The Typer app is built by
 (`contrib/agentseek-cli/src/agentseek_cli/app.py:33-43`) and contains only the
 project lifecycle groups:
 
-`create / run / build / deploy / api / ctx / skills`.
+`new / dev / build / deploy / api / ctx / skills`.
 
 Path A fits when:
 
-- You want to **scaffold a project** with `agentseek create …` and you do not
+- You want to **scaffold a project** with `agentseek new …` and you do not
   want to clone the repository to do it.
 - You operate **CI** that only needs `build` / `deploy` — the harness runtime
   is not pulled in.
@@ -149,7 +149,7 @@ environment on the host. End-to-end walkthrough:
 Each `contrib/agentseek-*/` package is a Python distribution you can install on
 top of the harness. They are listed at
 [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib) and
-installed via `agentseek install <package>` (e.g. `agentseek install agentseek-langchain`).
+installed via `agentseek plugin install <package>` (e.g. `agentseek plugin install agentseek-langchain`).
 
 These are **runtime plugins** for Path B: `agentseek-ag-ui`, `agentseek-langchain`,
 `agentseek-tapestore-oceanbase`, `bub-tapestore-otel`,

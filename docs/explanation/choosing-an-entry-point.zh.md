@@ -50,11 +50,11 @@ uv tool install agentseek-cli
 （`contrib/agentseek-cli/src/agentseek_cli/app.py:33-43`）构建，只包含项目
 生命周期组：
 
-`create / run / build / deploy / api / ctx / skills`。
+`new / dev / build / deploy / api / ctx / skills`。
 
 适合路径 A 的场景：
 
-- 你想用 `agentseek create …` **生成项目**，而且不想为此 clone 整个仓库。
+- 你想用 `agentseek new …` **生成项目**，而且不想为此 clone 整个仓库。
 - 你管理只跑 `build` / `deploy` 的 **CI** —— 不需要把 harness 运行时拉进来。
 - 你在 harness 环境之外管理项目：`run`、构建镜像、生成部署清单、调用 `ctx`
   / `skills`。
@@ -135,7 +135,7 @@ Compose 就是把路径 B 的 harness 为运维场景打了包。当你需要一
 
 每个 `contrib/agentseek-*/` 包都是一个可以安装在 harness 之上的 Python 发
 行物。它们列在 [contrib/](https://github.com/ob-labs/agentseek/tree/main/contrib)
-下，通过 `agentseek install <package>` 安装（例如 `agentseek install agentseek-langchain`）。
+下，通过 `agentseek plugin install <package>` 安装（例如 `agentseek plugin install agentseek-langchain`）。
 
 这些是路径 B 的**运行时 plugin**：`agentseek-ag-ui`、`agentseek-langchain`、
 `agentseek-tapestore-oceanbase`、`bub-tapestore-otel`、

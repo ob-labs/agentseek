@@ -35,7 +35,7 @@ Both defaults are applied with `setdefault`, so explicit values win.
 | `AGENTSEEK_*` name | Maps to `BUB_*` | Notes |
 | --- | --- | --- |
 | `AGENTSEEK_HOME` | `BUB_HOME` | Runtime home directory. |
-| `AGENTSEEK_PROJECT` | `BUB_PROJECT` | Plugin sandbox used by `agentseek install`. |
+| `AGENTSEEK_PROJECT` | `BUB_PROJECT` | Plugin sandbox used by `agentseek plugin install`. |
 | `AGENTSEEK_WORKSPACE_PATH` | `BUB_WORKSPACE_PATH` | Workspace root, used by the Docker entrypoint (`entrypoint.sh:5`). |
 | `AGENTSEEK_SKILLS_HOME` | `BUB_SKILLS_HOME` | Skill source directory (`entrypoint.sh:8`). |
 | `AGENTSEEK_MCP_CONFIG_PATH` | `BUB_MCP_CONFIG_PATH` | MCP config file path. |

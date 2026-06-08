@@ -8,7 +8,7 @@
 | Python package | `agentseek_contextseek` |
 | Bub entry point | `contextseek` |
 | Config surface | `AGENTSEEK_CTX_*` env vars |
-| Install path | `agentseek install agentseek-contextseek` |
+| Install path | `agentseek plugin install agentseek-contextseek` |
 | Test target | `contrib/agentseek-contextseek/tests/` |
 
 ## When To Use It
@@ -22,7 +22,7 @@ This package does **not** own contextseek's storage, embedding, or evolution log
 Via the agentseek plugin installer (recommended):
 
 ```bash
-agentseek install agentseek-contextseek
+agentseek plugin install agentseek-contextseek
 ```
 
 Standalone from workspace:

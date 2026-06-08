@@ -71,7 +71,7 @@ Telegram、AG-UI 等) 时使用本指南。`agentseek gateway` 归 **harness**
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
 | 找不到 `agentseek gateway` | 你现在是只装了 `agentseek-cli` 的路径 A 环境 | 改用 harness 环境，或用 Docker Compose 包装它。 |
-| channel 一直收不到消息 | 运行时环境缺少该 plugin | `uv run agentseek install <plugin>` 加入 sandbox。 |
+| channel 一直收不到消息 | 运行时环境缺少该 plugin | `uv run agentseek plugin install <plugin>` 加入 sandbox。 |
 | gateway 立即退出 | channel 凭据缺失 | 在日志中找到 channel 名称；把凭据加到 `.env`。 |
 | Docker 内多个 gateway 互相竞争 | `startup.sh` 和默认 entrypoint 都跑了 | 二选一；`startup.sh` 是替换不是链式叠加。 |
 

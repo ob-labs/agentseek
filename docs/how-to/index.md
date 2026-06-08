@@ -22,7 +22,7 @@ The job split from the overview matters here:
 - **`agentseek` (harness)** — runtime CLI plus embeddable library, available
   after `uv sync` in this repo or in a generated project. Most pages lead with
   this path.
-- **`agentseek-cli` (project lifecycle CLI)** — `create / run / build / deploy
+- **`agentseek-cli` (project lifecycle CLI)** — `new / dev / build / deploy
   / api / ctx / skills`, available standalone on Path A and merged into the
   same `agentseek` command when installed alongside the harness.
 
@@ -42,7 +42,7 @@ the page says so up front. Pages follow a consistent outline:
 
 ## Extend
 
-- [Install a plugin](install-a-plugin.md) — install a plugin with `agentseek install` and load
+- [Install a plugin](install-a-plugin.md) — install a plugin with `agentseek plugin install` and load
   it from the harness.
 - [Add skills](add-skills.md) — register project-local skills alongside bundled ones.
 - [Add an MCP server](add-mcp-server.md) — author an MCP entry that both shapes pick up.
@@ -51,8 +51,8 @@ the page says so up front. Pages follow a consistent outline:
 
 ## Run
 
-- [Run locally](run-locally.md) — invoke a single turn through the harness, or with
-  `agentseek run` and `agentseek chat`.
+- [Run locally](run-locally.md) — start a generated project with `agentseek dev`,
+  invoke one runtime turn with `agentseek turn`, or use `agentseek chat`.
 - [Run the gateway](run-gateway.md) — operate long-running channel listeners.
 - [Run with Docker Compose](run-with-docker-compose.md) — Compose workflow, mounts, and env defaults.
 - [Build and deploy](build-and-deploy.md) — package and ship with `agentseek build` and

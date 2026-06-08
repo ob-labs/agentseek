@@ -2,14 +2,14 @@
 
 This is a **How-to Guide**. Its purpose is to take a LangChain agent served by
 `agentseek api serve`, connect it to `agentseek`, and verify the integration
-with a real `uv run agentseek run` request.
+with a real `uv run agentseek turn` request.
 
 ## What You Will Get
 
 When you finish, you will have this call chain:
 
 ```text
-uv run agentseek run
+uv run agentseek turn
   -> agentseek-langchain
     -> LangGraphClientRunnable
       -> langgraph_sdk client
@@ -141,7 +141,7 @@ export AGENTSEEK_API_REMOTE_URL=http://127.0.0.1:2024
 export AGENTSEEK_API_REMOTE_GRAPH_ID=agent
 export AGENTSEEK_API_REMOTE_ASSISTANT_NAME=agentseek-api-demo
 export AGENTSEEK_API_REMOTE_USER_ID=dev
-uv run --no-sync --no-env-file agentseek run \
+uv run --no-sync --no-env-file agentseek turn \
   "Plan a low-risk rollout for enabling a new read path behind a feature flag." \
   --session-id agentseek-api-remote-demo
 ```
@@ -227,7 +227,7 @@ export AGENTSEEK_API_REMOTE_URL=http://127.0.0.1:2024
 export AGENTSEEK_API_REMOTE_GRAPH_ID=agent
 export AGENTSEEK_API_REMOTE_ASSISTANT_NAME=agentseek-api-demo
 export AGENTSEEK_API_REMOTE_USER_ID=dev
-uv run --no-sync --no-env-file agentseek run \
+uv run --no-sync --no-env-file agentseek turn \
   "Plan a low-risk rollout for enabling a new read path behind a feature flag." \
   --session-id agentseek-api-remote-demo
 ```

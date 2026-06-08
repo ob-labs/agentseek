@@ -5,7 +5,7 @@ categories:
         description: AG-UI channel adapter for `agentseek gateway`, translating Bub stream events into AG-UI SSE events.
         description_zh: 面向 `agentseek gateway` 的 AG-UI channel 适配器，把 Bub 流式事件转换成 AG-UI SSE 事件。
         entry_point: ag-ui
-        install: agentseek install agentseek-ag-ui
+        install: agentseek plugin install agentseek-ag-ui
         repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-ag-ui
         readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-ag-ui/README.md
         badges:
@@ -20,10 +20,10 @@ categories:
           - ui
 
       - name: agentseek-cli
-        description: Project-lifecycle CLI for agentseek (`create`, `run`, `build`, `deploy`, `api`, `ctx`, `skills`), installable via `uv tool install agentseek-cli` or foldable into the merged `agentseek` command surface.
-        description_zh: agentseek 的项目生命周期 CLI（`create`、`run`、`build`、`deploy`、`api`、`ctx`、`skills`），既可通过 `uv tool install agentseek-cli` 独立安装，也可在与 harness 共存时折叠进同一个 `agentseek` 命令面。
+        description: Project-lifecycle CLI for agentseek (`new`, `dev`, `build`, `deploy`, `api`, `ctx`, `skills`), installable via `uv tool install agentseek-cli` or foldable into the merged `agentseek` command surface.
+        description_zh: agentseek 的项目生命周期 CLI（`new`、`dev`、`build`、`deploy`、`api`、`ctx`、`skills`），既可通过 `uv tool install agentseek-cli` 独立安装，也可在与 harness 共存时折叠进同一个 `agentseek` 命令面。
         entry_point: cli
-        install: agentseek install agentseek-cli
+        install: agentseek plugin install agentseek-cli
         repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-cli
         readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-cli/README.md
         badges:
@@ -42,7 +42,7 @@ categories:
         description: Semantic context layer that retrieves relevant past knowledge before each model turn and writes new knowledge back afterward.
         description_zh: 语义化的上下文层，在每次模型轮次前检索相关的历史知识，并在轮次后回写新知识。
         entry_point: contextseek
-        install: agentseek install agentseek-contextseek
+        install: agentseek plugin install agentseek-contextseek
         repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-contextseek
         readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md
         badges:
@@ -77,7 +77,7 @@ categories:
         description: SQLAlchemy tape storage with OceanBase compatibility and optional vector retrieval.
         description_zh: 兼容 OceanBase 的 SQLAlchemy tape storage，并支持可选的向量检索能力。
         entry_point: tapestore-oceanbase
-        install: agentseek install agentseek-tapestore-oceanbase
+        install: agentseek plugin install agentseek-tapestore-oceanbase
         repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-tapestore-oceanbase
         readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-tapestore-oceanbase/README.md
         badges:
@@ -95,7 +95,7 @@ categories:
         description: Delegates Bub model turns to a LangChain `Runnable` while keeping agentseek transport and persistence in place.
         description_zh: 将 Bub 的模型轮次委托给 LangChain `Runnable`，同时保留 agentseek 的传输层与持久化能力。
         entry_point: langchain
-        install: agentseek install agentseek-langchain
+        install: agentseek plugin install agentseek-langchain
         repo_url: https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-langchain
         readme_url: https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-langchain/README.md
         badges:

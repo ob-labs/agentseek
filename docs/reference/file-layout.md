@@ -34,7 +34,7 @@ With `BUB_HOME` / `AGENTSEEK_HOME` unset, the defaults from
     mcp.json                       # MCP server definitions (read by bub-mcp)
     agentseek-project/             # AGENTSEEK_PROJECT / BUB_PROJECT
       pyproject.toml               # `uv init --bare --name agentseek-project --app`
-      ...                          # plugins installed by `agentseek install`
+      ...                          # plugins installed by `agentseek plugin install`
   .agents/
     skills/                        # project-local skills (Bub discovers from here)
     mcp.json                       # optional alternate MCP path
@@ -69,7 +69,7 @@ See [Docker reference](docker.md) for the resolution order.
 
 ## Plugin sandbox semantics
 
-`agentseek install` runs inside the directory at `AGENTSEEK_PROJECT` /
+`agentseek plugin install` runs inside the directory at `AGENTSEEK_PROJECT` /
 `BUB_PROJECT`. The first call uses `_ensure_plugin_sandbox`
 (`src/agentseek/cli.py:123`):
 
@@ -84,7 +84,7 @@ its `pyproject.toml` to see which plugins are installed.
 The default sandbox basename must match `uv init --name`
 (`src/agentseek/env.py:22` and `src/agentseek/cli.py:134`).
 
-`agentseek install` belongs to the harness runtime CLI. A Path A environment
+`agentseek plugin install` belongs to the harness runtime CLI. A Path A environment
 with only `agentseek-cli` does not create or manage this sandbox on its own.
 
 ## Bundled skills (`src/skills`)

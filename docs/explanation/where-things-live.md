@@ -46,7 +46,7 @@ agentseek/
 │   ├── agentseek-cli/    ← project lifecycle CLI (PyPI: agentseek-cli)
 │   └── agentseek-*/      ← runtime plugin packages (workspace members)
 ├── examples/             ← runnable end-to-end demos
-├── templates/            ← project scaffolds used by `agentseek create`
+├── templates/            ← project scaffolds used by `agentseek new`
 ├── skills/               ← stand-alone skills, separate from `src/skills`
 ├── references/           ← vendored upstream sources for reading, not editing
 ├── docs/                 ← published documentation (Diátaxis: tutorials/how-to/reference/explanation)
@@ -100,7 +100,7 @@ the other entries are runtime plugins for the harness.
 
 | Directory | Role | Purpose |
 | --- | --- | --- |
-| `agentseek-cli` | **Project lifecycle CLI** (top-level PyPI package) | `create / run / build / deploy / api / ctx / skills`. Installable via `uv tool install agentseek-cli`; when present alongside the harness it folds into the same `agentseek` command surface. |
+| `agentseek-cli` | **Project lifecycle CLI** (top-level PyPI package) | `new / dev / build / deploy / api / ctx / skills`. Installable via `uv tool install agentseek-cli`; when present alongside the harness it folds into the same `agentseek` command surface. |
 | `agentseek-ag-ui` | Runtime plugin | AG-UI SSE channel adapter for `agentseek gateway`. |
 | `agentseek-contextseek` | Runtime plugin | ContextSeek semantic context layer. |
 | `agentseek-langchain` | Runtime plugin | Routes Bub model turns through a user-supplied LangChain `Runnable`. |
@@ -124,7 +124,7 @@ remote, DeepAgents) are covered by the `agentseek create` templates.
 
 ### `templates/` — project scaffolds
 
-Cookiecutter sources used by `agentseek create` (provided by `agentseek-cli`). The
+Cookiecutter sources used by `agentseek new` (provided by `agentseek-cli`). The
 catalogue lives at `templates/index.json`:
 
 | Template | Purpose |
@@ -182,7 +182,7 @@ the source of the navigation/where-things-live picture used across the site.
 - **Two packages, one workspace.** The uv workspace lets the harness
   (`agentseek`) and the project lifecycle CLI (`agentseek-cli`) ship as two
   PyPI packages while contrib plugins evolve at their own pace. Plugins are
-  installed via `agentseek install <package>`, making adoption a single
+  installed via `agentseek plugin install <package>`, making adoption a single
   command.
 - **Bundled vs project-local skills.** Bundling skills inside the wheel makes them
   reproducible (`src/skills/`); workspace-local skills (`.agents/skills/`) make them

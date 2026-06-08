@@ -54,10 +54,10 @@ After the first run works, continue with the guide that matches the next job:
 
 ```bash
 # Browse templates
-uvx --from agentseek-cli agentseek create --list-templates
+uvx --from agentseek-cli agentseek new --list-templates
 
 # Create a minimal LangChain project
-uvx --from agentseek-cli agentseek create langchain/markdown-messages
+uvx --from agentseek-cli agentseek new langchain/markdown-messages
 
 # Run AgentSeek itself
 uv tool install agentseek

@@ -26,14 +26,14 @@ The two entry points serve different jobs:
 
 | Goal | Start here | Use it when |
 | --- | --- | --- |
-| Create a project from templates | `agentseek create` | You want a working application scaffold. |
+| Create a project from templates | `agentseek new` | You want a working application scaffold. |
 | Run AgentSeek itself | `agentseek chat` or `agentseek gateway` | You want to evaluate, embed, or operate the harness runtime. |
 
 ### Create a template project
 
 ```bash
-uvx --from agentseek-cli agentseek create --list-templates
-uvx --from agentseek-cli agentseek create langchain/markdown-messages
+uvx --from agentseek-cli agentseek new --list-templates
+uvx --from agentseek-cli agentseek new langchain/markdown-messages
 cd markdown_messages_agent
 cp .env.example .env
 uv sync
@@ -99,10 +99,10 @@ that matches the application shape:
 
 | Application shape | Start with |
 | --- | --- |
-| Minimal LangChain app | `agentseek create langchain/markdown-messages` |
-| Full AgentSeek delivery app | `agentseek create langchain/default` |
-| DeepAgents research app | `agentseek create deepagents/research` |
-| Bub app without LangChain | `agentseek create bub/default` |
+| Minimal LangChain app | `agentseek new langchain/markdown-messages` |
+| Full AgentSeek delivery app | `agentseek new langchain/default` |
+| DeepAgents research app | `agentseek new deepagents/research` |
+| Bub app without LangChain | `agentseek new bub/default` |
 
 See [Templates reference](docs/reference/templates.md) for the full catalogue.
 

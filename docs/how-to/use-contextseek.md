@@ -21,7 +21,7 @@ forwards to its underlying `contextseek` CLI.
 - `agentseek-contextseek` plugin installed:
 
   ```bash title="not executed in this run"
-  agentseek install agentseek-contextseek
+  agentseek plugin install agentseek-contextseek
   ```
 
   This pulls in both `agentseek-cli` (for the CLI mount point) and
@@ -72,7 +72,7 @@ README.
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek ctx` says command not found | `agentseek-contextseek` not installed | `agentseek install agentseek-contextseek`. |
+| `agentseek ctx` says command not found | `agentseek-contextseek` not installed | `agentseek plugin install agentseek-contextseek`. |
 | `contextseek` errors about missing backend | Config not set up | See the [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md). |
 
 ## Rollback

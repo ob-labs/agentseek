@@ -18,7 +18,7 @@ to end, and leaves you with a concrete artefact you can keep. Pick the page that
 your goal; do not skim across all three at once.
 
 agentseek ships as two complementary packages split by job. `agentseek-cli` owns the
-project lifecycle commands (`create / run / build / deploy / api / ctx / skills`);
+project lifecycle commands (`new / dev / build / deploy / api / ctx / skills`);
 `agentseek` is the harness itself (runtime CLI plus the library you embed). The tutorials
 below cover both paths: tutorial 01 runs the harness directly from a synced checkout;
 tutorial 02 starts with the lifecycle CLI and lands inside a generated harness project.
@@ -46,7 +46,7 @@ see the [Reference](../reference/index.md).
    when you are evaluating agentseek, running a local one-off workflow, or poking at the
    runtime to diagnose something.
 2. **[First harness app](02-first-harness-app.md).** The application-developer path.
-   Start with `agentseek create` (owned by `agentseek-cli`), then `uv sync` inside the
+   Start with `agentseek new` (owned by `agentseek-cli`), then `uv sync` inside the
    generated project so the harness itself resolves there. After this page, that generated
    project — not the cloned repo — is the surface you keep editing.
 3. **[Add a skill and MCP](03-add-a-skill-and-mcp.md).** Operational shape:

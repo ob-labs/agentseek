@@ -34,10 +34,8 @@ sources:
   所有 Bub plugin —— 包括 `agentseek_cli.plugin:main` —— 因此无论你是从
   `agentseek` 还是 `agentseek-cli` 启动脚本，最终的 CLI 表面是一致的。
 
-`contrib/agentseek-cli/src/agentseek_cli/plugin.py:28-42` 中的 Bub plugin 会
-把每一个项目生命周期组挂到 framework app 上，并允许**覆盖**框架内置的 `run`
-（Bub 的单条消息分发）为项目生命周期 CLI 的 `run`（本地启动项目）。该覆盖
-只在 `agentseek-cli` 与 harness 同时存在时发生。
+`contrib/agentseek-cli/src/agentseek_cli/plugin.py` 中的 Bub plugin 会
+把项目生命周期组挂到 framework app 上，但不会覆盖 framework 已有命令名。
 
 本页列出每一个子命令，并标注它属于哪一面。
 
@@ -45,19 +43,19 @@ sources:
 
 | 面板 | 命令 | 用途 |
 | --- | --- | --- |
-| **Project** | `create`, `run`, `build`, `deploy` | 创建、运行、构建、部署 |
+| **Project** | `new`, `dev`, `build`, `deploy` | 创建、开发、构建、部署 |
 | **Services** | `api`, `ctx`, `skills` | 外部服务集成 |
-| **Runtime** | `chat`, `gateway` | Agent 交互 |
-| **Environment** | `install`, `uninstall`, `update`, `onboard`, `login` | 插件和认证管理 |
+| **Runtime** | `chat`, `gateway`, `turn` | Agent 交互 |
+| **Environment** | `plugin`, `mcp`, `onboard`, `login` | 插件、MCP 和认证管理 |
 
 ## 项目生命周期命令
 
 这些命令来自 `agentseek-cli`
 （`contrib/agentseek-cli/src/agentseek_cli/app.py:22-30`）。它们在**路径 A**
 开箱可用；在**路径 B**下，只要 harness 环境里装了 `agentseek-cli`
-（例如通过 `agentseek install agentseek-cli`，或者生成的项目本身依赖它），它们也会出现。
+（例如通过 `agentseek plugin install agentseek-cli`，或者生成的项目本身依赖它），它们也会出现。
 
-### `agentseek create [SPEC]`
+### `agentseek new [SPEC]`
 
 :   从预构建的模板（位于 `templates/` 下的 cookiecutter）创建一个新的 agent project。
 
@@ -71,7 +69,7 @@ sources:
 
     捆绑模板列表请参见 [模板参考](templates.zh.md)。
 
-### `agentseek run`
+### `agentseek dev`
 
 :   完成 `.env` 配置后，在本地启动项目。
 
@@ -82,10 +80,6 @@ sources:
     | `--no-browser` | flag | off | 跳过打开默认浏览器。 |
     | `--wait-timeout` | INTEGER | `30` | 等待前端的秒数。 |
     | `--mode` | `auto\|compose\|python` | `auto` | 启动模式覆盖。 |
-
-    在**路径 B 且未装 `agentseek-cli`** 的情况下，上游 Bub 内置的
-    `run MESSAGE`（单条入站消息）会以同名暴露作为兜底。plugin 的覆盖
-    （`CLI_OVERRIDE_NAMES = {"run"}`）仅在 `agentseek-cli` 存在时发生。
 
 ### `agentseek build`
 
@@ -136,7 +130,7 @@ sources:
 
 :   ContextSeek — 语义上下文层。转发给 `contextseek` CLI。当
     `agentseek-contextseek` 在 path 上时可用（例如在路径 B 上通过
-    `agentseek install agentseek-contextseek`，或在路径 A 上由生成项目拉入）。
+    `agentseek plugin install agentseek-contextseek`，或在路径 A 上由生成项目拉入）。
 
     子命令包括 `add`、`retrieve`、`expand`、`compact`、
     `forget`、`delete`、`overview`、`tools`、`metrics`、`dream`、`feedback`、
@@ -199,7 +193,19 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     | --- | --- | --- | --- |
     | `--enable-channel` | TEXT (repeatable) | all | 要为 CLI 启用的 channels（默认：all）。 |
 
-### `agentseek install [SPECS]...`
+### `agentseek turn MESSAGE`
+
+:   让运行时处理一条入站消息。
+
+    | 参数 / 标志 | 类型 | 默认值 | 描述 |
+    | --- | --- | --- | --- |
+    | `MESSAGE` | TEXT | — | 要处理的用户消息。 |
+    | `--channel` | TEXT | `cli` | 入站消息使用的 channel 名。 |
+    | `--chat-id` | TEXT | `local` | Chat id。 |
+    | `--sender-id` | TEXT | `user` | Sender id。 |
+    | `--session-id` | TEXT | `None` | 可选的 session id。 |
+
+### `agentseek plugin install [SPECS]...`
 
 :   将 plugin 安装到 Bub 的环境中，或者在没有提供规格时同步环境。agentseek 将安装
     sandbox 替换为 `DEFAULT_PLUGIN_SANDBOX = "agentseek-project"`
@@ -214,7 +220,7 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     因为 `apply_agentseek_env_aliases` 在 Typer 读取默认值之前就设置了 `BUB_PROJECT`
     （`src/agentseek/env.py:73`）。
 
-### `agentseek uninstall PACKAGES...`
+### `agentseek plugin uninstall PACKAGES...`
 
 :   从 Bub 的环境中卸载 plugin。`PACKAGES` 是必填项。
 
@@ -222,7 +228,7 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     | --- | --- | --- | --- |
     | `--project` | PATH | `${BUB_PROJECT}` | project 目录的路径。 |
 
-### `agentseek update [PACKAGES]...`
+### `agentseek plugin update [PACKAGES]...`
 
 :   更新指定的包，或在未提供参数时更新 Bub 环境中的所有包。
 
@@ -286,14 +292,15 @@ agentseek gateway --help
 
 ```bash
 uv run agentseek --help
-uv run agentseek run --help
+uv run agentseek turn --help
 uv run agentseek chat --help
 uv run agentseek onboard --help
 uv run agentseek gateway --help
-uv run agentseek install --help
-uv run agentseek uninstall --help
-uv run agentseek update --help
-uv run agentseek create --help
+uv run agentseek plugin install --help
+uv run agentseek plugin uninstall --help
+uv run agentseek plugin update --help
+uv run agentseek new --help
+uv run agentseek dev --help
 uv run agentseek build --help
 uv run agentseek deploy --help
 uv run agentseek api --help

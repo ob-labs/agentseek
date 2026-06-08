@@ -22,7 +22,7 @@ sources:
 This tutorial is **Path B** from the overview: run the harness runtime CLI from a synced
 checkout. Use it to evaluate the project in minutes, drive local one-off workflows, or
 inspect the runtime. Tutorial 02 covers the complementary path: start with
-`agentseek create` from the project lifecycle CLI, then keep working inside the generated
+`agentseek new` from the project lifecycle CLI, then keep working inside the generated
 project.
 
 ## 1. Clone and install
@@ -129,8 +129,8 @@ just what the local checkout happened to be configured for. Type a short prompt 
 `Ctrl+D` or by typing `,quit`.
 
 > **Single-shot variant.** If you just want one prompt without dropping into the REPL,
-> `uv run agentseek run "summarize this workspace in one sentence"` is available. Note that
-> `agentseek run` belongs to the `agentseek-cli` contrib package and is wired through to the
+> `uv run agentseek turn "summarize this workspace in one sentence"` is available. Note that
+> `agentseek turn` belongs to the `agentseek-cli` contrib package and is wired through to the
 > upstream Bub `run` behaviour; see [CLI reference](../reference/cli.md) for the full surface.
 
 ## What you have now
@@ -142,7 +142,7 @@ just what the local checkout happened to be configured for. Type a short prompt 
 ## Where to go next
 
 - To generate a project you own, continue with [02 — Build your first harness app](02-first-harness-app.md). That tutorial
-  starts with `agentseek create` (owned by `agentseek-cli`) and then switches into the
+  starts with `agentseek new` (owned by `agentseek-cli`) and then switches into the
   generated project's harness environment.
 - To understand why the demo uses `.agentseek/` for local state and how the alias model
   works, read [How agentseek relates to Bub](../explanation/bub-relationship.md).

@@ -17,7 +17,7 @@ the file at `${BUB_MCP_CONFIG_PATH}` (default: `${BUB_HOME}/mcp.json`).
 
 ## Prerequisites
 
-- agentseek installed (`bub-mcp` is a core dependency, `pyproject.toml:21`).
+- agentseek plugin installed (`bub-mcp` is a core dependency, `pyproject.toml:21`).
 - At least one MCP server you want to register.
 
 ## Choose a location

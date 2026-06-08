@@ -55,7 +55,7 @@ Three pieces sit on top of each other:
    `AGENTSEEK_*` to `BUB_*`), and the bundled skills under `src/skills/`. See
    `src/agentseek/__main__.py:52-69` for the boot sequence.
 3. **`agentseek-cli` (the project lifecycle CLI)** is the second PyPI package.
-   It owns scaffolding and lifecycle commands (`create / run / build / deploy
+   It owns scaffolding and lifecycle commands (`new / dev / build / deploy
    / api / ctx / skills`). On its own it is self-contained and small; alongside
    the harness it folds in as a Bub plugin so the same `agentseek` command
    exposes the union of both surfaces. See

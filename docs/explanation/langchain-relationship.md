@@ -81,7 +81,7 @@ Key points:
 | **[ContextSeek](https://github.com/ob-labs/contextseek)** | Semantic context layer — unified `ContextItem`, L0/L1/L2 progressive disclosure, EvolutionEngine, DreamEngine. Fills the memory & context rot gaps that only LangSmith Context Hub covers. | [README](https://github.com/ob-labs/contextseek#readme) |
 | **[langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase)** | LangGraph checkpoint + store + vectorstore + hybrid search, backed by OceanBase / seekdb / MySQL. Runtime data is queryable SQL from day one. | [README](https://github.com/oceanbase/langchain-oceanbase#readme) |
 | **IM Gateway** | Feishu / DingTalk / Slack channel adapter. The agent meets users where they are, not just in a web UI. | Bundled in templates |
-| **[agentseek-cli](https://github.com/ob-labs/agentseek)** | Scaffold projects, lifecycle management (`create / run / build / deploy`). Eliminates the scaffolding tax for each new agent project. | [Templates ref](../reference/templates.md) |
+| **[agentseek-cli](https://github.com/ob-labs/agentseek)** | Scaffold projects, lifecycle management (`new / dev / build / deploy`). Eliminates the scaffolding tax for each new agent project. | [Templates ref](../reference/templates.md) |
 | **Development skills** | Installable guides for your coding agent (Claude Code, Cursor): `langchain-dev-guide` (pitfalls & fixes), `langchain-cn-models` (Chinese LLM integration). Your AI assistant references them while you code. | [skills/](https://github.com/ob-labs/agentseek/tree/main/skills) |
 
 Each component has its own repository and documentation. This site covers the
@@ -188,7 +188,7 @@ Use LangChain **with** the agentseek harness when:
 - You want IM channel delivery (Feishu, DingTalk) without writing adapters.
 - You want the Agent Engineering loop (ship → observe → refine) to work out of
   the box via agentseek-api + ContextSeek.
-- You want the harness CLI for lifecycle management (`create / run / build / deploy`).
+- You want the harness CLI for lifecycle management (`new / dev / build / deploy`).
 
 Use LangChain **without** the agentseek harness when:
 

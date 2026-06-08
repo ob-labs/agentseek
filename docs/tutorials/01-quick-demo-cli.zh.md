@@ -19,7 +19,7 @@ sources:
 
 本教程对应总览里的 **路径 B**：从已经 `uv sync` 的 checkout 直接运行 harness 的
 运行时 CLI。适合在几分钟内评估项目、跑本地一次性工作流，或排查 runtime。教程 02
-覆盖互补路径：先用项目生命周期 CLI 的 `agentseek create` 生成项目，再在生成项目里继续工作。
+覆盖互补路径：先用项目生命周期 CLI 的 `agentseek new` 生成项目，再在生成项目里继续工作。
 
 ## 1. Clone 并安装
 
@@ -110,7 +110,7 @@ agentseek >
 
 `model:` 这一行会显示你在第 2 步设置的值 —— 上面的 `openai:qwen-plus` 只是本地 checkout 当时碰巧配置的内容。在 `agentseek >` 提示符下输入一句简短的 prompt，按回车，你应该会看到回复以流式方式返回。用 `Ctrl+D` 或输入 `,quit` 退出。
 
-> **单次执行变体。** 如果你只想跑一条 prompt 而不进入 REPL，可以用 `uv run agentseek run "summarize this workspace in one sentence"`。注意 `agentseek run` 属于 `agentseek-cli` contrib 包，并桥接到上游 Bub 的 `run` 行为；完整接口见 [CLI 参考](../reference/cli.zh.md)。
+> **单次执行变体。** 如果你只想跑一条 prompt 而不进入 REPL，可以用 `uv run agentseek turn "summarize this workspace in one sentence"`。注意 `agentseek turn` 属于 `agentseek-cli` contrib 包，并桥接到上游 Bub 的 `run` 行为；完整接口见 [CLI 参考](../reference/cli.zh.md)。
 
 ## 你现在拥有什么
 
@@ -120,6 +120,6 @@ agentseek >
 
 ## 接下来去哪
 
-- 想生成一个由你自己掌控的项目，继续 [02 —— 构建你的第一个 harness 应用](02-first-harness-app.zh.md)。那一篇先从 `agentseek create`（由 `agentseek-cli` 提供）开始，再切进生成项目自己的 harness 环境。
+- 想生成一个由你自己掌控的项目，继续 [02 —— 构建你的第一个 harness 应用](02-first-harness-app.zh.md)。那一篇先从 `agentseek new`（由 `agentseek-cli` 提供）开始，再切进生成项目自己的 harness 环境。
 - 想了解为什么演示使用 `.agentseek/` 存放本地状态，以及别名模型如何工作，请读 [agentseek 与 Bub 的关系](../explanation/bub-relationship.zh.md)。
 - 想查阅每个 CLI flag 或环境变量而不是死记硬背，请看 [CLI 参考](../reference/cli.zh.md) 和 [环境变量参考](../reference/environment.zh.md)。

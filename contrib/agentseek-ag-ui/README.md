@@ -11,7 +11,7 @@ It does not own the agent or run the framework on its own. It registers `ag-ui` 
 | Distribution | `agentseek-ag-ui` |
 | Python package | `agentseek_ag_ui` |
 | Bub entry point | `ag-ui` |
-| Root install path | `agentseek install agentseek-ag-ui` |
+| Root install path | `agentseek plugin install agentseek-ag-ui` |
 | Test target | `make check-ag-ui` |
 
 ## When To Use It
@@ -42,7 +42,7 @@ Runtime boundary:
 From the repository root:
 
 ```bash
-agentseek install agentseek-ag-ui
+agentseek plugin install agentseek-ag-ui
 ```
 
 ## Configure
@@ -92,7 +92,7 @@ make check-ag-ui
 Or run it directly:
 
 ```bash
-agentseek install agentseek-ag-ui
+agentseek plugin install agentseek-ag-ui
 uv run python -m pytest contrib/agentseek-ag-ui/tests
 ```
 

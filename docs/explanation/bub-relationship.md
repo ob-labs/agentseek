@@ -134,7 +134,7 @@ Reach for the upstream CLI when:
 - You are diagnosing whether a bug lives in Bub or in the agentseek overrides.
 
 Reach for `agentseek` when you want the opinionated defaults: a workspace-local home, the
-agentseek install sandbox, lifecycle channels in chat mode, and the `AGENTSEEK_*` naming.
+agentseek plugin install sandbox, lifecycle channels in chat mode, and the `AGENTSEEK_*` naming.
 
 ## Related
 

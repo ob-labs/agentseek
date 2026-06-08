@@ -21,7 +21,7 @@ sources:
 > **你需要：** Python 3.12+、[uv](https://docs.astral.sh/uv/) 和一个模型提供方的 API key。只有当你还想用上自带的 CopilotKit 前端时，才需要 Node.js + npm；教程会在涉及到时明确指出。
 
 本教程会把总览里的两条路径串起来：先用**项目生命周期 CLI** `agentseek-cli`
-提供的 `agentseek create` 生成项目，再切到生成项目里执行自己的 `uv sync`，
+提供的 `agentseek new` 生成项目，再切到生成项目里执行自己的 `uv sync`，
 把 **harness** 本体解析进去。之后你持续编辑的就是这个生成出来的项目。教程 03
 会基于它继续构建，所以结束时别删掉它。
 
@@ -30,7 +30,7 @@ sources:
 agentseek 在 `templates/` 下自带了若干起步模板。每个模板组合了一个框架选择（`bub`、`langchain`、`deepagents`）和一种风味（`default`、`cli-remote`、……）。一条命令就能列出目录：
 
 ```bash
-uv run agentseek create --list-templates
+uv run agentseek new --list-templates
 ```
 
 ```text title="expected output"
@@ -50,7 +50,7 @@ uv run agentseek create --list-templates
     langchain/default
       LangChain create_agent + CopilotKit middleware over agentseek-langchain.
     langchain/markdown-messages
-      Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek runtime.
+      Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek devtime.
     langchain/sandbox
       DeepAgents sandbox coding agent with LangSmith sandbox backend, tool-call cards, and join/rejoin streaming UI.
 
@@ -62,9 +62,9 @@ uv run agentseek create --list-templates
       Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain.
 
   Usage:
-    agentseek create <type>/<name>          e.g. agentseek create langchain/cli-remote
-    agentseek create <type>                 use default template for the type
-    agentseek create                        interactive selection
+    agentseek new <type>/<name>          e.g. agentseek new langchain/cli-remote
+    agentseek new <type>                 use default template for the type
+    agentseek new                        interactive selection
 ```
 
 本教程使用 **`bub/default`**，因为它是经过 harness 最轻量的路径（依赖图里没有 LangChain，没有远程 runtime）。请选择一个**位于本 checkout 之外**的工作目录 —— 模板生成的是同级项目，而不是子目录。
@@ -74,7 +74,7 @@ uv run agentseek create --list-templates
 
 ```bash
 mkdir -p ~/projects && cd ~/projects
-uv run --project ~/code/agentseek agentseek create bub --template default --no-input
+uv run --project ~/code/agentseek agentseek new bub --template default --no-input
 ```
 
 `--no-input` 会接受模板 `cookiecutter.json` 中的所有默认值，得到一个名为 `my_bub_agent` 的项目。想要交互式提示（项目名、端口、作者），就去掉这个 flag。
@@ -154,10 +154,10 @@ uv run agentseek gateway --help
 
 ```bash title="not executed in this run"
 npm install --prefix frontend
-uv run agentseek run --no-browser
+uv run agentseek dev --no-browser
 ```
 
-`agentseek run`（由 `agentseek-cli` contrib 包提供，见 [CLI 参考](../reference/cli.zh.md)）包装了 `src/my_bub_agent/dev.py` 中的 supervisor。它会在 `AGENTSEEK_AG_UI_PORT`（默认 `8088`）上启动 gateway，在 `FRONTEND_PORT`（默认 `5173`）上启动 CopilotKit 支持的前端。两个进程都报告 ready 之后，在浏览器中打开 `http://127.0.0.1:5173`，发一轮对话。
+`agentseek dev`（由 `agentseek-cli` contrib 包提供，见 [CLI 参考](../reference/cli.zh.md)）包装了 `src/my_bub_agent/dev.py` 中的 supervisor。它会在 `AGENTSEEK_AG_UI_PORT`（默认 `8088`）上启动 gateway，在 `FRONTEND_PORT`（默认 `5173`）上启动 CopilotKit 支持的前端。两个进程都报告 ready 之后，在浏览器中打开 `http://127.0.0.1:5173`，发一轮对话。
 
 ## 5. 确认这个 agent 是你的
 
@@ -169,13 +169,13 @@ uv run agentseek run --no-browser
 
 - 一个独立的项目目录（按默认值就是 `~/projects/my_bub_agent`），有自己的 `pyproject.toml`、`.venv/` 和 `src/` 布局。
 - 一个已填好的 `.env`，指向真实模型。
-- 已确认 `agentseek create` 和 `agentseek gateway` 的形状。
-- 一个清晰的认识：`agentseek create` 只是入口步骤；`uv sync` 之后，你持续编辑的是这个生成出来的项目，而不是 clone 下来的 `agentseek` 仓库。
+- 已确认 `agentseek new` 和 `agentseek gateway` 的形状。
+- 一个清晰的认识：`agentseek new` 只是入口步骤；`uv sync` 之后，你持续编辑的是这个生成出来的项目，而不是 clone 下来的 `agentseek` 仓库。
 
 ## 接下来去哪
 
 - 给你刚生成的项目加一个本地 skill 和一个 MCP server：[03 —— 添加一个 skill 和一个 MCP server](03-add-a-skill-and-mcp.zh.md)。
 - 在不破坏项目的前提下切换模型提供方：[如何配置模型提供商](../how-to/configure-model.zh.md)。
-- 查阅 `agentseek create`、`agentseek gateway` 和 `agentseek run` 的每个 flag：[CLI 参考](../reference/cli.zh.md)。
+- 查阅 `agentseek new`、`agentseek gateway` 和 `agentseek dev` 的每个 flag：[CLI 参考](../reference/cli.zh.md)。
 - 看完整模板列表和每个模板带了什么：[模板参考](../reference/templates.zh.md)。
 - 在 Docker Compose 下运行同一个项目：[如何使用 Docker Compose 运行](../how-to/run-with-docker-compose.zh.md)。

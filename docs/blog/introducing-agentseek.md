@@ -47,12 +47,12 @@ The **harness distribution** (`agentseek`, source under `src/agentseek/`) is sma
   (`src/agentseek/__main__.py:52`).
 
 The second top-level package is **`agentseek-cli`**, the self-contained project
-lifecycle CLI for `create / run / build / deploy / api / ctx / skills`.
+lifecycle CLI for `new / dev / build / deploy / api / ctx / skills`.
 Installed on its own, it is Path A from the docs overview; installed alongside
 the harness, it folds into the same `agentseek` command surface as a Bub
 plugin. The bundled hard dependencies (`bub`, `bub-feishu`, `bub-mcp`,
 `agentseek-schedule-sqlalchemy`, `logfire`) and the optional plugins
-installable via `agentseek install` (`agentseek-langchain`,
+installable via `agentseek plugin install` (`agentseek-langchain`,
 `agentseek-contextseek`, etc.) are listed in
 [Packages reference](../reference/packages.md). The full layout — `src/`,
 `contrib/`, `examples/`, `templates/`, `skills/`, `references/`, `docs/` — is
@@ -62,7 +62,7 @@ Operationally, the docs expose this as **two paths**. Path A starts with
 `uv tool install agentseek-cli` when you need scaffolding or lifecycle commands
 without the harness runtime on the host. Path B runs the harness itself after
 `uv sync` in this repo or in a generated project; that is where `agentseek
-chat`, `agentseek gateway`, `agentseek install`, and the embeddable library
+chat`, `agentseek gateway`, `agentseek plugin install`, and the embeddable library
 surface live. The full split is in
 [Choosing an entry point](../explanation/choosing-an-entry-point.md).
 

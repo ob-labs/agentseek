@@ -17,7 +17,7 @@ over MCP. This page covers **authoring an entry**; see
 
 ## Prerequisites
 
-- agentseek installed (`bub-mcp` is a core dep, `pyproject.toml:21`).
+- agentseek plugin installed (`bub-mcp` is a core dep, `pyproject.toml:21`).
 - The MCP server itself runnable on your machine (a binary, a `uvx`
   package, an `npx` package, …).
 

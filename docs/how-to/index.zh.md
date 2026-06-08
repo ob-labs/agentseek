@@ -21,7 +21,7 @@ sources:
 
 - **`agentseek`（harness）** —— 运行时 CLI 加可嵌入库；在本仓库 `uv sync`
   之后，或在生成项目里各自 `uv sync` 之后可用。大多数页面以这条路径为主。
-- **`agentseek-cli`（项目生命周期 CLI）** —— `create / run / build / deploy / api / ctx / skills`；既可以作为路径 A 独立安装，也可以在与 harness 共存时
+- **`agentseek-cli`（项目生命周期 CLI）** —— `new / dev / build / deploy / api / ctx / skills`；既可以作为路径 A 独立安装，也可以在与 harness 共存时
   合并进同一个 `agentseek` 命令面。
 
 当两条路径都适用时，页面先给出 harness 形式，再给出等价的生命周期命令作为
@@ -38,15 +38,15 @@ sources:
 
 ## 扩展
 
-- [如何安装插件](install-a-plugin.zh.md) — 用 `agentseek install` 安装插件，并在 harness 中加载。
+- [如何安装插件](install-a-plugin.zh.md) — 用 `agentseek plugin install` 安装插件，并在 harness 中加载。
 - [如何添加 skill](add-skills.zh.md) — 注册项目本地 skill，与随包 skill 共存。
 - [如何添加 MCP 服务器](add-mcp-server.zh.md) — 编写一条同时被两种形态识别的 MCP 条目。
 - [如何编写一个 contrib plugin](author-a-contrib-plugin.zh.md) — 新建 `contrib/agentseek-<feature>/` 包。
 
 ## 运行
 
-- [如何在本地运行 agentseek](run-locally.zh.md) — 通过 harness 触发单轮对话，或使用 `agentseek run` 与
-  `agentseek chat`。
+- [如何在本地运行 agentseek](run-locally.zh.md) — 用 `agentseek dev` 启动生成项目，
+  用 `agentseek turn` 触发单轮运行时调用，或使用 `agentseek chat`。
 - [如何运行 gateway](run-gateway.zh.md) — 运行长期驻留的 channel 监听器。
 - [如何使用 Docker Compose 运行](run-with-docker-compose.zh.md) — Compose 工作流、挂载与环境变量默认值。
 - [如何构建与部署](build-and-deploy.zh.md) — 用 `agentseek build` 与 `agentseek deploy` 打包并发布。

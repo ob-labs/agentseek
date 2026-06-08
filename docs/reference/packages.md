@@ -23,8 +23,8 @@ which package is active in the current environment.
 
 | Package | Role | Source | Console script | How to install |
 | --- | --- | --- | --- | --- |
-| `agentseek` | Harness — runtime CLI and embeddable library (`chat`, `run`, `gateway`, `install`, `update`, …) | `pyproject.toml:2`, `src/agentseek/` | `agentseek = "agentseek.__main__:app"` (`pyproject.toml:29`) | `uv tool install agentseek` for the runtime CLI; add `agentseek` as a project dependency when embedding it as a library. |
-| `agentseek-cli` | Project lifecycle CLI (`create`, `run`, `build`, `deploy`, `api`, `ctx`, `skills`) | `contrib/agentseek-cli/pyproject.toml:2`, `contrib/agentseek-cli/src/agentseek_cli/` | `agentseek = "agentseek_cli.standalone:app"` (`contrib/agentseek-cli/pyproject.toml:18`) | `uv tool install agentseek-cli` (preferred), or pulled in as the `cli` extra from inside this repo |
+| `agentseek` | Harness — runtime CLI and embeddable library (`chat`, `turn`, `gateway`, `plugin`, …) | `pyproject.toml:2`, `src/agentseek/` | `agentseek = "agentseek.__main__:app"` (`pyproject.toml:29`) | `uv tool install agentseek` for the runtime CLI; add `agentseek` as a project dependency when embedding it as a library. |
+| `agentseek-cli` | Project lifecycle CLI (`new`, `dev`, `build`, `deploy`, `api`, `ctx`, `skills`) | `contrib/agentseek-cli/pyproject.toml:2`, `contrib/agentseek-cli/src/agentseek_cli/` | `agentseek = "agentseek_cli.standalone:app"` (`contrib/agentseek-cli/pyproject.toml:18`) | `uv tool install agentseek-cli` (preferred), or pulled in as the `cli` extra from inside this repo |
 
 `[tool.uv.sources]` in this repository is a development-time resolver map for
 workspace and git-sourced plugin packages. It is not required for the published
@@ -68,7 +68,7 @@ These are the main runtime entries from `pyproject.toml`:
 
 ## Installing plugins
 
-Plugins are installed via the `agentseek install` command. The previous
+Plugins are installed via the `agentseek plugin install` command. The previous
 `[optional-dependencies]` extras (e.g. `pip install agentseek[langchain]`) have
 been removed; only `agentseek[cli]` remains as a pip extra.
 
@@ -77,12 +77,12 @@ been removed; only `agentseek[cli]` remains as a pip extra.
 
 | Plugin package | Install command | Purpose |
 | --- | --- | --- |
-| `agentseek-ag-ui` | `agentseek install agentseek-ag-ui` | AG-UI adapter and FastAPI helpers. |
-| `agentseek-cli` | `agentseek install agentseek-cli` or `uv tool install agentseek-cli` | Project lifecycle CLI folded into the harness env (`create / run / build / deploy / api / ctx / skills`). |
-| `agentseek-langchain` | `agentseek install agentseek-langchain` | LangChain `Runnable` / agent bridge. |
-| `bub-tapestore-otel` | `agentseek install bub-tapestore-otel@main` | Tape-first OpenTelemetry spans exported through OTLP HTTP. |
-| `agentseek-tapestore-oceanbase` | `agentseek install agentseek-tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility. |
-| `agentseek-contextseek` | `agentseek install agentseek-contextseek` | ContextSeek semantic context runtime plugin (also brings the lifecycle CLI for `agentseek ctx`). |
+| `agentseek-ag-ui` | `agentseek plugin install agentseek-ag-ui` | AG-UI adapter and FastAPI helpers. |
+| `agentseek-cli` | `agentseek plugin install agentseek-cli` or `uv tool install agentseek-cli` | Project lifecycle CLI folded into the harness env (`new / dev / build / deploy / api / ctx / skills`). |
+| `agentseek-langchain` | `agentseek plugin install agentseek-langchain` | LangChain `Runnable` / agent bridge. |
+| `bub-tapestore-otel` | `agentseek plugin install bub-tapestore-otel@main` | Tape-first OpenTelemetry spans exported through OTLP HTTP. |
+| `agentseek-tapestore-oceanbase` | `agentseek plugin install agentseek-tapestore-oceanbase` | SQLAlchemy tape storage with OceanBase compatibility. |
+| `agentseek-contextseek` | `agentseek plugin install agentseek-contextseek` | ContextSeek semantic context runtime plugin (also brings the lifecycle CLI for `agentseek ctx`). |
 
 ## Contrib packages
 
@@ -120,7 +120,7 @@ contrib/agentseek-contextseek
 
 The trailing `.agentseek/agentseek-project` is the **default plugin sandbox**;
 including it as a workspace member allows uv to resolve plugins installed by
-`agentseek install` against the same lockfile (`pyproject.toml:100`).
+`agentseek plugin install` against the same lockfile (`pyproject.toml:100`).
 
 ## Skills bundled at build time
 

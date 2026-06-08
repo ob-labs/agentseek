@@ -21,14 +21,14 @@ it.
 | Goal | Command | Notes |
 | --- | --- | --- |
 | Sanity-check a chat turn | `agentseek chat` | Harness runtime CLI. Available on Path B. |
-| Run a generated project (template-shaped) | `agentseek run` | Boots a frontend + gateway. Owned by `agentseek-cli`; available when it is merged into the same `agentseek` command surface. |
+| Run a generated project (template-shaped) | `agentseek dev` | Boots a frontend + gateway. Owned by `agentseek-cli`; available when it is merged into the same `agentseek` command surface. |
 
 ## Prerequisites
 
 - Model and key configured — see [How to configure the model provider](configure-model.md).
 - A working harness environment (`uv sync` in this repo, or `uv sync` inside a
   generated project).
-- For `agentseek run`: a project created with `agentseek create` (see
+- For `agentseek dev`: a project created with `agentseek new` (see
   [Templates reference](../reference/templates.md)) **or** an existing `agentseek-cli`-compatible
   layout in the current directory.
 
@@ -54,19 +54,19 @@ combination without any frontend.
    | `--chat-id` | `local` | Chat id. |
    | `--session-id` | `None` | Optional session id. |
 
-## Option 2 — `agentseek run`
+## Option 2 — `agentseek dev`
 
-`agentseek run` belongs to **`agentseek-cli`**. In a merged environment it
+`agentseek dev` belongs to **`agentseek-cli`**. In a merged environment it
 starts the local project, typically a frontend (Vite) plus a gateway, and
 waits for the frontend to become ready.
 
 1. Inside a project directory:
 
    ```bash title="not executed in this run"
-   uv run agentseek run
+   uv run agentseek dev
    ```
 
-2. Tune the launch with the flags below (from `agentseek run --help`):
+2. Tune the launch with the flags below (from `agentseek dev --help`):
 
    | Flag | Default | Description |
    | --- | --- | --- |
@@ -86,8 +86,8 @@ entry point directly.
 | --- | --- | --- |
 | `agentseek chat` not found | You are on Path A with only `agentseek-cli` installed | Use a harness environment (`uv sync` in the repo or generated project). |
 | `agentseek chat` exits silently after model error | Provider rejected the request | Re-run with the model's debug env, or use `agentseek onboard` to rewrite config. |
-| `agentseek run` times out waiting for the frontend | Port mismatch | Pass `--port <n>` matching the frontend's listen port. |
-| `agentseek run` exits "not in a project" | `--mode python` selected outside a generated project | Run `agentseek create` first, or switch to `--mode compose`. |
+| `agentseek dev` times out waiting for the frontend | Port mismatch | Pass `--port <n>` matching the frontend's listen port. |
+| `agentseek dev` exits "not in a project" | `--mode python` selected outside a generated project | Run `agentseek new` first, or switch to `--mode compose`. |
 
 ## Rollback
 

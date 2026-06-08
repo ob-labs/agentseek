@@ -19,12 +19,12 @@ plugin 会安装到 **plugin sandbox**，即位于 `AGENTSEEK_PROJECT` /
 ## 前置条件
 
 - 已安装 agentseek，并在 `PATH` 上可作为 `uv run agentseek` 调用。
-- 具备网络访问 —— `agentseek install` 会解析 git URL 与 Bub contrib
+- 具备网络访问 —— `agentseek plugin install` 会解析 git URL 与 Bub contrib
   registry。
 
 ## 步骤
 
-1. 选择 plugin spec。`agentseek install` 的参数格式见 [CLI 参考](../reference/cli.zh.md)：
+1. 选择 plugin spec。`agentseek plugin install` 的参数格式见 [CLI 参考](../reference/cli.zh.md)：
 
    - 一个 git URL
    - `owner/repo`
@@ -45,7 +45,7 @@ plugin 会安装到 **plugin sandbox**，即位于 `AGENTSEEK_PROJECT` /
    依赖 (`src/agentseek/cli.py:134`)。
 
    ```bash title="not executed in this run"
-   uv run agentseek install bub-feishu@main
+   uv run agentseek plugin install bub-feishu@main
    ```
 
 4. 验证 sandbox 现在列出了该 plugin：
@@ -57,7 +57,7 @@ plugin 会安装到 **plugin sandbox**，即位于 `AGENTSEEK_PROJECT` /
 ### CLI 快捷方式
 
 对于安装而言，库形式 **就是** CLI 形式。没有嵌入式 API；
-`agentseek install` 会在 sandbox 内 shell out 到 `uv`。
+`agentseek plugin install` 会在 sandbox 内 shell out 到 `uv`。
 
 上游 Bub 的 `bub install <spec>` 等效。agentseek CLI
 仅添加了 sandbox 默认值与品牌化。
@@ -65,7 +65,7 @@ plugin 会安装到 **plugin sandbox**，即位于 `AGENTSEEK_PROJECT` /
 ## 移除一个 plugin
 
 ```bash title="not executed in this run"
-uv run agentseek uninstall <package-name>
+uv run agentseek plugin uninstall <package-name>
 ```
 
 `PACKAGES` 是 sandbox `pyproject.toml` 中列出的发行包名。
@@ -73,8 +73,8 @@ uv run agentseek uninstall <package-name>
 ## 更新 plugin
 
 ```bash title="not executed in this run"
-uv run agentseek update              # update all
-uv run agentseek update bub-feishu   # update one
+uv run agentseek plugin update              # update all
+uv run agentseek plugin update bub-feishu   # update one
 ```
 
 ## 故障排查
@@ -86,7 +86,7 @@ uv run agentseek update bub-feishu   # update one
 
 ## 回退
 
-`uv run agentseek uninstall <name>` 从 sandbox 中移除该包。如要丢弃
+`uv run agentseek plugin uninstall <name>` 从 sandbox 中移除该包。如要丢弃
 整个 sandbox，删除 `${AGENTSEEK_PROJECT}` (默认
 `.agentseek/agentseek-project`)。下一次安装会重新构建。
 

@@ -35,7 +35,7 @@ agentseek 从两个并行的命名空间读取其运行时配置：
 | `AGENTSEEK_*` 名称 | 映射到 `BUB_*` | 说明 |
 | --- | --- | --- |
 | `AGENTSEEK_HOME` | `BUB_HOME` | 运行时 home 目录。 |
-| `AGENTSEEK_PROJECT` | `BUB_PROJECT` | `agentseek install` 使用的 plugin sandbox。 |
+| `AGENTSEEK_PROJECT` | `BUB_PROJECT` | `agentseek plugin install` 使用的 plugin sandbox。 |
 | `AGENTSEEK_WORKSPACE_PATH` | `BUB_WORKSPACE_PATH` | workspace 根目录，由 Docker entrypoint 使用（`entrypoint.sh:5`）。 |
 | `AGENTSEEK_SKILLS_HOME` | `BUB_SKILLS_HOME` | skill 源目录（`entrypoint.sh:8`）。 |
 | `AGENTSEEK_MCP_CONFIG_PATH` | `BUB_MCP_CONFIG_PATH` | MCP 配置文件路径。 |

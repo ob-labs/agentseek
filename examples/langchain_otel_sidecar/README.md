@@ -94,11 +94,11 @@ both FastAPI entry spans and LangChain/tool-related spans.
 
 ## Step 4: Use the agentseek Sidecar to Analyze the Traces
 
-The simplest path is a one-shot `agentseek run` inside the sidecar:
+The simplest path is a one-shot `agentseek turn` inside the sidecar:
 
 ```bash
 docker compose -f examples/langchain_otel_sidecar/docker-compose.yml exec agentseek-sidecar \
-  uv run --no-sync --no-env-file agentseek run \
+  uv run --no-sync --no-env-file agentseek turn \
   "Use your OpenTelemetry tools to inspect the latest traces from service langchain-otel-demo. Summarize the request flow, the slowest spans, tool usage, token usage, and any errors."
 ```
 
@@ -150,7 +150,7 @@ docker compose -f examples/langchain_otel_sidecar/docker-compose.yml ps
 At runtime, verify that:
 
 - Jaeger shows the `langchain-otel-demo` service.
-- `agentseek run` can call `mcp.otel_*` tools.
+- `agentseek turn` can call `mcp.otel_*` tools.
 - The sidecar answer can describe trace structure, latency hotspots, and any failures.
 
 ## Cleanup

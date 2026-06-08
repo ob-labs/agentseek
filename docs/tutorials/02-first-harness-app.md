@@ -25,7 +25,7 @@ sources:
 > tutorial calls that out when it matters.
 
 This tutorial spans the two paths from the overview. It starts with
-`agentseek create` from the **project lifecycle CLI** (`agentseek-cli`), then
+`agentseek new` from the **project lifecycle CLI** (`agentseek-cli`), then
 switches into the generated project's own `uv sync`, which resolves the **harness**
 there. That generated project is what you keep editing afterward. Tutorial 03 builds on
 it, so do not delete it at the end.
@@ -37,7 +37,7 @@ framework choice (`bub`, `langchain`, `deepagents`) with a flavour (`default`, `
 …). The catalogue is one command away:
 
 ```bash
-uv run agentseek create --list-templates
+uv run agentseek new --list-templates
 ```
 
 ```text title="expected output"
@@ -57,7 +57,7 @@ uv run agentseek create --list-templates
     langchain/default
       LangChain create_agent + CopilotKit middleware over agentseek-langchain.
     langchain/markdown-messages
-      Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek runtime.
+      Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek devtime.
     langchain/sandbox
       DeepAgents sandbox coding agent with LangSmith sandbox backend, tool-call cards, and join/rejoin streaming UI.
 
@@ -69,9 +69,9 @@ uv run agentseek create --list-templates
       Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain.
 
   Usage:
-    agentseek create <type>/<name>          e.g. agentseek create langchain/cli-remote
-    agentseek create <type>                 use default template for the type
-    agentseek create                        interactive selection
+    agentseek new <type>/<name>          e.g. agentseek new langchain/cli-remote
+    agentseek new <type>                 use default template for the type
+    agentseek new                        interactive selection
 ```
 
 This tutorial uses **`bub/default`** because it is the lightest path through the harness
@@ -85,7 +85,7 @@ because tutorial 01 already prepared that environment; the standalone Path A equ
 
 ```bash
 mkdir -p ~/projects && cd ~/projects
-uv run --project ~/code/agentseek agentseek create bub --template default --no-input
+uv run --project ~/code/agentseek agentseek new bub --template default --no-input
 ```
 
 `--no-input` accepts every default in the template's `cookiecutter.json`, which gives you a
@@ -177,10 +177,10 @@ The full dev path (frontend + gateway) requires `npm`. From the project root:
 
 ```bash title="not executed in this run"
 npm install --prefix frontend
-uv run agentseek run --no-browser
+uv run agentseek dev --no-browser
 ```
 
-`agentseek run` (provided by the `agentseek-cli` contrib package, see
+`agentseek dev` (provided by the `agentseek-cli` contrib package, see
 [CLI reference](../reference/cli.md)) wraps the supervisor in `src/my_bub_agent/dev.py`. It launches the
 gateway on `AGENTSEEK_AG_UI_PORT` (default `8088`) and the CopilotKit-backed frontend on
 `FRONTEND_PORT` (default `5173`). Once both processes report ready, open
@@ -203,8 +203,8 @@ flows from a channel through the runtime to the model.
 - A standalone project directory (`~/projects/my_bub_agent` if you followed the defaults)
   with its own `pyproject.toml`, `.venv/`, and `src/` layout.
 - A populated `.env` pointing at a real model.
-- Verified shapes for `agentseek create` and `agentseek gateway`.
-- A clear sense that `agentseek create` is just the entry step: after `uv sync`, this
+- Verified shapes for `agentseek new` and `agentseek gateway`.
+- A clear sense that `agentseek new` is just the entry step: after `uv sync`, this
   generated project — not the cloned `agentseek` repo — is the harness environment you keep
   editing.
 
@@ -213,7 +213,7 @@ flows from a channel through the runtime to the model.
 - Add a local skill and an MCP server to the project you just generated:
   [03 — Add a skill and an MCP server](03-add-a-skill-and-mcp.md).
 - Switch model providers without breaking the project: [How to configure the model provider](../how-to/configure-model.md).
-- Look up every flag for `agentseek create`, `agentseek gateway`, and `agentseek run`:
+- Look up every flag for `agentseek new`, `agentseek gateway`, and `agentseek dev`:
   [CLI reference](../reference/cli.md).
 - See the full list of templates and what each ships: [Templates reference](../reference/templates.md).
 - Run the same project under Docker Compose: [How to run with Docker Compose](../how-to/run-with-docker-compose.md).

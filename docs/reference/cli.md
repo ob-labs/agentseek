@@ -36,12 +36,9 @@ resolves lazily on each invocation:
   resulting CLI surface is identical whether you launched the script from
   `agentseek` or from `agentseek-cli`.
 
-The Bub plugin in `contrib/agentseek-cli/src/agentseek_cli/plugin.py:28-42`
-mounts every project lifecycle group onto the framework app and is allowed to
-**override** the framework's builtin `run` (which is Bub's
-single-message dispatch) with the project lifecycle CLI's `run` (which starts
-the project locally). The override only happens when `agentseek-cli` is
-present alongside the harness.
+The Bub plugin in `contrib/agentseek-cli/src/agentseek_cli/plugin.py` mounts
+project lifecycle groups onto the framework app without overriding existing
+framework command names.
 
 This page lists every subcommand and notes which surface owns it.
 
@@ -49,20 +46,20 @@ Commands are organized into panels in `--help`:
 
 | Panel | Commands | Purpose |
 | --- | --- | --- |
-| **Project** | `create`, `run`, `build`, `deploy` | Scaffold, run, build, and ship |
+| **Project** | `new`, `dev`, `build`, `deploy` | Scaffold, develop, build, and ship |
 | **Services** | `api`, `ctx`, `skills` | External service integrations |
-| **Runtime** | `chat`, `gateway` | Agent interaction |
-| **Environment** | `install`, `uninstall`, `update`, `onboard`, `login` | Plugin and auth management |
+| **Runtime** | `chat`, `gateway`, `turn` | Agent interaction |
+| **Environment** | `plugin`, `mcp`, `onboard`, `login` | Plugin, MCP, and auth management |
 
 ## Project lifecycle commands
 
 These commands come from `agentseek-cli`
 (`contrib/agentseek-cli/src/agentseek_cli/app.py:22-30`). They are available
 on **Path A** out of the box, and on **Path B** whenever `agentseek-cli` is
-installed in the harness env (e.g. via `agentseek install agentseek-cli`, or
+installed in the harness env (e.g. via `agentseek plugin install agentseek-cli`, or
 because the generated project depends on it).
 
-### `agentseek create [SPEC]`
+### `agentseek new [SPEC]`
 
 :   Create a new agent project from a pre-built template (cookiecutter under
     `templates/`).
@@ -77,7 +74,7 @@ because the generated project depends on it).
 
     See [Templates reference](templates.md) for the bundled template list.
 
-### `agentseek run`
+### `agentseek dev`
 
 :   Start the project locally after completing `.env` configuration.
 
@@ -88,11 +85,6 @@ because the generated project depends on it).
     | `--no-browser` | flag | off | Skip opening the default browser. |
     | `--wait-timeout` | INTEGER | `30` | Seconds to wait for the frontend. |
     | `--mode` | `auto\|compose\|python` | `auto` | Launch mode override. |
-
-    On **Path B with `agentseek-cli` absent**, the upstream Bub builtin
-    `run MESSAGE` (single inbound message) is exposed under the same name
-    instead. The plugin override (`CLI_OVERRIDE_NAMES = {"run"}`) only swaps
-    them when `agentseek-cli` is present.
 
 ### `agentseek build`
 
@@ -145,7 +137,7 @@ because the generated project depends on it).
 
 :   ContextSeek — semantic context layer. Forwarded to the `contextseek` CLI.
     Available when `agentseek-contextseek` is on the path (e.g. on Path B via
-    `agentseek install agentseek-contextseek`, or on Path A when the generated
+    `agentseek plugin install agentseek-contextseek`, or on Path A when the generated
     project pulls it in).
 
     Subcommands include `add`, `retrieve`, `expand`, `compact`, `forget`,
@@ -215,7 +207,19 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     | --- | --- | --- | --- |
     | `--enable-channel` | TEXT (repeatable) | all | Channels to enable for CLI (default: all). |
 
-### `agentseek install [SPECS]...`
+### `agentseek turn MESSAGE`
+
+:   Run one inbound message through the runtime.
+
+    | Argument / Flag | Type | Default | Description |
+    | --- | --- | --- | --- |
+    | `MESSAGE` | TEXT | — | User message to process. |
+    | `--channel` | TEXT | `cli` | Channel name used for the inbound message. |
+    | `--chat-id` | TEXT | `local` | Chat id. |
+    | `--sender-id` | TEXT | `user` | Sender id. |
+    | `--session-id` | TEXT | `None` | Optional session id. |
+
+### `agentseek plugin install [SPECS]...`
 
 :   Install a plugin into Bub's environment, or sync the environment if no
     specifications are provided. agentseek replaces the install sandbox with
@@ -232,7 +236,7 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     `apply_agentseek_env_aliases` sets `BUB_PROJECT` before Typer reads the
     default (`src/agentseek/env.py:73`).
 
-### `agentseek uninstall PACKAGES...`
+### `agentseek plugin uninstall PACKAGES...`
 
 :   Uninstall a plugin from Bub's environment. `PACKAGES` is required.
 
@@ -240,7 +244,7 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     | --- | --- | --- | --- |
     | `--project` | PATH | `${BUB_PROJECT}` | Path to the project directory. |
 
-### `agentseek update [PACKAGES]...`
+### `agentseek plugin update [PACKAGES]...`
 
 :   Update selected packages, or all packages in Bub's environment when no
     arguments are given.
@@ -307,14 +311,15 @@ Repository checks use the merged development command surface:
 
 ```bash
 uv run agentseek --help
-uv run agentseek run --help
+uv run agentseek turn --help
 uv run agentseek chat --help
 uv run agentseek onboard --help
 uv run agentseek gateway --help
-uv run agentseek install --help
-uv run agentseek uninstall --help
-uv run agentseek update --help
-uv run agentseek create --help
+uv run agentseek plugin install --help
+uv run agentseek plugin uninstall --help
+uv run agentseek plugin update --help
+uv run agentseek new --help
+uv run agentseek dev --help
 uv run agentseek build --help
 uv run agentseek deploy --help
 uv run agentseek api --help
