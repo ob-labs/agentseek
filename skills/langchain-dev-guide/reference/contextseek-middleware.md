@@ -1,38 +1,45 @@
 # ContextSeek Middleware Development Issues
 
-## Issue 1: Minimum integration of ContextSeekMiddleware
+## Issue 1: Agent loses context across sessions — adding semantic memory beyond the filesystem
 
-- **Symptom**: You want to add semantic context memory to a LangChain agent but don't know which package to install, which env vars to set, or what the minimum code looks like.
-- **Cause**: `ContextSeekMiddleware` is shipped as a bridge inside the `contextseek` project and is installed separately from the base agentseek package. It also requires a storage backend, an embedding model, and a summarizer LLM to function, all of which must be configured before the first `create_agent` call.
-- **Solution**:
-  - **Install the dependency** (choose one):
+- **Symptom**: Your agent starts fresh every conversation. It can't recall user preferences, past decisions, or prior task outcomes. The filesystem-based `memory=` approach (via `StoreBackend`) works for explicit notes the agent writes, but doesn't help with implicit knowledge buried in past conversations. You need the agent to automatically draw on semantically relevant history without the agent having to manage files.
+- **Cause**: The default LangChain agent loop has no persistent memory. The `StoreBackend` + `memory=` pattern (from Deep Agents) gives the agent a writable file it can read and update, but the agent itself must decide what to write — it degrades when conversation history is long or unstructured. What's missing is a retrieval layer that automatically surfaces relevant past context before each model call, without the agent being involved.
+- **Solution**: Add `ContextSeekMiddleware` to the agent's `middleware=` list. It passively sidecars the agent loop: before every model call it retrieves semantically relevant items from a vector store and injects them into the system message; after every final answer it stores the Q+A pair for future retrieval. The agent has no awareness of any of this.
+  - **Install** (choose one):
     ```bash
-    # If you're inside the agentseek project
+    # Inside the agentseek project
     pip install "agentseek[context]"
 
-    # Direct install from the contextseek project
+    # Standalone
     pip install contextseek contextseek-bridges-langchain
     ```
-  - **Set the required env vars** (copy from `.env.example`, section "ContextSeek semantic context layer"):
+  - **Configure via env vars** (copy from `.env.example`, section "ContextSeek semantic context layer"). All constructor parameters are optional — the middleware reads configuration from env vars when none are passed:
     ```bash
-    # Storage backend: "memory" for dev, "oceanbase" for production
-    AGENTSEEK_CTX_STORAGE_BACKEND=memory
+    # Storage backend (default: memory — ephemeral, no persistence).
+    # Use seekdb for local persistent storage with built-in ONNX embedder
+    # (all-MiniLM-L6-v2, no external API key required):
+    AGENTSEEK_CTX_STORAGE_BACKEND=seekdb
 
-    # Embedding model used for retrieval indexing
-    AGENTSEEK_CTX_EMBEDDING_PROVIDER=openai
-    AGENTSEEK_CTX_EMBEDDING_MODEL=text-embedding-3-small
-    AGENTSEEK_CTX_EMBEDDING_DIMS=1536
-
-    # LLM used by the internal Summarizer (L0/L1 abstraction layers)
+    # Optional: LLM for richer L0/L1 abstracts. Without it, raw Q&A text is stored
+    # (still fully retrievable via seekdb's built-in vector search).
     AGENTSEEK_CTX_LLM_PROVIDER=openai
     AGENTSEEK_CTX_LLM_MODEL=gpt-4o-mini
     ```
-    The `AGENTSEEK_CTX_*` prefix is automatically aliased to the env vars that contextseek reads internally, so you do not need to duplicate credentials.
-  - **Minimum code**:
+    The `AGENTSEEK_CTX_*` prefix is automatically aliased to the env vars contextseek reads internally — no credential duplication needed.
+  - **Minimum integration** (zero constructor arguments):
     ```python
     from langchain.agents import create_agent
-    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
     from contextseek.bridges.langchain.middleware import ContextSeekMiddleware
+
+    agent = create_agent(
+        model=model,
+        tools=[...],
+        middleware=[ContextSeekMiddleware()],
+    )
+    ```
+  - **Passing the agent's own model and embedder** (avoids a second model instantiation):
+    ```python
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
     model = ChatOpenAI(model="gpt-4o")
     embedder = OpenAIEmbeddings(model="text-embedding-3-small")
@@ -40,29 +47,13 @@
     agent = create_agent(
         model=model,
         tools=[...],
-        middleware=[
-            ContextSeekMiddleware(
-                model=model,
-                embedder=embedder,
-                retrieval_k=10,
-                scope="my_project",
-            ),
-        ],
+        middleware=[ContextSeekMiddleware(model=model, embedder=embedder)],
     )
     ```
-  - **What `model=` and `embedder=` do at construction time**: passing them lets the middleware build a `ContextSeek` client internally, reusing the same LangChain objects the agent already holds. Alternatively, pass a pre-built `ContextSeek` instance via `ctx=`:
-    ```python
-    from contextseek.client.contextseek import ContextSeek
-
-    ctx = ContextSeek(adapter=..., resolver=..., embedder=..., summarizer=...)
-    middleware = ContextSeekMiddleware(ctx=ctx, retrieval_k=10, scope="my_project")
-    ```
-  - **What the middleware does at runtime** (per agent turn):
-    1. `wrap_model_call`: retrieves the top-k semantically relevant items from the store and appends them to the system message under a `[Relevant Context]` block before the model call
-    2. `after_model`: stores the final Q+A pair (`Q: <user turn>\nA: <ai reply>`) back into the store for future retrieval (gated by `auto_store`, default `True`)
-    3. `wrap_tool_call`: optionally records each tool invocation (gated by `record_tool_calls`, default `False`)
-    4. `after_agent`: optionally triggers context compaction (gated by `auto_compact`, default `False`)
-- **Lessons learned**: The middleware is "prompt-augmentation only" — it does not modify agent flow or LangGraph state. It sidecars passively alongside the existing model loop. The only visible effect to the model is additional text in the system message; the agent itself has no awareness of ContextSeek.
+  - **What happens at runtime** (fully transparent to the agent):
+    1. Before each model call: retrieves the top-k semantically relevant items from the store and appends them to the system message as a `[Relevant Context]` block
+    2. After each final answer: stores the Q+A pair for future retrieval
+- **Lessons learned**: `ContextSeekMiddleware` and the filesystem `memory=` approach solve different problems and can coexist. Use `memory=` when the agent needs to explicitly read and write structured notes. Use `ContextSeekMiddleware` when you want the agent's accumulated conversation history to automatically inform future answers — no agent-side file management required.
 
 ## Issue 2: scope isolation strategy — fixed at construction vs dynamic per session
 
