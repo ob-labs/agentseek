@@ -466,7 +466,8 @@ def _parse_new_args(ctx: typer.Context) -> argparse.Namespace:
     try:
         return _parse_argv(list(ctx.args))
     except SystemExit as exc:
-        raise typer.Exit(int(exc.code or 2)) from exc
+        code = exc.code if isinstance(exc.code, int) else 2
+        raise typer.Exit(code) from exc
 
 
 def _split_spec(args: argparse.Namespace) -> tuple[str | None, str | None]:

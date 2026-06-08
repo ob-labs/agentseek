@@ -60,6 +60,12 @@ def _mock_remote_template_repo(
 # -- spec validation / error paths -----------------------------------------
 
 
+def test_help_exits_0() -> None:
+    result = _runner().invoke(build_app(), ["new", "--help"])
+    assert result.exit_code == 0
+    assert "agentseek new" in result.output
+
+
 def test_unknown_type_exits_2() -> None:
     result = _runner().invoke(build_app(), ["new", "not-a-real-type"])
     assert result.exit_code == 2
