@@ -7,7 +7,7 @@ import logfire
 import logfire.integrations.loguru as logfire_loguru
 import typer
 
-from agentseek.cli import apply_agentseek_cli_overrides
+from agentseek.cli import apply_agentseek_cli_overrides, apply_agentseek_runtime_command_layout
 from agentseek.env import (
     agentseek_config_file,
     apply_agentseek_env_aliases,
@@ -43,6 +43,7 @@ def create_cli_app() -> typer.Typer:
     framework = BubFramework(config_file=agentseek_config_file())
     framework.load_hooks()
     app = framework.create_cli_app()
+    apply_agentseek_runtime_command_layout(app)
 
     if not app.registered_commands:
 

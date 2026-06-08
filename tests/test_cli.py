@@ -24,6 +24,7 @@ from agentseek.cli import (
     apply_agentseek_cli_overrides,
     apply_agentseek_install_project_defaults,
     apply_agentseek_onboard_branding,
+    apply_agentseek_runtime_command_layout,
     resolve_enabled_channels,
 )
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
@@ -92,6 +93,45 @@ def test_apply_agentseek_cli_overrides_runs_onboard_then_install(monkeypatch) ->
     apply_agentseek_cli_overrides()
 
     assert order == ["onboard", "chat", "install"]
+
+
+def test_runtime_command_layout_moves_ambiguous_root_commands() -> None:
+    app = typer.Typer()
+
+    @app.command("run")
+    def run() -> None:
+        pass
+
+    @app.command("install")
+    def install() -> None:
+        pass
+
+    @app.command("uninstall")
+    def uninstall() -> None:
+        pass
+
+    @app.command("update")
+    def update() -> None:
+        pass
+
+    @app.command("chat")
+    def chat() -> None:
+        pass
+
+    apply_agentseek_runtime_command_layout(app)
+
+    root_commands = {command.name for command in app.registered_commands}
+    assert "run" not in root_commands
+    assert "install" not in root_commands
+    assert "uninstall" not in root_commands
+    assert "update" not in root_commands
+    assert "turn" in root_commands
+    assert "chat" in root_commands
+
+    plugin_groups = [group.typer_instance for group in app.registered_groups if group.name == "plugin"]
+    assert len(plugin_groups) == 1
+    assert plugin_groups[0] is not None
+    assert {command.name for command in plugin_groups[0].registered_commands} == {"install", "uninstall", "update"}
 
 
 class _FakeFramework(BubFramework):

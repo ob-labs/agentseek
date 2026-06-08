@@ -30,6 +30,16 @@ AGENTSEEK_ONBOARD_BANNER = r"""
 AGENTSEEK v{version}
 """.strip("\n")
 AGENTSEEK_ONBOARD_WELCOME = "\nWelcome to agentseek! Let's get you set up.\n"
+RUNTIME_COMMAND_PANELS: dict[str, str] = {
+    "chat": "Runtime",
+    "gateway": "Runtime",
+    "turn": "Runtime",
+    "plugin": "Environment",
+    "mcp": "Environment",
+    "onboard": "Environment",
+    "login": "Environment",
+}
+PLUGIN_COMMAND_NAMES: tuple[str, ...] = ("install", "uninstall", "update")
 
 
 def agentseek_version() -> str:
@@ -163,6 +173,59 @@ def apply_agentseek_install_requirement_resolution() -> None:
     object.__setattr__(bub_cli, "_build_requirement", _build_requirement)
 
 
+def _command_name(command: typer.models.CommandInfo) -> str | None:
+    if command.name:
+        return command.name
+    if command.callback is None:
+        return None
+    return getattr(command.callback, "__name__", None)
+
+
+def _pop_registered_command(app: typer.Typer, name: str) -> typer.models.CommandInfo | None:
+    for index, command in enumerate(app.registered_commands):
+        if _command_name(command) == name:
+            return app.registered_commands.pop(index)
+    return None
+
+
+def _tag_registered_command_panels(app: typer.Typer) -> None:
+    for group in app.registered_groups:
+        name = getattr(group, "name", None) or (group.typer_instance.info.name if group.typer_instance else None)
+        if name and name in RUNTIME_COMMAND_PANELS and group.typer_instance:
+            group.typer_instance.info.rich_help_panel = RUNTIME_COMMAND_PANELS[name]
+
+    for command in app.registered_commands:
+        name = _command_name(command)
+        if name and name in RUNTIME_COMMAND_PANELS:
+            command.rich_help_panel = RUNTIME_COMMAND_PANELS[name]
+
+
+def apply_agentseek_runtime_command_layout(app: typer.Typer) -> None:
+    """Normalize root runtime commands for the AgentSeek command surface."""
+    run_command = _pop_registered_command(app, "run")
+    if run_command and run_command.callback is not None:
+        app.command("turn", rich_help_panel=RUNTIME_COMMAND_PANELS["turn"])(run_command.callback)
+
+    plugin_app = typer.Typer(
+        name="plugin",
+        help="Manage AgentSeek runtime plugins.",
+        add_completion=False,
+        no_args_is_help=True,
+    )
+    has_plugin_commands = False
+    for command_name in PLUGIN_COMMAND_NAMES:
+        command = _pop_registered_command(app, command_name)
+        if command is None or command.callback is None:
+            continue
+        plugin_app.command(command_name)(command.callback)
+        has_plugin_commands = True
+
+    if has_plugin_commands and not any(group.name == "plugin" for group in app.registered_groups):
+        app.add_typer(plugin_app, name="plugin", rich_help_panel=RUNTIME_COMMAND_PANELS["plugin"])
+
+    _tag_registered_command_panels(app)
+
+
 def apply_agentseek_cli_overrides() -> None:
     """Patch ``bub.builtin.cli`` before ``BubFramework.create_cli_app`` registers commands.
 
@@ -184,5 +247,6 @@ __all__ = [
     "apply_agentseek_install_project_defaults",
     "apply_agentseek_install_requirement_resolution",
     "apply_agentseek_onboard_branding",
+    "apply_agentseek_runtime_command_layout",
     "resolve_enabled_channels",
 ]
