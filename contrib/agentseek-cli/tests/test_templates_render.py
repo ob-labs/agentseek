@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from agentseek_cli.commands import create as create_module
+from agentseek_cli.commands import new as create_module
 from cookiecutter.main import cookiecutter
 
 

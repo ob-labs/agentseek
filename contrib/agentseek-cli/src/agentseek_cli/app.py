@@ -8,14 +8,15 @@ through this function so the two entry shapes stay in sync.
 from __future__ import annotations
 
 import contextlib
+from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 
 import typer
 
-from agentseek_cli.commands import api, build, create, ctx, deploy, run, skills
+from agentseek_cli.commands import api, build, ctx, deploy, dev, new, skills
 
-CLI_HELP = "AgentSeek project-lifecycle CLI. Scaffold, run, build, deploy, manage API services, skills, and context."
+CLI_HELP = "AgentSeek CLI. Scaffold, develop, build, deploy, manage API services, skills, and context."
 VERSION_COMMAND_NAME = "version"
 
 
@@ -33,31 +34,33 @@ def _get_version_string() -> str:
     return "\n".join(parts)
 
 
-COMMAND_PANELS: dict[str, str] = {
-    "create": "Project",
-    "run": "Project",
-    "build": "Project",
-    "deploy": "Project",
-    "api": "Services",
-    "ctx": "Services",
-    "skills": "Services",
-}
+@dataclass(frozen=True)
+class CommandGroup:
+    """A public top-level command group owned by the project lifecycle CLI."""
+
+    name: str
+    app: typer.Typer
+    panel: str
 
 
-def iter_command_groups() -> tuple[typer.Typer, ...]:
+COMMAND_GROUPS: tuple[CommandGroup, ...] = (
+    CommandGroup("new", new.app, "Project"),
+    CommandGroup("dev", dev.app, "Project"),
+    CommandGroup("build", build.app, "Project"),
+    CommandGroup("deploy", deploy.app, "Project"),
+    CommandGroup("api", api.app, "Services"),
+    CommandGroup("ctx", ctx.app, "Services"),
+    CommandGroup("skills", skills.app, "Services"),
+)
+COMMAND_PANELS: dict[str, str] = {group.name: group.panel for group in COMMAND_GROUPS}
+
+
+def iter_command_groups() -> tuple[CommandGroup, ...]:
     """Return the top-level Typer groups that make up the AgentSeek CLI.
 
     The order here is the order users see in ``agentseek --help``.
     """
-    return (
-        create.app,
-        run.app,
-        build.app,
-        deploy.app,
-        api.app,
-        ctx.app,
-        skills.app,
-    )
+    return COMMAND_GROUPS
 
 
 def register_version_command(app: typer.Typer) -> None:
@@ -79,12 +82,10 @@ def build_app() -> typer.Typer:
         add_completion=False,
         no_args_is_help=True,
     )
-    for sub in iter_command_groups():
-        name = sub.info.name or ""
-        panel = COMMAND_PANELS.get(name)
-        app.add_typer(sub, name=name, rich_help_panel=panel)
+    for group in iter_command_groups():
+        app.add_typer(group.app, name=group.name, rich_help_panel=group.panel)
     register_version_command(app)
     return app
 
 
-__all__ = ["CLI_HELP", "build_app", "iter_command_groups", "register_version_command"]
+__all__ = ["CLI_HELP", "CommandGroup", "build_app", "iter_command_groups", "register_version_command"]

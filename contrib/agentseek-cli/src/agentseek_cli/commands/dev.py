@@ -1,4 +1,4 @@
-"""``agentseek run`` — start the project locally and open the frontend.
+"""``agentseek dev`` — start the project locally and open the frontend.
 
 The command runs in the user's project working directory:
 
@@ -35,7 +35,7 @@ from pydantic import AliasChoices, Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class RunMode(StrEnum):
+class DevMode(StrEnum):
     AUTO = "auto"
     COMPOSE = "compose"
     PYTHON = "python"
@@ -51,7 +51,7 @@ PYTHON_ENTRY_CANDIDATES: tuple[str, ...] = ("app.py", "main.py")
 PYTHON_SCRIPT_HINTS: tuple[str, ...] = ("serve", "dev")
 
 app = typer.Typer(
-    name="run",
+    name="dev",
     help="Start the project locally after completing .env configuration.",
     add_completion=False,
     no_args_is_help=False,
@@ -59,7 +59,7 @@ app = typer.Typer(
 
 
 @app.callback(invoke_without_command=True)
-def run(
+def dev(
     port: Annotated[
         int | None,
         typer.Option("--port", help="Frontend port. Defaults to PORT in .env or 3000.", show_default=False),
@@ -77,9 +77,9 @@ def run(
         typer.Option("--wait-timeout", help="Seconds to wait for the frontend to become ready."),
     ] = DEFAULT_WAIT_TIMEOUT,
     mode: Annotated[
-        RunMode,
+        DevMode,
         typer.Option("--mode", case_sensitive=False, help="Launch mode override (auto | compose | python)."),
-    ] = RunMode.AUTO,
+    ] = DevMode.AUTO,
 ) -> None:
     """Start the project's services and (optionally) open the browser."""
     cwd = Path.cwd()
@@ -113,10 +113,10 @@ def run(
 # ---------------------------------------------------------------------------
 
 
-class RunSettings(BaseSettings):
+class DevSettings(BaseSettings):
     """Settings sourced from ``.env`` (and overridden by process env vars).
 
-    Only the knobs ``agentseek run`` cares about are declared here. ``.env`` may
+    Only the knobs ``agentseek dev`` cares about are declared here. ``.env`` may
     contain other keys for the project itself; those are ignored at this layer
     and remain visible to child processes through their own configuration.
     """
@@ -134,20 +134,20 @@ class RunSettings(BaseSettings):
     )
 
 
-def _load_settings(cwd: Path) -> RunSettings:
-    """Load :class:`RunSettings` from ``cwd/.env``. Exit 2 on missing/invalid input."""
+def _load_settings(cwd: Path) -> DevSettings:
+    """Load :class:`DevSettings` from ``cwd/.env``. Exit 2 on missing/invalid input."""
     env_path = cwd / ".env"
     if not env_path.is_file():
         typer.echo(
             f"Missing .env file at {env_path}.\n"
-            "Copy .env.example to .env and fill in the required values, then re-run `agentseek run`.",
+            "Copy .env.example to .env and fill in the required values, then retry `agentseek dev`.",
             err=True,
         )
         raise typer.Exit(2)
-    # ``RunSettings`` resolves ``env_file=".env"`` against the current working
+    # ``DevSettings`` resolves ``env_file=".env"`` against the current working
     # directory, which the caller has already set to ``cwd``.
     try:
-        return RunSettings()
+        return DevSettings()
     except ValidationError as exc:
         typer.echo(f"Invalid configuration in {env_path}:\n{exc}", err=True)
         raise typer.Exit(2) from exc
@@ -158,8 +158,8 @@ def _load_settings(cwd: Path) -> RunSettings:
 # ---------------------------------------------------------------------------
 
 
-def _resolve_mode(requested: RunMode, cwd: Path) -> RunMode:
-    if requested is not RunMode.AUTO:
+def _resolve_mode(requested: DevMode, cwd: Path) -> DevMode:
+    if requested is not DevMode.AUTO:
         return requested
     detected = _detect_mode(cwd)
     if detected is None:
@@ -174,11 +174,11 @@ def _resolve_mode(requested: RunMode, cwd: Path) -> RunMode:
     return detected
 
 
-def _detect_mode(cwd: Path) -> RunMode | None:
+def _detect_mode(cwd: Path) -> DevMode | None:
     if any((cwd / name).is_file() for name in COMPOSE_CANDIDATES):
-        return RunMode.COMPOSE
+        return DevMode.COMPOSE
     if (cwd / "pyproject.toml").is_file() and _has_python_entry(cwd):
-        return RunMode.PYTHON
+        return DevMode.PYTHON
     return None
 
 
@@ -205,12 +205,12 @@ def _find_script_hint(content: str) -> str | None:
     return None
 
 
-def _start_service(mode: RunMode, cwd: Path) -> subprocess.Popen[bytes]:
-    if mode is RunMode.COMPOSE:
+def _start_service(mode: DevMode, cwd: Path) -> subprocess.Popen[bytes]:
+    if mode is DevMode.COMPOSE:
         return _start_compose(cwd)
-    if mode is RunMode.PYTHON:
+    if mode is DevMode.PYTHON:
         return _start_python(cwd)
-    msg = f"Unsupported run mode: {mode}"  # auto should already be resolved.
+    msg = f"Unsupported dev mode: {mode}"  # auto should already be resolved.
     raise RuntimeError(msg)
 
 
@@ -296,7 +296,7 @@ def _wait_for_exit(proc: subprocess.Popen[bytes]) -> int:
         return 130
 
 
-def _shutdown(proc: subprocess.Popen[bytes], mode: RunMode, cwd: Path) -> None:
+def _shutdown(proc: subprocess.Popen[bytes], mode: DevMode, cwd: Path) -> None:
     if proc.poll() is None:
         with contextlib.suppress(ProcessLookupError):
             proc.terminate()
@@ -306,7 +306,7 @@ def _shutdown(proc: subprocess.Popen[bytes], mode: RunMode, cwd: Path) -> None:
             proc.kill()
             with contextlib.suppress(subprocess.TimeoutExpired):
                 proc.wait(timeout=TERMINATE_GRACE_SECONDS)
-    if mode is RunMode.COMPOSE:
+    if mode is DevMode.COMPOSE:
         _compose_down(cwd)
 
 
@@ -340,7 +340,7 @@ __all__ = [
     "DEFAULT_HOST",
     "DEFAULT_PORT",
     "DEFAULT_WAIT_TIMEOUT",
-    "RunMode",
-    "RunSettings",
+    "DevMode",
+    "DevSettings",
     "app",
 ]

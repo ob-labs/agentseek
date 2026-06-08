@@ -1,4 +1,4 @@
-"""Tests for ``agentseek create``: template discovery, listing, and generation."""
+"""Tests for ``agentseek new``: template discovery, listing, and generation."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from typing import Any, cast
 
 import pytest
 from agentseek_cli.app import build_app
-from agentseek_cli.commands import create as create_module
-from agentseek_cli.commands.create import TemplateSource
+from agentseek_cli.commands import new as create_module
+from agentseek_cli.commands.new import TemplateSource
 from typer.testing import CliRunner
 
 
@@ -61,13 +61,13 @@ def _mock_remote_template_repo(
 
 
 def test_unknown_type_exits_2() -> None:
-    result = _runner().invoke(build_app(), ["create", "not-a-real-type"])
+    result = _runner().invoke(build_app(), ["new", "not-a-real-type"])
     assert result.exit_code == 2
     assert "Unknown framework type" in result.output
 
 
 def test_list_templates_for_type_prints_bundled_names() -> None:
-    result = _runner().invoke(build_app(), ["create", "langchain", "--list-templates"])
+    result = _runner().invoke(build_app(), ["new", "langchain", "--list-templates"])
     assert result.exit_code == 0
     assert "langchain" in result.output
     assert "default" in result.output
@@ -76,15 +76,15 @@ def test_list_templates_for_type_prints_bundled_names() -> None:
 
 
 def test_list_templates_without_type_lists_all_known_types() -> None:
-    result = _runner().invoke(build_app(), ["create", "--list-templates"])
+    result = _runner().invoke(build_app(), ["new", "--list-templates"])
     assert result.exit_code == 0
     for project_type in create_module.KNOWN_TYPES:
         assert project_type in result.output
 
 
 def test_template_flag_no_value_lists_all_templates() -> None:
-    """``agentseek create --template`` (no value) should list all templates."""
-    result = _runner().invoke(build_app(), ["create", "--template"])
+    """``agentseek new --template`` (no value) should list all templates."""
+    result = _runner().invoke(build_app(), ["new", "--template"])
     assert result.exit_code == 0
     for project_type in create_module.KNOWN_TYPES:
         assert project_type in result.output
@@ -92,8 +92,8 @@ def test_template_flag_no_value_lists_all_templates() -> None:
 
 
 def test_template_flag_no_value_with_type_lists_type_templates() -> None:
-    """``agentseek create langchain --template`` should list langchain templates only."""
-    result = _runner().invoke(build_app(), ["create", "langchain", "--template"])
+    """``agentseek new langchain --template`` should list langchain templates only."""
+    result = _runner().invoke(build_app(), ["new", "langchain", "--template"])
     assert result.exit_code == 0
     assert "langchain" in result.output
     assert "cli-remote" in result.output
@@ -112,7 +112,7 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
         },
     )
 
-    result = _runner().invoke(build_app(), ["create", "--template"])
+    result = _runner().invoke(build_app(), ["new", "--template"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
@@ -130,7 +130,7 @@ def test_template_flag_no_value_for_type_uses_remote_checkout(monkeypatch, tmp_p
         {"langchain/remote-only": "Remote-only LangChain template."},
     )
 
-    result = _runner().invoke(build_app(), ["create", "langchain", "--template", "--checkout", "release/next"])
+    result = _runner().invoke(build_app(), ["new", "langchain", "--template", "--checkout", "release/next"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, "release/next", str(tmp_path / "cookiecutters"), True)]
@@ -147,7 +147,7 @@ def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path:
         cached=True,
     )
 
-    result = _runner().invoke(build_app(), ["create", "langchain", "--template"])
+    result = _runner().invoke(build_app(), ["new", "langchain", "--template"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == []
@@ -240,7 +240,7 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
 
     result = _runner().invoke(
         build_app(),
-        ["create", "deepagents", "--template", "default", "--no-input"],
+        ["new", "deepagents", "--template", "default", "--no-input"],
     )
 
     assert result.exit_code == 0, result.output
@@ -254,7 +254,7 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
 
 
 def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
-    """``agentseek create langchain/cli-remote --no-input`` should resolve correctly."""
+    """``agentseek new langchain/cli-remote --no-input`` should resolve correctly."""
     captured: dict[str, object] = {}
 
     def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
@@ -265,7 +265,7 @@ def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path
 
     result = _runner().invoke(
         build_app(),
-        ["create", "langchain/cli-remote", "--no-input"],
+        ["new", "langchain/cli-remote", "--no-input"],
     )
 
     assert result.exit_code == 0, result.output
@@ -287,7 +287,7 @@ def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> Non
 
     result = _runner().invoke(
         build_app(),
-        ["create", "https://github.com/foo/bar.git", "--no-input"],
+        ["new", "https://github.com/foo/bar.git", "--no-input"],
     )
 
     assert result.exit_code == 0, result.output
@@ -958,7 +958,7 @@ def test_ag_ui_templates_generate_frontend_and_serve_script(
     assert 'serve = "my_' in pyproject_text
     assert '"agentseek-cli"' in pyproject_text
     assert readme.is_file()
-    assert "uv run agentseek run --no-browser" in readme.read_text(encoding="utf-8")
+    assert "uv run agentseek dev --no-browser" in readme.read_text(encoding="utf-8")
     assert frontend_package.is_file()
     assert frontend_app.is_file()
     assert frontend_main.is_file()

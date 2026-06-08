@@ -15,7 +15,7 @@ langgraph dev
 # Bridge to agentseek:
 export PYTHONPATH=src
 export AGENTSEEK_LANGCHAIN_SPEC={{ cookiecutter.project_slug }}.gateway_binding:build_spec
-uv run --no-sync agentseek run "Plan the rollout."
+uv run --no-sync agentseek dev "Plan the rollout."
 ```
 
 Author: {{ cookiecutter.author }}

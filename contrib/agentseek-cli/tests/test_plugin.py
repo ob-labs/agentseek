@@ -5,7 +5,7 @@ from agentseek_cli.app import build_app, iter_command_groups, register_version_c
 from agentseek_cli.plugin import AgentSeekCliPlugin
 from typer.testing import CliRunner
 
-EXPECTED_GROUPS = ("create", "run", "build", "deploy", "api", "ctx", "skills")
+EXPECTED_GROUPS = ("new", "dev", "build", "deploy", "api", "ctx", "skills")
 VERSION_COMMAND = "version"
 
 
@@ -31,23 +31,19 @@ def test_build_app_version_reports_cli_package() -> None:
     assert "agentseek-cli" in result.stdout
 
 
-def test_plugin_register_cli_commands_overrides_framework_run() -> None:
-    """Plugin shape: cli's ``run`` replaces any pre-existing ``run`` command."""
-    from agentseek_cli.commands.run import app as cli_run_app
-
-    # Simulate a pre-existing framework ``run`` command.
+def test_plugin_register_cli_commands_does_not_override_framework_names() -> None:
+    """Plugin shape: existing framework names are left untouched."""
     app = typer.Typer()
-    dummy_run = typer.Typer(name="run", help="Framework run (should be replaced).")
-    app.add_typer(dummy_run, name="run")
+    dummy_dev = typer.Typer(name="dev", help="Framework dev (should stay).")
+    app.add_typer(dummy_dev, name="dev")
 
     AgentSeekCliPlugin().register_cli_commands(app)
     names = [group.name for group in app.registered_groups]
-    assert names.count("run") == 1
+    assert names.count("dev") == 1
 
-    # Verify it's the cli's run, not the dummy.
-    run_groups = [g for g in app.registered_groups if g.name == "run"]
-    assert len(run_groups) == 1
-    assert run_groups[0].typer_instance is cli_run_app
+    dev_groups = [g for g in app.registered_groups if g.name == "dev"]
+    assert len(dev_groups) == 1
+    assert dev_groups[0].typer_instance is dummy_dev
 
 
 def test_plugin_register_cli_commands_mounts_all_groups() -> None:
@@ -79,5 +75,5 @@ def test_register_version_command_is_idempotent() -> None:
 
 
 def test_iter_command_groups_preserves_documented_order() -> None:
-    names = [sub.info.name for sub in iter_command_groups()]
+    names = [group.name for group in iter_command_groups()]
     assert names == list(EXPECTED_GROUPS)

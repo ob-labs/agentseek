@@ -58,7 +58,7 @@ def _resolve_dockerfile(cwd: Path, override: Path | None) -> Path:
 def _raise_missing_dockerfile(path: Path) -> NoReturn:
     typer.echo(
         f"Dockerfile not found at {path}.\n"
-        "Run `agentseek create` to scaffold a project with a Dockerfile, or pass `--file <path>`.",
+        "Run `agentseek new` to scaffold a project with a Dockerfile, or pass `--file <path>`.",
         err=True,
     )
     raise typer.Exit(2)

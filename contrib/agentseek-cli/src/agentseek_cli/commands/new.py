@@ -1,4 +1,4 @@
-"""``agentseek create`` — scaffold a new agent project from a cookiecutter template.
+"""``agentseek new`` — scaffold a new agent project from a cookiecutter template.
 
 Templates live in the ``templates/`` directory at the **repository root** (next
 to ``contrib/``).  At runtime the command resolves them in two ways:
@@ -6,7 +6,7 @@ to ``contrib/``).  At runtime the command resolves them in two ways:
 1. **Local checkout** — when running from the cloned repo (detected via
    ``git rev-parse --show-toplevel``), templates are read straight from disk.
    This gives instant feedback during development: edit a template, run
-   ``agentseek create``, see the result.
+   ``agentseek new``, see the result.
 
 2. **Installed / remote** — when the package is ``pip install``-ed without
    a working tree, the command prepares the repository in cookiecutter's cache
@@ -14,15 +14,15 @@ to ``contrib/``).  At runtime the command resolves them in two ways:
 
 Spec resolution (mirrors bub ``install``'s ``_build_requirement`` pattern):
 
-* ``agentseek create``                                — interactive type + template selection.
-* ``agentseek create deepagents``                     — ``templates/deepagents/default``.
-* ``agentseek create langchain/cli-remote``           — ``templates/langchain/cli-remote``.
-* ``agentseek create langchain --list-templates``     — list templates available for the type.
-* ``agentseek create langchain --template cli-remote``— same as ``langchain/cli-remote``.
-* ``agentseek create langchain --template``           — list templates for the type (same as --list-templates).
-* ``agentseek create --template``                     — list all templates across all types.
-* ``agentseek create https://github.com/x/y.git``    — passthrough to cookiecutter.
-* ``agentseek create /path/to/template``              — passthrough to cookiecutter.
+* ``agentseek new``                                — interactive type + template selection.
+* ``agentseek new deepagents``                     — ``templates/deepagents/default``.
+* ``agentseek new langchain/cli-remote``           — ``templates/langchain/cli-remote``.
+* ``agentseek new langchain --list-templates``     — list templates available for the type.
+* ``agentseek new langchain --template cli-remote``— same as ``langchain/cli-remote``.
+* ``agentseek new langchain --template``           — list templates for the type (same as --list-templates).
+* ``agentseek new --template``                     — list all templates across all types.
+* ``agentseek new https://github.com/x/y.git``    — passthrough to cookiecutter.
+* ``agentseek new /path/to/template``              — passthrough to cookiecutter.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ class _SwallowArgsGroup(TyperGroup):
     """Typer group that forwards every trailing token to the callback.
 
     Typer normally treats the first positional after the group name as a
-    sub-command, so ``agentseek create deepagents --template default`` is
+    sub-command, so ``agentseek new deepagents --template default`` is
     rejected with "No such command 'deepagents'". We override
     ``parse_args`` to dump everything past the group's own options into
     ``ctx.args``, leaving callback-side argparse to interpret them.
@@ -58,8 +58,8 @@ class _SwallowArgsGroup(TyperGroup):
 
 
 app = typer.Typer(
-    name="create",
-    help="Create a new agent project from a pre-built template.",
+    name="new",
+    help="Scaffold a new agent project from a pre-built template.",
     add_completion=False,
     no_args_is_help=False,
     cls=_SwallowArgsGroup,
@@ -116,7 +116,7 @@ def _local_templates_root() -> Path | None:
     1. Walk up from *this* source file looking for a ``templates/`` directory
        that contains at least one ``cookiecutter.json``.  This works regardless
        of the user's cwd, which is important because the user will typically
-       ``cd`` into their desired output directory before running ``create``.
+       ``cd`` into their desired output directory before running ``new``.
     2. Fall back to ``git rev-parse --show-toplevel`` (covers unusual layouts).
     """
     # Strategy 1: relative to source file.
@@ -251,9 +251,9 @@ def _print_all_templates(templates_root: Path, descriptions: dict[str, str]) -> 
         _print_templates_table(project_type, templates, descriptions)
     if total:
         typer.echo("\n  Usage:")
-        typer.echo("    agentseek create <type>/<name>          e.g. agentseek create langchain/cli-remote")
-        typer.echo("    agentseek create <type>                 use default template for the type")
-        typer.echo("    agentseek create                        interactive selection")
+        typer.echo("    agentseek new <type>/<name>          e.g. agentseek new langchain/cli-remote")
+        typer.echo("    agentseek new <type>                 use default template for the type")
+        typer.echo("    agentseek new                        interactive selection")
         typer.echo()
 
 
@@ -354,16 +354,16 @@ def _run_cookiecutter(
 
 
 def _parse_argv(argv: list[str]) -> argparse.Namespace:
-    """Parse the raw create argv with argparse.
+    """Parse the raw new argv with argparse.
 
     Using argparse here (instead of additional Typer ``Option``s) keeps the
-    documented ``agentseek create [SPEC] [--option ...]`` shape intact even
+    documented ``agentseek new [SPEC] [--option ...]`` shape intact even
     though Typer would otherwise insist on a ``COMMAND`` after the positional.
     """
     parser = argparse.ArgumentParser(
-        prog="agentseek create",
+        prog="agentseek new",
         add_help=True,
-        description="Create a new agent project from a pre-built template.",
+        description="Scaffold a new agent project from a pre-built template.",
     )
     parser.add_argument(
         "spec",
@@ -408,9 +408,9 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
 
 
 @app.callback(invoke_without_command=True)
-def create(ctx: typer.Context) -> None:
-    """Create a new agent project from a pre-built template."""
-    args = _parse_create_args(ctx)
+def new(ctx: typer.Context) -> None:
+    """Scaffold a new agent project from a pre-built template."""
+    args = _parse_new_args(ctx)
 
     # --- External spec (URL or absolute path) → passthrough to cookiecutter ---
     if args.spec and _is_external_spec(args.spec):
@@ -462,7 +462,7 @@ def create(ctx: typer.Context) -> None:
     _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
 
 
-def _parse_create_args(ctx: typer.Context) -> argparse.Namespace:
+def _parse_new_args(ctx: typer.Context) -> argparse.Namespace:
     try:
         return _parse_argv(list(ctx.args))
     except SystemExit as exc:

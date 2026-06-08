@@ -1,6 +1,6 @@
 # {{ cookiecutter.project_name }}
 
-A DeepAgents-based agent project, scaffolded with `agentseek create deepagents`.
+A DeepAgents-based agent project, scaffolded with `agentseek new deepagents`.
 
 The binding export is:
 
@@ -20,7 +20,7 @@ cp .env.example .env
 export PYTHONPATH=src
 export AGENTSEEK_LANGCHAIN_SPEC={{ cookiecutter.project_slug }}.demo_binding:build_spec
 
-uv run --no-sync --no-env-file agentseek run "Plan a rollback-safe migration." \
+uv run --no-sync --no-env-file agentseek dev "Plan a rollback-safe migration." \
   --session-id {{ cookiecutter.project_slug }}-demo
 ```
 
