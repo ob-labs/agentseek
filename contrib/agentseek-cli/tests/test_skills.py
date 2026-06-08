@@ -23,13 +23,13 @@ def _stub_subprocess_run(captured: dict[str, object], *, returncode: int = 0):
     return _run
 
 
-def _stub_find_npx_skills(monkeypatch) -> None:
-    monkeypatch.setattr(skills_module, "_find_npx_skills", lambda: "/usr/bin/npx-skills")
+def _stub_find_skills_cmd(monkeypatch) -> None:
+    monkeypatch.setattr(skills_module, "_find_skills_cmd", lambda: ["/usr/bin/npx-skills"])
 
 
 def test_skills_add_forwards_to_npx_skills(monkeypatch, tmp_path) -> None:
     captured: dict[str, object] = {}
-    _stub_find_npx_skills(monkeypatch)
+    _stub_find_skills_cmd(monkeypatch)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
     result = CliRunner().invoke(
@@ -47,44 +47,163 @@ def test_skills_add_forwards_to_npx_skills(monkeypatch, tmp_path) -> None:
     assert Path(str(captured["cwd"])).resolve() == tmp_path.resolve()
 
 
-def test_skills_list_defaults_cwd_to_current_dir(monkeypatch) -> None:
+def test_skills_add_bare_defaults_to_agentseek_all(monkeypatch, tmp_path) -> None:
     captured: dict[str, object] = {}
-    _stub_find_npx_skills(monkeypatch)
+    _stub_find_skills_cmd(monkeypatch)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
+
+    result = CliRunner().invoke(
+        build_app(),
+        ["skills", "--dir", str(tmp_path), "add"],
+    )
+
+    assert result.exit_code == 0
+    assert captured["cmd"] == [
+        "/usr/bin/npx-skills",
+        "add",
+        "ob-labs/agentseek",
+        "--all",
+    ]
+
+
+def test_skills_add_flags_default_to_agentseek_source(monkeypatch, tmp_path) -> None:
+    captured: dict[str, object] = {}
+    _stub_find_skills_cmd(monkeypatch)
+    monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
+
+    result = CliRunner().invoke(
+        build_app(),
+        ["skills", "--dir", str(tmp_path), "add", "--all", "--global"],
+    )
+
+    assert result.exit_code == 0
+    assert captured["cmd"] == [
+        "/usr/bin/npx-skills",
+        "add",
+        "ob-labs/agentseek",
+        "--all",
+        "--global",
+    ]
+
+
+def test_skills_add_skill_flags_default_to_agentseek_source(monkeypatch, tmp_path) -> None:
+    captured: dict[str, object] = {}
+    _stub_find_skills_cmd(monkeypatch)
+    monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
+
+    result = CliRunner().invoke(
+        build_app(),
+        ["skills", "add", "--skill", "langsmith-trace", "--global", "--yes"],
+    )
+
+    assert result.exit_code == 0
+    assert captured["cmd"] == [
+        "/usr/bin/npx-skills",
+        "add",
+        "ob-labs/agentseek",
+        "--skill",
+        "langsmith-trace",
+        "--global",
+        "--yes",
+    ]
+
+
+def test_skills_add_does_not_override_explicit_source(monkeypatch, tmp_path) -> None:
+    captured: dict[str, object] = {}
+    _stub_find_skills_cmd(monkeypatch)
+    monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
+
+    result = CliRunner().invoke(
+        build_app(),
+        ["skills", "add", "langchain-ai/langsmith-skills", "--skill", "*", "--yes"],
+    )
+
+    assert result.exit_code == 0
+    assert captured["cmd"] == [
+        "/usr/bin/npx-skills",
+        "add",
+        "langchain-ai/langsmith-skills",
+        "--skill",
+        "*",
+        "--yes",
+    ]
+
+
+def test_skills_list_shows_embedded_catalogue_by_default(monkeypatch) -> None:
+    monkeypatch.setattr(skills_module, "_find_skills_cmd", lambda: (_ for _ in ()).throw(AssertionError))
 
     result = CliRunner().invoke(build_app(), ["skills", "list"])
 
     assert result.exit_code == 0
-    assert captured["cmd"] == ["/usr/bin/npx-skills", "list"]
-    assert Path(str(captured["cwd"])).resolve() == Path.cwd().resolve()
+    assert "langsmith-trace" in result.output
+    assert "langchain-dev-guide" in result.output
+    assert "langchain-cn-models" in result.output
+    assert "github-repo-cards" in result.output
+    assert "agentseek skills add" in result.output
+
+
+def test_skills_list_with_args_passes_through(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _stub_find_skills_cmd(monkeypatch)
+    monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
+
+    result = CliRunner().invoke(build_app(), ["skills", "list", "--global", "--json"])
+
+    assert result.exit_code == 0
+    assert captured["cmd"] == ["/usr/bin/npx-skills", "list", "--global", "--json"]
+
+
+def test_skills_list_agent_filter_passes_through(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _stub_find_skills_cmd(monkeypatch)
+    monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
+
+    result = CliRunner().invoke(build_app(), ["skills", "list", "--agent", "OpenClaw"])
+
+    assert result.exit_code == 0
+    assert captured["cmd"] == ["/usr/bin/npx-skills", "list", "--agent", "OpenClaw"]
 
 
 def test_skills_propagates_non_zero_exit_code(monkeypatch) -> None:
     captured: dict[str, object] = {}
-    _stub_find_npx_skills(monkeypatch)
+    _stub_find_skills_cmd(monkeypatch)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=42))
 
     result = CliRunner().invoke(build_app(), ["skills", "find", "typescript"])
     assert result.exit_code == 42
 
 
-def test_skills_reports_missing_npx_skills(monkeypatch) -> None:
+def test_skills_falls_back_to_npx(monkeypatch) -> None:
+    import shutil
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npx" if name == "npx" else None)
+    monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
+
+    result = CliRunner().invoke(build_app(), ["skills", "list", "--global"])
+    assert result.exit_code == 0
+    assert captured["cmd"] == ["/usr/bin/npx", "skills", "list", "--global"]
+
+
+def test_skills_reports_missing_both(monkeypatch) -> None:
     import shutil
 
     monkeypatch.setattr(shutil, "which", lambda name: None)
 
-    result = CliRunner().invoke(build_app(), ["skills", "list"])
+    result = CliRunner().invoke(build_app(), ["skills", "add", "--all"])
     assert result.exit_code == 1
-    assert "npx-skills" in result.stderr
+    assert "npx-skills" in result.output or "npx" in result.output
 
 
-def test_skills_passes_all_documented_subcommands(monkeypatch) -> None:
+def test_skills_passes_all_passthrough_subcommands(monkeypatch) -> None:
     captured: dict[str, object] = {}
-    _stub_find_npx_skills(monkeypatch)
+    _stub_find_skills_cmd(monkeypatch)
     monkeypatch.setattr(subprocess, "run", _stub_subprocess_run(captured, returncode=0))
 
     runner = CliRunner()
-    for sub in skills_module.SKILLS_COMMANDS:
+    # add and list have custom handlers; the rest are pure passthrough
+    passthrough_commands = [s for s in skills_module.SKILLS_COMMANDS if s not in {"add", "list"}]
+    for sub in passthrough_commands:
         result = runner.invoke(build_app(), ["skills", sub])
         assert result.exit_code == 0, sub
         cmd = captured["cmd"]

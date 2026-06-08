@@ -9,9 +9,8 @@ to ``contrib/``).  At runtime the command resolves them in two ways:
    ``agentseek create``, see the result.
 
 2. **Installed / remote** — when the package is ``pip install``-ed without
-   a working tree, the command falls back to the GitHub repository URL and
-   lets *cookiecutter* clone + cache the templates on its own (using the
-   ``directory`` kwarg for monorepo subdirectory support).
+   a working tree, the command prepares the repository in cookiecutter's cache
+   first, then reads templates from that cached checkout.
 
 Spec resolution (mirrors bub ``install``'s ``_build_requirement`` pattern):
 
@@ -20,6 +19,8 @@ Spec resolution (mirrors bub ``install``'s ``_build_requirement`` pattern):
 * ``agentseek create langchain/cli-remote``           — ``templates/langchain/cli-remote``.
 * ``agentseek create langchain --list-templates``     — list templates available for the type.
 * ``agentseek create langchain --template cli-remote``— same as ``langchain/cli-remote``.
+* ``agentseek create langchain --template``           — list templates for the type (same as --list-templates).
+* ``agentseek create --template``                     — list all templates across all types.
 * ``agentseek create https://github.com/x/y.git``    — passthrough to cookiecutter.
 * ``agentseek create /path/to/template``              — passthrough to cookiecutter.
 """
@@ -67,11 +68,14 @@ app = typer.Typer(
 KNOWN_TYPES: tuple[str, ...] = ("deepagents", "langchain", "bub")
 DEFAULT_TYPE = "deepagents"
 
+_TEMPLATE_LIST_SENTINEL = "__list__"
+
 # The canonical GitHub repo URL used when templates are not found locally.
 REPO_URL = "https://github.com/ob-labs/agentseek"
 REPO_GIT_URL = f"{REPO_URL}.git"
 # The directory inside the repo that holds all cookiecutter templates.
 TEMPLATES_DIR = "templates"
+TEMPLATE_REPO_CACHE_DIR = "agentseek"
 
 
 # ---------------------------------------------------------------------------
@@ -133,26 +137,23 @@ def _local_templates_root() -> Path | None:
     return None
 
 
-def _resolve_type_template(project_type: str, template_name: str) -> TemplateSource:
-    """Resolve ``<type>/<name>`` into a :class:`TemplateSource`.
-
-    Prefers a local checkout; falls back to the GitHub remote.
-    """
-    subdir = f"{TEMPLATES_DIR}/{project_type}/{template_name}"
-    local_root = _local_templates_root()
-    if local_root is not None:
-        local_path = local_root / project_type / template_name
-        if (local_path / "cookiecutter.json").is_file():
-            return TemplateSource(
-                template=str(local_path),
-                install_source_path=str(local_root.parent),
-            )
-    # Fall back to remote.
-    return TemplateSource(
-        template=REPO_URL,
-        directory=subdir,
-        install_source_url=REPO_GIT_URL,
-    )
+def _resolve_type_template(
+    project_type: str,
+    template_name: str,
+    *,
+    templates_root: Path,
+) -> TemplateSource:
+    """Resolve ``<type>/<name>`` from an already prepared template root."""
+    template_path = templates_root / project_type / template_name
+    if (template_path / "cookiecutter.json").is_file():
+        install_source_path = str(templates_root.parent) if _local_templates_root() == templates_root else None
+        return TemplateSource(
+            template=str(template_path),
+            install_source_path=install_source_path,
+            install_source_url=None if install_source_path else REPO_GIT_URL,
+        )
+    typer.echo(f"Template {project_type}/{template_name!s} was not found.", err=True)
+    raise typer.Exit(2)
 
 
 def _is_external_spec(spec: str) -> bool:
@@ -165,24 +166,51 @@ def _is_external_spec(spec: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _list_templates(project_type: str) -> list[str]:
+def _list_templates(project_type: str, templates_root: Path | None = None) -> list[str]:
     """Return template names available under ``templates/<type>/``."""
-    local_root = _local_templates_root()
-    if local_root is None:
+    if templates_root is None:
+        templates_root = _local_templates_root()
+    if templates_root is None:
         return []
-    type_dir = local_root / project_type
+    type_dir = templates_root / project_type
     if not type_dir.is_dir():
         return []
-    names = [entry.name for entry in type_dir.iterdir() if (entry / "cookiecutter.json").is_file()]
-    return sorted(names)
+    return sorted(entry.name for entry in type_dir.iterdir() if (entry / "cookiecutter.json").is_file())
 
 
-def _load_template_descriptions() -> dict[str, str]:
-    """Best-effort load of the ``templates/index.json`` for descriptions."""
+def _prepare_templates_root(checkout: str | None = None) -> Path:
     local_root = _local_templates_root()
-    if local_root is None:
+    if local_root is not None:
+        return local_root
+
+    from cookiecutter.config import get_user_config
+    from cookiecutter.vcs import clone
+
+    cookiecutters_dir = Path(get_user_config()["cookiecutters_dir"]).expanduser()
+    cached_repo = cookiecutters_dir / TEMPLATE_REPO_CACHE_DIR
+    if checkout is None and cached_repo.is_dir():
+        templates_root = cached_repo / TEMPLATES_DIR
+    else:
+        repo_root = clone(
+            REPO_URL,
+            checkout=checkout,
+            clone_to_dir=cookiecutters_dir,
+            no_input=True,
+        )
+        templates_root = Path(repo_root) / TEMPLATES_DIR
+
+    if not templates_root.is_dir():
+        typer.echo(f"Templates directory not found at {templates_root}.", err=True)
+        raise typer.Exit(1)
+    return templates_root
+
+
+def _load_template_descriptions(templates_root: Path | None = None) -> dict[str, str]:
+    if templates_root is None:
+        templates_root = _local_templates_root()
+    if templates_root is None:
         return {}
-    index = local_root / "index.json"
+    index = templates_root / "index.json"
     if not index.is_file():
         return {}
     try:
@@ -194,18 +222,39 @@ def _load_template_descriptions() -> dict[str, str]:
     return {str(k): str(v) for k, v in data.items()}
 
 
-def _print_templates_table(project_type: str, templates: list[str]) -> None:
+def _print_templates_table(
+    project_type: str,
+    templates: list[str],
+    descriptions: dict[str, str] | None = None,
+) -> None:
     if not templates:
         typer.echo(f"No templates found for type {project_type!r}.")
         return
-    descriptions = _load_template_descriptions()
-    typer.echo(f"Available {project_type} templates:")
-    width = max(len(name) for name in templates)
+    if descriptions is None:
+        descriptions = _load_template_descriptions()
+    typer.echo(f"\n  {project_type} ({len(templates)} templates)")
+    typer.echo(f"  {'─' * 60}")
     for name in templates:
         key = f"{project_type}/{name}"
         desc = descriptions.get(key, "")
-        suffix = f"  {desc}" if desc else ""
-        typer.echo(f"  {name:<{width}}{suffix}")
+        typer.echo(f"    {key}")
+        if desc:
+            typer.echo(f"      {desc}")
+
+
+def _print_all_templates(templates_root: Path, descriptions: dict[str, str]) -> None:
+    """Print all templates across all types with usage hints."""
+    total = 0
+    for project_type in KNOWN_TYPES:
+        templates = _list_templates(project_type, templates_root)
+        total += len(templates)
+        _print_templates_table(project_type, templates, descriptions)
+    if total:
+        typer.echo("\n  Usage:")
+        typer.echo("    agentseek create <type>/<name>          e.g. agentseek create langchain/cli-remote")
+        typer.echo("    agentseek create <type>                 use default template for the type")
+        typer.echo("    agentseek create                        interactive selection")
+        typer.echo()
 
 
 # ---------------------------------------------------------------------------
@@ -237,12 +286,21 @@ def _coerce_type_choice(raw: str) -> str:
     raise typer.BadParameter(msg)
 
 
-def _prompt_template_name(project_type: str, templates: list[str]) -> str:
+def _prompt_template_name(
+    project_type: str,
+    templates: list[str],
+    descriptions: dict[str, str] | None = None,
+) -> str:
     if len(templates) == 1:
         return templates[0]
+    if descriptions is None:
+        descriptions = _load_template_descriptions()
     typer.echo(f"Available {project_type} templates:")
+    width = max(len(name) for name in templates)
     for index, name in enumerate(templates, start=1):
-        typer.echo(f"  {index}. {name}")
+        desc = descriptions.get(f"{project_type}/{name}", "")
+        suffix = f"  — {desc}" if desc else ""
+        typer.echo(f"  {index}. {name:<{width}}{suffix}")
     raw = typer.prompt(f"Choose template [1-{len(templates)}]", default="1")
     cleaned = raw.strip()
     if cleaned in templates:
@@ -318,8 +376,13 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--template",
+        nargs="?",
         default=None,
-        help="Named template under the chosen type (e.g. --template cli-remote).",
+        const=_TEMPLATE_LIST_SENTINEL,
+        help=(
+            "Named template under the chosen type (e.g. --template cli-remote). "
+            "Pass --template with no value to list available templates."
+        ),
     )
     parser.add_argument(
         "--checkout",
@@ -362,10 +425,12 @@ def create(ctx: typer.Context) -> None:
     # --- Parse spec into (type, name) ---
     project_type, template_name = _split_spec(args)
 
-    # --- --list-templates ---
-    if args.list_templates:
-        _show_templates(project_type)
+    # --- --list-templates or --template (no value) ---
+    if args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL:
+        _show_templates(project_type, checkout=args.checkout)
         return
+
+    templates_root = _prepare_templates_root(checkout=args.checkout)
 
     # --- Interactive type selection if needed ---
     if project_type is None:
@@ -377,16 +442,23 @@ def create(ctx: typer.Context) -> None:
     if template_name is None:
         template_name = args.template
     if template_name is None:
-        available = _list_templates(project_type)
-        if not available:
-            # No local templates — try remote with "default".
+        if args.no_input:
             template_name = "default"
-        elif len(available) == 1 or args.no_input:
-            template_name = available[0] if "default" not in available else "default"
         else:
-            template_name = _prompt_template_name(project_type, available)
+            descriptions = _load_template_descriptions(templates_root)
+            available = _list_templates(project_type, templates_root)
+            if not available:
+                template_name = "default"
+            elif len(available) == 1:
+                template_name = available[0]
+            else:
+                template_name = _prompt_template_name(project_type, available, descriptions)
 
-    source = _resolve_type_template(project_type, template_name)
+    source = _resolve_type_template(
+        project_type,
+        template_name,
+        templates_root=templates_root,
+    )
     _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
 
 
@@ -422,13 +494,16 @@ def _validate_project_type(project_type: str) -> None:
         raise typer.Exit(2)
 
 
-def _show_templates(project_type: str | None) -> None:
+def _show_templates(project_type: str | None, *, checkout: str | None = None) -> None:
+    if project_type is not None:
+        _validate_project_type(project_type)
+    templates_root = _prepare_templates_root(checkout=checkout)
+    descriptions = _load_template_descriptions(templates_root)
     if project_type is None:
-        for known in KNOWN_TYPES:
-            _print_templates_table(known, _list_templates(known))
+        _print_all_templates(templates_root, descriptions)
         return
-    _validate_project_type(project_type)
-    _print_templates_table(project_type, _list_templates(project_type))
+    _print_templates_table(project_type, _list_templates(project_type, templates_root), descriptions)
+    typer.echo()
 
 
 __all__ = ["DEFAULT_TYPE", "KNOWN_TYPES", "REPO_URL", "TemplateSource", "app"]

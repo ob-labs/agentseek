@@ -22,7 +22,7 @@ command surface you see depends on which one is active.
 | Source package | `agentseek` resolves to | When you see it |
 | --- | --- | --- |
 | `agentseek-cli` (project lifecycle CLI) | `agentseek_cli.standalone:app` (`contrib/agentseek-cli/pyproject.toml:18`) | Path A — `uv tool install agentseek-cli` |
-| `agentseek` (harness) | `agentseek.__main__:app` (`pyproject.toml:49`) | Path B — `git clone … && uv sync && uv run agentseek` |
+| `agentseek` (harness) | `agentseek.__main__:app` (`pyproject.toml:29`) | Path B — `uv tool install agentseek` |
 
 `agentseek_cli.standalone:app` (`contrib/agentseek-cli/src/agentseek_cli/standalone.py:24-32`)
 resolves lazily on each invocation:
@@ -45,6 +45,15 @@ present alongside the harness.
 
 This page lists every subcommand and notes which surface owns it.
 
+Commands are organized into panels in `--help`:
+
+| Panel | Commands | Purpose |
+| --- | --- | --- |
+| **Project** | `create`, `run`, `build`, `deploy` | Scaffold, run, build, and ship |
+| **Services** | `api`, `ctx`, `skills` | External service integrations |
+| **Runtime** | `chat`, `gateway` | Agent interaction |
+| **Environment** | `install`, `uninstall`, `update`, `onboard`, `login` | Plugin and auth management |
+
 ## Project lifecycle commands
 
 These commands come from `agentseek-cli`
@@ -61,9 +70,9 @@ because the generated project depends on it).
     | Argument / Flag | Type | Default | Description |
     | --- | --- | --- | --- |
     | `spec` | TEXT | — | Framework type (`deepagents`, `langchain`, `bub`), `type/name`, git URL, or local path. |
-    | `--template` | TEXT | — | Named template under the chosen type (e.g. `cli-remote`). |
+    | `--template` | TEXT (optional value) | — | Named template under the chosen type (e.g. `--template cli-remote`). Pass with no value to list available templates. |
     | `--checkout` | TEXT | — | Branch / tag / commit for remote fetches. |
-    | `--list-templates` | flag | — | List templates available for the type and exit. |
+    | `--list-templates` | flag | — | List templates for the chosen type, or all templates when no type is given, and exit. |
     | `--no-input` | flag | off | Skip cookiecutter prompts. |
 
     See [Templates reference](templates.md) for the bundled template list.
@@ -150,15 +159,19 @@ because the generated project depends on it).
 
 ### `agentseek skills`
 
-:   Manage agent skills via the upstream `vercel-labs/skills` CLI (run with
-    `npx`).
+:   Manage agent skills. Wraps the `vercel-labs/skills` CLI (uses `npx-skills`
+    if available, falls back to `npx`).
 
     | Flag | Type | Default | Description |
     | --- | --- | --- | --- |
     | `--dir` | PATH | `$PWD` | Workspace directory to run `skills` in. |
 
-    Subcommands (each forwards to `npx skills`): `add`, `list`, `find`,
-    `update`, `remove`, `init`.
+    Subcommands: `add`, `list`, `find`, `update`, `remove`, `init`.
+
+    `add` defaults to `ob-labs/agentseek` when no source is specified:
+
+        agentseek skills add --all --global        # installs all AgentSeek skills
+        agentseek skills add other/repo --all      # explicit source
 
 ## Harness runtime commands
 
@@ -279,10 +292,18 @@ Usage: agentseek [OPTIONS] COMMAND [ARGS]...
     | `--manual` | flag | off | Paste the callback URL or code instead of waiting for a local callback server. |
     | `--timeout` | FLOAT | `300.0` | OAuth wait timeout in seconds. |
 
-## Help commands actually executed
+## Help command checks
 
-The following commands were run from the repository root (Path B, with all
-extras) to populate this page:
+Runtime-only Path B checks use an isolated tool install:
+
+```bash
+uv tool install agentseek
+agentseek --help
+agentseek chat --help
+agentseek gateway --help
+```
+
+Repository checks use the merged development command surface:
 
 ```bash
 uv run agentseek --help

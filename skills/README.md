@@ -1,33 +1,59 @@
 # Skills
 
-This directory contains a curated collection of skills designed to address tasks across various fields.
-
-By default, these skills are not included in the agentseek release.
+Curated skills for agent-assisted development with AgentSeek templates.
 
 ## Install
 
-Install all skills to all detected agents at once:
+### Via `agentseek` CLI (recommended)
+
+The `agentseek skills` subcommand defaults to this repo — no need to type the source:
 
 ```bash
-npx skills add ob-labs/agentseek --all
+# All skills, globally
+agentseek skills add --all --global
+
+# Specific skill
+agentseek skills add --skill langsmith-trace --global --yes
+
+# Specific agent
+agentseek skills add --all --global --agent claude-code
 ```
 
-Or pick specific skills and agents:
+### Via `npx skills` directly
 
 ```bash
-npx skills add ob-labs/agentseek --skill github-repo-cards --agent claude-code
-npx skills add ob-labs/agentseek --skill langchain-cn-models --agent claude-code
-npx skills add ob-labs/agentseek --skill langchain-dev-guide --agent claude-code
+npx skills add ob-labs/agentseek --all --global
+npx skills add ob-labs/agentseek --skill langsmith-trace --global --yes
 ```
 
-To verify what was installed:
+### Project-local (for shared repos)
 
 ```bash
-npx skills list
+agentseek skills add --all
 ```
 
-To remove installed skills:
+Omit `--global` to install into the current project only.
+
+### Standalone copies (CI / airgapped)
 
 ```bash
-npx skills remove
+agentseek skills add --all --global --copy
+```
+
+## Available Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `langsmith-trace` | LangSmith CLI setup, tracing, and trace debugging for AgentSeek backends |
+| `langchain-dev-guide` | Engineering pitfalls and verified fixes for LangChain/LangGraph |
+| `langchain-cn-models` | Integrating Chinese LLM providers (Qwen, GLM, DeepSeek) with LangChain |
+| `github-repo-cards` | Generate visual repo cards for documentation and social sharing |
+
+## Update & Remove
+
+```bash
+agentseek skills update           # update all
+agentseek skills remove           # interactive remove
+npx skills update -g              # update global (alternative)
+npx skills remove --all --global  # remove everything
 ```

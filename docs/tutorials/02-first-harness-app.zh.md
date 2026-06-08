@@ -34,13 +34,37 @@ uv run agentseek create --list-templates
 ```
 
 ```text title="expected output"
-Available deepagents templates:
-  default  Local create_deep_agent runnable bound to agentseek-langchain.
-Available langchain templates:
-  cli-remote  Remote LangGraph CLI agent bridged via LangGraphClientRunnable.
-  default     LangChain create_agent + CopilotKit middleware over agentseek-langchain.
-Available bub templates:
-  default  Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain.
+  deepagents (3 templates)
+  ────────────────────────────────────────────────────────────
+    deepagents/content-builder
+      DeepAgents content builder with brand memory, skills, subagents, image generation, and streamed UI.
+    deepagents/default
+      Local create_deep_agent runnable bound to agentseek-langchain.
+    deepagents/research
+      Pure DeepAgents research agent with Tavily search and streamed tool/sub-agent UI.
+
+  langchain (4 templates)
+  ────────────────────────────────────────────────────────────
+    langchain/cli-remote
+      Remote LangGraph CLI agent bridged via LangGraphClientRunnable.
+    langchain/default
+      LangChain create_agent + CopilotKit middleware over agentseek-langchain.
+    langchain/markdown-messages
+      Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek runtime.
+    langchain/sandbox
+      DeepAgents sandbox coding agent with LangSmith sandbox backend, tool-call cards, and join/rejoin streaming UI.
+
+  bub (2 templates)
+  ────────────────────────────────────────────────────────────
+    bub/contextseek
+      Bub agent with ContextSeek semantic memory layer and ctx HTTP API for feeding and inspecting context.
+    bub/default
+      Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain.
+
+  Usage:
+    agentseek create <type>/<name>          e.g. agentseek create langchain/cli-remote
+    agentseek create <type>                 use default template for the type
+    agentseek create                        interactive selection
 ```
 
 本教程使用 **`bub/default`**，因为它是经过 harness 最轻量的路径（依赖图里没有 LangChain，没有远程 runtime）。请选择一个**位于本 checkout 之外**的工作目录 —— 模板生成的是同级项目，而不是子目录。

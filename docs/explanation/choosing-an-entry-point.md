@@ -70,29 +70,25 @@ cleanly from PyPI.
 
 ### Path B — `agentseek` (the harness)
 
-The harness is a regular Python project, but **not** installable directly from
-PyPI: `requires-dist` includes `bub-feishu`, `bub-mcp`, and
-`agentseek-schedule-sqlalchemy`, which are wired via `[tool.uv.sources]` (git
-source / workspace). PyPI metadata cannot carry source overrides, so
-`pip install agentseek` and `uv tool install agentseek` will both fail to
-resolve. Use a project that owns those sources instead:
+Install the published runtime as an isolated uv tool when you only need the
+harness command surface:
 
 ```bash
-# Option 1 — clone this repository.
+uv tool install agentseek
+```
+
+For repository development, or when you need workspace contrib packages from
+this checkout, sync a project that owns the `[tool.uv.sources]` map:
+
+```bash
 git clone https://github.com/ob-labs/agentseek.git
 cd agentseek
 uv sync
-
-# Option 2 — generate a project via Path A, then sync inside it.
-uv tool install agentseek-cli
-agentseek create bub --template default --no-input
-cd my_bub_agent
-uv sync
 ```
 
-Either way, `uv run agentseek` ends up calling
-`agentseek.__main__:app` (`pyproject.toml:49`,
-`src/agentseek/__main__.py:52-69`), which bootstraps `BubFramework`, loads
+In an installed tool or synced project, `agentseek` ends up calling
+`agentseek.__main__:app` (`pyproject.toml:29`,
+`src/agentseek/__main__.py:39-53`), which bootstraps `BubFramework`, loads
 every Bub plugin, and exposes the **harness runtime** command surface:
 
 `chat / run / gateway / install / uninstall / update / mcp / login / onboard`.

@@ -163,7 +163,7 @@ appears. If an MCP server is not picked up, confirm the file path matches
   [How to install a plugin](../how-to/install-a-plugin.md).
 - For the decision matrix — when to reach for a skill, an MCP server, or a contrib plugin —
   see [The extension model](../explanation/extension-model.md).
-- For everything `agentseek skills` forwards to `npx skills`, see
+- For everything `agentseek skills` forwards to `npx-skills`, see
   `../reference/cli.md#skills`.
 - For the full list of `AGENTSEEK_*` variables and their `BUB_*` aliases, see
   [Environment variables reference](../reference/environment.md).

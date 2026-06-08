@@ -60,13 +60,12 @@ agentseek/
 
 ### `src/agentseek/` — the harness package
 
-The Python package published to PyPI as `agentseek` (the harness itself). It is
-**not** directly installable from PyPI: `requires-dist` includes `bub-feishu`,
-`bub-mcp`, and `agentseek-schedule-sqlalchemy`, which are wired via
-`[tool.uv.sources]` (git source / workspace). PyPI metadata cannot carry source
-overrides, so a plain `pip install agentseek` or `uv tool install agentseek`
-will fail to resolve. Install it by cloning this repo and running `uv sync`, or
-by `uv sync`-ing inside a project generated via `agentseek create`. See
+The Python package published to PyPI as `agentseek` (the harness itself). Its
+core runtime dependencies resolve from PyPI, so `pip install agentseek` installs
+the harness package. Use `pip install 'agentseek[cli]'` when you also want the
+project lifecycle CLI folded into the same environment. Clone this repo and run
+`uv sync` when you need workspace contrib packages or the development
+`[tool.uv.sources]` mappings. See
 [Choosing an entry point](choosing-an-entry-point.md).
 
 Three files matter:
@@ -83,10 +82,10 @@ This is the only place core harness code lives. Everything bigger goes under `co
 
 ### `src/skills/` — bundled skills
 
-Skills shipped inside the distribution because `pyproject.toml:73-77` includes `src/skills`
+Skills shipped inside the distribution because `pyproject.toml:65-69` includes `src/skills`
 in the build. As of this writing the directory contains `plugin-creator/`, plus skills
 imported at build time from external repos via `[tool.pdm.build].skills`
-(`pyproject.toml:78-80`) — currently `friendly-python` and `piglet` from
+(`pyproject.toml:70-72`) — currently `friendly-python` and `piglet` from
 <https://github.com/PsiACE/skills>. See [src/skills/](https://github.com/ob-labs/agentseek/tree/main/src/skills)
 for the bundled skill list and [The runtime data model](runtime-data-model.md) for what a
 skill is.
@@ -109,7 +108,7 @@ the other entries are runtime plugins for the harness.
 | `agentseek-tapestore-oceanbase` | Runtime plugin | SQLAlchemy tape storage with OceanBase compatibility. |
 
 Each package owns its install, configure, run, and verify documentation. The main docs
-link out; they do not duplicate. The workspace mapping lives at `pyproject.toml:100-110`.
+link out; they do not duplicate. The workspace mapping lives at `pyproject.toml:92-101`.
 
 OpenTelemetry tracing is documented in
 <https://github.com/bubbuild/bub-contrib/tree/main/packages/bub-tapestore-otel>.
@@ -135,8 +134,8 @@ catalogue lives at `templates/index.json`:
 | `langchain/cli-remote` | Remote LangGraph CLI agent bridged via `LangGraphClientRunnable`. |
 | `deepagents/default` | Local `create_deep_agent` runnable bound to `agentseek-langchain`. |
 
-The directory is excluded from ty (`pyproject.toml:120-126`) and ruff
-(`pyproject.toml:133-139`) because the files contain Jinja2 placeholders, not real Python.
+The directory is excluded from ty (`pyproject.toml:111-117`) and ruff
+(`pyproject.toml:124-130`) because the files contain Jinja2 placeholders, not real Python.
 Reference: [Templates reference](../reference/templates.md).
 
 ### `skills/` — stand-alone skill repositories

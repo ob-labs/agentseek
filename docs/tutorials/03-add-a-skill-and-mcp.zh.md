@@ -132,5 +132,5 @@ uv run agentseek gateway --enable-channel ag-ui
 
 - 想用 Bub 兼容的 Python plugin（而不是 skill 或 MCP），看 [如何安装插件](../how-to/install-a-plugin.zh.md)。
 - 决策矩阵 —— 什么时候选 skill、MCP server 还是 contrib plugin —— 见 [扩展模型](../explanation/extension-model.zh.md)。
-- `agentseek skills` 透传给 `npx skills` 的全部内容，见 [CLI 参考](../reference/cli.zh.md)。
+- `agentseek skills` 透传给 `npx-skills` 的全部内容，见 [CLI 参考](../reference/cli.zh.md)。
 - `AGENTSEEK_*` 变量及其 `BUB_*` 别名的完整清单，见 [环境变量参考](../reference/environment.zh.md)。

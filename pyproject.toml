@@ -1,6 +1,6 @@
 [project]
 name = "agentseek"
-version = "0.1.0"
+version = "0.0.2"
 description = "A database-native Agent Harness for runtime data workflows, powered by Bub"
 authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
 readme = "README.md"

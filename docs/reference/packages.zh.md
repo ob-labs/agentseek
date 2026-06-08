@@ -3,7 +3,7 @@ title: 包参考
 type: reference
 audience: [A2, A3, A4]
 runs: no
-verified_on: 2026-06-03
+verified_on: 2026-06-05
 sources:
   - pyproject.toml
   - contrib/agentseek-cli/pyproject.toml
@@ -23,34 +23,28 @@ agentseek 在 PyPI 上以**两个互补的包**形式提供，按职责拆分。
 
 | 包 | 角色 | 源码 | Console script | 安装方式 |
 | --- | --- | --- | --- | --- |
-| `agentseek` | Harness —— 运行时 CLI 与可嵌入的库（`chat`、`run`、`gateway`、`install`、`update`、…） | `pyproject.toml:2`、`src/agentseek/` | `agentseek = "agentseek.__main__:app"`（`pyproject.toml:49`） | **不能直接从 PyPI 安装。** 请在本仓库执行 `git clone … && uv sync`，或在 `agentseek create` 生成的项目里执行 `uv sync`。 |
+| `agentseek` | Harness —— 运行时 CLI 与可嵌入的库（`chat`、`run`、`gateway`、`install`、`update`、…） | `pyproject.toml:2`、`src/agentseek/` | `agentseek = "agentseek.__main__:app"`（`pyproject.toml:29`） | 运行时 CLI 使用 `uv tool install agentseek`；作为库嵌入时，把 `agentseek` 加入项目依赖。 |
 | `agentseek-cli` | 项目生命周期 CLI（`create`、`run`、`build`、`deploy`、`api`、`ctx`、`skills`） | `contrib/agentseek-cli/pyproject.toml:2`、`contrib/agentseek-cli/src/agentseek_cli/` | `agentseek = "agentseek_cli.standalone:app"`（`contrib/agentseek-cli/pyproject.toml:18`） | `uv tool install agentseek-cli`（首选），或在本仓库内以 `cli` extra 拉入 |
 
-> **为什么 `agentseek` 不能从 PyPI 直装** —— 它的 `requires-dist` 包含
-> `bub-feishu`、`bub-mcp` 与 `agentseek-schedule-sqlalchemy`。这些依赖通过本
-> 仓库的 `[tool.uv.sources]` 接到 git source / workspace，PyPI metadata 无法
-> 携带 source 覆盖。直接 `pip install agentseek` 或 `uv tool install agentseek`
-> 都会解析失败。可靠的路径是路径 B（`git clone + uv sync`）或路径 A
-> （`uv tool install agentseek-cli` → `agentseek create` → 在生成的项目里
-> `uv sync`），二者都自带 `[tool.uv.sources]`。参见
-> [agentseek](../index.zh.md)。
+本仓库的 `[tool.uv.sources]` 是开发期解析 workspace 和 git-sourced plugin 包的
+映射。发布到 PyPI 的 `agentseek` wheel 的核心运行时依赖不需要它。
 
 ### `agentseek`（harness）
 
 | 字段 | 值 | 来源 |
 | --- | --- | --- |
 | Name | `agentseek` | `pyproject.toml:2` |
-| Version | `0.1.0` | `pyproject.toml:3` |
+| Version | `0.0.2` | `pyproject.toml:3` |
 | Python | `>=3.12,<4.0` | `pyproject.toml:8` |
-| Build backend | `pdm.backend`（`pdm-backend`、`pdm-build-skills>=0.1.0a3`） | `pyproject.toml:69` |
-| Build includes | `src/agentseek`、`src/skills` | `pyproject.toml:74` |
+| Build backend | `pdm.backend`（`pdm-backend`、`pdm-build-skills>=0.1.0a3`） | `pyproject.toml:61` |
+| Build includes | `src/agentseek`、`src/skills` | `pyproject.toml:65` |
 
 ### `agentseek-cli`（项目生命周期 CLI）
 
 | 字段 | 值 | 来源 |
 | --- | --- | --- |
 | Name | `agentseek-cli` | `contrib/agentseek-cli/pyproject.toml:2` |
-| Version | `0.1.0` | `contrib/agentseek-cli/pyproject.toml:3` |
+| Version | `0.0.2` | `contrib/agentseek-cli/pyproject.toml:3` |
 | Python | `>=3.12` | `contrib/agentseek-cli/pyproject.toml:7` |
 | Console script | `agentseek = "agentseek_cli.standalone:app"` | `contrib/agentseek-cli/pyproject.toml:18` |
 | Bub 入口点 | `cli = "agentseek_cli.plugin:main"` | `contrib/agentseek-cli/pyproject.toml:21` |
@@ -67,10 +61,6 @@ agentseek 在 PyPI 上以**两个互补的包**形式提供，按职责拆分。
 | 包 | 约束 | 来源 pin |
 | --- | --- | --- |
 | `bub` | `>=0.3.7` | PyPI |
-| `bub-feishu` | （无版本） | `git+bub-contrib@5374c8f`（`pyproject.toml:89`） |
-| `bub-mcp` | （无版本） | `git+bub-contrib@5374c8f`（`pyproject.toml:90`） |
-| `bub-tapestore-otel` | （无版本） | `git+bub-contrib@75c0778` |
-| `agentseek-schedule-sqlalchemy` | （无版本） | workspace |
 | `logfire` | `>=4.33.0` | PyPI |
 | `pydantic-settings` | `>=2.0.0` | PyPI |
 
@@ -94,7 +84,7 @@ pip extra 保留。
 
 ## Contrib 包
 
-Workspace 成员位于 `contrib/` 下（`pyproject.toml:101`）。每个都有自己的 README；
+Workspace 成员位于 `contrib/` 下（`pyproject.toml:92`）。每个都有自己的 README；
 不要在此处重复配置。
 
 `agentseek-cli` 也出现在此表中，但它本身是一个独立的顶层 PyPI 包（参见本页顶部
@@ -126,11 +116,11 @@ contrib/agentseek-contextseek
 
 末尾的 `.agentseek/agentseek-project` 是 **默认 plugin sandbox**；将其作为 workspace
 成员，可以让 uv 针对同一 lockfile 解析由 `agentseek install` 安装的 plugins
-（`pyproject.toml:109`）。
+（`pyproject.toml:100`）。
 
 ## 构建时捆绑的 skills
 
-`[tool.pdm.build].skills`（`pyproject.toml:78`）：
+`[tool.pdm.build].skills`（`pyproject.toml:70`）：
 
 | 来源 | 子路径 | 包含的 skills |
 | --- | --- | --- |
@@ -141,7 +131,7 @@ contrib/agentseek-contextseek
 ## Index URL
 
 `[tool.uv]` 将 `index-url = "https://pypi.org/simple"` 固定下来
-（`pyproject.toml:85`）。为加快开发安装速度，可以将 `UV_INDEX_URL` 设为镜像
+（`pyproject.toml:76`）。为加快开发安装速度，可以将 `UV_INDEX_URL` 设为镜像
 （例如 `https://pypi.tuna.tsinghua.edu.cn/simple`）。
 
 ## 另请参阅

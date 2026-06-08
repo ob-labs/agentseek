@@ -49,12 +49,23 @@ locations into the same path (`entrypoint.sh:30`–`:35`).
 
 ### CLI shortcut — install from a registry
 
-`agentseek skills` wraps the upstream `vercel-labs/skills` CLI (run via
-`npx`). Subcommands: `add`, `list`, `find`, `update`, `remove`, `init`.
+`agentseek skills` wraps the upstream `vercel-labs/skills` CLI. Subcommands:
+`add`, `list`, `find`, `update`, `remove`, `init`.
+
+When no source is specified, `add` defaults to `ob-labs/agentseek`:
 
 ```bash title="not executed in this run"
-uv run agentseek skills --dir . add psiace/skills --skill friendly-python
+# Install all AgentSeek skills globally (source is implied)
+agentseek skills add --all --global
+
+# Install a specific skill
+agentseek skills add --skill langsmith-trace --global --yes
+
+# Install from another source (explicit)
+agentseek skills add langchain-ai/langsmith-skills --skill '*' --yes
 ```
+
+The CLI looks for `npx-skills` first, then falls back to `npx` (Node.js).
 
 ## Steps — bundle a release skill
 
