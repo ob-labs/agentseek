@@ -25,6 +25,15 @@ def test_build_app_help_lists_groups() -> None:
     assert VERSION_COMMAND in result.stdout
 
 
+def test_build_app_rejects_legacy_root_forms_without_suggestions() -> None:
+    app = build_app()
+    for legacy_name in ("run", "create", "install", "uninstall", "update"):
+        result = CliRunner().invoke(app, [legacy_name, "--help"])
+        assert result.exit_code != 0
+        assert f"No such command '{legacy_name}'" in result.output
+        assert "Did you mean" not in result.output
+
+
 def test_build_app_version_reports_cli_package() -> None:
     result = CliRunner().invoke(build_app(), [VERSION_COMMAND])
     assert result.exit_code == 0

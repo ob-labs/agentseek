@@ -81,6 +81,7 @@ def build_app() -> typer.Typer:
         help=CLI_HELP,
         add_completion=False,
         no_args_is_help=True,
+        suggest_commands=False,
     )
     for group in iter_command_groups():
         app.add_typer(group.app, name=group.name, rich_help_panel=group.panel)

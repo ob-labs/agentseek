@@ -49,7 +49,7 @@ Three pieces sit on top of each other:
    library dependency (`pyproject.toml:18`). See
    <https://github.com/bubbuild/bub>.
 2. **`agentseek` (the harness)** runs on top of Bub. It owns the runtime CLI
-   (`chat`, `run`, `gateway`, `install`, `update`, …), the embeddable library
+   (`chat`, `turn`, `gateway`, `plugin`, …), the embeddable library
    surface, runtime defaults (`.agentseek/` runtime home, the
    `.agentseek/agentseek-project` install sandbox, the alias layer from
    `AGENTSEEK_*` to `BUB_*`), and the bundled skills under `src/skills/`. See

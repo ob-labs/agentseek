@@ -137,7 +137,7 @@ def apply_agentseek_install_project_defaults() -> None:
         # ``.agentseek/agentseek-project``), that factory is bypassed and the
         # directory may not exist yet — ``_uv(... cwd=project)`` would then
         # raise ``FileNotFoundError`` from ``subprocess.run``. Mirror Bub's
-        # invariant here so ``agentseek install`` works in a fresh workspace.
+        # invariant here so ``agentseek plugin install`` works in a fresh workspace.
         project.mkdir(parents=True, exist_ok=True)
         if (project / "pyproject.toml").is_file():
             return
@@ -202,6 +202,8 @@ def _tag_registered_command_panels(app: typer.Typer) -> None:
 
 def apply_agentseek_runtime_command_layout(app: typer.Typer) -> None:
     """Normalize root runtime commands for the AgentSeek command surface."""
+    app.suggest_commands = False
+
     run_command = _pop_registered_command(app, "run")
     if run_command and run_command.callback is not None:
         app.command("turn", rich_help_panel=RUNTIME_COMMAND_PANELS["turn"])(run_command.callback)

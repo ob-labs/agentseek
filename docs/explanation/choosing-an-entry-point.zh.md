@@ -19,7 +19,7 @@ sources:
 # 选择一个入口
 
 > **一句话：**agentseek 以**两个 PyPI 包**形式提供，按职责拆分 ——
-> `agentseek-cli` 是**项目生命周期 CLI**（scaffold、run、build、deploy）；
+> `agentseek-cli` 是**项目生命周期 CLI**（scaffold、develop、build、deploy）；
 > `agentseek` 是 **harness** 本身（chat、gateway、运行时、可嵌入的库）。按你
 > 的工作来选。Docker Compose 与 contrib 包是 harness 之上的*部署 / 扩展面*，
 > 不是另外的入口。
@@ -56,10 +56,10 @@ uv tool install agentseek-cli
 
 - 你想用 `agentseek new …` **生成项目**，而且不想为此 clone 整个仓库。
 - 你管理只跑 `build` / `deploy` 的 **CI** —— 不需要把 harness 运行时拉进来。
-- 你在 harness 环境之外管理项目：`run`、构建镜像、生成部署清单、调用 `ctx`
+- 你在 harness 环境之外管理项目：`dev`、构建镜像、生成部署清单、调用 `ctx`
   / `skills`。
 
-路径 A 故意**不**包含 harness 运行时 CLI（`chat / gateway / install / …`）。
+路径 A 故意**不**包含 harness 运行时 CLI（`chat / turn / gateway / plugin / …`）。
 依赖树很小，从 PyPI 解析很干净。
 
 ### 路径 B —— `agentseek`（harness）
@@ -84,7 +84,7 @@ uv sync
 `src/agentseek/__main__.py:39-53`），它启动 `BubFramework`、加载所有 Bub
 plugin，并暴露 **harness 运行时**命令面：
 
-`chat / run / gateway / install / uninstall / update / mcp / login / onboard`。
+`chat / turn / gateway / plugin / mcp / login / onboard`。
 
 适合路径 B 的场景：
 
@@ -110,11 +110,13 @@ plugin，并暴露 **harness 运行时**命令面：
   `[project.entry-points.bub]` 加载 `agentseek_cli.plugin:main`。
 - plugin
   （`contrib/agentseek-cli/src/agentseek_cli/plugin.py:28-42`）把每个项目
-  生命周期组挂到 framework app 上，并把 Bub 内置的 `run`（单条消息分发）
-  覆盖为项目生命周期 CLI 的 `run`（本地启动项目）。
+  生命周期组挂到 framework app 上，但不会覆盖 framework 已经拥有的名字。
+- harness 布局把 Bub 的单条消息分发从顶层 `run` 移到 `turn`，并把 Bub 的
+  `install` / `uninstall` / `update` 移到 `plugin install` /
+  `plugin uninstall` / `plugin update`。
 
-最终：单个 `agentseek …` 暴露两个表面的并集。每条命令属于哪个包详见
-[CLI 参考](../reference/cli.zh.md)。
+最终：单个 `agentseek …` 暴露两个表面的并集，但旧的顶层形式不是 alias，
+也不是有效命令。每条命令属于哪个包详见 [CLI 参考](../reference/cli.zh.md)。
 
 ## 部署 / 扩展面
 

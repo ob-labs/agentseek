@@ -19,7 +19,7 @@ sources:
 # Choosing an entry point
 
 > **In short:** agentseek ships as **two PyPI packages** split by job —
-> `agentseek-cli` is the **project lifecycle CLI** (scaffold, run, build,
+> `agentseek-cli` is the **project lifecycle CLI** (scaffold, develop, build,
 > deploy); `agentseek` is the **harness** itself (chat, gateway, runtime,
 > embeddable library). Pick the one that fits the job. Docker Compose and the
 > contrib packages are deployment / extension surfaces *on top of* the harness,
@@ -61,11 +61,11 @@ Path A fits when:
   want to clone the repository to do it.
 - You operate **CI** that only needs `build` / `deploy` — the harness runtime
   is not pulled in.
-- You manage projects with `run`, build images, generate deployment
+- You manage projects with `dev`, build images, generate deployment
   manifests, or invoke `ctx` / `skills` from outside the harness env.
 
 Path A intentionally does **not** include the harness runtime CLI
-(`chat / gateway / install / …`). The dependency tree is small and resolves
+(`chat / turn / gateway / plugin / …`). The dependency tree is small and resolves
 cleanly from PyPI.
 
 ### Path B — `agentseek` (the harness)
@@ -91,7 +91,7 @@ In an installed tool or synced project, `agentseek` ends up calling
 `src/agentseek/__main__.py:39-53`), which bootstraps `BubFramework`, loads
 every Bub plugin, and exposes the **harness runtime** command surface:
 
-`chat / run / gateway / install / uninstall / update / mcp / login / onboard`.
+`chat / turn / gateway / plugin / mcp / login / onboard`.
 
 Path B fits when:
 
@@ -120,11 +120,14 @@ but the user-visible behaviour is identical:
   `contrib/agentseek-cli/pyproject.toml:20-21`.
 - The plugin
   (`contrib/agentseek-cli/src/agentseek_cli/plugin.py:28-42`) mounts every
-  project lifecycle group onto the framework app, and overrides Bub's
-  built-in `run` (single-message dispatch) with the project lifecycle CLI's
-  `run` (start the project locally).
+  project lifecycle group onto the framework app without overriding existing
+  framework-owned names.
+- The harness layout moves Bub's single-message dispatch from root `run` to
+  `turn`, and moves Bub's `install` / `uninstall` / `update` under
+  `plugin install` / `plugin uninstall` / `plugin update`.
 
-End result: a single `agentseek …` exposes the union of both surfaces. See
+End result: a single `agentseek …` exposes the union of both surfaces, but the
+old root forms are not aliases and are not valid commands. See
 [CLI reference](../reference/cli.md) for the per-command attribution.
 
 ## Deployment and extension surfaces

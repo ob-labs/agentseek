@@ -134,6 +134,38 @@ def test_runtime_command_layout_moves_ambiguous_root_commands() -> None:
     assert {command.name for command in plugin_groups[0].registered_commands} == {"install", "uninstall", "update"}
 
 
+def test_runtime_command_layout_rejects_legacy_root_forms_without_suggestions() -> None:
+    app = typer.Typer()
+
+    @app.command("run")
+    def run() -> None:
+        pass
+
+    @app.command("install")
+    def install() -> None:
+        pass
+
+    @app.command("uninstall")
+    def uninstall() -> None:
+        pass
+
+    @app.command("update")
+    def update() -> None:
+        pass
+
+    @app.command("chat")
+    def chat() -> None:
+        pass
+
+    apply_agentseek_runtime_command_layout(app)
+
+    for legacy_name in ("run", "create", "install", "uninstall", "update"):
+        result = runner.invoke(app, [legacy_name, "--help"])
+        assert result.exit_code != 0
+        assert f"No such command '{legacy_name}'" in result.output
+        assert "Did you mean" not in result.output
+
+
 class _FakeFramework(BubFramework):
     def __init__(self) -> None:
         pass
