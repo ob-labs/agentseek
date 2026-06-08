@@ -26,6 +26,7 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 | Streaming Output | [reference/streaming.md](reference/streaming.md) | Choosing between `stream_events` and `stream`, distinguishing tokens from multiple LLMs, disabling streaming, custom progress events |
 | Multi-Agent Orchestration | [reference/multi-agent.md](reference/multi-agent.md) | subagents vs handoffs, tool-per-agent vs dispatch, retrieving subagent state, trimming subagent boilerplate, quickly building handoff setups |
 | Other Common Issues | [reference/common-issues.md](reference/common-issues.md) | High-frequency standalone issues that don't fit the categories above. Currently includes: tools returning data to both the model and the application layer, `with_structured_output` returning None, MCP tools unable to access runtime context |
+| ContextSeek Middleware | [reference/contextseek-middleware.md](reference/contextseek-middleware.md) | Integrating `ContextSeekMiddleware`, context engineering, semantic / vector memory, multi-session scope isolation |
 
 ## Common Issues Quick Reference
 
@@ -53,3 +54,9 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 | Tool returning data to both the model and the app layer / `artifact` / `Command(update=...)` | common-issues issue 1 |
 | `with_structured_output` returning None / missing fields | common-issues issue 2 |
 | MCP tool can't access `user_id` / `store` / state / API key | common-issues issue 3 |
+| context engineering / semantic memory / vector memory / agent memory | contextseek-middleware issue 1 |
+| `ContextSeekMiddleware` integration / minimum setup / install | contextseek-middleware issue 1 |
+| scope pollution / multi-user isolation / `thread_id` / context bleeding between sessions | contextseek-middleware issue 2 |
+| `record_tool_calls` / write volume spike / `auto_store` / Summarizer LLM cost | contextseek-middleware issue 3 |
+| `auto_compact` / `compact_every` / executor shutdown / `RuntimeError` on restart | contextseek-middleware issue 4 |
+| `tool_arg_overrides` / inject tool arguments / runtime params without modifying tool definition | contextseek-middleware issue 5 |
