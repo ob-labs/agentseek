@@ -1,218 +1,264 @@
-# ContextSeek Middleware Development Issues
+# ContextSeek Middleware — Use Case Scenarios
 
-## Issue 1: Agent loses context across sessions — adding semantic memory beyond the filesystem
+Every scenario below answers one question: **"I'm building X — is ContextSeekMiddleware the right fit, and how do I wire it in?"** Parameter-level configuration issues that arise after the decision to use the middleware are covered in [contextseek-params.md](contextseek-params.md).
 
-- **Symptom**: Your agent starts fresh every conversation. It can't recall user preferences, past decisions, or prior task outcomes. The filesystem-based `memory=` approach (via `StoreBackend`) works for explicit notes the agent writes, but doesn't help with implicit knowledge buried in past conversations. You need the agent to automatically draw on semantically relevant history without the agent having to manage files.
-- **Cause**: The default LangChain agent loop has no persistent memory. The `StoreBackend` + `memory=` pattern (from Deep Agents) gives the agent a writable file it can read and update, but the agent itself must decide what to write — it degrades when conversation history is long or unstructured. What's missing is a retrieval layer that automatically surfaces relevant past context before each model call, without the agent being involved.
-- **Solution**: Add `ContextSeekMiddleware` to the agent's `middleware=` list. It passively sidecars the agent loop: before every model call it retrieves semantically relevant items from a vector store and injects them into the system message; after every final answer it stores the Q+A pair for future retrieval. The agent has no awareness of any of this.
-  - **Install** (choose one):
-    ```bash
-    # Inside the agentseek project
-    pip install "agentseek[context]"
+---
 
-    # Standalone
-    pip install contextseek contextseek-bridges-langchain
-    ```
-  - **Configure via env vars** (copy from `.env.example`, section "ContextSeek semantic context layer"). All constructor parameters are optional — the middleware reads configuration from env vars when none are passed:
-    ```bash
-    # Storage backend (default: memory — ephemeral, no persistence).
-    # Use seekdb for local persistent storage with built-in ONNX embedder
-    # (all-MiniLM-L6-v2, no external API key required):
-    AGENTSEEK_CTX_STORAGE_BACKEND=seekdb
+## Issue 1: Agent loses context across sessions — personal assistant or support bot
 
-    # Optional: LLM for richer L0/L1 abstracts. Without it, raw Q&A text is stored
-    # (still fully retrievable via seekdb's built-in vector search).
-    AGENTSEEK_CTX_LLM_PROVIDER=openai
-    AGENTSEEK_CTX_LLM_MODEL=gpt-4o-mini
-    ```
-    The `AGENTSEEK_CTX_*` prefix is automatically aliased to the env vars contextseek reads internally — no credential duplication needed.
-  - **Minimum integration** (zero constructor arguments):
-    ```python
-    from langchain.agents import create_agent
-    from contextseek.bridges.langchain.middleware import ContextSeekMiddleware
+**Keywords**: semantic memory, context loss, cross-session, agent forgets, StoreBackend alternative, vector retrieval, passive memory, persistent memory
 
-    agent = create_agent(
-        model=model,
-        tools=[...],
-        middleware=[ContextSeekMiddleware()],
-    )
-    ```
-  - **Passing the agent's own model and embedder** (avoids a second model instantiation):
-    ```python
-    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+You're building a **personal coding assistant** or a **customer support bot**. Users notice the agent "forgets" everything between sessions: an architecture decision made last week ("we chose OceanBase over Redis because of HTAP requirements") is unknown to the agent today; a support user who already explained their account type and preferred language has to explain it again on every new conversation.
 
-    model = ChatOpenAI(model="gpt-4o")
-    embedder = OpenAIEmbeddings(model="text-embedding-3-small")
+The instinct is to reach for `memory=` and `StoreBackend` (from Deep Agents). That works — but only for knowledge the agent actively chooses to write down. It degrades when conversation history is long or when the agent doesn't "know" what's worth remembering. What's missing is a passive retrieval layer that automatically surfaces semantically relevant history before each model call without any agent involvement.
 
-    agent = create_agent(
-        model=model,
-        tools=[...],
-        middleware=[ContextSeekMiddleware(model=model, embedder=embedder)],
-    )
-    ```
-  - **What happens at runtime** (fully transparent to the agent):
-    1. Before each model call: retrieves the top-k semantically relevant items from the store and appends them to the system message as a `[Relevant Context]` block
-    2. After each final answer: stores the Q+A pair for future retrieval
-- **Lessons learned**: `ContextSeekMiddleware` and the filesystem `memory=` approach solve different problems and can coexist. Use `memory=` when the agent needs to explicitly read and write structured notes. Use `ContextSeekMiddleware` when you want the agent's accumulated conversation history to automatically inform future answers — no agent-side file management required.
+`ContextSeekMiddleware` sidecars the agent loop transparently:
 
-## Issue 2: scope isolation strategy — fixed at construction vs dynamic per session
+1. **Before every model call**: retrieves the top-k semantically relevant items from the vector store and appends them to the system message as a `[Relevant Context]` block.
+2. **After every final answer**: stores the Q+A pair for future retrieval (skips intermediate tool-call turns to avoid noise).
 
-- **Symptom**: In a multi-user service, different users' context bleeds into each other — one user sees context retrieved from another user's conversation history. Or a single-user bot uses `thread_id` as scope but the context appears to reset on each invocation.
-- **Cause**: A `ContextSeekMiddleware` instance is shared across all concurrent agent sessions (it is stateless except for the compact executor). Scope determines which "bucket" in the store is read and written. There are two distinct resolution paths:
-  - **Constructor `scope=` is given**: this value is hard-wired for every session this instance handles — `_SCOPE_VAR` (the per-task ContextVar) is **not** consulted. All sessions share the same bucket regardless of `thread_id`.
-  - **Constructor `scope=` is omitted (or `None`)**: `before_agent` runs at the start of each agent turn and sets `_SCOPE_VAR` to `runtime.thread_id` for the current asyncio task. Every downstream hook (`wrap_model_call`, `after_model`, `wrap_tool_call`) reads the ContextVar, so concurrent sessions are naturally isolated without touching the instance.
-- **Solution**:
-  - **Single-tenant / shared knowledge base** (all sessions read and write the same context):
-    ```python
-    # Every session contributes to and retrieves from "my_project"
-    middleware = ContextSeekMiddleware(
-        model=model,
-        embedder=embedder,
-        scope="my_project",
-    )
-    ```
-  - **Multi-user isolation** (each session gets its own isolated context bucket):
-    ```python
-    # Do NOT pass scope= — let before_agent pick up runtime.thread_id
-    middleware = ContextSeekMiddleware(
-        model=model,
-        embedder=embedder,
-        # scope= omitted
-    )
+The agent is never aware of either step.
 
-    # Callers must pass a stable, user-specific thread_id in config
-    agent.invoke(
-        {"messages": [...]},
-        config={"configurable": {"thread_id": f"user:{user_id}"}},
-    )
-    ```
-  - **Per-conversation isolation with a fallback** (scope set externally but with a default):
-    ```python
-    # The middleware falls back to "default" when before_agent didn't run
-    # (e.g. sync invocation without a checkpointer). This is the built-in behavior.
-    middleware = ContextSeekMiddleware(model=model, embedder=embedder)
-    # _current_scope() returns _SCOPE_VAR.get() or "default"
-    ```
-  - **Anti-pattern to avoid** — sharing a fixed-scope instance across users:
-    ```python
-    # WRONG: all users pollute each other's context
-    shared = ContextSeekMiddleware(model=model, embedder=embedder, scope="global")
-    agent_for_user_a = create_agent(..., middleware=[shared])
-    agent_for_user_b = create_agent(..., middleware=[shared])  # reads user_a's context
-    ```
-- **Lessons learned**: The `scope=` parameter is a deliberate opt-in to shared context. Omitting it is the safe default for multi-user services: `before_agent` will populate the ContextVar from `thread_id`, and each asyncio task gets its own isolated copy of the variable. The instance itself is never mutated — it is safe to share.
+- **Install**:
+  ```bash
+  # Inside the agentseek project
+  pip install "agentseek[context]"
 
-## Issue 3: auto_store and record_tool_calls write volume and side effects
+  # Standalone
+  pip install contextseek contextseek-bridges-langchain
+  ```
+- **Configure via env vars** (copy from `.env.example`, section "ContextSeek semantic context layer"). All constructor parameters are optional — the middleware reads from env when nothing is passed:
+  ```bash
+  # seekdb = local persistent storage, built-in ONNX embedder (no API key needed)
+  AGENTSEEK_CTX_STORAGE_BACKEND=seekdb
 
-- **Symptom**: After setting `record_tool_calls=True`, storage write volume spikes dramatically, LLM costs for the internal Summarizer shoot up, and agent turn latency increases. Or conversely: `auto_store=True` is the default, but some intermediate AI messages (with tool_calls) are unexpectedly NOT being stored.
-- **Cause**: The two write paths have very different trigger frequencies:
-  - `auto_store` writes in `after_model`, which fires **once per model call** — but only for final answers. The middleware deliberately skips persistence when the `AIMessage` carries `tool_calls` (i.e. an intermediate planning step) to avoid noise. Only a clean text reply (no pending tool calls) is stored.
-  - `record_tool_calls` writes in `wrap_tool_call`, which fires **once per individual tool invocation**. A single agent turn that calls 5 tools generates 5 separate `ctx.add()` calls, each triggering the full pipeline: Summarizer (L0 abstract + L1 overview) + embedding + DB write. At scale this multiplies costs by the average number of tool calls per turn.
-- **Solution**:
-  - **Default configuration** (recommended for most use cases):
-    ```python
-    ContextSeekMiddleware(
-        model=model,
-        embedder=embedder,
-        auto_store=True,       # only final Q+A pairs — low volume
-        record_tool_calls=False,  # default; no per-tool writes
-    )
-    ```
-  - **When you need per-tool provenance** (debugging, audit logs, tracing tool decision chains):
-    ```python
-    ContextSeekMiddleware(
-        model=model,
-        embedder=embedder,
-        auto_store=True,
-        record_tool_calls=True,  # each tool call stored with tool name, args, result, rationale, task
-    )
-    ```
-    Each stored tool record contains:
-    - `tool`: tool name
-    - `args`: tool call arguments
-    - `result`: the ToolMessage content
-    - `rationale`: the AIMessage text that preceded the tool call (the model's reasoning)
-    - `task`: the last user message (what the user originally asked)
-  - **Disable all writes** (retrieval-only mode, e.g. read from a pre-populated knowledge base):
-    ```python
-    ContextSeekMiddleware(
-        model=model,
-        embedder=embedder,
-        auto_store=False,
-        record_tool_calls=False,
-    )
-    ```
-  - **Why intermediate AI messages are skipped**: when the model emits `tool_calls`, the conversation is not done — the assistant has not produced a final answer yet. Storing this half-baked state would degrade retrieval quality because the context would contain questions without coherent answers. The middleware waits for the clean final turn.
-- **Lessons learned**: `record_tool_calls=True` is a diagnostic / provenance feature, not a general-purpose setting. Turn it on only for specific debugging sessions or audit pipelines. For production, `auto_store=True` alone is sufficient to build up a useful semantic memory over time with minimal overhead.
+  # Optional LLM for richer L1 summaries
+  AGENTSEEK_CTX_LLM_PROVIDER=openai
+  AGENTSEEK_CTX_LLM_MODEL=gpt-4o-mini
+  ```
+  The `AGENTSEEK_CTX_*` prefix is automatically aliased to the env vars contextseek reads internally — no credential duplication.
+- **Minimum integration** (zero constructor arguments):
+  ```python
+  from langchain.agents import create_agent
+  from contextseek.bridges.langchain.middleware import ContextSeekMiddleware
 
-## Issue 4: auto_compact throttling mechanism and graceful shutdown
+  agent = create_agent(
+      model=model,
+      tools=[...],
+      middleware=[ContextSeekMiddleware()],
+  )
+  ```
+- **Sharing the agent's own model and embedder** (avoids a second model instantiation):
+  ```python
+  from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-- **Symptom**: You enabled `auto_compact=True` expecting the store to evolve automatically, but compact never seems to run (or runs too rarely). Or, after a FastAPI service restart, you see `RuntimeError: cannot schedule new futures after shutdown` in the logs related to ContextSeek.
-- **Cause**:
-  - `auto_compact` triggers inside `after_agent`, which runs **after the full agent turn** (including all tool calls and the final answer). The trigger condition is: the internal counter for the current scope must reach `compact_every`. So if `compact_every=20` and the agent handles 5 sessions a day, compact fires once every 4 days per scope — much less frequently than one might expect.
-  - The compact task is submitted to a single-threaded `ThreadPoolExecutor` (one worker). A per-scope `threading.Lock` prevents the same scope from compacting concurrently. If the previous compact for a scope is still running when the next threshold is crossed, the new trigger is silently dropped (non-blocking `lock.acquire(blocking=False)`).
-  - The executor is shut down automatically via `weakref.finalize` when the middleware instance is garbage collected. But if the instance is held by the application as a long-lived object and the application has its own shutdown hook, the `weakref.finalize` may race with framework teardown — producing the `RuntimeError`.
-- **Solution**:
-  - **Recommended compact settings for production**:
-    ```python
-    middleware = ContextSeekMiddleware(
-        model=model,
-        embedder=embedder,
-        auto_compact=True,
-        compact_every=20,  # trigger after every 20 completed agent turns per scope
-    )
-    ```
-    A value of 20–50 balances evolution quality (compact needs enough new material to work with) against freshness (too high means the store never evolves).
-  - **Graceful shutdown in FastAPI lifespan**:
-    ```python
-    from contextlib import asynccontextmanager
-    from fastapi import FastAPI
+  model = ChatOpenAI(model="gpt-4o")
+  embedder = OpenAIEmbeddings(model="text-embedding-3-small")
 
-    middleware = ContextSeekMiddleware(model=model, embedder=embedder, auto_compact=True)
-    agent = create_agent(model=model, tools=[...], middleware=[middleware])
+  agent = create_agent(
+      model=model,
+      tools=[...],
+      middleware=[ContextSeekMiddleware(model=model, embedder=embedder)],
+  )
+  ```
+- **Lessons learned**: `ContextSeekMiddleware` and `memory=` (StoreBackend) solve different problems and can coexist in the same agent. Use `memory=` when the agent needs to explicitly read and write structured notes it controls. Use `ContextSeekMiddleware` when you want the agent's accumulated conversation history to automatically inform future answers — no agent-side file management required.
 
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        yield
-        middleware.shutdown(wait=True)  # wait for any in-flight compact to finish
+**Common configuration problems for this scenario** → see [contextseek-params.md](contextseek-params.md): scope isolation (multi-user context bleeding), auto_compact throttling and graceful shutdown, retrieval_tags / min_score filtering noisy context, tool_arg_overrides for injecting runtime arguments.
 
-    app = FastAPI(lifespan=lifespan)
-    ```
-  - **Checking if compact is running**: there is no built-in status probe. Use `LANGSMITH_TRACING=true` to see `ContextSeek.compact` spans in LangSmith, or instrument the `_traced_compact` call externally.
-  - **Manually triggering compact** (outside the middleware loop):
-    ```python
-    middleware.ctx.compact(scope="my_project")
-    ```
-- **Lessons learned**: `auto_compact` is a "fire-and-forget evolution" feature — it intentionally drops triggers when the executor is busy to avoid pile-up. Design around this: it is not a guarantee that compact runs exactly every N turns, only that it runs **at most** every N turns and **never** concurrently for the same scope. For critical evolution jobs, prefer explicit scheduled compact calls outside the agent loop.
+---
 
-## Issue 5: tool_arg_overrides — injecting arguments without modifying tool definitions
+## Issue 2: Multi-tool data-pipeline agent — auditing tool call decisions
 
-- **Symptom**: A tool (from a library, MCP, or shared codebase) needs a runtime argument like `user_id`, `tenant_id`, or `api_key` injected at call time. You cannot modify the tool's definition, and you don't want the model to be responsible for supplying these values.
-- **Cause**: By default, `wrap_tool_call` passes the tool request through unchanged. `tool_arg_overrides` is a constructor-time dict that maps tool names to a set of fixed key-value pairs. Before the tool executes, the middleware merges these overrides into `tool_call["args"]` — the model's arguments are kept, but any key present in `overrides` is forcibly replaced. This happens regardless of `record_tool_calls`.
-- **Solution**:
-  - **Inject a fixed tenant ID into one tool**:
-    ```python
-    ContextSeekMiddleware(
-        model=model,
-        embedder=embedder,
-        tool_arg_overrides={
-            "search_knowledge_base": {"tenant_id": "acme-corp"},
-        },
-    )
-    ```
-  - **Override multiple tools**:
-    ```python
-    ContextSeekMiddleware(
-        model=model,
-        embedder=embedder,
-        tool_arg_overrides={
-            "send_email":    {"from_address": "bot@company.com"},
-            "write_to_db":   {"db_name": "prod", "schema": "agents"},
-            "call_external": {"api_key": os.environ["EXTERNAL_API_KEY"]},
-        },
-    )
-    ```
-  - **Merge semantics**: overrides use `{**tool_args, **overrides}` — the model's supplied values are the base, and the override dict is merged on top. Any key the model passes that is also in `overrides` will be silently replaced by the override value. The model cannot override the override.
-  - **Interaction with record_tool_calls**: when `record_tool_calls=True`, the recorded `args` field reflects the **merged** args (after overrides are applied), so the stored provenance is accurate.
-  - **Limitation**: overrides are static at construction time. If the injected value needs to change per session (e.g. `user_id` per request), `tool_arg_overrides` is not the right tool — use a custom `wrap_tool_call` middleware instead, or pass the value through agent state.
-- **Lessons learned**: `tool_arg_overrides` is best suited for environment-level constants (API keys, tenant IDs, backend names) that should never be model-controlled. It is a lightweight alternative to wrapping every tool in a closure or adding hidden parameters to tool schemas. Keep the override dict small and document it clearly — it is easy to forget that the model's arg is being silently replaced.
+**Keywords**: tool provenance, audit trail, tool call history, data pipeline agent, record_tool_calls, why did agent choose this query, compliance, tool decision tracing
+
+You're building a **data analysis agent** that, on each task, calls a chain of tools: `query_db` → `run_sql` → `transform_data` → `generate_chart` — typically 5–10 tool invocations per turn. A compliance requirement asks: *"Why did the agent choose that particular SQL query? Were the tool arguments reasonable?"* Your team also needs to reproduce past analyses from stored tool traces.
+
+`ContextSeekMiddleware` with `record_tool_calls=True` writes a structured record for each tool invocation into the vector store. Each record captures:
+
+- `tool` — tool name
+- `args` — arguments passed (after any `tool_arg_overrides` are applied)
+- `result` — the ToolMessage content
+- `rationale` — the AIMessage text that preceded the tool call (the model's stated reasoning)
+- `task` — the originating user message
+
+These records are retrievable by future agent turns: *"What SQL did we use for the Q3 revenue report last month?"* can return the exact query with its rationale.
+
+- **Integration**:
+  ```python
+  middleware = ContextSeekMiddleware(
+      model=model,
+      embedder=embedder,
+      auto_store=True,          # store final Q+A pairs
+      record_tool_calls=True,   # additionally store each tool invocation
+  )
+  agent = create_agent(model=model, tools=[query_db, run_sql, transform_data, generate_chart], middleware=[middleware])
+  ```
+- **Retrieval-only mode** — read historical tool traces without writing new ones (e.g. a read-only audit agent):
+  ```python
+  ContextSeekMiddleware(
+      model=model,
+      embedder=embedder,
+      auto_store=False,
+      record_tool_calls=False,  # retrieval only; no writes
+  )
+  ```
+- **Lessons learned**: `record_tool_calls=True` multiplies write volume by the average number of tool calls per turn. Each call triggers the full summarizer + embedding + DB write pipeline. For a 5-tool agent, that is 5× the LLM cost per turn compared to `auto_store=True` alone. Only enable it when you actually need per-tool provenance.
+
+**Common configuration problems for this scenario** → see [contextseek-params.md](contextseek-params.md): auto_store / record_tool_calls write volume and cost spikes.
+
+---
+
+## Issue 3: Research agent accumulates raw notes — cross-topic pattern discovery
+
+**Keywords**: dream, cross-topic pattern, consolidation, divergence, knowledge synthesis, idle-time, hypothesis generation, dreaming, research agent, implicit connections
+
+You're building a **literature research agent** that writes dozens of raw research summaries per day across multiple topics. After a week the store holds 200+ items but the agent can only retrieve "known" content — it misses implicit cross-topic connections: "gene editing for Alzheimer's treatment" and "mRNA vaccine T-cell activation" both involve immune regulation mechanisms, but no item makes that bridge explicit. You need the system to synthesize new insights from accumulated material without re-running the full agent.
+
+`ctx.dream()` runs offline in two phases:
+
+1. **Consolidation** — scans recently active, un-dreamed items. Within a similarity window `(0.35, 0.72)` — related but not duplicates — it synthesizes new `extracted`-stage items that surface implicit patterns. Tagged `dreamed`, `consolidation`.
+2. **Divergence** — generates cross-cluster hypothesis items bridging dissimilar topic clusters. Tagged `dreamed`, `divergence`. Confidence is lower (×0.85 multiplier) — these are hypotheses, not facts.
+
+Dream items have `stability=transient` and decay fast. They are "use it or lose it": `ctx.feedback(ref, score=1.0)` on a valuable hypothesis promotes it to a stable item; otherwise it fades within days.
+
+- **Trigger dream manually after a research session**:
+  ```python
+  from contextseek import ContextSeek
+
+  ctx = ContextSeek.from_settings()
+  report = ctx.dream(scope="research/immunology")
+  consolidation_count = len(report.consolidation.items)
+  divergence_count = len(report.divergence.items) if report.divergence else 0
+  print(f"Consolidations: {consolidation_count}, Divergences: {divergence_count}")
+  ```
+- **Review and promote valuable dream items**:
+  ```python
+  scope = "research/immunology"
+  # ctx.overview() returns stage distribution counts; dreamed items are filtered by tag separately
+  all_items = ctx.items(scope=scope)
+  dreamed = [item for item in all_items if "dreamed" in (item.tags or [])]
+
+  for item in dreamed:
+      if human_review_approves(item):
+          # feedback() requires a full URI ref, not a bare item id
+          ref = ctx.resolver.ref_for(scope, item.id)
+          ctx.feedback(ref, scope=scope, score=1.0, reason="confirmed cross-domain insight")
+  ```
+- **Enable LLM-enhanced dream** (richer synthesis):
+  ```bash
+  DREAM_LLM_ENABLED=true
+  # uses the same LLM configured for the agent; no separate key needed
+  ```
+- **Lessons learned**: By default `ContextSeekMiddleware` does **not** trigger `dream()` — it only handles `compact()`. For research workflows, call `ctx.dream()` explicitly after bulk ingestion sessions, or schedule it via cron / the contextseek daemon lifecycle. If you want automatic dream triggering inside the agent loop, set `auto_dream=True` on the middleware (see [contextseek-params.md](contextseek-params.md) Issue 11 for the dual-gate trigger mechanics). Dream without LLM falls back to keyword-overlap heuristics; results are coarser but still useful for surface-level clustering.
+
+**Common configuration problems for this scenario** → see [contextseek-params.md](contextseek-params.md): dream trigger conditions not met (min_items, cooldown), dream-generated items disappearing due to transient stability.
+
+---
+
+## Issue 4: SRE incident postmortem agent — tracing knowledge confidence and conflicts
+
+**Keywords**: evidence_chain, provenance, confidence propagation, conflict detection, SRE, postmortem, audit, upstream, chain_confidence, broken links, knowledge trustworthiness
+
+You're building an **incident postmortem agent** that accumulates observations during a live incident: "Alert A fired at 14:03", "Log B shows connection timeouts", "Analysis: timeouts caused by DB connection pool exhaustion", "Recommendation: lower `connection_timeout` to 500ms". Each item is derived from the previous. A week later, during a recurring-incident review, an engineer asks: *"Is this recommendation actually well-supported? Were there any conflicting signals? How confident should we be in this diagnosis?"*
+
+`ctx.evidence_chain()` constructs a full DAG starting from any item, traversing `derived_from`, `supported_by`, `merged_from` (positive) and `refuted_by` (negative) links. It returns:
+
+- `overall_confidence` — propagated confidence score (Noisy-OR for supports, penalty for refutations)
+- `critical_path` — `list[str]` of item ids forming the highest-weight inference path
+- `conflicts` — `list[ConflictReport]`; each has `item_id`, `refuter_id`, `refutation_strength`
+- `broken_links` — `list[str]` of item ids that no longer exist in the store
+- `nodes` / `edges` — full DAG for visualization
+- `needs_reverification` — `bool`; `True` when `overall_confidence < 0.4`
+
+- **Write items with explicit derivation links**:
+  ```python
+  from contextseek import ContextSeek
+  from contextseek.domain.links import Link, LinkType
+
+  ctx = ContextSeek.from_settings()
+  scope = "incidents/2026-06-01"
+
+  alert = ctx.add("Alert A fired at 14:03: p99 latency > 2s", scope=scope, source="pagerduty")
+  log   = ctx.add("Log B: connection pool exhausted (pool_size=10, wait_timeout=30s)",
+                  scope=scope, source="datadog",
+                  links=[Link(target_id=alert.id, relation=LinkType.supported_by)])
+  analysis = ctx.add("Root cause: DB connection pool exhausted under 50-rps load",
+                     scope=scope, source="agent_inference",
+                     links=[Link(target_id=log.id, relation=LinkType.derived_from)])
+  rec = ctx.add("Recommendation: lower connection_timeout to 500ms",
+                scope=scope, source="agent_inference",
+                links=[Link(target_id=analysis.id, relation=LinkType.derived_from)])
+  ```
+- **Evaluate the recommendation's trustworthiness**:
+  ```python
+  # evidence_chain and chain_confidence require a full URI ref, not a bare item id
+  ref = ctx.resolver.ref_for(scope, rec.id)
+  chain = ctx.evidence_chain(ref, scope=scope)
+  print(f"Confidence: {chain.overall_confidence:.2f}")  # e.g. 0.71
+  if chain.conflicts:
+      # conflicts is list[ConflictReport]; each has item_id, refuter_id, refutation_strength
+      for c in chain.conflicts:
+          print(f"Conflicting evidence: {c.refuter_id} refutes {c.item_id} (strength={c.refutation_strength:.2f})")
+  if chain.overall_confidence < 0.4:
+      print("Low confidence — needs human review before applying")
+  ```
+- **Quick check without the full DAG**:
+  ```python
+  ref = ctx.resolver.ref_for(scope, rec.id)
+  score = ctx.chain_confidence(ref, scope=scope)
+  # returns a float; same traversal as evidence_chain but no DAG construction overhead
+  ```
+- **Lessons learned**: the agent itself doesn't need to call `evidence_chain` — it's a postmortem / audit API. Wire it into your review pipeline or a separate audit agent that periodically evaluates low-confidence recommendations. Writing `links=` when calling `ctx.add()` is optional but unlocks this entire capability; without links, `evidence_chain` sees only isolated nodes.
+
+**Common configuration problems for this scenario** → see [contextseek-params.md](contextseek-params.md): evidence_chain vs chain_confidence — when to use which.
+
+---
+
+## Issue 5: Enterprise knowledge migration — agent is retrieval-ready on day one
+
+**Keywords**: pre-populate, cold start, bulk import, DataPlug, RAGPlug, PowerMemPlug, existing knowledge, seed context, initial corpus, plug, knowledge migration
+
+You're migrating an enterprise knowledge base to a ContextSeek-backed agent. The existing data is 100 k+ FAQ entries, historical support tickets, and internal wiki pages — currently stored in a RAG vector store or PowerMem. The new agent cannot wait months for `auto_store` to accumulate conversation history; it needs to be able to retrieve from all of this on day one.
+
+`ctx.plug()` consumes a `DataPlug` (a streaming iterator of `RawEvent` objects) and routes each event through the same full pipeline as `ctx.add()`: summarization, embedding, conflict detection, and persistence. Built-in plugs cover the most common sources:
+
+| Plug class | Source |
+|------------|--------|
+| `RAGPlug` | Existing RAG / vector store chunks |
+| `PowerMemPlug` | PowerMem memory store |
+| `TracePlug` | Execution traces / agent logs |
+| `MCPToolImporter` | MCP tool definitions → `skill` stage |
+| `OpenAIFunctionImporter` | OpenAI function schemas → `skill` stage |
+
+- **Import from an existing RAG store**:
+  ```python
+  from contextseek import ContextSeek
+  from contextseek.plugs import RAGPlug
+
+  ctx = ContextSeek.from_settings()
+
+  # RAGPlug accepts a list of dicts; each dict needs at least "content" or "page_content"
+  docs = existing_vector_store.similarity_search("*", k=10000)
+  rag_plug = RAGPlug(
+      documents=[{"content": d.page_content, "metadata": d.metadata} for d in docs],
+      source_name="wiki-v2",
+  )
+  ctx.plug(rag_plug, scope="company/knowledge")
+  ```
+- **Import from PowerMem**:
+  ```python
+  from contextseek.plugs import PowerMemPlug
+
+  # PowerMemPlug.from_records() accepts dicts from PowerMem get_all/search results
+  records = powermem_instance.get_all(user_id="shared")  # yields list of dicts
+  plug = PowerMemPlug.from_records(records, source_prefix="powermem")
+  ctx.plug(plug, scope="company/support-history")
+  ```
+- **Run compact after bulk import** to consolidate and promote stages before the agent goes live:
+  ```python
+  ctx.compact(scope="company/knowledge")
+  ```
+- **Combine pre-populated knowledge with live agent writes** — plug for the initial corpus, then deploy the agent with `ContextSeekMiddleware` writing new Q+A pairs into the same scope. The two pipelines are additive.
+- **Lessons learned**: `plug()` is for one-time or scheduled batch ingestion outside the agent loop. `ContextSeekMiddleware` handles continuous, per-turn ingestion inside the agent loop. Use both: `plug()` to seed the store, middleware to keep it growing. Run `compact()` after large bulk imports before the first retrieval to maximize retrieval quality.
+
+**Common configuration problems for this scenario** → see [contextseek-params.md](contextseek-params.md): DataPlug vs manual ctx.add() — which to use for bulk import; plug() scope priority and stage inference.
