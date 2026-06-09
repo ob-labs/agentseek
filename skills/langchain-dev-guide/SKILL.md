@@ -56,20 +56,8 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 | Tool returning data to both the model and the app layer / `artifact` / `Command(update=...)` | common-issues issue 1 |
 | `with_structured_output` returning None / missing fields | common-issues issue 2 |
 | MCP tool can't access `user_id` / `store` / state / API key | common-issues issue 3 |
-| context engineering / semantic memory / vector memory / agent forgets across sessions | contextseek-middleware issue 1 |
-| memory beyond filesystem / alternative to `StoreBackend` / cross-session knowledge retrieval | contextseek-middleware issue 1 |
-| tool provenance / audit trail / record_tool_calls / why agent chose this tool | contextseek-middleware issue 2 |
-| dream / cross-topic pattern / consolidation / divergence / knowledge synthesis | contextseek-middleware issue 3 |
-| evidence_chain / chain_confidence / SRE postmortem / provenance / conflict detection | contextseek-middleware issue 4 |
-| pre-populate / cold start / bulk import / DataPlug / RAGPlug / seed context | contextseek-middleware issue 5 |
-| scope isolation / multi-user / context bleeding / thread_id / ContextVar | contextseek-params issue 1 |
-| auto_store / record_tool_calls / write volume / LLM cost spike / storage overhead | contextseek-params issue 2 |
-| auto_compact / compact_every / FastAPI shutdown / RuntimeError / compact frequency | contextseek-params issue 3 |
-| retrieval_tags / min_score / noisy context / [Relevant Context] pollution / tag filter | contextseek-params issue 4 |
-| tool_arg_overrides / inject arguments / tenant_id / api_key / silent arg replacement | contextseek-params issue 5 |
-| dream not running / DreamReport empty / min_items_for_dream / cooldown_hours | contextseek-params issue 6 |
-| dream item disappeared / transient stability / feedback / use it or lose it | contextseek-params issue 7 |
-| evidence_chain vs chain_confidence / DAG / overall_confidence / conflicts / performance | contextseek-params issue 8 |
-| DataPlug vs ctx.add() / bulk import / RAGPlug / which to use for batch ingestion | contextseek-params issue 9 |
-| plug() scope / event metadata scope / DataPlug name / stage inference / unexpected scope | contextseek-params issue 10 |
-| auto_dream / dream_every / dream_min_interval_seconds / automatic dream / middleware dream | contextseek-params issue 11 |
+| Agent loses context across sessions — personal assistant or support bot | contextseek-middleware issue 1 |
+| Multi-tool data-pipeline agent — auditing tool call decisions | contextseek-middleware issue 2 |
+| Research agent accumulates raw notes — cross-topic pattern discovery | contextseek-middleware issue 3 |
+| SRE incident postmortem agent — tracing knowledge confidence and conflicts | contextseek-middleware issue 4 |
+| Enterprise knowledge migration — agent is retrieval-ready on day one | contextseek-middleware issue 5 |
