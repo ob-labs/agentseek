@@ -23,7 +23,7 @@ agentseek/
 │   └── skills/           ← skills bundled into the wheel
 ├── contrib/              ← optional runtime integration packages
 ├── examples/             ← runnable end-to-end demos
-├── templates/            ← Cookiecutter sources for `agentseek new`
+├── templates/            ← Cookiecutter sources for `agentseek create`
 ├── skills/               ← standalone skills maintained beside the project
 ├── references/           ← upstream source snapshots for reading
 ├── docs/                 ← published documentation
@@ -50,7 +50,7 @@ configuration reference.
 
 ## `templates`
 
-Cookiecutter sources used by `agentseek new`. Templates can generate Bub,
+Cookiecutter sources used by `agentseek create`. Templates can generate Bub,
 LangChain, or DeepAgents projects, and may depend on AgentSeek or remain
 self-contained depending on their purpose.
 
@@ -73,11 +73,11 @@ of a user workspace. Today the catalogue (from [examples/](https://github.com/ob
 is `agentseek_api_remote_agent` and `langchain_otel_sidecar`. They are the right starting
 point when you want to see the whole assembly — gateway + frontend + LangChain + agentseek
 — rather than the harness alone. Other common patterns (AG-UI, LangChain default, CLI
-remote, DeepAgents) are covered by the `agentseek new` templates.
+remote, DeepAgents) are covered by the `agentseek create` templates.
 
 ### `templates/` — project scaffolds
 
-Cookiecutter sources used by `agentseek new`. The catalogue lives at
+Cookiecutter sources used by `agentseek create`. The catalogue lives at
 `templates/index.json`:
 
 | Template | Purpose |

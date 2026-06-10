@@ -54,10 +54,10 @@ agent 应用。
 
 ```bash
 # Browse templates
-uvx agentseek new --list-templates
+uvx agentseek create --list-templates
 
 # Create a minimal LangChain project
-uvx agentseek new langchain/markdown-messages
+uvx agentseek create langchain/markdown-messages
 
 # Run AgentSeek itself
 uv tool install agentseek

@@ -27,7 +27,7 @@ AgentSeek is a database-native agent harness with one CLI entry point:
 
 | Goal | Command family | Use it when |
 | --- | --- | --- |
-| Manage projects | `agentseek new/dev/build/deploy` | You want to scaffold, run, package, or deploy an application. |
+| Manage projects | `agentseek create/run/build/deploy` | You want to scaffold, run, package, or deploy an application. |
 | Run the harness | `agentseek chat/turn/gateway` | You want to evaluate, embed, or operate the runtime. |
 | Extend the runtime | `agentseek plugin/ctx/skills/api` | You want plugins, context, skills, or service bridges. |
 
@@ -35,8 +35,8 @@ AgentSeek is a database-native agent harness with one CLI entry point:
 
 ```bash
 uv tool install agentseek
-agentseek new --list-templates
-agentseek new langchain/markdown-messages
+agentseek create --list-templates
+agentseek create langchain/markdown-messages
 cd markdown_messages_agent
 cp .env.example .env
 uv sync
@@ -99,10 +99,10 @@ that matches the application shape:
 
 | Application shape | Start with |
 | --- | --- |
-| Minimal LangChain app | `agentseek new langchain/markdown-messages` |
-| Full AgentSeek delivery app | `agentseek new langchain/default` |
-| DeepAgents research app | `agentseek new deepagents/research` |
-| Bub app without LangChain | `agentseek new bub/default` |
+| Minimal LangChain app | `agentseek create langchain/markdown-messages` |
+| Full AgentSeek delivery app | `agentseek create langchain/default` |
+| DeepAgents research app | `agentseek create deepagents/research` |
+| Bub app without LangChain | `agentseek create bub/default` |
 
 See [Templates reference](docs/reference/templates.md) for the full catalogue.
 

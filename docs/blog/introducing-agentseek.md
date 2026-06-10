@@ -43,7 +43,7 @@ runtime, project commands, and public CLI:
   `BUB_*` names (`src/agentseek/env.py:56`).
 - `apply_agentseek_runtime_overrides()` brands the onboarding banner, enables
   Bub support channels in `chat`, and sets AgentSeek plugin defaults.
-- `src/agentseek/cli/` provides `new / dev / build / deploy / api / ctx / skills`.
+- `src/agentseek/cli/` provides `create / run / build / deploy / api / ctx / skills`.
 - `__main__.py` boots a `BubFramework` and asks it for a Typer CLI
   (`src/agentseek/__main__.py:52`).
 
@@ -53,7 +53,7 @@ The full layout — `src/`, `contrib/`, `examples/`, `templates/`, `skills/`,
 `references/`, `docs/` — is mapped in
 [Where things live](../explanation/where-things-live.md).
 
-Operationally, the docs expose one command surface: `agentseek new/dev/build/deploy`
+Operationally, the docs expose one command surface: `agentseek create/run/build/deploy`
 for project management, `agentseek chat/turn/gateway` for runtime, and
 `agentseek plugin/ctx/skills/api` for extensions and service bridges. The full
 layout is in [CLI surface](../explanation/choosing-an-entry-point.md).

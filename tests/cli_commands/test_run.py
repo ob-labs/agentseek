@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
-from agentseek.cli.commands import dev as dev_module
+from agentseek.cli.commands import run as run_module
 from tests.cli_commands.helpers import build_command_app
 
 # ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ def _patch_no_signal(monkeypatch: pytest.MonkeyPatch) -> None:
     """signal.signal needs main thread; tests run in pytest's main thread normally,
     but we still neutralize it so handler installation never fails the assertion path.
     """
-    monkeypatch.setattr(dev_module, "_install_signal_handlers", lambda proc: None)
+    monkeypatch.setattr(run_module, "_install_signal_handlers", lambda proc: None)
 
 
 def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -71,7 +71,7 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_missing_env_exits_2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
-    result = CliRunner().invoke(build_command_app(), ["dev"])
+    result = CliRunner().invoke(build_command_app(), ["run"])
     assert result.exit_code == 2
     assert "Missing .env" in result.stderr
 
@@ -84,7 +84,7 @@ def test_missing_env_exits_2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
 def test_unknown_mode_exits_2_when_auto_cannot_detect(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _write_env(tmp_path)
     monkeypatch.chdir(tmp_path)
-    result = CliRunner().invoke(build_command_app(), ["dev"])
+    result = CliRunner().invoke(build_command_app(), ["run"])
     assert result.exit_code == 2
     assert "auto-detect" in result.stderr
 
@@ -109,14 +109,14 @@ def test_no_browser_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
 
     browser_calls: list[str] = []
 
-    monkeypatch.setattr(dev_module, "_spawn", fake_spawn)
-    monkeypatch.setattr(dev_module.shutil, "which", lambda name: f"/usr/bin/{name}")
-    monkeypatch.setattr(dev_module, "_probe", lambda url: True)
-    monkeypatch.setattr(dev_module.webbrowser, "open", lambda url: browser_calls.append(url))
-    monkeypatch.setattr(dev_module, "_compose_down", lambda cwd: None)
+    monkeypatch.setattr(run_module, "_spawn", fake_spawn)
+    monkeypatch.setattr(run_module.shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(run_module, "_probe", lambda url: True)
+    monkeypatch.setattr(run_module.webbrowser, "open", lambda url: browser_calls.append(url))
+    monkeypatch.setattr(run_module, "_compose_down", lambda cwd: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser"])
+    result = CliRunner().invoke(build_command_app(), ["run", "--no-browser"])
 
     assert result.exit_code == 0, result.stderr
     assert browser_calls == []
@@ -142,14 +142,14 @@ def test_compose_mode_invokes_compose_up(tmp_path: Path, monkeypatch: pytest.Mon
         captured["cmd"] = cmd
         return fake
 
-    monkeypatch.setattr(dev_module, "_spawn", fake_spawn)
-    monkeypatch.setattr(dev_module.shutil, "which", lambda name: f"/bin/{name}")
-    monkeypatch.setattr(dev_module, "_probe", lambda url: True)
-    monkeypatch.setattr(dev_module.webbrowser, "open", lambda url: None)
-    monkeypatch.setattr(dev_module, "_compose_down", lambda cwd: None)
+    monkeypatch.setattr(run_module, "_spawn", fake_spawn)
+    monkeypatch.setattr(run_module.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(run_module, "_probe", lambda url: True)
+    monkeypatch.setattr(run_module.webbrowser, "open", lambda url: None)
+    monkeypatch.setattr(run_module, "_compose_down", lambda cwd: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser"])
+    result = CliRunner().invoke(build_command_app(), ["run", "--no-browser"])
 
     assert result.exit_code == 0, result.stderr
     assert captured["cmd"] == ["/bin/docker", "compose", "up"]
@@ -171,13 +171,13 @@ def test_wait_ready_timeout_exits_nonzero(tmp_path: Path, monkeypatch: pytest.Mo
     def fake_spawn(cmd: list[str], cwd: Path) -> _FakePopen:
         return fake
 
-    monkeypatch.setattr(dev_module, "_spawn", fake_spawn)
-    monkeypatch.setattr(dev_module.shutil, "which", lambda name: f"/bin/{name}")
-    monkeypatch.setattr(dev_module, "_probe", lambda url: False)
-    monkeypatch.setattr(dev_module, "_compose_down", lambda cwd: None)
+    monkeypatch.setattr(run_module, "_spawn", fake_spawn)
+    monkeypatch.setattr(run_module.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr(run_module, "_probe", lambda url: False)
+    monkeypatch.setattr(run_module, "_compose_down", lambda cwd: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser", "--wait-timeout", "0"])
+    result = CliRunner().invoke(build_command_app(), ["run", "--no-browser", "--wait-timeout", "0"])
 
     assert result.exit_code == 1
     assert "did not become ready" in result.stderr
@@ -206,13 +206,13 @@ def test_python_mode_picks_app_py_entry(tmp_path: Path, monkeypatch: pytest.Monk
     def fake_which(name: str) -> str | None:
         return None  # force fallback to sys.executable
 
-    monkeypatch.setattr(dev_module, "_spawn", fake_spawn)
-    monkeypatch.setattr(dev_module.shutil, "which", fake_which)
-    monkeypatch.setattr(dev_module, "_probe", lambda url: True)
-    monkeypatch.setattr(dev_module.webbrowser, "open", lambda url: None)
+    monkeypatch.setattr(run_module, "_spawn", fake_spawn)
+    monkeypatch.setattr(run_module.shutil, "which", fake_which)
+    monkeypatch.setattr(run_module, "_probe", lambda url: True)
+    monkeypatch.setattr(run_module.webbrowser, "open", lambda url: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser", "--mode", "python"])
+    result = CliRunner().invoke(build_command_app(), ["run", "--no-browser", "--mode", "python"])
 
     assert result.exit_code == 0, result.stderr
     assert captured["cmd"] == [sys.executable, "app.py"]
@@ -234,13 +234,13 @@ def test_auto_mode_detects_project_script_entry(tmp_path: Path, monkeypatch: pyt
         captured["cmd"] = cmd
         return fake
 
-    monkeypatch.setattr(dev_module, "_spawn", fake_spawn)
-    monkeypatch.setattr(dev_module.shutil, "which", lambda name: None)
-    monkeypatch.setattr(dev_module, "_probe", lambda url: True)
-    monkeypatch.setattr(dev_module.webbrowser, "open", lambda url: None)
+    monkeypatch.setattr(run_module, "_spawn", fake_spawn)
+    monkeypatch.setattr(run_module.shutil, "which", lambda name: None)
+    monkeypatch.setattr(run_module, "_probe", lambda url: True)
+    monkeypatch.setattr(run_module.webbrowser, "open", lambda url: None)
     _patch_no_signal(monkeypatch)
 
-    result = CliRunner().invoke(build_command_app(), ["dev", "--no-browser"])
+    result = CliRunner().invoke(build_command_app(), ["run", "--no-browser"])
 
     assert result.exit_code == 0, result.stderr
     assert captured["cmd"] == [sys.executable, "serve"]

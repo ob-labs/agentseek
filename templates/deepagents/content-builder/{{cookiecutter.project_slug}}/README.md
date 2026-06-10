@@ -1,7 +1,7 @@
 # {{ cookiecutter.project_name }}
 
 DeepAgents content builder scaffolded with
-`agentseek new deepagents/content-builder`.
+`agentseek create deepagents/content-builder`.
 
 The backend serves a `create_deep_agent(...)` graph through `langgraph dev`
 with brand-voice memory, content skills (blog-post, social-media), a

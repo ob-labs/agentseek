@@ -30,7 +30,7 @@ Confirm the single CLI entry point loads:
 uv run agentseek --help
 ```
 
-You should see project commands (`new`, `dev`, `build`, `deploy`), runtime
+You should see project commands (`create`, `run`, `build`, `deploy`), runtime
 commands (`chat`, `turn`, `gateway`), and extension commands (`plugin`, `ctx`,
 `skills`, `api`) under the same `agentseek` entry point.
 

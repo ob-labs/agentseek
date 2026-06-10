@@ -1,7 +1,7 @@
 # {{ cookiecutter.project_name }}
 
 Pure DeepAgents research agent scaffolded with
-`agentseek new deepagents/research`.
+`agentseek create deepagents/research`.
 
 The backend serves a `create_deep_agent(...)` graph through `langgraph dev`.
 The frontend streams user messages, tool calls, optional sub-agent delegation,

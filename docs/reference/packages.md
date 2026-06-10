@@ -31,7 +31,7 @@ needed by the single CLI entry point:
 | Package | Purpose |
 | --- | --- |
 | `bub` | Hook-first runtime, channels, plugins, and CLI foundation. |
-| `cookiecutter` | Template rendering for `agentseek new`. |
+| `cookiecutter` | Template rendering for `agentseek create`. |
 | `jinja2` | Template rendering support. |
 | `logfire` | Local instrumentation and log integration. |
 | `npx-skills` | Skill CLI wrapper for `agentseek skills`. |

@@ -6,11 +6,11 @@ from dataclasses import dataclass
 
 import typer
 
-from agentseek.cli.commands import api, build, ctx, deploy, dev, new, skills
+from agentseek.cli.commands import api, build, create, ctx, deploy, run, skills
 
 AGENTSEEK_CLI_HELP = (
     "AgentSeek is a database-native agent harness with one CLI entry point. "
-    "Use `agentseek new/dev/build/deploy` to manage projects, "
+    "Use `agentseek create/run/build/deploy` to manage projects, "
     "`agentseek chat/turn/gateway` to run the harness, and "
     "`agentseek plugin/ctx/skills/api` to extend the runtime and connect services."
 )
@@ -27,8 +27,8 @@ class CommandCapability:
 
 
 COMMAND_CAPABILITIES: tuple[CommandCapability, ...] = (
-    CommandCapability("new", "Project", "Create a project from an AgentSeek template.", new.app),
-    CommandCapability("dev", "Project", "Run the current project locally.", dev.app),
+    CommandCapability("create", "Project", "Create a project from an AgentSeek template.", create.app),
+    CommandCapability("run", "Project", "Run the current project locally.", run.app),
     CommandCapability("build", "Project", "Build the current project into a deployable image.", build.app),
     CommandCapability("deploy", "Project", "Render deployment manifests for the current project.", deploy.app),
     CommandCapability("api", "Services", "Forward service commands to agentseek-api.", api.app),

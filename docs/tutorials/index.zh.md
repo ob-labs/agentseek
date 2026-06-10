@@ -25,7 +25,7 @@ sources:
 
 1. **[通过 CLI 快速演示](01-quick-demo-cli.zh.md)**：clone 仓库、同步环境、配置模型并运行
    `agentseek chat`。
-2. **[构建你的第一个 harness 应用](02-first-harness-app.zh.md)**：用 `agentseek new`
+2. **[构建你的第一个 harness 应用](02-first-harness-app.zh.md)**：用 `agentseek create`
    创建项目、同步生成项目并本地运行。
 3. **[添加 skill 和 MCP](03-add-a-skill-and-mcp.zh.md)**：给生成应用加入项目本地行为。
 

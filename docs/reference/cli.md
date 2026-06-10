@@ -26,7 +26,7 @@ separated by job:
 
 | Area | Commands | Purpose |
 | --- | --- | --- |
-| Project | `new`, `dev`, `build`, `deploy` | Create, run, build, and package projects. |
+| Project | `create`, `run`, `build`, `deploy` | Create, run, build, and package projects. |
 | Runtime | `chat`, `turn`, `gateway` | Interact with the harness. |
 | Environment | `plugin`, `mcp`, `onboard`, `login` | Manage runtime configuration and plugins. |
 | Services | `api`, `ctx`, `skills` | Bridge optional AgentSeek services and skill tooling. |
@@ -40,7 +40,7 @@ root-level plugin commands.
 Project commands are mounted by `src/agentseek/cli/surface.py` and are part
 of the main `agentseek` package.
 
-### `agentseek new [SPEC]`
+### `agentseek create [SPEC]`
 
 Create a new project from a bundled or external template.
 
@@ -54,7 +54,7 @@ Create a new project from a bundled or external template.
 
 See [Templates reference](templates.md) for the bundled template catalogue.
 
-### `agentseek dev`
+### `agentseek run`
 
 Run a generated project locally.
 
@@ -189,7 +189,7 @@ Useful smoke checks:
 
 ```bash
 uv run agentseek --help
-uv run agentseek new --help
+uv run agentseek create --help
 uv run agentseek chat --help
 uv run agentseek turn --help
 uv run agentseek plugin --help

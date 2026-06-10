@@ -21,7 +21,7 @@ The design keeps one command name while separating command groups by job:
 
 | Job | Commands | Use when |
 | --- | --- | --- |
-| Project management | `new`, `dev`, `build`, `deploy` | You are creating, running, packaging, or deploying a project. |
+| Project management | `create`, `run`, `build`, `deploy` | You are creating, running, packaging, or deploying a project. |
 | Runtime | `chat`, `turn`, `gateway` | You are interacting with the harness. |
 | Extension and services | `plugin`, `ctx`, `skills`, `api`, `mcp` | You are connecting plugins, context, skills, APIs, or MCP servers. |
 
@@ -47,10 +47,10 @@ Generated projects depend on `agentseek` and therefore receive the same command
 surface after `uv sync`. The normal loop is:
 
 ```bash
-uv run agentseek new langchain/default
+uv run agentseek create langchain/default
 cd my-agent
 uv sync
-uv run agentseek dev
+uv run agentseek run
 ```
 
 ## Docker Compose

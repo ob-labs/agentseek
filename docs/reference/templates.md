@@ -19,7 +19,7 @@ sources:
 
 # Templates reference
 
-Bundled cookiecutter templates used by `agentseek new`. The catalogue lives
+Bundled cookiecutter templates used by `agentseek create`. The catalogue lives
 in `templates/index.json`; each template is a cookiecutter project under
 `templates/<framework>/<name>/`.
 
@@ -44,8 +44,8 @@ in `templates/index.json`; each template is a cookiecutter project under
 
 Listing comes from `templates/index.json`.
 
-> **Tip — browse from the terminal.** Run `agentseek new --template` to see
-> all templates with descriptions, or `agentseek new langchain --template` to
+> **Tip — browse from the terminal.** Run `agentseek create --template` to see
+> all templates with descriptions, or `agentseek create langchain --template` to
 > filter by framework type.
 
 ## Picking a template
@@ -64,20 +64,20 @@ Different templates suit different developer profiles and use cases:
 | Wanting Bub plus semantic memory | `bub/contextseek` | Extends the Bub path with ContextSeek memory, a ctx HTTP API, and a seed script. |
 | Integrating LangChain with agentseek runtime | `deepagents/default` | `create_deep_agent` bound to `agentseek-langchain` — both the harness data layer and DeepAgents orchestration. |
 
-## `agentseek new` argument shapes
+## `agentseek create` argument shapes
 
 | Form | Meaning |
 | --- | --- |
-| `agentseek new --template` | List all templates across all types with descriptions. |
-| `agentseek new langchain --template` | List templates for the given type. |
-| `agentseek new --list-templates` | List all templates across all types with descriptions. |
-| `agentseek new <type> --list-templates` | List templates for the type (same as `--template` with no value). |
-| `agentseek new langchain/cli-remote` | Specific `type/name` spec. |
-| `agentseek new langchain --template cli-remote` | Equivalent named-template form. |
-| `agentseek new bub` | Default template for the framework (`bub/default`). |
-| `agentseek new` | Interactive type + template selection. |
-| `agentseek new <git-url>` | Fetch a remote cookiecutter; combine with `--checkout`. |
-| `agentseek new <local-path>` | Use a local cookiecutter directory. |
+| `agentseek create --template` | List all templates across all types with descriptions. |
+| `agentseek create langchain --template` | List templates for the given type. |
+| `agentseek create --list-templates` | List all templates across all types with descriptions. |
+| `agentseek create <type> --list-templates` | List templates for the type (same as `--template` with no value). |
+| `agentseek create langchain/cli-remote` | Specific `type/name` spec. |
+| `agentseek create langchain --template cli-remote` | Equivalent named-template form. |
+| `agentseek create bub` | Default template for the framework (`bub/default`). |
+| `agentseek create` | Interactive type + template selection. |
+| `agentseek create <git-url>` | Fetch a remote cookiecutter; combine with `--checkout`. |
+| `agentseek create <local-path>` | Use a local cookiecutter directory. |
 
 See `cli.md#agentseek-create-spec` for the full flag table.
 

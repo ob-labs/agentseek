@@ -27,7 +27,7 @@ artifact you want at the end.
 1. **[Quick demo (CLI)](01-quick-demo-cli.md)** clones the repository, syncs it,
    configures a model, and runs `agentseek chat`.
 2. **[First harness app](02-first-harness-app.md)** creates a project with
-   `agentseek new`, syncs the generated project, and runs it locally.
+   `agentseek create`, syncs the generated project, and runs it locally.
 3. **[Add a skill and MCP](03-add-a-skill-and-mcp.md)** adds project-local
    behavior to the generated application.
 

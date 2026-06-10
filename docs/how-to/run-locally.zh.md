@@ -33,10 +33,10 @@ uv run agentseek chat
 
 ## 运行生成项目
 
-在 `agentseek new` 创建的项目目录中：
+在 `agentseek create` 创建的项目目录中：
 
 ```bash title="not executed in this run"
-uv run agentseek dev
+uv run agentseek run
 ```
 
 常用选项：
@@ -54,8 +54,8 @@ uv run agentseek dev
 | 现象 | 可能原因 | 处理 |
 | --- | --- | --- |
 | `agentseek chat` 无法调用模型 | provider 配置缺失或错误 | 检查 `.env`，或运行 `agentseek onboard`。 |
-| `agentseek dev` 等待超时 | 前端监听端口不同 | 传入 `--port <n>`。 |
-| `agentseek dev` 在非项目目录退出 | 没有生成项目布局 | 先运行 `agentseek new`，或改用 `agentseek chat`。 |
+| `agentseek run` 等待超时 | 前端监听端口不同 | 传入 `--port <n>`。 |
+| `agentseek run` 在非项目目录退出 | 没有生成项目布局 | 先运行 `agentseek create`，或改用 `agentseek chat`。 |
 
 ## 相关
 

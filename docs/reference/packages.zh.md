@@ -30,7 +30,7 @@ harness library。
 | Package | 用途 |
 | --- | --- |
 | `bub` | hook-first runtime、channels、plugins 和 CLI 基础。 |
-| `cookiecutter` | `agentseek new` 的模板渲染。 |
+| `cookiecutter` | `agentseek create` 的模板渲染。 |
 | `jinja2` | 模板渲染支持。 |
 | `logfire` | 本地 instrumentation 和日志集成。 |
 | `npx-skills` | `agentseek skills` 使用的 skill CLI wrapper。 |

@@ -34,10 +34,10 @@ Optional flags:
 
 ## Run a generated project
 
-Inside a project created by `agentseek new`:
+Inside a project created by `agentseek create`:
 
 ```bash title="not executed in this run"
-uv run agentseek dev
+uv run agentseek run
 ```
 
 Common flags:
@@ -55,8 +55,8 @@ Common flags:
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `agentseek chat` cannot call the model | Provider config missing or invalid | Re-check `.env` or run `agentseek onboard`. |
-| `agentseek dev` times out | Frontend listens on another port | Pass `--port <n>`. |
-| `agentseek dev` exits outside a project | No generated project layout found | Run `agentseek new` first or use `agentseek chat`. |
+| `agentseek run` times out | Frontend listens on another port | Pass `--port <n>`. |
+| `agentseek run` exits outside a project | No generated project layout found | Run `agentseek create` first or use `agentseek chat`. |
 
 ## Related
 

@@ -15,7 +15,7 @@ cp .env.example .env
 cp frontend/.env.example frontend/.env
 # Optionally merge in the model credentials from your existing repository root `.env`.
 
-uv run agentseek dev --no-browser
+uv run agentseek run --no-browser
 ```
 
 The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`,

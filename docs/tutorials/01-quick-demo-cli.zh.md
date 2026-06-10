@@ -29,7 +29,7 @@ uv sync
 uv run agentseek --help
 ```
 
-你应该在同一个 `agentseek` 入口下看到项目命令（`new`、`dev`、`build`、`deploy`）、
+你应该在同一个 `agentseek` 入口下看到项目命令（`create`、`run`、`build`、`deploy`）、
 运行时命令（`chat`、`turn`、`gateway`）和扩展命令（`plugin`、`ctx`、`skills`、`api`）。
 
 ## 2. 配置模型

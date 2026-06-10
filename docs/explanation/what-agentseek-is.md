@@ -20,7 +20,7 @@ evaluation.
 
 The public command surface is:
 
-- `agentseek new/dev/build/deploy` for project management.
+- `agentseek create/run/build/deploy` for project management.
 - `agentseek chat/turn/gateway` for runtime execution.
 - `agentseek plugin/ctx/skills/api` for extensions and service bridges.
 

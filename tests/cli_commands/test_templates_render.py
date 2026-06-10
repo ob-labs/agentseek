@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 from cookiecutter.main import cookiecutter
 
-from agentseek.cli.commands import new as create_module
+from agentseek.cli.commands import create as create_module
 
 
 def _patch_template_for_test(template_dir: Path, tmp_path: Path) -> Path:

@@ -22,7 +22,7 @@ agentseek/
 │   └── skills/           ← 打进 wheel 的内置 skills
 ├── contrib/              ← 可选 runtime 集成包
 ├── examples/             ← 可运行端到端示例
-├── templates/            ← `agentseek new` 使用的 Cookiecutter 源
+├── templates/            ← `agentseek create` 使用的 Cookiecutter 源
 ├── skills/               ← 随项目维护的 standalone skills
 ├── references/           ← 供阅读的上游源码快照
 ├── docs/                 ← 发布文档
@@ -48,7 +48,7 @@ README、测试和配置参考。
 
 ## `templates`
 
-`agentseek new` 使用的 Cookiecutter 源。模板可以生成 Bub、LangChain 或 DeepAgents 项目；
+`agentseek create` 使用的 Cookiecutter 源。模板可以生成 Bub、LangChain 或 DeepAgents 项目；
 根据目的不同，有些依赖 AgentSeek，有些保持自包含。
 
 ## `skills`
@@ -67,12 +67,12 @@ README、测试和配置参考。
 今天的目录（来自 [examples/](https://github.com/ob-labs/agentseek/tree/main/examples)）是
 `agentseek_api_remote_agent` 和 `langchain_otel_sidecar`。当你想要看整套组装 ——
 gateway + 前端 + LangChain + agentseek —— 而不是只看 harness 时，它们是正确的起点。
-其他常见模式（AG-UI、LangChain 默认、CLI remote、DeepAgents）已被 `agentseek new`
+其他常见模式（AG-UI、LangChain 默认、CLI remote、DeepAgents）已被 `agentseek create`
 模板覆盖。
 
 ### `templates/` —— 项目脚手架
 
-`agentseek new` 使用的 Cookiecutter 源。目录位于 `templates/index.json`：
+`agentseek create` 使用的 Cookiecutter 源。目录位于 `templates/index.json`：
 
 | 模板 | 用途 |
 | --- | --- |

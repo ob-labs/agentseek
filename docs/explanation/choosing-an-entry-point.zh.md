@@ -21,7 +21,7 @@ AgentSeek 现在只有一个公开 CLI 入口：`agentseek`。
 
 | 工作 | 命令 | 使用场景 |
 | --- | --- | --- |
-| 项目管理 | `new`, `dev`, `build`, `deploy` | 创建、运行、打包或部署项目。 |
+| 项目管理 | `create`, `run`, `build`, `deploy` | 创建、运行、打包或部署项目。 |
 | 运行时 | `chat`, `turn`, `gateway` | 与 harness 交互。 |
 | 扩展与服务 | `plugin`, `ctx`, `skills`, `api`, `mcp` | 连接插件、上下文、skills、API 或 MCP server。 |
 
@@ -43,10 +43,10 @@ AgentSeek 现在只有一个公开 CLI 入口：`agentseek`。
 生成项目依赖 `agentseek`，因此 `uv sync` 后得到同一套命令面：
 
 ```bash
-uv run agentseek new langchain/default
+uv run agentseek create langchain/default
 cd my-agent
 uv sync
-uv run agentseek dev
+uv run agentseek run
 ```
 
 ## Docker Compose

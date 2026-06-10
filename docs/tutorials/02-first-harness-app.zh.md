@@ -14,14 +14,14 @@ sources:
 
 # 构建你的第一个 harness 应用
 
-你会使用 `agentseek new` 创建项目、同步生成项目、配置模型，并在本地运行它。
+你会使用 `agentseek create` 创建项目、同步生成项目、配置模型，并在本地运行它。
 
 ## 1. 选择模板
 
 列出内置模板：
 
 ```bash
-uv run agentseek new --list-templates
+uv run agentseek create --list-templates
 ```
 
 本教程使用 `bub/default`，因为它是最轻量的完整 harness app。
@@ -33,7 +33,7 @@ uv run agentseek new --list-templates
 ```bash
 mkdir -p ~/projects
 cd ~/projects
-uvx agentseek new bub/default --no-input
+uvx agentseek create bub/default --no-input
 ```
 
 默认项目名是 `my_bub_agent`。
@@ -78,7 +78,7 @@ uv run agentseek gateway --enable-channel ag-ui
 
 ```bash title="not executed in this run"
 npm install --prefix frontend
-uv run agentseek dev --no-browser
+uv run agentseek run --no-browser
 ```
 
 前端 ready 后打开 `http://127.0.0.1:5173`。
@@ -86,7 +86,7 @@ uv run agentseek dev --no-browser
 ## 你现在拥有
 
 - 一个有独立 `.venv`、`.env` 和源码树的 standalone project。
-- 通过 `agentseek new` 和 `agentseek dev` 验证过的项目命令路径。
+- 通过 `agentseek create` 和 `agentseek run` 验证过的项目命令路径。
 - 一个可以继续编辑、且不需要改 AgentSeek 仓库的应用项目。
 
 ## 下一步

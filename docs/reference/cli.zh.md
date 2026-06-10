@@ -24,7 +24,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 
 | 区域 | 命令 | 用途 |
 | --- | --- | --- |
-| Project | `new`, `dev`, `build`, `deploy` | 创建、运行、构建和打包项目。 |
+| Project | `create`, `run`, `build`, `deploy` | 创建、运行、构建和打包项目。 |
 | Runtime | `chat`, `turn`, `gateway` | 与 harness 交互。 |
 | Environment | `plugin`, `mcp`, `onboard`, `login` | 管理运行时配置和插件。 |
 | Services | `api`, `ctx`, `skills` | 桥接可选服务和 skill 工具。 |
@@ -36,7 +36,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 
 项目命令由 `src/agentseek/cli/surface.py` 挂载，是主 `agentseek` 包的一部分。
 
-### `agentseek new [SPEC]`
+### `agentseek create [SPEC]`
 
 从内置或外部模板创建项目。
 
@@ -48,7 +48,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 | `--list-templates` | flag | off | 列出模板并退出。 |
 | `--no-input` | flag | off | 跳过 Cookiecutter 交互提示。 |
 
-### `agentseek dev`
+### `agentseek run`
 
 在本地运行生成的项目。
 
@@ -144,7 +144,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 
 ```bash
 uv run agentseek --help
-uv run agentseek new --help
+uv run agentseek create --help
 uv run agentseek chat --help
 uv run agentseek turn --help
 uv run agentseek plugin --help

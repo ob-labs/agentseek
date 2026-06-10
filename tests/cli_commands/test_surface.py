@@ -5,8 +5,8 @@ import typer
 from agentseek.cli import CommandCapability, iter_command_capabilities, mount_agentseek_commands
 from tests.cli_commands.helpers import build_command_app
 
-EXPECTED_GROUPS = ("new", "dev", "build", "deploy", "api", "ctx", "skills")
-LEGACY_ROOT_FORMS = ("run", "create", "install", "uninstall", "update")
+EXPECTED_GROUPS = ("create", "run", "build", "deploy", "api", "ctx", "skills")
+LEGACY_ROOT_FORMS = ("new", "dev", "install", "uninstall", "update")
 
 
 def test_mount_agentseek_commands_registers_every_documented_group() -> None:
@@ -26,14 +26,14 @@ def test_mount_agentseek_commands_rejects_legacy_root_forms_structurally() -> No
 
 def test_mount_agentseek_commands_does_not_override_existing_names() -> None:
     app = typer.Typer()
-    dummy_dev = typer.Typer(name="dev", help="Framework dev should stay.")
-    app.add_typer(dummy_dev, name="dev")
+    dummy_run = typer.Typer(name="run", help="Framework run should stay.")
+    app.add_typer(dummy_run, name="run")
 
     mount_agentseek_commands(app)
 
-    dev_groups = [group for group in app.registered_groups if group.name == "dev"]
-    assert len(dev_groups) == 1
-    assert dev_groups[0].typer_instance is dummy_dev
+    run_groups = [group for group in app.registered_groups if group.name == "run"]
+    assert len(run_groups) == 1
+    assert run_groups[0].typer_instance is dummy_run
 
 
 def test_mount_agentseek_commands_is_idempotent() -> None:

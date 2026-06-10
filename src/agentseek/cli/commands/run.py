@@ -1,4 +1,4 @@
-"""``agentseek dev`` — start the project locally and open the frontend.
+"""``agentseek run`` — start the project locally and open the frontend.
 
 The command runs in the user's project working directory:
 
@@ -51,7 +51,7 @@ PYTHON_ENTRY_CANDIDATES: tuple[str, ...] = ("app.py", "main.py")
 PYTHON_SCRIPT_HINTS: tuple[str, ...] = ("serve", "dev")
 
 app = typer.Typer(
-    name="dev",
+    name="run",
     help="Start the project locally after completing .env configuration.",
     add_completion=False,
     no_args_is_help=False,
@@ -59,7 +59,7 @@ app = typer.Typer(
 
 
 @app.callback(invoke_without_command=True)
-def dev(
+def run(
     port: Annotated[
         int | None,
         typer.Option("--port", help="Frontend port. Defaults to PORT in .env or 3000.", show_default=False),
@@ -116,7 +116,7 @@ def dev(
 class DevSettings(BaseSettings):
     """Settings sourced from ``.env`` (and overridden by process env vars).
 
-    Only the knobs ``agentseek dev`` cares about are declared here. ``.env`` may
+    Only the knobs ``agentseek run`` cares about are declared here. ``.env`` may
     contain other keys for the project itself; those are ignored at this layer
     and remain visible to child processes through their own configuration.
     """
@@ -140,7 +140,7 @@ def _load_settings(cwd: Path) -> DevSettings:
     if not env_path.is_file():
         typer.echo(
             f"Missing .env file at {env_path}.\n"
-            "Copy .env.example to .env and fill in the required values, then retry `agentseek dev`.",
+            "Copy .env.example to .env and fill in the required values, then retry `agentseek run`.",
             err=True,
         )
         raise typer.Exit(2)

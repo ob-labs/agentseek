@@ -36,7 +36,7 @@ agentseek 今天是一个顶层 Python 包，加上一组 uv workspace 内的 co
   `BUB_*` 名字（`src/agentseek/env.py:56`）。
 - `apply_agentseek_runtime_overrides()` 改写 onboarding banner、让 `chat` 启用
   Bub 支持通道，并设置 AgentSeek plugin 默认值。
-- `src/agentseek/cli/` 提供 `new / dev / build / deploy / api / ctx / skills`。
+- `src/agentseek/cli/` 提供 `create / run / build / deploy / api / ctx / skills`。
 - `__main__.py` 启动 `BubFramework` 并向它请求一个 Typer CLI
   （`src/agentseek/__main__.py:52`）。
 
@@ -45,7 +45,7 @@ agentseek 今天是一个顶层 Python 包，加上一组 uv workspace 内的 co
 `examples/`、`templates/`、`skills/`、`references/`、`docs/` ——
 见 [文件存放位置](../explanation/where-things-live.zh.md)。
 
-在使用方式上，文档只暴露一个命令面：`agentseek new/dev/build/deploy` 管理项目，
+在使用方式上，文档只暴露一个命令面：`agentseek create/run/build/deploy` 管理项目，
 `agentseek chat/turn/gateway` 运行 runtime，`agentseek plugin/ctx/skills/api` 连接扩展和服务。
 完整布局见 [CLI 命令面](../explanation/choosing-an-entry-point.zh.md)。
 

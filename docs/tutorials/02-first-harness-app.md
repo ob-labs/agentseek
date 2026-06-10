@@ -14,7 +14,7 @@ sources:
 
 # Build your first harness app
 
-You will create a project with `agentseek new`, sync that generated project,
+You will create a project with `agentseek create`, sync that generated project,
 configure a model, and run it locally.
 
 ## 1. Pick a template
@@ -22,7 +22,7 @@ configure a model, and run it locally.
 List bundled templates:
 
 ```bash
-uv run agentseek new --list-templates
+uv run agentseek create --list-templates
 ```
 
 This tutorial uses `bub/default` because it is the lightest full harness app.
@@ -34,7 +34,7 @@ Choose a working directory outside the AgentSeek checkout:
 ```bash
 mkdir -p ~/projects
 cd ~/projects
-uvx agentseek new bub/default --no-input
+uvx agentseek create bub/default --no-input
 ```
 
 The default project is named `my_bub_agent`.
@@ -80,7 +80,7 @@ For the full frontend + gateway loop:
 
 ```bash title="not executed in this run"
 npm install --prefix frontend
-uv run agentseek dev --no-browser
+uv run agentseek run --no-browser
 ```
 
 Open `http://127.0.0.1:5173` when the frontend is ready.
@@ -88,7 +88,7 @@ Open `http://127.0.0.1:5173` when the frontend is ready.
 ## What you have now
 
 - A standalone project with its own `.venv`, `.env`, and source tree.
-- A verified project command path through `agentseek new` and `agentseek dev`.
+- A verified project command path through `agentseek create` and `agentseek run`.
 - A project you can edit without touching the AgentSeek repository.
 
 ## Next
