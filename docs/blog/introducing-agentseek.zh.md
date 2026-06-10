@@ -44,7 +44,7 @@ agentseek 今天是一个顶层 Python 包，加上一组 uv workspace 内的 co
 
 在使用方式上，文档只暴露一个命令面：`agentseek create/run/build/deploy` 管理项目，
 `agentseek chat/turn/gateway` 运行 runtime，`agentseek plugin/ctx/skills/api` 连接扩展和服务。
-完整布局见 [CLI 命令面](../explanation/choosing-an-entry-point.zh.md)。
+完整布局见 [CLI 命令面](../explanation/cli-surface.zh.md)。
 
 ## "数据库原生"到底是什么意思
 
