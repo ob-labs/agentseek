@@ -124,7 +124,7 @@ requires-dist = [
 
 [[package]]
 name = "agentseek-cli"
-version = "0.0.2"
+version = "0.0.3"
 source = { editable = "contrib/agentseek-cli" }
 dependencies = [
     { name = "bub" },
@@ -498,8 +498,8 @@ wheels = [
 
 [[package]]
 name = "bub"
-version = "0.3.7"
-source = { registry = "https://pypi.org/simple" }
+version = "0.3.9.dev15+g3d9a4db16"
+source = { git = "https://github.com/bubbuild/bub.git#3d9a4db16b07670c0382f9c9c72ab141ba1ec73a" }
 dependencies = [
     { name = "aiohttp" },
     { name = "any-llm-sdk" },
@@ -516,10 +516,6 @@ dependencies = [
     { name = "republic" },
     { name = "rich" },
     { name = "typer" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/49/43/a8a3294df3aef2a1c6ed6ef775f3b5de0bb1f67ac470bc6c2300859419bd/bub-0.3.7.tar.gz", hash = "sha256:7d942e8a209fe65a367f989141e3b35a2068ff7f0e53cb6a3a0e850d7cf924c4", size = 93298, upload-time = "2026-04-25T01:36:36.967Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/86/ff/1c36e6279a49dba748c487f6c141fe9879c01a49e423ea04f4e7fde5069e/bub-0.3.7-py3-none-any.whl", hash = "sha256:44622ea2a71f932e1608dfbb2cd394fef5ab831b5d8d6e6780bfe5554bd5c87a", size = 88477, upload-time = "2026-04-25T01:36:35.58Z" },
 ]
 
 [[package]]

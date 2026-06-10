@@ -50,9 +50,7 @@ Additionally, inspect the project directory structure to determine the Python pa
 
 ## Step 3: Check if DeepSeek
 
-**If the model is DeepSeek**, first check whether `langchain-deepseek` is installed; install it if not. Then copy `chat_model.py` and `__init__.py` from [deepseek/](deepseek/) into the target subdirectory. Skip all subsequent steps.
-
-DeepSeek has an official integration `langchain_deepseek.ChatDeepSeek` whose `_get_request_payload` handles content list conversion and Azure `tool_choice` compatibility, but it does **NOT write back `reasoning_content`**. The code in [deepseek/](deepseek/) subclasses the official class, only overriding `_get_request_payload` to inject reasoning write-back logic. No other methods need overriding.
+**If the model is DeepSeek**, install `langchain-deepseek` and use `ChatDeepSeek` directly. Skip all subsequent steps.
 
 **If the model is another provider**, continue with the steps below.
 
