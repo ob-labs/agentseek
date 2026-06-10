@@ -30,15 +30,12 @@ harness 而非 framework。
 
 agentseek 今天是一个顶层 Python 包，加上一组 uv workspace 内的 contrib 包。
 
-**harness 发行版**（`agentseek`，源码位于 `src/agentseek/`）同时拥有 runtime、项目命令和公开 CLI：
+**harness 发行版**（`agentseek`）拥有 runtime、项目命令和公开 CLI：
 
-- `apply_agentseek_env_aliases()` 把 `AGENTSEEK_*` 环境变量映射到 Bub 的
-  `BUB_*` 名字（`src/agentseek/env.py:56`）。
-- `apply_agentseek_runtime_overrides()` 改写 onboarding banner、让 `chat` 启用
-  Bub 支持通道，并设置 AgentSeek plugin 默认值。
-- `src/agentseek/cli/` 提供 `create / run / build / deploy / api / ctx / skills`。
-- `__main__.py` 启动 `BubFramework` 并向它请求一个 Typer CLI
-  （`src/agentseek/__main__.py:52`）。
+- 启动时将 `AGENTSEEK_*` 环境变量映射到 Bub 的 `BUB_*` 名字。
+- Bub 内置命令被替换为 AgentSeek 自己的实现（品牌化 onboard、lifecycle-aware chat、plugin 分组）。
+- 项目生命周期命令：`create / run / build / deploy / api / ctx / skills`。
+- 单个 `BubFramework` 启动并作为 runtime。
 
 捆绑的硬依赖和可通过 `agentseek plugin install` 安装的可选插件列在
 [包参考](../reference/packages.zh.md) 中。整个目录布局 —— `src/`、`contrib/`、
@@ -90,9 +87,8 @@ DeepAgents 或者自己的 orchestrator，把模型轮次走 `agentseek-langchai
 
 agentseek **打包了 [Bub](https://github.com/bubbuild/bub)** —— 同一套 hook 优先的
 turn pipeline、channel、tape、skills 和插件模型。`agentseek` 是发行版入口；
-`.agentseek/` 和 `AGENTSEEK_*` 是面向项目的默认值。除了由
-`apply_agentseek_runtime_overrides`（`src/agentseek/cli/runtime.py`）
-组合的 Typer override 之外，Bub 没有被 fork 也没有被改。完整关系见
+`.agentseek/` 和 `AGENTSEEK_*` 是面向项目的默认值。除了 CLI 命令替换之外，Bub 没有被
+fork 也没有被改。完整关系见
 [agentseek 和 Bub 的关系](../explanation/bub-relationship.zh.md)。
 
 [Why we rewrote Bub](https://bub.build/posts/why-rewrite-bub/) 这篇文章解释了维护

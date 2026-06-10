@@ -36,16 +36,13 @@ contrib packages, or out to separate projects.
 agentseek today is one top-level Python package plus a uv workspace of contrib
 packages.
 
-The **harness distribution** (`agentseek`, source under `src/agentseek/`) owns the
-runtime, project commands, and public CLI:
+The **harness distribution** (`agentseek`) owns the runtime, project commands, and public CLI:
 
-- `apply_agentseek_env_aliases()` maps `AGENTSEEK_*` env vars onto Bub's
-  `BUB_*` names (`src/agentseek/env.py:56`).
-- `apply_agentseek_runtime_overrides()` brands the onboarding banner, enables
-  Bub support channels in `chat`, and sets AgentSeek plugin defaults.
-- `src/agentseek/cli/` provides `create / run / build / deploy / api / ctx / skills`.
-- `__main__.py` boots a `BubFramework` and asks it for a Typer CLI
-  (`src/agentseek/__main__.py:52`).
+- `AGENTSEEK_*` env vars are mapped onto Bub's `BUB_*` names at startup.
+- Bub's builtin commands are replaced with AgentSeek implementations (branded onboard,
+  lifecycle-aware chat, plugin group).
+- Project lifecycle commands: `create / run / build / deploy / api / ctx / skills`.
+- A single `BubFramework` boots and serves as the runtime.
 
 The bundled hard dependencies and optional plugins installable via
 `agentseek plugin install` are listed in [Packages reference](../reference/packages.md).
@@ -106,8 +103,7 @@ one.
 agentseek **packages [Bub](https://github.com/bubbuild/bub)** — same hook-first
 turn pipeline, channels, tape, skills, and plugin model. `agentseek` is the
 distribution entry point; `.agentseek/` and `AGENTSEEK_*` are project-facing
-defaults. None of Bub is forked or patched beyond the Typer overrides
-composed by `apply_agentseek_runtime_overrides` (`src/agentseek/cli/runtime.py`). The
+defaults. None of Bub is forked or patched beyond the CLI command replacements. The
 full relationship is laid out in
 [How agentseek relates to Bub](../explanation/bub-relationship.md).
 
