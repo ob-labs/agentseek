@@ -14,15 +14,13 @@ sources:
 
 # CLI reference
 
-AgentSeek has one public console entry point:
+## Usage
 
 ```bash
 agentseek [OPTIONS] COMMAND [ARGS]...
 ```
 
-The same `agentseek` command owns project management, runtime
-execution, and extension/service bridges. The command groups are intentionally
-separated by job:
+Commands are grouped by area:
 
 | Area | Commands | Purpose |
 | --- | --- | --- |
@@ -31,14 +29,7 @@ separated by job:
 | Environment | `plugin`, `mcp`, `onboard`, `login` | Manage runtime configuration and plugins. |
 | Services | `api`, `ctx`, `skills` | Bridge optional AgentSeek services and skill tooling. |
 
-Legacy root forms are not aliases. Use `turn` instead of Bub's root `run`,
-and use `plugin install`, `plugin uninstall`, and `plugin update` instead of
-root-level plugin commands.
-
 ## Project management
-
-Project commands are mounted by `src/agentseek/cli/surface.py` and are part
-of the main `agentseek` package.
 
 ### `agentseek create [SPEC]`
 
@@ -99,12 +90,9 @@ required, so the command writes files but does not apply them.
 
 ## Runtime
 
-Runtime commands are created by Bub and normalized by `src/agentseek/cli/runtime.py`.
-
 ### `agentseek chat`
 
-Start an interactive CLI chat session. AgentSeek enables Bub support channels so
-MCP and skill helpers can start with the CLI channel.
+Start an interactive CLI chat session with MCP and skill support.
 
 | Flag | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -135,9 +123,8 @@ Start message listeners for configured channels.
 
 ### `agentseek plugin install [SPECS]...`
 
-Install runtime plugins into the AgentSeek plugin sandbox. AgentSeek keeps the
-upstream Bub behaviour but changes the default sandbox name to
-`.agentseek/agentseek-project`.
+Install runtime plugins into the AgentSeek plugin sandbox (default:
+`.agentseek/agentseek-project`).
 
 ### `agentseek plugin uninstall PACKAGES...`
 
@@ -153,7 +140,7 @@ Run the interactive configuration flow and write runtime config.
 
 ### `agentseek mcp`
 
-Manage MCP configuration through Bub's MCP command group when available.
+Manage MCP server configuration.
 
 ### `agentseek login`
 

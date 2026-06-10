@@ -126,7 +126,7 @@ the source of the navigation/where-things-live picture used across the site.
 - `tests/` holds top-level tests; contrib packages have their own test trees under
   `contrib/*/tests/`.
 - `entrypoint.sh` and `docker-compose.yml` are the Docker entry points; see
-  [CLI surface](cli-surface.md).
+  [Command overview](cli-surface.md).
 - `pyproject.toml` is the source of truth for the distribution, the dependencies, and
   the workspace member list.
 
@@ -146,7 +146,7 @@ the source of the navigation/where-things-live picture used across the site.
 - **References are checked in, not vendored.** They are search targets, not dependencies.
   This trade keeps grep cheap without taking on maintenance burden.
 
-## Consequences for users
+## Where to put your code
 
 - Add core agentseek code under `src/agentseek/`. If a change needs its own dependency or
   test surface, it is a contrib package.
@@ -163,4 +163,4 @@ the source of the navigation/where-things-live picture used across the site.
 
 - [Packages reference](../reference/packages.md)
 - [File layout reference](../reference/file-layout.md)
-- [CLI surface](cli-surface.md)
+- [Command overview](cli-surface.md)

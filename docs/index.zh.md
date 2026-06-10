@@ -37,7 +37,7 @@ agent 应用。
 | 最小 [LangChain](https://github.com/langchain-ai/langchain) 应用 | [模板参考](reference/templates.zh.md)里的 `langchain/markdown-messages`。 |
 | 完整产品形态的生成项目 | `langchain/default`，然后读[本地运行](how-to/run-locally.zh.md)和[构建和部署](how-to/build-and-deploy.zh.md)。 |
 | [DeepAgents](https://docs.langchain.com/oss/deepagents) 项目 | 在[模板参考](reference/templates.zh.md)里比较 `deepagents/research`、`deepagents/content-builder` 和 `langchain/sandbox`。 |
-| 不带 LangChain 的 [Bub](https://github.com/bubbuild/bub) 应用 | 从 `bub/default` 开始，然后读 [AgentSeek 与 Bub 的关系](explanation/bub-relationship.zh.md)。 |
+| 不带 LangChain 的轻量应用 | 从 `bub/default` 模板开始。 |
 | 要加入持久记忆 | 使用 [agentseek-contextseek](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-contextseek) 或 [ContextSeek](https://github.com/ob-labs/contextseek)。 |
 | 要选择数据库后端 | 阅读 [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) 和[运行时数据模型](explanation/runtime-data-model.zh.md)。 |
 
@@ -45,7 +45,7 @@ agent 应用。
 
 | 需要 | 参考 |
 | --- | --- |
-| 理解 CLI 命令面的组织方式 | [CLI 命令面](explanation/cli-surface.zh.md) |
+| 理解命令的组织方式 | [命令概览](explanation/cli-surface.zh.md) |
 | 查看所有命令和参数 | [CLI 参考](reference/cli.zh.md) |
 | 查看所有模板 | [模板参考](reference/templates.zh.md) |
 | 理清包和仓库边界 | [包参考](reference/packages.zh.md) |

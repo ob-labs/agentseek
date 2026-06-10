@@ -58,7 +58,7 @@ AgentSeek 不试图替代 agent framework、成为通用插件市场、提供 ho
 
 ## 相关
 
-- [CLI 命令面](cli-surface.zh.md)
+- [命令概览](cli-surface.zh.md)
 - [AgentSeek 与 Bub 的关系](bub-relationship.zh.md)
 - [AgentSeek 与 LangChain 的关系](langchain-relationship.zh.md)
 - [运行时数据模型](runtime-data-model.zh.md)

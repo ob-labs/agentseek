@@ -76,7 +76,7 @@ AgentSeek 的 CLI 从 Bub app 出发，但呈现不同的命令面：
   运行，因为 alias 只填空。
 - **没有 Bub 的私有 fork。** Bub 是普通依赖，按版本固定。升级 Bub 就升级 agentseek。
 
-## 对用户的影响
+## 实际使用中的表现
 
 - `uv run bub --help` 和 `uv run agentseek --help` 命令面不同。AgentSeek 增加项目命令组，
   并将 runtime 命令重组到面板中。

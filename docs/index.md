@@ -37,7 +37,7 @@ After the first run works, continue with the guide that matches the next job:
 | A minimal [LangChain](https://github.com/langchain-ai/langchain) app | `langchain/markdown-messages` in [Templates reference](reference/templates.md). |
 | A full product-shaped generated app | `langchain/default`, then [Run locally](how-to/run-locally.md) and [Build and deploy](how-to/build-and-deploy.md). |
 | A [DeepAgents](https://docs.langchain.com/oss/deepagents) project | Compare `deepagents/research`, `deepagents/content-builder`, and `langchain/sandbox` in [Templates reference](reference/templates.md). |
-| A [Bub](https://github.com/bubbuild/bub) app without LangChain | Start with `bub/default`, then read [How AgentSeek relates to Bub](explanation/bub-relationship.md). |
+| A lightweight app without LangChain | Start with the `bub/default` template. |
 | Adding persistent memory | Use [agentseek-contextseek](https://github.com/ob-labs/agentseek/tree/main/contrib/agentseek-contextseek) or the [ContextSeek](https://github.com/ob-labs/contextseek) project. |
 | Choosing a database backend | Read [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase) and [runtime data model](explanation/runtime-data-model.md). |
 
@@ -45,7 +45,7 @@ After the first run works, continue with the guide that matches the next job:
 
 | Need | Reference |
 | --- | --- |
-| How the CLI is organized | [CLI surface](explanation/cli-surface.md) |
+| How commands are organized | [Command overview](explanation/cli-surface.md) |
 | Every command and flag | [CLI reference](reference/cli.md) |
 | Every template | [Templates reference](reference/templates.md) |
 | Package and repository boundaries | [Packages reference](reference/packages.md) |

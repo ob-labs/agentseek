@@ -56,8 +56,8 @@ cd my_bub_agent
 uv sync
 ```
 
-The generated project is now the working surface. It depends on `agentseek` and
-receives the same CLI command groups as the repository checkout.
+The generated project depends on `agentseek` and provides the same CLI command
+groups as the repository checkout.
 
 ## 4. Configure the model
 

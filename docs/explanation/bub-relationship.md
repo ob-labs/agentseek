@@ -87,7 +87,7 @@ Runtime behavior (turn pipeline, channels, hooks, tape) still flows through Bub 
 - **No private fork of Bub.** Bub is a normal dependency pinned by version. Upgrading Bub
   upgrades agentseek; nothing in agentseek vendors or patches the kernel.
 
-## Consequences for users
+## What this means in practice
 
 - `uv run bub --help` and `uv run agentseek --help` show different command surfaces.
   AgentSeek adds project commands and reorganizes runtime commands into panels.

@@ -16,11 +16,11 @@ environment variables.
 
 | Path | Created by | Purpose |
 | --- | --- | --- |
-| `.agentseek/` | `agentseek` runtime | Default `BUB_HOME` / AgentSeek runtime home. |
+| `.agentseek/` | `agentseek` runtime | AgentSeek runtime home directory. |
 | `.agentseek/agentseek-project/` | `agentseek plugin install` | uv project used for plugin dependency resolution. |
 | `.agentseek/mcp.json` | user or Docker entrypoint | Default MCP config path. |
 | `.agents/skills/` | user | Project-local skills. |
-| `.agents/mcp.json` | user | Workspace-friendly MCP config that Docker links into `.agentseek/mcp.json`. |
+| `.agents/mcp.json` | user | MCP config file — Docker copies this to `.agentseek/mcp.json`. |
 
 ## Environment overrides
 

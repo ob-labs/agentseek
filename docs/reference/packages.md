@@ -25,8 +25,7 @@ the public console script and the embeddable harness library.
 
 ## Core dependency groups
 
-Runtime dependencies include both the harness runtime and the project command tooling
-needed by the single CLI entry point:
+Runtime dependencies include both the harness runtime and the project command tooling:
 
 | Package | Purpose |
 | --- | --- |

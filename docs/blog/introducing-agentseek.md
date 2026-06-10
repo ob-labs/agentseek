@@ -50,10 +50,10 @@ The full layout — `src/`, `contrib/`, `examples/`, `templates/`, `skills/`,
 `references/`, `docs/` — is mapped in
 [Where things live](../explanation/where-things-live.md).
 
-Operationally, the docs expose one command surface: `agentseek create/run/build/deploy`
+Commands are organized by what you are doing: `agentseek create/run/build/deploy`
 for project management, `agentseek chat/turn/gateway` for runtime, and
-`agentseek plugin/ctx/skills/api` for extensions and service bridges. The full
-layout is in [CLI surface](../explanation/cli-surface.md).
+`agentseek plugin/ctx/skills/api` for extensions and service bridges. See the
+[command overview](../explanation/cli-surface.md) for details.
 
 ## Why "database-native" and what it means
 

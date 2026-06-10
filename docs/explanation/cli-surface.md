@@ -1,5 +1,5 @@
 ---
-title: CLI surface
+title: Command overview
 type: explanation
 audience: [A1, A2, A4, A5]
 runs: no
@@ -13,38 +13,21 @@ sources:
   - entrypoint.sh
 ---
 
-# CLI surface
+# Command overview
 
-AgentSeek now has one public CLI entry point: `agentseek`.
+All AgentSeek functionality is accessed through the `agentseek` command.
+Commands are grouped by what you are trying to do:
 
-The design keeps one command name while separating command groups by job:
-
-| Job | Commands | Use when |
+| Goal | Commands | Use when |
 | --- | --- | --- |
 | Project management | `create`, `run`, `build`, `deploy` | You are creating, running, packaging, or deploying a project. |
 | Runtime | `chat`, `turn`, `gateway` | You are interacting with the harness. |
-| Extension and services | `plugin`, `ctx`, `skills`, `api`, `mcp` | You are connecting plugins, context, skills, APIs, or MCP servers. |
-
-This shape matches the way AgentSeek is used in practice: project management
-is important enough to be first-class, but it should not require a
-separate package or a separate command name. The runtime stays equally visible
-because the same package is also an executable harness.
-
-## Why command groups are separated
-
-- `create / run / build / deploy` are project operations. They can work before a
-  long-running harness is started.
-- `chat / turn / gateway` are runtime operations. They execute the harness.
-- `plugin / ctx / skills / api / mcp` connect the runtime to optional services
-  and tools.
-
-This avoids ambiguous root commands. Bub's root `run` becomes `agentseek turn`,
-and root plugin mutation commands move under `agentseek plugin`.
+| Extensions and services | `plugin`, `ctx`, `skills`, `api`, `mcp` | You are connecting plugins, context, skills, APIs, or MCP servers. |
 
 ## Generated projects
 
-Generated projects depend on `agentseek` and therefore receive the same command
-surface after `uv sync`. The normal loop is:
+Generated projects include `agentseek` as a dependency, so you get the same
+commands after `uv sync`. A typical workflow:
 
 ```bash
 uv run agentseek create langchain/default
@@ -56,14 +39,14 @@ uv run agentseek run
 ## Docker Compose
 
 Compose packages the runtime for operators. `entrypoint.sh` prepares the
-runtime home, maps `AGENTSEEK_*` variables to Bub, and starts `agentseek
-gateway` unless the workspace provides a custom startup script.
+runtime home and starts `agentseek gateway` unless the workspace provides a
+custom startup script.
 
-## Consequences
+## Good to know
 
-- Install and document `agentseek`, not a companion CLI package.
-- Old root forms are intentionally invalid; do not rely on aliases.
-- Contrib packages remain optional runtime extensions, not alternative entry
+- Install `agentseek` — there is no separate CLI package.
+- Legacy root command forms are not supported; use the grouped commands above.
+- Contrib packages are optional runtime extensions, not alternative entry
   points.
 
 ## Related

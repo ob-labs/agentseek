@@ -16,8 +16,7 @@ sources:
 > **You will:** drop a project-local skill into `.agents/skills/<name>/SKILL.md`, declare an
 > MCP server in `.agents/mcp.json`, and confirm that the agent picks both up.
 > **You need:** the project from [02 — Build your first harness app](02-first-harness-app.md) (or any agentseek workspace) and
-> `uv`. `bub-mcp` is already a core dependency of `agentseek` (`pyproject.toml:21`), so no
-> extra install is required.
+> `uv`. `bub-mcp` is already included with `agentseek`, so no extra install is required.
 
 This tutorial covers the operational shape that every harness app eventually grows into:
 *there is something in this workspace that the agent should be aware of without me hand-wiring it
@@ -76,8 +75,8 @@ wiring because Bub reads the workspace skills directly.
 
 > **Bundled vs project-local.** Bundled skills ship with the agentseek distribution under
 > `skills/` and `src/skills/` (the bottom two rows above come from `skills/`).
-> `.agents/skills/` is **your** project's authoring surface. Keep authoring there; do not
-> edit the bundled directories. See [How to add skills](../how-to/add-skills.md) for the full taxonomy.
+> `.agents/skills/` is where you write your own skills. Do not edit the bundled
+> directories. See [How to add skills](../how-to/add-skills.md) for the full taxonomy.
 
 ## 2. Declare an MCP server
 

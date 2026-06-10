@@ -160,7 +160,7 @@ turn.
   MCP and plugins shape what it can do. Keeping the two surfaces separate keeps authoring
   cheap (drop a Markdown file) and runtime extension deliberate (ship a Python package).
 
-## Consequences for users
+## Choosing the right extension point
 
 - If you want to **read or query runtime data**, target the tape store. Pick a backend
   through the `provide_tape_store` plugin; do not invent a sidecar log.
@@ -169,8 +169,7 @@ turn.
   the MCP config; otherwise write a plugin.
 - If you want a **new place the agent can be reached from**, write or install a channel
   plugin.
-- Hard dependencies (Bub, `bub-feishu`, `bub-mcp`, `agentseek-schedule-sqlalchemy`) are
-  always present in any agentseek plugin install; everything else is opt-in.
+- Core runtime dependencies are always present after install; everything else is opt-in.
 
 ## Related
 

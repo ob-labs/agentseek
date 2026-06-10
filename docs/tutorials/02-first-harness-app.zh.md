@@ -55,7 +55,7 @@ cd my_bub_agent
 uv sync
 ```
 
-生成项目现在就是工作表面。它依赖 `agentseek`，因此拥有与仓库 checkout 相同的 CLI 命令组。
+生成项目依赖 `agentseek`，拥有与仓库 checkout 相同的 CLI 命令组。
 
 ## 4. 配置模型
 

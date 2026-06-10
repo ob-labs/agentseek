@@ -84,11 +84,10 @@ the contrib monorepo (`contrib/README.md`) sets the standard for the heaviest st
   install steps, env vars, and runtime behaviour notes, those facts belong next to the
   code. That is why [contrib/README.md](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md) defines a fixed
   section order and the main docs only link out.
-- **`AGENTSEEK_*` vs `BUB_*`.** Plugin authors keep `BUB_*` for runtime behaviour and
-  reserve `AGENTSEEK_*` for distribution-scoped settings. When a plugin supports both, the
-  upstream `BUB_*` name wins — see [How agentseek relates to Bub](bub-relationship.md).
+- **`AGENTSEEK_*` environment variables** are the preferred prefix for distribution-scoped
+  settings. See [Environment reference](../reference/environment.md) for details.
 
-## Consequences for users
+## How to decide
 
 - The first question to ask is "where on the matrix does this belong?" — not "do I need a
   plugin?".

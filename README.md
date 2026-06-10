@@ -20,12 +20,9 @@ application with a clear runtime, storage, context, and serving story.
 > **"Deep Agents 实战"**: a free LangChain / DeepAgents course with AgentSeek labs.
 > [Course site](https://webup.github.io/deepagents-course) · [Source repo](https://github.com/webup/deepagents-course)
 
-## One CLI Entry Point
+## Quick Start
 
-AgentSeek is a database-native agent harness with one CLI entry point:
-`agentseek`.
-
-| Goal | Command family | Use it when |
+| Goal | Commands | Use it when |
 | --- | --- | --- |
 | Manage projects | `agentseek create/run/build/deploy` | You want to scaffold, run, package, or deploy an application. |
 | Run the harness | `agentseek chat/turn/gateway` | You want to evaluate, embed, or operate the runtime. |
@@ -43,8 +40,8 @@ uv sync
 uv run langgraph dev
 ```
 
-Use this path when you want a generated application shape first. Templates cover
-LangChain, DeepAgents, and Bub starters.
+Use this path when you want a generated application scaffold. Templates cover
+LangChain, DeepAgents, and lightweight starters.
 
 ### Run the harness
 
@@ -55,20 +52,17 @@ agentseek chat
 Use this path when you want the harness runtime directly: a chat loop, gateway,
 plugins, MCP, or an embeddable Python package.
 
-For the full command surface, see [CLI reference](docs/reference/cli.md).
+For all commands and options, see the [CLI reference](docs/reference/cli.md).
 
-## What Is In This Repository
+## Repository Overview
 
-This repository contains the pieces needed to create projects and run the
-AgentSeek harness.
-
-| Piece | Role |
+| Component | Role |
 | --- | --- |
-| `agentseek` | Unified CLI, harness runtime, project commands, and embeddable library. |
-| Templates | Cookiecutter starters for common application shapes. |
+| `agentseek` | CLI, harness runtime, project commands, and embeddable library. |
+| `templates/` | Cookiecutter starters for common application shapes. |
 | `contrib/` | Optional integrations for frameworks, storage, and context systems. |
 
-Related projects live in their own repositories:
+Related projects:
 
 | Project | Role |
 | --- | --- |
@@ -79,7 +73,7 @@ Related projects live in their own repositories:
 AgentSeek also builds on [Bub](https://github.com/bubbuild/bub), a hook-first
 agent runtime and framework.
 
-## How The Pieces Fit
+## Typical Workflow
 
 The usual flow is:
 
@@ -89,20 +83,18 @@ The usual flow is:
 4. Add semantic memory with ContextSeek when the agent needs cross-session context.
 5. Serve production LangGraph apps through agentseek-api.
 
-This keeps the entry points simple while leaving room to add storage, memory,
-and serving only when the application needs them.
+Storage, memory, and serving are added only when the application needs them.
 
 ## Template Choices
 
-After you choose the template creation entry point, pick the smallest template
-that matches the application shape:
+Pick the smallest template that matches your application:
 
 | Application shape | Start with |
 | --- | --- |
 | Minimal LangChain app | `agentseek create langchain/markdown-messages` |
 | Full AgentSeek delivery app | `agentseek create langchain/default` |
 | DeepAgents research app | `agentseek create deepagents/research` |
-| Bub app without LangChain | `agentseek create bub/default` |
+| Lightweight app without LangChain | `agentseek create bub/default` |
 
 See [Templates reference](docs/reference/templates.md) for the full catalogue.
 

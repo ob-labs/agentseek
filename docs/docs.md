@@ -32,14 +32,14 @@ Start from the quadrant that matches the job you are doing right now.
   </div>
   <div class="terminal-card">
     <h3><a href="reference/">Reference</a></h3>
-    <p>Canonical facts: environment variables, CLI surface, file layout, packages, templates, and Docker.</p>
+    <p>Canonical facts: environment variables, CLI commands, file layout, packages, templates, and Docker.</p>
   </div>
 </div>
 
 ## Suggested entry points
 
 - New to the project: start with [Quick demo (CLI)](tutorials/01-quick-demo-cli.md).
-- Building an app: read [CLI surface](explanation/cli-surface.md), then [First harness app](tutorials/02-first-harness-app.md).
+- Building an app: read [Command overview](explanation/cli-surface.md), then [First harness app](tutorials/02-first-harness-app.md).
 - Coming from LangChain / DeepAgents: read [LangChain relationship](explanation/langchain-relationship.md), then pick a template from [Templates reference](reference/templates.md).
 - Operating a workspace: go to [How-to guides](how-to/index.md), especially Docker Compose and gateway pages.
 - Looking up exact behaviour: open [Reference](reference/index.md).

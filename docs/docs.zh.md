@@ -32,14 +32,14 @@ sources:
   </div>
   <div class="terminal-card">
     <h3><a href="reference/">参考</a></h3>
-    <p>权威事实清单：环境变量、CLI 命令面、文件布局、包、模板与 Docker。</p>
+    <p>权威事实清单：环境变量、CLI 命令、文件布局、包、模板与 Docker。</p>
   </div>
 </div>
 
 ## 建议起点
 
 - 第一次接触项目：从 [通过 CLI 快速演示](tutorials/01-quick-demo-cli.zh.md) 开始。
-- 准备构建应用：先读 [CLI 命令面](explanation/cli-surface.zh.md)，再读 [构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md)。
+- 准备构建应用：先读[命令概览](explanation/cli-surface.zh.md)，再读[构建你的第一个 harness 应用](tutorials/02-first-harness-app.zh.md)。
 - 来自 LangChain / DeepAgents：先读 [agentseek 与 LangChain 的关系](explanation/langchain-relationship.zh.md)，然后在 [模板参考](reference/templates.zh.md) 里选一个适合你的模板。
 - 需要运维一个 workspace：进入 [操作指南](how-to/index.zh.md)，优先看 Docker Compose 和 gateway 相关页面。
 - 需要查准确信息：直接打开 [参考](reference/index.zh.md)。

@@ -180,7 +180,7 @@ SQL——与 LangChain 的 SmithDB 在内部提供的结构性体验相同。
 
 - 概念解释：[agentseek 是什么](what-agentseek-is.zh.md)、
   [agentseek 与 Bub 的关系](bub-relationship.zh.md)、
-  [CLI 命令面](cli-surface.zh.md)
+  [命令概览](cli-surface.zh.md)
 - 参考：[模板参考](../reference/templates.zh.md)、
   [包参考](../reference/packages.zh.md)
 - 操作指南：[使用 ContextSeek](../how-to/use-contextseek.zh.md)、

@@ -24,15 +24,15 @@ cd agentseek
 uv sync
 ```
 
-Confirm the single CLI entry point loads:
+Verify the CLI is available:
 
 ```bash
 uv run agentseek --help
 ```
 
-You should see project commands (`create`, `run`, `build`, `deploy`), runtime
-commands (`chat`, `turn`, `gateway`), and extension commands (`plugin`, `ctx`,
-`skills`, `api`) under the same `agentseek` entry point.
+You should see commands for project management (`create`, `run`, `build`,
+`deploy`), runtime (`chat`, `turn`, `gateway`), and extensions (`plugin`,
+`ctx`, `skills`, `api`).
 
 ## 2. Point AgentSeek at a model
 
@@ -68,10 +68,9 @@ uv run agentseek turn "summarize this workspace in one sentence"
 
 - A synced repository environment.
 - Model configuration through `AGENTSEEK_*` variables or `.env`.
-- A verified runtime path through `agentseek chat` or `agentseek turn`.
+- A working `agentseek chat` or `agentseek turn` setup.
 
 ## Next
 
 - Build an application project: [First harness app](02-first-harness-app.md).
-- Read the command surface: [CLI reference](../reference/cli.md).
-- Understand the Bub layer: [Bub relationship](../explanation/bub-relationship.md).
+- Explore available commands: [CLI reference](../reference/cli.md).

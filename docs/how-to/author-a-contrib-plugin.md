@@ -39,7 +39,7 @@ points you at it and lists the agentseek-specific bits you must not skip.
 2. Follow the contrib **naming conventions**
    ([contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md), "agentseek follows Bub's extension conventions"):
 
-   | Surface | Convention |
+   | Item | Convention |
    | --- | --- |
    | Distribution name | `agentseek-<feature>` |
    | Python package | `agentseek_<feature>` |

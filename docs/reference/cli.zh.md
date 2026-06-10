@@ -14,13 +14,13 @@ sources:
 
 # CLI 参考
 
-AgentSeek 只有一个公开 CLI 入口：
+## 用法
 
 ```bash
 agentseek [OPTIONS] COMMAND [ARGS]...
 ```
 
-同一个 `agentseek` 命令同时承载项目管理、运行时执行，以及扩展 / 服务桥接。
+命令按功能分组：
 
 | 区域 | 命令 | 用途 |
 | --- | --- | --- |
@@ -29,12 +29,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 | Environment | `plugin`, `mcp`, `onboard`, `login` | 管理运行时配置和插件。 |
 | Services | `api`, `ctx`, `skills` | 桥接可选服务和 skill 工具。 |
 
-旧的根命令形式不是别名。使用 `turn` 替代 Bub 的根级 `run`，使用
-`plugin install`、`plugin uninstall`、`plugin update` 替代根级插件变更命令。
-
 ## 项目管理
-
-项目命令由 `src/agentseek/cli/surface.py` 挂载，是主 `agentseek` 包的一部分。
 
 ### `agentseek create [SPEC]`
 
@@ -92,12 +87,9 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 
 ## 运行时
 
-运行时命令来自 Bub，并由 `src/agentseek/cli/runtime.py` 规范化命令布局。
-
 ### `agentseek chat`
 
-启动交互式 CLI chat。AgentSeek 会启用 Bub 支持通道，让 MCP 和 skill helper
-可以随 CLI channel 一起启动。
+启动交互式 CLI chat，支持 MCP 和 skill。
 
 ### `agentseek turn MESSAGE`
 

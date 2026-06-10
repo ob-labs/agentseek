@@ -15,11 +15,11 @@ sources:
 
 | 路径 | 创建者 | 用途 |
 | --- | --- | --- |
-| `.agentseek/` | `agentseek` runtime | 默认 `BUB_HOME` / AgentSeek runtime home。 |
+| `.agentseek/` | `agentseek` runtime | AgentSeek 运行时 home 目录。 |
 | `.agentseek/agentseek-project/` | `agentseek plugin install` | 用于解析插件依赖的 uv project。 |
 | `.agentseek/mcp.json` | 用户或 Docker entrypoint | 默认 MCP 配置路径。 |
 | `.agents/skills/` | 用户 | 项目本地 skills。 |
-| `.agents/mcp.json` | 用户 | 更适合 workspace 的 MCP 配置，Docker 会 link 到 `.agentseek/mcp.json`。 |
+| `.agents/mcp.json` | 用户 | MCP 配置文件——Docker 会将其复制到 `.agentseek/mcp.json`。 |
 
 ## 环境变量覆盖
 

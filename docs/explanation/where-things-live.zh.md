@@ -116,7 +116,7 @@ navigation/where-things-live 图景的来源。
 - `scripts/` 保留给项目脚本，目前为空。
 - `tests/` 保存顶层测试；contrib 包在 `contrib/*/tests/` 下有自己的测试树。
 - `entrypoint.sh` 和 `docker-compose.yml` 是 Docker entry point；
-  见 [CLI 命令面](cli-surface.zh.md)。
+  见 [命令概览](cli-surface.zh.md)。
 - `pyproject.toml` 是 distribution、依赖和 workspace 成员列表的事实来源。
 
 ## 为什么是这样
@@ -132,7 +132,7 @@ navigation/where-things-live 图景的来源。
 - **References 是 check in 的，不是 vendor 的。** 它们是搜索目标，不是依赖。这种权衡保持
   grep 廉价而不承担维护负担。
 
-## 对用户的影响
+## 代码应该放在哪里
 
 - 在 `src/agentseek/` 下添加 core agentseek 代码。如果一个改动需要自己的依赖或测试面，
   它就是一个 contrib 包。
@@ -150,4 +150,4 @@ navigation/where-things-live 图景的来源。
 
 - [包参考](../reference/packages.zh.md)
 - [文件布局参考](../reference/file-layout.zh.md)
-- [CLI 命令面](cli-surface.zh.md)
+- [命令概览](cli-surface.zh.md)

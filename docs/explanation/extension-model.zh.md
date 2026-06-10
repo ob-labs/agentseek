@@ -75,11 +75,10 @@ agentseek 原封不动地继承了 Bub 的 extension 表面。本页就是那个
   这些事实应该挨着代码。这就是为什么
   [contrib/README.md](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md)
   定义了固定的小节顺序，而主文档只链接出去。
-- **`AGENTSEEK_*` vs `BUB_*`。** Plugin 作者把 `BUB_*` 保留给 runtime 行为，把
-  `AGENTSEEK_*` 保留给 distribution 范围的设置。当一个 plugin 同时支持两者时，上游的 `BUB_*`
-  名称胜出 —— 见 [agentseek 与 Bub 的关系](bub-relationship.zh.md)。
+- **`AGENTSEEK_*` 环境变量** 是 distribution 范围设置的推荐前缀。
+  详见[环境变量参考](../reference/environment.zh.md)。
 
-## 对用户的影响
+## 如何选择
 
 - 第一个要问的问题是 "这属于矩阵的哪一行？" —— 而不是 "我需要 plugin 吗？"。
 - [AGENTS.md](https://github.com/ob-labs/agentseek/blob/main/AGENTS.md) 中的项目 instructions

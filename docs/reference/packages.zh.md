@@ -11,8 +11,8 @@ sources:
 
 # 包参考
 
-AgentSeek 发布一个顶层 Python 包：`agentseek`。该包同时提供公开 CLI 入口和可嵌入的
-harness library。
+AgentSeek 发布一个顶层 Python 包：`agentseek`。该包同时提供 CLI 工具和可嵌入的
+harness 库。
 
 | 字段 | 值 | 来源 |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ harness library。
 
 ## 核心依赖
 
-运行时依赖同时覆盖 harness runtime 和单入口 CLI 需要的项目命令工具：
+运行时依赖同时覆盖 harness runtime 和项目命令工具：
 
 | Package | 用途 |
 | --- | --- |

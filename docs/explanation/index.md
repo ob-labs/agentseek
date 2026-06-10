@@ -12,13 +12,12 @@ sources:
 
 # Explanation
 
-These pages explain why AgentSeek is shaped as a database-native harness with a
-single CLI entry point.
+These pages explain the design and architecture of AgentSeek.
 
 | Page | Read it when |
 | --- | --- |
 | [What AgentSeek is](what-agentseek-is.md) | You need the high-level framing and non-goals. |
-| [CLI surface](cli-surface.md) | You want to understand why project management and runtime commands share `agentseek`. |
+| [Command overview](cli-surface.md) | You want to understand how commands are organized. |
 | [Bub relationship](bub-relationship.md) | You want the boundary between Bub and AgentSeek. |
 | [LangChain relationship](langchain-relationship.md) | You use LangChain, LangGraph, or DeepAgents and want the integration model. |
 | [Runtime data model](runtime-data-model.md) | You are reasoning about tapes, skills, plugins, MCP, and channels. |

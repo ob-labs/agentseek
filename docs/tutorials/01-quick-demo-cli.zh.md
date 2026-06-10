@@ -23,14 +23,14 @@ cd agentseek
 uv sync
 ```
 
-确认单一 CLI 入口可加载：
+确认 CLI 可用：
 
 ```bash
 uv run agentseek --help
 ```
 
-你应该在同一个 `agentseek` 入口下看到项目命令（`create`、`run`、`build`、`deploy`）、
-运行时命令（`chat`、`turn`、`gateway`）和扩展命令（`plugin`、`ctx`、`skills`、`api`）。
+你应该看到项目管理命令（`create`、`run`、`build`、`deploy`）、运行时命令（`chat`、
+`turn`、`gateway`）和扩展命令（`plugin`、`ctx`、`skills`、`api`）。
 
 ## 2. 配置模型
 
@@ -64,10 +64,9 @@ uv run agentseek turn "summarize this workspace in one sentence"
 
 - 已同步的仓库环境。
 - 通过 `AGENTSEEK_*` 或 `.env` 配置好的模型。
-- 通过 `agentseek chat` 或 `agentseek turn` 验证过的 runtime 路径。
+- 可用的 `agentseek chat` 或 `agentseek turn`。
 
 ## 下一步
 
 - 构建应用项目：[构建你的第一个 harness 应用](02-first-harness-app.zh.md)。
-- 查看命令面：[CLI 参考](../reference/cli.zh.md)。
-- 理解 Bub 层：[AgentSeek 与 Bub 的关系](../explanation/bub-relationship.zh.md)。
+- 查看可用命令：[CLI 参考](../reference/cli.zh.md)。

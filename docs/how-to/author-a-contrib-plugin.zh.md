@@ -39,7 +39,7 @@ Bub 兼容 plugin 时使用本指南。plugin 契约、README 结构与
 2. 遵循 contrib 的 **命名约定**
    ([contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md), "agentseek follows Bub's extension conventions")：
 
-   | 维度 | 约定 |
+   | 项 | 约定 |
    | --- | --- |
    | 发行包名 | `agentseek-<feature>` |
    | Python 包 | `agentseek_<feature>` |

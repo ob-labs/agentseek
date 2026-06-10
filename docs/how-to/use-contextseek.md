@@ -81,7 +81,7 @@ ContextSeek storage is owned by the backend (`agentseek-contextseek` README
 documents removal). To uninstall the plugin:
 
 ```bash title="not executed in this run"
-pip uninstall agentseek-contextseek
+uv run agentseek plugin uninstall agentseek-contextseek
 ```
 
 ## Related

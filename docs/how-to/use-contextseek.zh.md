@@ -79,7 +79,7 @@ ContextSeek 的存储由 backend 维护（`agentseek-contextseek` README
 说明了如何移除）。要卸载该插件：
 
 ```bash title="not executed in this run"
-pip uninstall agentseek-contextseek
+uv run agentseek plugin uninstall agentseek-contextseek
 ```
 
 ## 相关

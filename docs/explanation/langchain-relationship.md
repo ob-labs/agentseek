@@ -202,7 +202,7 @@ minute.
 
 - Explanation: [What agentseek is](what-agentseek-is.md),
   [How agentseek relates to Bub](bub-relationship.md),
-  [CLI surface](cli-surface.md)
+  [Command overview](cli-surface.md)
 - Reference: [Templates reference](../reference/templates.md),
   [Packages reference](../reference/packages.md)
 - How-to: [How to use ContextSeek](../how-to/use-contextseek.md),
