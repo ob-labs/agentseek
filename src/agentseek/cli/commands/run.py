@@ -52,7 +52,7 @@ PYTHON_SCRIPT_HINTS: tuple[str, ...] = ("serve", "dev")
 
 app = typer.Typer(
     name="run",
-    help="Start the project locally after completing .env configuration.",
+    help="Run the current project locally.",
     add_completion=False,
     no_args_is_help=False,
 )

@@ -1,24 +1,27 @@
-"""agentseek overrides for Bub's builtin CLI (onboard branding, install sandbox, …)."""
+"""AgentSeek runtime layer — reimplements Bub builtin commands with AgentSeek branding and behavior.
+
+Design: Bub's ``register_cli_commands`` hookspec uses ``call_many_sync`` (all
+implementations execute, order not deterministic).  There is no built-in
+override mechanism, so AgentSeek cannot reliably replace commands via hooks.
+
+Instead, ``apply_agentseek_runtime_command_layout`` runs *after*
+``BubFramework.create_cli_app()`` returns: it pops Bub's builtin commands and
+re-registers AgentSeek's own implementations.  The reimplementations import
+Bub's low-level utilities (``_uv``, ``_build_bub_requirement``, etc.) but own
+their docstrings, argument annotations, and channel behavior.
+"""
 
 from __future__ import annotations
 
 import asyncio
-import contextlib
 from collections.abc import Iterable
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import typer
 
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
-
-if TYPE_CHECKING:
-    from bub.channels.cli import CliChannel
-    from bub.channels.cli.renderer import CliRenderer
-    from bub.channels.message import MessageKind
-    from rich.live import Live
 
 AGENTSEEK_ONBOARD_BANNER = r"""
     _                    _                 _
@@ -49,13 +52,9 @@ def agentseek_version() -> str:
         return "0.0.0"
 
 
-def _brand_onboard_echo(original_echo):
-    def echo(message=None, *args, **kwargs):
-        if message == "\nWelcome to Bub! Let's get you set up.\n":
-            message = AGENTSEEK_ONBOARD_WELCOME
-        return original_echo(message, *args, **kwargs)
-
-    return echo
+# ---------------------------------------------------------------------------
+# AgentSeek command implementations (replace Bub builtins at registration time)
+# ---------------------------------------------------------------------------
 
 
 def resolve_enabled_channels(framework, primary_channels: Iterable[str]) -> list[str]:
@@ -67,110 +66,144 @@ def resolve_enabled_channels(framework, primary_channels: Iterable[str]) -> list
     return enabled
 
 
-def _install_single_cli_log_sink(self: CliChannel) -> int:
-    from loguru import logger
-
-    with contextlib.suppress(ValueError):
-        logger.remove()
-    return logger.add(self._renderer.log, colorize=False, format="{level:<8} | {message}")
-
-
-def _finish_cli_stream_once(self: CliRenderer, live: Live, *, kind: MessageKind, text: str) -> None:
-    del self
-    del kind, text
-    live.stop()
-
-
-def apply_agentseek_onboard_branding() -> None:
-    """Replace Bub's onboard banner and copy without changing the onboard workflow."""
-    from bub.builtin import cli
-
-    cli.ONBOARD_BANNER = AGENTSEEK_ONBOARD_BANNER
-    cli.typer.echo = _brand_onboard_echo(cli.typer.echo)
-    cli.__version__ = agentseek_version()
-
-
-def apply_agentseek_chat_channel_defaults() -> None:
-    """Include Bub support channels in chat mode so MCP and similar helpers can boot."""
-    import bub.builtin.cli as bub_cli
+def _agentseek_chat(
+    ctx: typer.Context,
+    chat_id: str = typer.Option("local", "--chat-id", help="Chat id"),
+    session_id: str | None = typer.Option(None, "--session-id", help="Optional session id"),
+) -> None:
+    """Start an interactive CLI chat session."""
     from bub.channels.cli import CliChannel
-    from bub.channels.cli.renderer import CliRenderer
     from bub.channels.manager import ChannelManager
     from bub.framework import BubFramework
 
-    type.__setattr__(CliChannel, "_install_log_sink", _install_single_cli_log_sink)
-    type.__setattr__(CliRenderer, "finish_stream", _finish_cli_stream_once)
-
-    def chat(
-        ctx: typer.Context,
-        chat_id: str = bub_cli.typer.Option("local", "--chat-id", help="Chat id"),
-        session_id: str | None = bub_cli.typer.Option(None, "--session-id", help="Optional session id"),
-    ) -> None:
-        framework = ctx.ensure_object(BubFramework)
-        manager = ChannelManager(
-            framework,
-            enabled_channels=resolve_enabled_channels(framework, ["cli"]),
-            stream_output=True,
-        )
-        channel = manager.get_channel("cli")
-        if not isinstance(channel, CliChannel):
-            bub_cli.typer.echo("CLI channel not found. Please check your hook implementations.")
-            raise bub_cli.typer.Exit(1)
-        channel.set_metadata(chat_id=chat_id, session_id=session_id)
-        asyncio.run(manager.listen_and_run())
-
-    object.__setattr__(bub_cli, "chat", chat)
+    framework = ctx.ensure_object(BubFramework)
+    manager = ChannelManager(
+        framework,
+        enabled_channels=resolve_enabled_channels(framework, ["cli"]),
+        stream_output=True,
+    )
+    channel = manager.get_channel("cli")
+    if not isinstance(channel, CliChannel):
+        typer.echo("CLI channel not found. Please check your hook implementations.")
+        raise typer.Exit(1)
+    channel.set_metadata(chat_id=chat_id, session_id=session_id)
+    asyncio.run(manager.listen_and_run())
 
 
-def apply_agentseek_install_project_defaults() -> None:
-    """Use :data:`~agentseek.env.DEFAULT_PLUGIN_SANDBOX` for Bub's plugin-install sandbox.
+def _agentseek_onboard(ctx: typer.Context) -> None:
+    """Interactively collect plugin configuration and write it to the AgentSeek config file."""
+    from bub import configure
+    from bub.framework import BubFramework
 
-    Bub defaults to ``uv init --name bub-project``. agentseek aligns ``uv init --name`` with the
-    default ``BUB_PROJECT`` path from :func:`~agentseek.env.apply_agentseek_env_aliases`.
-    """
-    import bub.builtin.cli as bub_cli
+    framework = ctx.ensure_object(BubFramework)
+    typer.echo(AGENTSEEK_ONBOARD_BANNER.format(version=agentseek_version()))
+    typer.echo(AGENTSEEK_ONBOARD_WELCOME)
 
-    def _ensure_plugin_sandbox(project: Path) -> None:
-        # Bub's own ``_default_project`` factory mkdir's the sandbox before
-        # returning the path. When ``BUB_PROJECT`` is supplied through the
-        # environment (which is what ``apply_agentseek_env_aliases`` does for
-        # ``.agentseek/agentseek-project``), that factory is bypassed and the
-        # directory may not exist yet — ``_uv(... cwd=project)`` would then
-        # raise ``FileNotFoundError`` from ``subprocess.run``. Mirror Bub's
-        # invariant here so ``agentseek plugin install`` works in a fresh workspace.
-        project.mkdir(parents=True, exist_ok=True)
-        if (project / "pyproject.toml").is_file():
-            return
-        bub_cli._uv("init", "--bare", "--name", DEFAULT_PLUGIN_SANDBOX, "--app", cwd=project)
-        bub_requirement = bub_cli._build_bub_requirement()
-        bub_cli._uv("add", "--active", "--no-sync", *bub_requirement, cwd=project)
+    try:
+        config_data = framework.collect_onboard_config()
+        configure.save(framework.config_file, config_data)
+    except (typer.Abort, typer.Exit):
+        raise
+    except Exception as exc:
+        typer.secho(f"Onboarding failed: {exc}", err=True, fg="red")
+        raise typer.Exit(1) from exc
 
-    # Ruff B010 rewrites `setattr(mod, "const", ...)` to assignment; that breaks ty's monkeypatch
-    # typing. ``object.__setattr__`` keeps dynamic binding and satisfies both.
-    object.__setattr__(bub_cli, "_ensure_project", _ensure_plugin_sandbox)
+    typer.echo(f"Saved config to {framework.config_file}")
 
 
-def apply_agentseek_install_requirement_resolution() -> None:
-    """Route ``agentseek-*`` packages directly as bare names.
+def _default_plugin_project() -> Path:
+    """Resolve the plugin environment directory via ``bub.home`` (configured by env aliases)."""
+    from bub.builtin.cli import _default_project
 
-    Resolution order for bare names (no ``/``, no URL prefix):
+    return _default_project()
 
-    1. Name starts with ``agentseek-`` → pass bare name (uv resolves from workspace or PyPI).
-    2. Otherwise → Bub's original ``_build_requirement`` (PyPI or bub-contrib).
-    """
-    import bub.builtin.cli as bub_cli
 
-    _original_build_requirement = bub_cli._build_requirement
+def _ensure_plugin_sandbox(project: Path) -> None:
+    """Ensure the AgentSeek plugin sandbox exists and is initialized."""
+    from bub.builtin.cli import _build_bub_requirement, _uv
 
-    def _build_requirement(spec: str) -> str:
-        if spec.startswith(("git@", "https://")) or "/" in spec:
-            return _original_build_requirement(spec)
-        name, _, _ = spec.partition("@")
-        if name.startswith("agentseek-"):
-            return name
-        return _original_build_requirement(spec)
+    project.mkdir(parents=True, exist_ok=True)
+    if (project / "pyproject.toml").is_file():
+        return
+    _uv("init", "--bare", "--name", DEFAULT_PLUGIN_SANDBOX, "--app", cwd=project)
+    bub_requirement = _build_bub_requirement()
+    _uv("add", "--active", "--no-sync", *bub_requirement, cwd=project)
 
-    object.__setattr__(bub_cli, "_build_requirement", _build_requirement)
+
+def _build_agentseek_requirement(spec: str) -> str:
+    """Resolve a plugin spec, routing ``agentseek-*`` packages directly."""
+    from bub.builtin.cli import _build_requirement as _bub_build_requirement
+
+    if spec.startswith(("git@", "https://")) or "/" in spec:
+        return _bub_build_requirement(spec)
+    name, _, _ = spec.partition("@")
+    if name.startswith("agentseek-"):
+        return name
+    return _bub_build_requirement(spec)
+
+
+_project_opt = typer.Option(
+    default_factory=_default_plugin_project,
+    help="Path to the plugin environment directory.",
+    envvar="BUB_PROJECT",
+    show_envvar=False,
+)
+_specs_arg = typer.Argument(
+    default_factory=list,
+    help="Package spec: a git URL, owner/repo, or package name.",
+)
+_packages_arg = typer.Argument(..., help="Package name to uninstall.")
+_packages_optional_arg = typer.Argument(
+    default_factory=list,
+    help="Package name to update, or omit to update all.",
+)
+
+
+def _agentseek_plugin_install(
+    specs: list[str] = _specs_arg,
+    project: Path = _project_opt,
+) -> None:
+    """Install a plugin into the AgentSeek environment, or sync if no specs are given."""
+    from bub.builtin.cli import _uv
+
+    _ensure_plugin_sandbox(project)
+    if not specs:
+        _uv("sync", "--active", "--inexact", cwd=project)
+    else:
+        _uv("add", "--active", *map(_build_agentseek_requirement, specs), cwd=project)
+
+
+def _agentseek_plugin_uninstall(
+    packages: list[str] = _packages_arg,
+    project: Path = _project_opt,
+) -> None:
+    """Uninstall a plugin from the AgentSeek environment."""
+    from bub.builtin.cli import _uv
+
+    _ensure_plugin_sandbox(project)
+    _uv("remove", "--active", *packages, cwd=project)
+
+
+def _agentseek_plugin_update(
+    packages: list[str] = _packages_optional_arg,
+    project: Path = _project_opt,
+) -> None:
+    """Update selected packages or all packages in the AgentSeek environment."""
+    from bub.builtin.cli import _uv
+
+    _ensure_plugin_sandbox(project)
+    if not packages:
+        _uv("sync", "--active", "--upgrade", "--inexact", cwd=project)
+    else:
+        package_args: list[str] = []
+        for pkg in packages:
+            package_args.extend(["--upgrade-package", pkg])
+        _uv("sync", "--active", "--inexact", *package_args, cwd=project)
+
+
+# ---------------------------------------------------------------------------
+# Command layout — pop Bub commands, register AgentSeek replacements
+# ---------------------------------------------------------------------------
 
 
 def _command_name(command: typer.models.CommandInfo) -> str | None:
@@ -201,54 +234,45 @@ def _tag_registered_command_panels(app: typer.Typer) -> None:
 
 
 def apply_agentseek_runtime_command_layout(app: typer.Typer) -> None:
-    """Normalize root runtime commands for the AgentSeek command surface."""
+    """Replace Bub builtin commands with AgentSeek implementations and reorganize the layout."""
     app.suggest_commands = False
 
+    # run → turn (reuse bub's callback unchanged)
     run_command = _pop_registered_command(app, "run")
     if run_command and run_command.callback is not None:
         app.command("turn", rich_help_panel=RUNTIME_COMMAND_PANELS["turn"])(run_command.callback)
 
+    # chat → AgentSeek chat (lifecycle channels enabled)
+    _pop_registered_command(app, "chat")
+    app.command("chat", rich_help_panel=RUNTIME_COMMAND_PANELS["chat"])(_agentseek_chat)
+
+    # onboard → AgentSeek onboard (branded)
+    _pop_registered_command(app, "onboard")
+    app.command("onboard", rich_help_panel=RUNTIME_COMMAND_PANELS["onboard"])(_agentseek_onboard)
+
+    # install/uninstall/update → plugin group (AgentSeek implementations)
     plugin_app = typer.Typer(
         name="plugin",
         help="Manage AgentSeek runtime plugins.",
         add_completion=False,
         no_args_is_help=True,
     )
-    has_plugin_commands = False
     for command_name in PLUGIN_COMMAND_NAMES:
-        command = _pop_registered_command(app, command_name)
-        if command is None or command.callback is None:
-            continue
-        plugin_app.command(command_name)(command.callback)
-        has_plugin_commands = True
+        _pop_registered_command(app, command_name)
+    plugin_app.command("install")(_agentseek_plugin_install)
+    plugin_app.command("uninstall")(_agentseek_plugin_uninstall)
+    plugin_app.command("update")(_agentseek_plugin_update)
 
-    if has_plugin_commands and not any(group.name == "plugin" for group in app.registered_groups):
+    if not any(group.name == "plugin" for group in app.registered_groups):
         app.add_typer(plugin_app, name="plugin", rich_help_panel=RUNTIME_COMMAND_PANELS["plugin"])
 
     _tag_registered_command_panels(app)
-
-
-def apply_agentseek_runtime_overrides() -> None:
-    """Patch ``bub.builtin.cli`` before ``BubFramework.create_cli_app`` registers commands.
-
-    Apply onboarding branding first, then chat channel defaults and install sandbox behavior; all
-    target the same module and must run before Typer binds builtin commands.
-    """
-    apply_agentseek_onboard_branding()
-    apply_agentseek_chat_channel_defaults()
-    apply_agentseek_install_project_defaults()
-    apply_agentseek_install_requirement_resolution()
 
 
 __all__ = [
     "AGENTSEEK_ONBOARD_BANNER",
     "AGENTSEEK_ONBOARD_WELCOME",
     "agentseek_version",
-    "apply_agentseek_chat_channel_defaults",
-    "apply_agentseek_install_project_defaults",
-    "apply_agentseek_install_requirement_resolution",
-    "apply_agentseek_onboard_branding",
     "apply_agentseek_runtime_command_layout",
-    "apply_agentseek_runtime_overrides",
     "resolve_enabled_channels",
 ]

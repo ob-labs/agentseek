@@ -10,7 +10,6 @@ import typer
 from agentseek.cli import (
     AGENTSEEK_CLI_HELP,
     apply_agentseek_runtime_command_layout,
-    apply_agentseek_runtime_overrides,
     mount_agentseek_commands,
 )
 from agentseek.env import (
@@ -20,7 +19,6 @@ from agentseek.env import (
 )
 
 apply_agentseek_env_aliases()
-apply_agentseek_runtime_overrides()
 
 
 def _logfire_console_config(enabled: bool) -> logfire.ConsoleOptions | Literal[False]:

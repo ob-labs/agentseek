@@ -9,10 +9,11 @@ import typer
 from agentseek.cli.commands import api, build, create, ctx, deploy, run, skills
 
 AGENTSEEK_CLI_HELP = (
-    "AgentSeek is a database-native agent harness with one CLI entry point. "
-    "Use `agentseek create/run/build/deploy` to manage projects, "
-    "`agentseek chat/turn/gateway` to run the harness, and "
-    "`agentseek plugin/ctx/skills/api` to extend the runtime and connect services."
+    "AgentSeek is a database-native agent harness with one CLI entry point.\n\n"
+    "Project lifecycle: `agentseek create → run → build → deploy`.\n"
+    "Runtime: `agentseek chat / turn / gateway`.\n"
+    "Environment: `agentseek plugin / onboard / mcp / login`.\n"
+    "Services: `agentseek api / ctx / skills`."
 )
 
 
