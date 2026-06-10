@@ -48,7 +48,9 @@ def _registered_names(app: typer.Typer) -> set[str]:
         if command.name:
             names.add(command.name)
         elif command.callback is not None:
-            names.add(command.callback.__name__)
+            cb_name = getattr(command.callback, "__name__", None)
+            if cb_name is not None:
+                names.add(cb_name)
     return names
 
 
