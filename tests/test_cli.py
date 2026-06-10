@@ -10,15 +10,10 @@ from bub.channels.message import ChannelMessage
 from bub.framework import BubFramework
 from republic import StreamEvent
 
-from agentseek.cli import (
-    apply_agentseek_runtime_command_layout,
-    resolve_enabled_channels,
-)
-from agentseek.cli.runtime import (
-    _agentseek_chat,
-    _agentseek_onboard,
-    _ensure_plugin_sandbox,
-)
+from agentseek.cli import apply_agentseek_runtime_command_layout, resolve_enabled_channels
+from agentseek.cli.commands.chat import chat as agentseek_chat
+from agentseek.cli.commands.onboard import onboard as agentseek_onboard
+from agentseek.cli.commands.plugin import _ensure_plugin_sandbox
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
 
 
@@ -84,9 +79,9 @@ def test_runtime_command_layout_replaces_and_regroups_bub_commands() -> None:
 
     # chat and onboard are AgentSeek's own implementations
     chat_cmd = next(c for c in app.registered_commands if c.name == "chat")
-    assert chat_cmd.callback is _agentseek_chat
+    assert chat_cmd.callback is agentseek_chat
     onboard_cmd = next(c for c in app.registered_commands if c.name == "onboard")
-    assert onboard_cmd.callback is _agentseek_onboard
+    assert onboard_cmd.callback is agentseek_onboard
 
     # plugin group
     plugin_groups = [group.typer_instance for group in app.registered_groups if group.name == "plugin"]

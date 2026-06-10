@@ -1,1 +1,1 @@
-"""AgentSeek-owned command modules mounted by :mod:`agentseek.cli.surface`."""
+"""AgentSeek-owned command modules mounted by :mod:`agentseek.cli.runtime`."""

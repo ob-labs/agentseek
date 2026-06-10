@@ -10,7 +10,6 @@ import typer
 from agentseek.cli import (
     AGENTSEEK_CLI_HELP,
     apply_agentseek_runtime_command_layout,
-    mount_agentseek_commands,
 )
 from agentseek.env import (
     agentseek_config_file,
@@ -47,7 +46,6 @@ def create_cli_app() -> typer.Typer:
     framework.load_hooks()
     app = framework.create_cli_app()
     apply_agentseek_runtime_command_layout(app)
-    mount_agentseek_commands(app)
     app.info.help = AGENTSEEK_CLI_HELP
 
     if not app.registered_commands:
