@@ -45,7 +45,7 @@ After the first run works, continue with the guide that matches the next job:
 
 | Need | Reference |
 | --- | --- |
-| How the CLI is organized | [CLI surface](explanation/choosing-an-entry-point.md) |
+| How the CLI is organized | [CLI surface](explanation/cli-surface.md) |
 | Every command and flag | [CLI reference](reference/cli.md) |
 | Every template | [Templates reference](reference/templates.md) |
 | Package and repository boundaries | [Packages reference](reference/packages.md) |

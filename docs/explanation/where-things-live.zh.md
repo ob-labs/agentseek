@@ -116,7 +116,7 @@ navigation/where-things-live 图景的来源。
 - `scripts/` 保留给项目脚本，目前为空。
 - `tests/` 保存顶层测试；contrib 包在 `contrib/*/tests/` 下有自己的测试树。
 - `entrypoint.sh` 和 `docker-compose.yml` 是 Docker entry point；
-  见 [选择一个入口](choosing-an-entry-point.zh.md)。
+  见 [CLI 命令面](cli-surface.zh.md)。
 - `pyproject.toml` 是 distribution、依赖和 workspace 成员列表的事实来源。
 
 ## 为什么是这样
@@ -150,4 +150,4 @@ navigation/where-things-live 图景的来源。
 
 - [包参考](../reference/packages.zh.md)
 - [文件布局参考](../reference/file-layout.zh.md)
-- [CLI 命令面](choosing-an-entry-point.zh.md)
+- [CLI 命令面](cli-surface.zh.md)

@@ -35,7 +35,7 @@ nav:
           - LangChain relationship: explanation/langchain-relationship.md
           - Runtime data model: explanation/runtime-data-model.md
           - Extension model: explanation/extension-model.md
-          - CLI surface: explanation/choosing-an-entry-point.md
+          - CLI surface: explanation/cli-surface.md
           - Where things live: explanation/where-things-live.md
       - Reference:
           - Overview: reference/index.md

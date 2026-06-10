@@ -67,7 +67,7 @@ and the runtime substrate; application and deployment choices remain explicit.
 
 ## Related
 
-- [CLI surface](choosing-an-entry-point.md)
+- [CLI surface](cli-surface.md)
 - [How AgentSeek relates to Bub](bub-relationship.md)
 - [How AgentSeek relates to LangChain](langchain-relationship.md)
 - [Runtime data model](runtime-data-model.md)

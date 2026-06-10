@@ -17,7 +17,7 @@ sources:
 | 页面 | 适合阅读的场景 |
 | --- | --- |
 | [agentseek 是什么](what-agentseek-is.zh.md) | 需要整体定位和非目标。 |
-| [CLI 命令面](choosing-an-entry-point.zh.md) | 想理解为什么项目管理和运行时命令共享 `agentseek`。 |
+| [CLI 命令面](cli-surface.zh.md) | 想理解为什么项目管理和运行时命令共享 `agentseek`。 |
 | [AgentSeek 与 Bub 的关系](bub-relationship.zh.md) | 想看 Bub 和 AgentSeek 的边界。 |
 | [AgentSeek 与 LangChain 的关系](langchain-relationship.zh.md) | 已经使用 LangChain、LangGraph 或 DeepAgents，想理解集成方式。 |
 | [运行时数据模型](runtime-data-model.zh.md) | 正在理解 tapes、skills、plugins、MCP 和 channels。 |

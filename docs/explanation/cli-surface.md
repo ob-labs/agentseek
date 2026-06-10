@@ -32,7 +32,7 @@ because the same package is also an executable harness.
 
 ## Why command groups are separated
 
-- `new / dev / build / deploy` are project operations. They can work before a
+- `create / run / build / deploy` are project operations. They can work before a
   long-running harness is started.
 - `chat / turn / gateway` are runtime operations. They execute the harness.
 - `plugin / ctx / skills / api / mcp` connect the runtime to optional services

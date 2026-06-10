@@ -31,7 +31,7 @@ AgentSeek 现在只有一个公开 CLI 入口：`agentseek`。
 
 ## 为什么拆命令组
 
-- `new / dev / build / deploy` 是项目操作，可以发生在长运行 harness 启动之前。
+- `create / run / build / deploy` 是项目操作，可以发生在长运行 harness 启动之前。
 - `chat / turn / gateway` 是运行时操作，会执行 harness。
 - `plugin / ctx / skills / api / mcp` 负责把运行时连接到可选服务和工具。
 
