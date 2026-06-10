@@ -17,6 +17,7 @@ is intentionally **not** handled here — it belongs to the
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Callable, Sequence
 from typing import NoReturn
 
@@ -111,11 +112,12 @@ def _is_help_request(argv: Sequence[str]) -> bool:
 
 def _load_contextseek_run_cli() -> _RunCli:
     try:
-        from contextseek.cli import run_cli
+        module = importlib.import_module("contextseek.cli")
     except ModuleNotFoundError as exc:
         if exc.name and not exc.name.startswith("contextseek"):
             raise
         raise MissingContextSeekError from exc
+    run_cli = getattr(module, "run_cli", None)
     if not callable(run_cli):
         _raise_invalid_contextseek()
     return run_cli
