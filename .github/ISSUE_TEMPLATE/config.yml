@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📋 Release Board
+    url: https://github.com/orgs/ob-labs/projects/1
+    about: See what the AgentSeek family is shipping this cycle.

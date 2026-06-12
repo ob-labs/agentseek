@@ -1,0 +1,176 @@
+name: "🧩 App Template Request"
+description: "Request a new AgentSeek app template, and tell us what it needs to support (skills, MCP, HITL, streaming, …)"
+title: "[Template]: "
+labels: ["template-request", "triage"]
+projects: ["ob-labs/1"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a template! Templates are the fastest way for others to start building on the AgentSeek family.
+
+        The more concrete you are below, the faster we can scope and build it. If a section doesn't apply, leave it blank.
+
+  - type: input
+    id: template-name
+    attributes:
+      label: Template name
+      description: A short, descriptive name. We'll slugify it for the template directory.
+      placeholder: "e.g. customer-support-agent, deep-research, sql-copilot"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-it-does
+    attributes:
+      label: What does this template do?
+      description: One or two sentences. What should a developer have running after `agentseek new <template>`?
+      placeholder: "A multi-agent research assistant that searches the web, reads sources, and writes a cited report."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Who is this for?
+      description: Helps us decide the depth and the docs tone.
+      options:
+        - "Developers (building/extending agents)"
+        - "End users (running a ready-made app)"
+        - "Both"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Agent framework / harness
+      description: What should this template be built on?
+      options:
+        - "LangChain"
+        - "LangGraph"
+        - "DeepAgents"
+        - "Bub (built-in)"
+        - "Not sure — recommend one"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: Capabilities to support
+      description: Check everything this template needs. Each checked box has a detail section below — please fill in the matching one.
+      options:
+        - label: "🛠️ Skills (coskills / reusable capabilities)"
+        - label: "🔌 MCP servers (Model Context Protocol)"
+        - label: "🧑‍⚖️ Human-in-the-loop (HITL) — approvals, interrupts, edits"
+        - label: "📡 Event streaming (token/step/tool streaming to a UI or client)"
+        - label: "🧰 Custom tools / function calling"
+        - label: "🧠 Memory & context (ContextSeek / persistent context)"
+        - label: "🔍 Retrieval / RAG (OceanBase · seekdb vector + fulltext)"
+        - label: "👥 Subagents / multi-agent orchestration"
+        - label: "🔐 Auth (per-user / resource-level authorization)"
+        - label: "🚀 Served via agentseek-api (LangGraph Platform-compatible runtime)"
+
+  - type: textarea
+    id: skills-detail
+    attributes:
+      label: "🛠️ Skills — details"
+      description: Which skills should ship with the template? Existing coskills to reuse, or new ones to author? Any human-confirmation/editing needs?
+      placeholder: |
+        - Reuse: langchain-dev-guide, langsmith-trace
+        - New: a "jira-triage" skill that reads tickets and proposes labels
+        - Should skills be editable / require human confirmation before use?
+
+  - type: textarea
+    id: mcp-detail
+    attributes:
+      label: "🔌 MCP — details"
+      description: Which MCP servers? Transport (stdio / SSE / HTTP)? Do they need auth or secrets? Local or remote?
+      placeholder: |
+        - filesystem MCP (stdio, local)
+        - GitHub MCP (HTTP, needs PAT)
+        - a custom internal MCP at https://… (SSE, OAuth)
+
+  - type: textarea
+    id: hitl-detail
+    attributes:
+      label: "🧑‍⚖️ Human-in-the-loop — details"
+      description: Where should the agent pause for a human? Approve/reject, edit state, or answer a question? Which steps are sensitive?
+      placeholder: |
+        - Pause before sending any external email/API write
+        - Let a reviewer edit the drafted plan before execution (interrupt + resume)
+        - Approve tool calls that cost money
+
+  - type: textarea
+    id: streaming-detail
+    attributes:
+      label: "📡 Event streaming — details"
+      description: What needs to stream, and to what? Which stream modes (tokens / updates / messages / events / tasks / checkpoints / custom)? Subgraph streaming?
+      placeholder: |
+        - Stream assistant tokens to a web chat UI (messages-tuple)
+        - Surface tool-call start/end as status events
+        - Need subgraph streaming for the planner → worker handoff
+
+  - type: textarea
+    id: models
+    attributes:
+      label: Models / providers
+      description: Which LLM(s) and embedding model(s)? Any Chinese providers (DeepSeek, Qwen, GLM, …) or OpenAI-compatible endpoints?
+      placeholder: "Chat: DeepSeek-V3 via OpenAI-compatible endpoint; Embeddings: bge-m3 on seekdb"
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: How will it run?
+      options:
+        - "Local CLI / script"
+        - "Served behind agentseek-api"
+        - "Desktop app (Tauri, like ContextSeek)"
+        - "Notebook / demo"
+        - "Not sure"
+    validations:
+      required: false
+
+  - type: textarea
+    id: external-services
+    attributes:
+      label: External services & data
+      description: Any APIs, databases, files, or accounts the template must talk to? Note anything requiring secrets so we plan config/`.env`.
+      placeholder: "Slack API, a Postgres read replica, a folder of PDFs"
+
+  - type: textarea
+    id: success
+    attributes:
+      label: What does success look like?
+      description: A concrete acceptance check — the demo/flow that should work end-to-end.
+      placeholder: "Ask 'summarize last week's support tickets' → agent retrieves, asks me to approve the summary, streams the final report."
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Your sense of urgency — we'll re-triage on the board.
+      options:
+        - "P0 — blocking my work / committed deliverable"
+        - "P1 — important, want it this cycle"
+        - "P2 — nice to have"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Are you able to help build it?
+      options:
+        - "Yes — I'll open the PR"
+        - "Partly — I can co-build / review"
+        - "No — requesting the team build it"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Links to prior art, related issues/PRs, sketches, or constraints.
