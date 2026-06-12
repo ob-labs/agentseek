@@ -61,7 +61,7 @@ uv run agentseek deploy --dry-run --mode k8s --image my-agent:0.1.0
 
 | 现象 | 可能原因 | 处理 |
 | --- | --- | --- |
-| 找不到 `agentseek build` | 当前项目未安装 AgentSeek。 | 运行 `uv add agentseek`，再用 `uv run agentseek build`。 |
+| 找不到 `agentseek build` | 命令没有在生成项目根目录运行。 | 进入 `agentseek create` 创建的项目并先运行 `uv sync`。 |
 | `--push` 返回 `unauthorized` | 未登录 registry。 | 运行 `docker login <registry>`。 |
 | `deploy` 拒绝执行 | 需要 `--dry-run`。 | 加上 `--dry-run`。 |
 | 清单里的镜像不对 | 未设置 `--image`。 | 显式传入镜像名。 |

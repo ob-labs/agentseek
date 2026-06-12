@@ -61,7 +61,7 @@ uv run agentseek deploy --dry-run --mode k8s --image my-agent:0.1.0
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek build` is unavailable | AgentSeek is not installed in this project. | Run `uv add agentseek`, then retry with `uv run agentseek build`. |
+| `agentseek build` is unavailable | The command is not running from a generated project root. | Enter the project created by `agentseek create` and run `uv sync` first. |
 | `--push` fails with `unauthorized` | Registry login is missing. | Run `docker login <registry>`. |
 | `deploy` rejects the command | `--dry-run` is required. | Add `--dry-run`. |
 | Manifest references the wrong image | `--image` was omitted. | Pass the image explicitly. |

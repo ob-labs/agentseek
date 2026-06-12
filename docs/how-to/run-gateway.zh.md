@@ -53,7 +53,7 @@ gateway 命令。
 
 | 现象 | 可能原因 | 处理 |
 | --- | --- | --- |
-| `agentseek gateway` 不可用 | 当前环境未安装 AgentSeek。 | 用 `uv tool install agentseek` 安装，或把它加入项目依赖。 |
+| `agentseek gateway` 不可用 | 当前环境没有可用的 AgentSeek CLI。 | 使用 `uv tool install agentseek` 安装 CLI。 |
 | channel 收不到消息 | plugin 或凭证缺失。 | 安装 plugin 并检查 `.env`。 |
 | Docker 启动了其他进程 | 存在 `startup.sh`。 | 删除或修改 `startup.sh`。 |
 

@@ -90,7 +90,7 @@ uv run agentseek mcp add local-tools --transport stdio \
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
-| `No such command 'mcp'` | 未安装 `bub-mcp`。 | 将 `bub-mcp` 加入项目依赖。 |
+| `No such command 'mcp'` | 未安装 `bub-mcp`。 | 安装 `bub-mcp` 后重试。 |
 | 工具缺失 | server 命令启动失败。 | 在 AgentSeek 之外运行该 server 命令。 |
 | 鉴权失败 | `env` 中缺少 token。 | 在对应 server 条目下添加凭据。 |
 | 修改没有生效 | runtime 在编辑前已经启动。 | 重启 `agentseek chat` 或 `agentseek gateway`。 |

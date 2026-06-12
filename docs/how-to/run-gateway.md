@@ -54,7 +54,7 @@ instead of the default gateway command.
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek gateway` is unavailable | AgentSeek is not installed in this environment. | Install it with `uv tool install agentseek` or add it to the project. |
+| `agentseek gateway` is unavailable | AgentSeek is not installed as a CLI tool. | Install it with `uv tool install agentseek`. |
 | The channel receives no messages | Plugin or credentials are missing. | Install the plugin and check `.env`. |
 | Docker starts another process | `startup.sh` is present. | Remove or edit `startup.sh`. |
 

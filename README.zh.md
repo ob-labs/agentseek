@@ -39,12 +39,6 @@ npm install --prefix frontend
 uv run agentseek run --no-browser
 ```
 
-如果你在已有 Python 项目里基于 AgentSeek 二开，把它作为依赖加入项目：
-
-```bash
-uv add agentseek
-```
-
 ## 文档
 
 - [首页](docs/index.zh.md)：从文档中选择最短路径。

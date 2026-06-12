@@ -39,13 +39,6 @@ Set `AGENTSEEK_API_KEY` in `.env`, then start the app:
 uv run agentseek run --no-browser
 ```
 
-If you are extending AgentSeek inside an existing Python project, add it as a
-dependency:
-
-```bash
-uv add agentseek
-```
-
 ## Documentation
 
 - [Home](docs/index.md): the shortest route through the docs.
