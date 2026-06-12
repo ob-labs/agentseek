@@ -3,88 +3,105 @@ title: How to configure MCP servers
 type: how-to
 audience: [A2, A4]
 runs: yes
-verified_on: 2026-05-28
+verified_on: 2026-06-12
 sources:
   - src/agentseek/env.py
   - entrypoint.sh
+  - pyproject.toml
 ---
 
 # How to configure MCP servers
 
-Use this when you want the agent to call external tools or services exposed
-over MCP. agentseek consumes MCP configuration through `bub-mcp`, which reads
-the file at `${BUB_MCP_CONFIG_PATH}` (default: `${BUB_HOME}/mcp.json`).
+Use this when AgentSeek should call tools exposed by MCP servers.
 
 ## Prerequisites
 
-- agentseek plugin installed (`bub-mcp` is a core dependency, `pyproject.toml:21`).
-- At least one MCP server you want to register.
+- `bub-mcp` installed in the project environment.
+- At least one MCP server you can run from the same environment.
 
-## Choose a location
-
-| You want to… | Put `mcp.json` here | Variable to set |
-| --- | --- | --- |
-| Keep MCP next to Bub runtime state (default) | `.agentseek/mcp.json` | none (default) |
-| Co-locate with your project's `.agents/` skills folder | `.agents/mcp.json` | `AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json` |
-| Use a custom location | anywhere | `AGENTSEEK_MCP_CONFIG_PATH=<path>` |
-
-In Docker, the entrypoint auto-discovers `${workspace}/.agents/mcp.json` and
-symlinks it into `${AGENTSEEK_HOME}/mcp.json` (`entrypoint.sh:13`, `:37`).
+```bash
+uv add bub-mcp
+```
 
 ## Steps
 
-1. Write the MCP server file. See [How to add an MCP server](add-mcp-server.md) for the entry format.
+1. Create `.agents/mcp.json` in your project.
 
-   ```json title=".agentseek/mcp.json"
+   ```json title=".agents/mcp.json"
    {
      "mcpServers": {
-       "echo": {
-         "command": "uvx",
-         "args": ["mcp-server-echo"]
+       "local-tools": {
+         "command": "python",
+         "args": ["-m", "my_package.mcp_server"],
+         "env": {
+           "LOG_LEVEL": "info"
+         }
+       },
+       "github": {
+         "command": "npx",
+         "args": ["-y", "@modelcontextprotocol/server-github"],
+         "env": {
+           "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_fake_replace_me"
+         }
        }
      }
    }
    ```
 
-2. If you chose a non-default location, set the path:
+2. Point AgentSeek at that file.
 
    ```bash title=".env"
    AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json
    ```
 
-3. Verify the file is picked up by running a chat session.
+3. Restart the runtime.
 
-   ```bash title="not executed in this run"
+   ```bash
    uv run agentseek chat
    ```
 
+In Docker, the default compose setup already points at `/workspace/.agents/mcp.json`.
+
 ### CLI shortcut
 
-The `agentseek mcp` subcommand can manage entries in the resolved
-`mcp.json` for you, so you do not have to edit the file by hand:
+When `bub-mcp` is installed in the current CLI environment, `agentseek mcp`
+can edit the same config file.
 
 ```bash
 uv run agentseek mcp list
-uv run agentseek mcp add <name> <target> --transport <http|sse|stdio>
-uv run agentseek mcp remove <name>
 ```
 
-See `../reference/cli.md#agentseek-mcp` for the full flag set. The file
-path is still controlled by `AGENTSEEK_MCP_CONFIG_PATH` as described
-above; the CLI just writes through it.
+```text title="output"
+No MCP tools registered.
+```
+
+```bash
+uv run agentseek mcp add github https://example.com/mcp \
+  --transport http --header "Authorization: Bearer $TOKEN"
+```
+
+```bash
+uv run agentseek mcp add local-tools --transport stdio \
+  --env LOG_LEVEL=info -- python -m my_package.mcp_server
+```
+
+Create the parent directory before using `mcp add` with a custom path.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| MCP servers do not appear in `tools/list` | `mcp.json` is at a path Bub does not read | Set `AGENTSEEK_MCP_CONFIG_PATH` to the file's path. |
-| Edits to `mcp.json` are not reflected | Process was started before the edit | Restart `agentseek chat` / `agentseek gateway`. |
+| `No such command 'mcp'` | `bub-mcp` is not installed. | Add `bub-mcp` to the project. |
+| Tools are missing | The server command failed. | Run the server command outside AgentSeek. |
+| Auth fails | A token is missing from `env`. | Add the credential under that server entry. |
+| Edits are not reflected | The runtime started before the edit. | Restart `agentseek chat` or `agentseek gateway`. |
 
 ## Rollback
 
-Delete the `mcp.json` file. Unset `AGENTSEEK_MCP_CONFIG_PATH` if you set it.
+Remove the server entry from `mcp.json`. Unset `AGENTSEEK_MCP_CONFIG_PATH` if
+you set it.
 
 ## Related
 
-- How-to: [How to add an MCP server](add-mcp-server.md), [How to configure the Docker workspace](configure-docker-workspace.md)
-- Reference: [Environment variables reference](../reference/environment.md), [Docker reference](../reference/docker.md)
+- Reference: [Environment variables](../reference/environment.md)
+- Docker: [How to run with Docker Compose](run-with-docker-compose.md)

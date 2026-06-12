@@ -3,7 +3,7 @@ title: How to use ContextSeek
 type: how-to
 audience: [A2]
 runs: yes
-verified_on: 2026-05-28
+verified_on: 2026-06-12
 sources:
   - src/agentseek/cli/runtime.py
   - contrib/agentseek-contextseek/README.md
@@ -11,28 +11,28 @@ sources:
 
 # How to use ContextSeek
 
-Use this when you want a semantic context layer that retrieves context
-before each model turn and writes responses back after. ContextSeek is
-provided by the `agentseek-contextseek` contrib package; `agentseek ctx`
-forwards to its underlying `contextseek` CLI.
+Use this when you want AgentSeek to use ContextSeek memory.
 
 ## Prerequisites
 
-- `agentseek-contextseek` plugin installed:
-
-  ```bash title="not executed in this run"
-  agentseek plugin install agentseek-contextseek
-  ```
-
-  This installs the ContextSeek runtime plugin and makes the `agentseek ctx`
-  forwarding commands usable in the same environment.
-
-- ContextSeek's own backend configured. See the
-  [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md).
+- AgentSeek is installed in the current project.
+- You know where ContextSeek should store project data.
 
 ## Steps
 
-1. Confirm the subcommand is wired up:
+1. Add ContextSeek to the project.
+
+   ```bash
+   uv add agentseek-contextseek
+   ```
+
+2. Configure ContextSeek storage.
+
+   ```bash title=".env"
+   AGENTSEEK_CTX_STORAGE_PATH=.contextseek/store
+   ```
+
+3. Check the forwarded CLI.
 
    ```bash
    uv run agentseek ctx --help
@@ -44,44 +44,32 @@ forwards to its underlying `contextseek` CLI.
                       ...
    ```
 
-   The output is the upstream `contextseek` argparse help; agentseek does
-   not rewrap it.
+4. Add a context item.
 
-2. Add a context item:
-
-   ```bash title="not executed in this run"
+   ```bash
    uv run agentseek ctx add --scope my-scope --text "..."
    ```
 
-3. Retrieve ranked hits:
+5. Retrieve ranked hits.
 
-   ```bash title="not executed in this run"
+   ```bash
    uv run agentseek ctx retrieve --scope my-scope --query "..."
    ```
-
-## Subcommand index
-
-The forwarded `contextseek` CLI exposes (from
-`agentseek ctx --help`): `add`, `retrieve`, `expand`, `compact`, `forget`,
-`delete`, `overview`, `tools`, `metrics`, `dream`, `feedback`, `upstream`,
-`evidence-chain`, `chain-confidence`, `skill-tools`, `skill-context`,
-`skill-import`, `items`. Per-subcommand semantics live with the package
-README.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek ctx` says command not found | `agentseek-contextseek` not installed | `agentseek plugin install agentseek-contextseek`. |
-| `contextseek` errors about missing backend | Config not set up | See the [contextseek README](https://github.com/ob-labs/agentseek/blob/main/contrib/agentseek-contextseek/README.md). |
+| `agentseek ctx` asks for `agentseek-contextseek` | The package is not installed in this project. | Run `uv add agentseek-contextseek`. |
+| ContextSeek reports missing backend config | Storage or backend settings are missing. | Add the required `AGENTSEEK_CTX_*` values. |
 
 ## Rollback
 
-ContextSeek storage is owned by the backend (`agentseek-contextseek` README
-documents removal). To uninstall the plugin:
+Remove the package and the storage directory you configured.
 
-```bash title="not executed in this run"
-uv run agentseek plugin uninstall agentseek-contextseek
+```bash
+uv remove agentseek-contextseek
+rm -rf .contextseek/store
 ```
 
 ## Related

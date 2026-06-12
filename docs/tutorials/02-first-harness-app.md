@@ -3,10 +3,10 @@ title: 02 — Build your first harness app
 type: tutorial
 audience: [A2]
 runs: yes
-verified_on: 2026-06-08
+verified_on: 2026-06-12
 sources:
-  - src/agentseek/cli/commands/new.py
-  - src/agentseek/cli/commands/dev.py
+  - src/agentseek/cli/commands/create.py
+  - src/agentseek/cli/commands/run.py
   - templates/index.json
   - templates/bub/default/cookiecutter.json
   - templates/bub/default/{{cookiecutter.project_slug}}/pyproject.toml
@@ -14,22 +14,23 @@ sources:
 
 # Build your first harness app
 
-You will create a project with `agentseek create`, sync that generated project,
-configure a model, and run it locally.
+You will create a generated project, install its dependencies, and start the
+local app loop.
 
-## 1. Pick a template
+## 1. Choose the starter
 
-List bundled templates:
+This tutorial uses `bub/default`. It is the smallest full harness app in the
+bundled templates.
+
+You can see the available starters first:
 
 ```bash
-uv run agentseek create --list-templates
+uvx agentseek create --list-templates
 ```
-
-This tutorial uses `bub/default` because it is the lightest full harness app.
 
 ## 2. Generate the project
 
-Choose a working directory outside the AgentSeek checkout:
+Choose a working directory for the generated project:
 
 ```bash
 mkdir -p ~/projects
@@ -40,24 +41,29 @@ uvx agentseek create bub/default --no-input
 The default project is named `my_bub_agent`.
 
 ```bash
-ls -a my_bub_agent
+find my_bub_agent -maxdepth 1 -mindepth 1 -printf "%f\n" | sort
 ```
 
-Expected shape:
+You should see:
 
 ```text
-Dockerfile   .env.example   frontend   pyproject.toml   README.md   src
+.env.example
+Dockerfile
+README.md
+frontend
+pyproject.toml
+src
 ```
 
-## 3. Install project dependencies
+## 3. Install dependencies
 
 ```bash
 cd my_bub_agent
 uv sync
+npm install --prefix frontend
 ```
 
-The generated project depends on `agentseek` and provides the same CLI command
-groups as the repository checkout.
+The generated project is now your working surface.
 
 ## 4. Configure the model
 
@@ -65,34 +71,34 @@ groups as the repository checkout.
 cp .env.example .env
 ```
 
-Fill in `AGENTSEEK_API_KEY` and, if needed, `AGENTSEEK_API_BASE`. See
-[Environment variables](../reference/environment.md) for the full table.
+Open `.env` and set `AGENTSEEK_API_KEY`. Set `AGENTSEEK_API_BASE` too if your
+provider needs a custom endpoint.
 
 ## 5. Run locally
 
-For a backend-only smoke test:
+For a backend-only check:
 
-```bash title="not executed in this run"
+```bash
 uv run agentseek gateway --enable-channel ag-ui
 ```
 
-For the full frontend + gateway loop:
+For the frontend and gateway together:
 
-```bash title="not executed in this run"
-npm install --prefix frontend
+```bash
 uv run agentseek run --no-browser
 ```
 
-Open `http://127.0.0.1:5173` when the frontend is ready.
+Open `http://127.0.0.1:5173` when the frontend is ready. Stop either command
+with `Ctrl-C`.
 
 ## What you have now
 
 - A standalone project with its own `.venv`, `.env`, and source tree.
-- A verified project command path through `agentseek create` and `agentseek run`.
+- A local app loop through `agentseek run`.
 - A project you can edit without touching the AgentSeek repository.
 
 ## Next
 
-- Add project behavior: [Add a skill and MCP](03-add-a-skill-and-mcp.md).
+- Add local behavior and tools: [Add a skill and MCP](03-add-a-skill-and-mcp.md).
 - Run under Compose: [Run with Docker Compose](../how-to/run-with-docker-compose.md).
-- Inspect all flags: [CLI reference](../reference/cli.md).
+- Look up exact flags: [CLI reference](../reference/cli.md).

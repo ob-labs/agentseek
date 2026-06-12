@@ -3,9 +3,8 @@ title: Documentation
 type: explanation
 audience: [A1, A2, A3, A4, A5]
 runs: no
-verified_on: 2026-05-30
+verified_on: 2026-06-12
 sources:
-  - README.md
   - mkdocs.yml
   - docs/tutorials/index.md
   - docs/how-to/index.md
@@ -15,31 +14,26 @@ sources:
 
 # Documentation
 
-Start from the quadrant that matches the job you are doing right now.
+Choose the page by what you are trying to do now.
 
-<div class="terminal-grid terminal-grid-2">
-  <div class="terminal-card">
-    <h3><a href="tutorials/">Tutorials</a></h3>
-    <p>Guided end-to-end walkthroughs. Use these when you want a clean starting point and a concrete result at the end.</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="how-to/">How-to</a></h3>
-    <p>Task-focused recipes. Use these when you already know the system and need the shortest path to one outcome.</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="explanation/">Explanation</a></h3>
-    <p>Design rationale and mental models. Use these when you want to understand why agentseek is shaped this way.</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="reference/">Reference</a></h3>
-    <p>Canonical facts: environment variables, CLI commands, file layout, packages, templates, and Docker.</p>
-  </div>
-</div>
+## Learn
 
-## Suggested entry points
+Start with [Tutorials](tutorials/index.md) if you want a guided path to a
+working result.
 
-- New to the project: start with [Quick demo (CLI)](tutorials/01-quick-demo-cli.md).
-- Building an app: read [Command overview](explanation/cli-surface.md), then [First harness app](tutorials/02-first-harness-app.md).
-- Coming from LangChain / DeepAgents: read [LangChain relationship](explanation/langchain-relationship.md), then pick a template from [Templates reference](reference/templates.md).
-- Operating a workspace: go to [How-to guides](how-to/index.md), especially Docker Compose and gateway pages.
-- Looking up exact behaviour: open [Reference](reference/index.md).
+## Do a task
+
+Use [How-to guides](how-to/index.md) when you already have a specific task.
+
+## Understand
+
+Read [Concepts](explanation/index.md) when you want the design behind the runtime.
+
+## Look up
+
+Open [Reference](reference/index.md) when you need exact command, environment,
+package, template, or file-layout details.
+
+## Browse integrations
+
+Use [Hub](hub.md) to find bundled and contrib integrations.

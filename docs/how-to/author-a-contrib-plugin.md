@@ -11,21 +11,19 @@ sources:
 
 # How to author a contrib plugin
 
-Use this when you need a Bub-compatible plugin that lives in this monorepo
-as `contrib/agentseek-<feature>/`. The plugin contract, README shape, and
-distribution conventions are owned by the [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md) — this page
-points you at it and lists the agentseek-specific bits you must not skip.
+Use this when you want to add a Bub-compatible plugin under
+`contrib/agentseek-<feature>/`.
 
 ## Prerequisites
 
-- Read the [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md) first. That is the source of truth for the
-  README standard.
-- Decide which Bub entry point group your plugin belongs to (`[project.entry-points.bub]`).
+- Read the [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md).
+- Decide which Bub hook or entry point your plugin registers.
 
 ## Steps
 
-1. Create a workspace member at `contrib/agentseek-<feature>/` and add it
-   to the workspace list in `pyproject.toml:101`:
+1. Create `contrib/agentseek-<feature>/`.
+
+2. Add it to the root workspace.
 
    ```toml title="pyproject.toml"
    [tool.uv.workspace]
@@ -36,8 +34,7 @@ points you at it and lists the agentseek-specific bits you must not skip.
    ]
    ```
 
-2. Follow the contrib **naming conventions**
-   ([contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md), "agentseek follows Bub's extension conventions"):
+3. Use the standard names.
 
    | Item | Convention |
    | --- | --- |
@@ -45,10 +42,8 @@ points you at it and lists the agentseek-specific bits you must not skip.
    | Python package | `agentseek_<feature>` |
    | Bub entry point group | `[project.entry-points.bub]` |
    | Env vars | prefer `AGENTSEEK_*`; accept `BUB_*` for Bub runtime settings |
-   | When both prefixes exist | `BUB_*` wins (matches `apply_agentseek_env_aliases`, `src/agentseek/env.py:63`) |
 
-3. Write the README using the section order from the
-   [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md) ("README Standard"):
+4. Write the package README with these sections.
 
    1. `At A Glance`
    2. `When To Use It`
@@ -59,38 +54,29 @@ points you at it and lists the agentseek-specific bits you must not skip.
    7. `Verify`
    8. `Limitations`
 
-4. (Optional) Expose the package as an extra in the root
-   `pyproject.toml:27`:
+5. Expose the package as an optional dependency when users should install it
+   from the root project.
 
    ```toml title="pyproject.toml"
    [project.optional-dependencies]
    <feature> = ["agentseek-<feature>"]
    ```
 
-   And pin the workspace source in `[tool.uv.sources]`
-   (`pyproject.toml:87`):
+6. Pin the workspace source.
 
    ```toml
    agentseek-<feature> = { workspace = true }
    ```
 
-5. Use the bundled `plugin-creator` skill to scaffold the package. The
-   agentseek-adapted version mirrors the upstream Bub contrib workflow but
-   specializes for `contrib/agentseek-*`, `AGENTSEEK_*` aliases, and bundled
-   `src/skills` (see [The extension model](../explanation/extension-model.md)).
-
 ### CLI shortcut
 
-There is no `agentseek plugin new` command. Use the `plugin-creator` skill
-inside a chat session, or copy an existing `contrib/agentseek-*/` and
-rename.
+There is no `agentseek plugin new` command. Use the `plugin-creator` skill, or
+copy an existing `contrib/agentseek-*/` package and rename it.
 
 ## Boundaries
 
-- Do **not** duplicate the per-package README into `docs/`. Cross-link
-  to it instead.
-- The main `docs/` tree documents only `src/agentseek` and `src/skills`
-  ([contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md), "Documentation Boundary").
+- Keep package-specific docs in the package README.
+- Link from `docs/` instead of copying contrib README content.
 
 ## Related
 

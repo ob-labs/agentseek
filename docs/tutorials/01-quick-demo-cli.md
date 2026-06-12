@@ -3,7 +3,7 @@ title: 01 — Quick demo via the CLI
 type: tutorial
 audience: [A1]
 runs: yes
-verified_on: 2026-06-08
+verified_on: 2026-06-12
 sources:
   - src/agentseek/cli/runtime.py
   - src/agentseek/env.py
@@ -13,64 +13,60 @@ sources:
 
 # Quick demo via the CLI
 
-You will clone the repository, install dependencies, configure a model, and run
-one chat session through `agentseek chat`.
+You will run AgentSeek as a CLI tool, configure a model, and start one local
+chat session.
 
-## 1. Clone and install
+## 1. Install the CLI
 
 ```bash
-git clone https://github.com/ob-labs/agentseek.git
-cd agentseek
-uv sync
+uv tool install agentseek
 ```
 
-Verify the CLI is available:
+Confirm the CLI loads:
 
 ```bash
-uv run agentseek --help
+agentseek --help
 ```
 
-You should see commands for project management (`create`, `run`, `build`,
-`deploy`), runtime (`chat`, `turn`, `gateway`), and extensions (`plugin`,
-`ctx`, `skills`, `api`).
+If the help page prints, the tool is ready.
 
-## 2. Point AgentSeek at a model
+## 2. Configure a model
+
+Create a small working directory and add model variables:
 
 ```bash
-export AGENTSEEK_MODEL=openrouter:free
-export AGENTSEEK_API_KEY=sk-or-v1-replace-me
-export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+mkdir agentseek-demo
+cd agentseek-demo
+cat > .env <<'EOF'
+AGENTSEEK_MODEL=openrouter:free
+AGENTSEEK_API_KEY=sk-or-v1-replace-me
+AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+EOF
 ```
 
-Replace the API key with a real key before expecting model output. You can also
-copy `.env.example` to `.env` and edit the file instead:
+Replace the API key with a real key before you expect model output.
+
+## 3. Run one chat
 
 ```bash
-cp .env.example .env
+agentseek chat
 ```
 
-## 3. Start chat
+Type a short prompt at the `agentseek >` prompt. Exit with `Ctrl-D`.
+
+For a single prompt without entering the chat loop:
 
 ```bash
-uv run agentseek chat
-```
-
-Type a short prompt at the `agentseek >` prompt. Exit with `Ctrl+D` or the
-configured quit command.
-
-For a single prompt without entering the REPL:
-
-```bash
-uv run agentseek turn "summarize this workspace in one sentence"
+agentseek turn "summarize this workspace in one sentence"
 ```
 
 ## What you have now
 
-- A synced repository environment.
-- Model configuration through `AGENTSEEK_*` variables or `.env`.
-- A working `agentseek chat` or `agentseek turn` setup.
+- AgentSeek installed as a CLI tool.
+- Model settings in `.env`.
+- A local runtime path through `agentseek chat` or `agentseek turn`.
 
 ## Next
 
-- Build an application project: [First harness app](02-first-harness-app.md).
-- Explore available commands: [CLI reference](../reference/cli.md).
+- Create an editable project: [First harness app](02-first-harness-app.md).
+- Look up exact flags: [CLI reference](../reference/cli.md).

@@ -3,60 +3,53 @@ title: How to run agentseek locally
 type: how-to
 audience: [A2, A4]
 runs: yes
-verified_on: 2026-06-08
+verified_on: 2026-06-12
 sources:
   - src/agentseek/cli/runtime.py
-  - src/agentseek/cli/commands/dev.py
+  - src/agentseek/cli/commands/run.py
 ---
 
 # How to run agentseek locally
 
-Use this when you want a quick local loop from this repository or from a
-generated project.
+Use this when you want to run AgentSeek on your machine.
 
 ## Prerequisites
 
 - Model credentials configured. See [Configure model](configure-model.md).
-- A synced environment: `uv sync` in this repository or inside a generated project.
+- AgentSeek is available as `agentseek`, or installed in the generated project.
 
-## Chat with the harness
+## Start a chat
 
-```bash title="not executed in this run"
-uv run agentseek chat
+```bash
+agentseek chat
 ```
 
-Optional flags:
-
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--chat-id` | `local` | Chat id. |
-| `--session-id` | `None` | Optional session id. |
+Use `--chat-id` or `--session-id` only when you need a stable conversation id.
 
 ## Run a generated project
 
-Inside a project created by `agentseek create`:
+Run this from the generated project root:
 
-```bash title="not executed in this run"
+```bash
 uv run agentseek run
 ```
 
-Common flags:
+The command starts the project loop and waits for the frontend. Stop it with
+`Ctrl-C`.
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--port` | `$PORT` or `3000` | Frontend port. |
-| `--host` | `127.0.0.1` | Readiness host. |
-| `--no-browser` | off | Do not open the browser. |
-| `--wait-timeout` | `30` | Seconds to wait for frontend readiness. |
-| `--mode` | `auto` | One of `auto`, `compose`, `python`. |
+If the frontend uses a non-default port, pass it explicitly:
+
+```bash
+uv run agentseek run --port 5173
+```
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek chat` cannot call the model | Provider config missing or invalid | Re-check `.env` or run `agentseek onboard`. |
-| `agentseek run` times out | Frontend listens on another port | Pass `--port <n>`. |
-| `agentseek run` exits outside a project | No generated project layout found | Run `agentseek create` first or use `agentseek chat`. |
+| Chat cannot call the model | Provider config is missing or invalid. | Re-check `.env`. |
+| `agentseek run` times out | The frontend uses another port. | Pass `--port <n>`. |
+| `agentseek run` exits immediately | The directory is not a generated project. | Run it from the generated project root. |
 
 ## Related
 

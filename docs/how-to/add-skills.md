@@ -3,7 +3,7 @@ title: How to add skills
 type: how-to
 audience: [A2]
 runs: yes
-verified_on: 2026-05-28
+verified_on: 2026-06-12
 sources:
   - pyproject.toml
   - entrypoint.sh
@@ -11,30 +11,18 @@ sources:
 
 # How to add skills
 
-Use this when the extension is **instruction or workflow knowledge** — a
-`SKILL.md` file plus optional scripts — rather than a new runtime hook. Use
-[How to install a plugin](install-a-plugin.md) instead when you need a new channel, store, or tool
-registration.
+Use this when you want to add instruction or workflow knowledge with a
+`SKILL.md` file.
 
-## Pick a scope
+## Add a project skill
 
-| Scope | Path | When |
-| --- | --- | --- |
-| Project-local | `.agents/skills/<name>/SKILL.md` | Repository-specific behaviour. Do not ship with the package. |
-| Bundled (release) | `src/skills/<name>/SKILL.md` | Behaviour that should exist wherever `agentseek` is installed. Goes into the wheel via `pyproject.toml:74`. |
-| External (build-imported) | `[tool.pdm.build].skills` in `pyproject.toml:78` | Pull selected skills from another repo at build time. |
-
-Bub discovers project-local skills from `.agents/skills/`. The Docker
-entrypoint preserves this convention by default and symlinks alternate
-locations into the same path (`entrypoint.sh:30`–`:35`).
-
-## Steps — install a project-local skill
-
-1. Add the skill directory and minimal `SKILL.md`:
+1. Create the skill directory.
 
    ```bash
    mkdir -p .agents/skills/my-skill
    ```
+
+2. Add the skill instructions.
 
    ```markdown title=".agents/skills/my-skill/SKILL.md"
    # my-skill
@@ -44,68 +32,44 @@ locations into the same path (`entrypoint.sh:30`–`:35`).
    1. ...
    ```
 
-2. The skill is picked up on the next `agentseek chat` / `agentseek
-   gateway`. No restart of any sandbox is required.
+3. Start a new runtime process.
 
-### CLI shortcut — install from a registry
+   ```bash
+   uv run agentseek chat
+   ```
 
-`agentseek skills` wraps the upstream `vercel-labs/skills` CLI. Subcommands:
-`add`, `list`, `find`, `update`, `remove`, `init`.
+Use `.agents/skills/<name>/` for project-local skills. Use
+`src/skills/<name>/` only for skills that should ship with the package.
 
-When no source is specified, `add` defaults to `ob-labs/agentseek`:
+### CLI shortcut
 
-```bash title="not executed in this run"
-# Install all AgentSeek skills globally (source is implied)
+Install from a registry when the skill already lives elsewhere:
+
+```bash
 agentseek skills add --all --global
-
-# Install a specific skill
 agentseek skills add --skill langsmith-trace --global --yes
-
-# Install from another source (explicit)
 agentseek skills add langchain-ai/langsmith-skills --skill '*' --yes
 ```
 
-The CLI looks for `npx-skills` first, then falls back to `npx` (Node.js).
+## Bundle a release skill
 
-## Steps — bundle a release skill
+Place the skill under `src/skills/<name>/SKILL.md`, then build the package.
 
-1. Place the skill under `src/skills/<name>/SKILL.md`. `pyproject.toml:74`
-   already includes `src/skills` in the wheel.
-
-2. Build the wheel and confirm the skill shows up:
-
-   ```bash title="not executed in this run"
-   uv build
-   ```
-
-3. The skill is then available wherever `agentseek` is installed.
-
-## Steps — import an external skill at build time
-
-Edit `[tool.pdm.build].skills` in `pyproject.toml:78` to point at the source
-repository, subpath, and the skill subset you want:
-
-```toml title="pyproject.toml"
-[tool.pdm.build]
-skills = [
-  { git = "https://github.com/PsiACE/skills.git", subpath = "skills", include = ["friendly-python", "piglet"] },
-]
+```bash
+uv build
 ```
-
-The `pdm-build-skills` backend resolves these at build time.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| Skill never invoked | `SKILL.md` trigger description does not match the task | Tighten the "When to use" line. |
-| Skill in `src/skills/` not visible after install | You installed from source without rebuilding | `uv sync` or `uv build` again. |
-| Container ignores host skills | `AGENTSEEK_SKILLS_HOME` is set to a non-default path and Bub is scanning the link | Confirm symlink exists at `${workspace}/.agents/skills` (`entrypoint.sh:33`). |
+| Skill never runs | The trigger is too vague. | Tighten the "When to use" line. |
+| Release skill is missing | The package was not rebuilt. | Run `uv build` again. |
+| Container misses host skills | The container points at another skills path. | Set `AGENTSEEK_SKILLS_HOME=/workspace/.agents/skills`. |
 
 ## Rollback
 
-Delete the skill directory under `.agents/skills/` or `src/skills/`. Rebuild
-if you bundled it.
+Delete the skill directory. Rebuild the package if you removed a bundled skill.
 
 ## Related
 

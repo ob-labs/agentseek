@@ -3,7 +3,7 @@ title: 如何配置模型提供方
 type: how-to
 audience: [A2, A4]
 runs: yes
-verified_on: 2026-05-28
+verified_on: 2026-06-12
 sources:
   - src/agentseek/env.py
   - README.md
@@ -12,70 +12,59 @@ sources:
 
 # 如何配置模型提供方
 
-当你需要让 agentseek 指向特定 LLM (OpenRouter、OpenAI、
-OpenAI 兼容 gateway、本地 server 等) 时使用本指南。agentseek 不
-内置默认凭据；任何 chat turn 运行前都必须设置模型与密钥。
+当你要让 AgentSeek 调用自己的模型提供方时使用本页。
 
 ## 前置条件
 
-- 一个可用的 AgentSeek 环境：本仓库 `uv sync` 之后的环境、生成项目里各自
-  `uv sync` 之后的环境，或已安装的 `agentseek` tool。
+- 一个可用的 AgentSeek 环境。
 - 所选提供方的有效 API key。
 
 ## 步骤
 
-1. 选一个 Bub any-llm 层接受的模型标识。常见形式：
-   `openrouter:<model>`、`openai:gpt-4o-mini`、`openai:<model>@<base_url>`。
-
-2. 把配置写入项目根目录的 `.env`。agentseek 从当前工作目录
-   加载 `.env` (`src/agentseek/env.py:38`)。
+1. 在运行 AgentSeek 的目录中创建或编辑 `.env`。
 
    ```bash title=".env"
    AGENTSEEK_MODEL=openrouter:moonshotai/kimi-k2:free
    AGENTSEEK_API_KEY=sk-or-v1-replace-me   # fake placeholder
-   # Optional — only when your provider is not the model's default endpoint
-   # AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
    ```
 
-   `AGENTSEEK_*` 在启动时被别名映射为 `BUB_*` (`src/agentseek/env.py:56`)。
-   如果进程环境里已经设置了 `BUB_*`，它会优先生效 —— 便于一次性
-   覆盖。
+2. 只有使用 OpenAI 兼容端点时，才需要添加 base URL。
 
-3. 通过查看解析后的 help 验证别名映射生效 (这会读取
-   `.env`)：
+   ```bash title=".env"
+   AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+   ```
+
+3. 从同一目录启动 chat。
 
    ```bash
-   uv run agentseek chat --help
+   agentseek chat
    ```
 
-   ```text title="output"
-   Usage: agentseek chat [OPTIONS]
-   ```
-
-   没有 traceback 表示 `.env` 解析正常。
+AgentSeek 也接受对应的 `BUB_*` 变量。两种前缀同时存在时，`BUB_*` 优先生效。
 
 ### CLI 快捷方式
 
-不修改 `.env` 而按次覆盖：
+按次运行时，可以直接传入进程环境变量：
 
-```bash title="not executed in this run"
+```bash
 AGENTSEEK_MODEL=openai:gpt-4o-mini \
 AGENTSEEK_API_KEY=sk-replace-me \
-uv run agentseek chat
+agentseek chat
 ```
+
+示例中的 key 是占位符。
 
 ## 故障排查
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
-| provider 返回 `401 Unauthorized` | `AGENTSEEK_API_KEY` 缺失或失效 | 重新签发 key 并更新 `.env`；重启进程。 |
-| 请求打到错误的端点 | 用 OpenAI 兼容 gateway 但未设置 `AGENTSEEK_API_BASE` | 把 `AGENTSEEK_API_BASE` 设为 gateway 的 `…/v1` URL。 |
-| 设置被忽略 | shell 中已存在同名 `BUB_*` 变量 | `BUB_*` 通过 `setdefault` 优先 —— 取消或更新它。 |
+| `401 Unauthorized` | key 缺失或过期。 | 更新 `AGENTSEEK_API_KEY`。 |
+| 请求打到错误端点 | provider 需要自定义 base URL。 | 设置 `AGENTSEEK_API_BASE`。 |
+| `.env` 值被忽略 | shell 中存在同名 `BUB_*` 变量。 | 取消或更新该 shell 变量。 |
 
 ## 回退
 
-从 `.env` 删除相关行，或在 shell 中 `unset AGENTSEEK_MODEL AGENTSEEK_API_KEY`。
-没有需要清理的磁盘状态。
+从 `.env` 删除模型配置，或取消同名 shell 变量。
 
 ## 相关
 

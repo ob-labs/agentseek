@@ -3,7 +3,7 @@ title: How to run the gateway
 type: how-to
 audience: [A4]
 runs: yes
-verified_on: 2026-06-08
+verified_on: 2026-06-12
 sources:
   - src/agentseek/cli/runtime.py
   - entrypoint.sh
@@ -11,50 +11,54 @@ sources:
 
 # How to run the gateway
 
-Use this when you need a long-running process that listens on configured
-channels such as Feishu, Telegram, or AG-UI.
+Use this when AgentSeek should listen for channel messages.
 
 ## Prerequisites
 
-- Channel plugins installed in the runtime environment.
-- Channel credentials present in `.env`.
+- The channel plugin is installed in the runtime environment.
+- The channel credentials are present in `.env`.
 
 ## Run locally
 
 Show the available options:
 
 ```bash
-uv run agentseek gateway --help
+agentseek gateway --help
 ```
 
 Start one channel:
 
-```bash title="not executed in this run"
-uv run agentseek gateway --enable-channel telegram
+```bash
+agentseek gateway --enable-channel telegram
 ```
 
-Omit `--enable-channel` to start every registered channel.
+Stop the listener with `Ctrl-C`. Omit `--enable-channel` to start every
+registered channel.
 
 ## Run in Docker
 
-```bash title="not executed in this run"
+```bash
 docker compose up
 ```
 
-The repository entrypoint prepares the runtime home and starts
-`agentseek gateway` by default. If the mounted workspace contains `startup.sh`,
-that script replaces the default gateway command.
+Stop the stack with:
+
+```bash
+docker compose down
+```
+
+If the mounted workspace contains `startup.sh`, the container runs that script
+instead of the default gateway command.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek gateway` is unavailable | Environment is not synced | Run `uv sync`, then retry with `uv run agentseek gateway`. |
-| Channel receives no messages | Plugin or credentials missing | Install the plugin and check `.env`. |
-| Docker starts the wrong process | `startup.sh` is present | Remove or edit `startup.sh`. |
+| `agentseek gateway` is unavailable | AgentSeek is not installed in this environment. | Install it with `uv tool install agentseek` or add it to the project. |
+| The channel receives no messages | Plugin or credentials are missing. | Install the plugin and check `.env`. |
+| Docker starts another process | `startup.sh` is present. | Remove or edit `startup.sh`. |
 
 ## Related
 
 - [How to run locally](run-locally.md)
 - [How to run with Docker Compose](run-with-docker-compose.md)
-- [Docker reference](../reference/docker.md)

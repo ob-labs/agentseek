@@ -1,27 +1,21 @@
 ---
-title: 参考索引
+title: 参考
 type: reference
 audience: [A2, A3, A4]
 runs: no
-verified_on: 2026-05-28
+verified_on: 2026-06-12
 sources:
-  - src/agentseek/cli/runtime.py
+  - docs/reference/cli.zh.md
+  - docs/reference/templates.zh.md
+  - docs/reference/environment.zh.md
 ---
 
 # 参考
 
-运行时行为的查阅表。参考页面镜像每页 `sources:` 块所列源文件中的事实。当出现漂移时，以源文件为准。
-
-| 页面 | 镜像内容 |
+| 页面 | 查找内容 |
 | --- | --- |
-| [环境变量参考](environment.zh.md) | `src/agentseek/env.py` — `AGENTSEEK_*` / `BUB_*` 别名。 |
-| [CLI 参考](cli.zh.md) | `src/agentseek/cli/runtime.py` 以及 `agentseek <subcommand> --help`。 |
-| [文件布局参考](file-layout.zh.md) | `.agentseek/`、`.agents/`、plugin sandbox。 |
-| [包参考](packages.zh.md) | `pyproject.toml` — extras、workspace 成员、contrib 入口点。 |
-| [模板参考](templates.zh.md) | `templates/index.json` 以及各个 `templates/<framework>/<name>/`。 |
-| [Docker 参考](docker.zh.md) | `entrypoint.sh`、`docker-compose.yml`、`Dockerfile`。 |
-
-## 另请参阅
-
-- 操作指南：[操作指南](../how-to/index.zh.md)
-- 概念解释：[概念解释](../explanation/index.zh.md)
+| [CLI](cli.zh.md) | 命令、参数和选项。 |
+| [模板](templates.zh.md) | 内置项目起点和输入变量。 |
+| [环境变量](environment.zh.md) | 运行时设置、别名和优先级。 |
+| [包](packages.zh.md) | 发布包、依赖、contrib 包和 workspace 成员。 |
+| [文件布局](file-layout.zh.md) | Workspace 路径和覆盖变量。 |

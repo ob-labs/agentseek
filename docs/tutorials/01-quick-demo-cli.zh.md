@@ -3,70 +3,69 @@ title: 01 — 通过 CLI 快速演示
 type: tutorial
 audience: [A1]
 runs: yes
-verified_on: 2026-06-08
+verified_on: 2026-06-12
 sources:
   - src/agentseek/cli/runtime.py
   - src/agentseek/env.py
   - pyproject.toml
-  - README.md
+  - README.zh.md
 ---
 
 # 通过 CLI 快速演示
 
-你会 clone 仓库、安装依赖、配置模型，并通过 `agentseek chat` 跑通一次 chat。
+你会把 AgentSeek 作为 CLI 工具运行，配置模型，并启动一次本地 chat。
 
-## 1. Clone 并安装
-
-```bash
-git clone https://github.com/ob-labs/agentseek.git
-cd agentseek
-uv sync
-```
-
-确认 CLI 可用：
+## 1. 安装 CLI
 
 ```bash
-uv run agentseek --help
+uv tool install agentseek
 ```
 
-你应该看到项目管理命令（`create`、`run`、`build`、`deploy`）、运行时命令（`chat`、
-`turn`、`gateway`）和扩展命令（`plugin`、`ctx`、`skills`、`api`）。
+确认 CLI 可以加载：
+
+```bash
+agentseek --help
+```
+
+如果能看到 help 页面，工具就准备好了。
 
 ## 2. 配置模型
 
+创建一个小工作目录，并写入模型变量：
+
 ```bash
-export AGENTSEEK_MODEL=openrouter:free
-export AGENTSEEK_API_KEY=sk-or-v1-replace-me
-export AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+mkdir agentseek-demo
+cd agentseek-demo
+cat > .env <<'EOF'
+AGENTSEEK_MODEL=openrouter:free
+AGENTSEEK_API_KEY=sk-or-v1-replace-me
+AGENTSEEK_API_BASE=https://openrouter.ai/api/v1
+EOF
 ```
 
-把 API key 替换成真实值。也可以复制 `.env.example` 后编辑文件：
+如果要得到模型输出，请把 API key 换成真实值。
+
+## 3. 跑一次 chat
 
 ```bash
-cp .env.example .env
+agentseek chat
 ```
 
-## 3. 启动 chat
+在 `agentseek >` 提示符后输入短 prompt。用 `Ctrl-D` 退出。
+
+如果只想运行单条 prompt：
 
 ```bash
-uv run agentseek chat
-```
-
-在 `agentseek >` 提示符后输入短 prompt。用 `Ctrl+D` 或配置的退出命令结束。
-
-如果只想跑单条 prompt：
-
-```bash
-uv run agentseek turn "summarize this workspace in one sentence"
+agentseek turn "summarize this workspace in one sentence"
 ```
 
 ## 你现在拥有
 
-- 已同步的仓库环境。
-- 通过 `AGENTSEEK_*` 或 `.env` 配置好的模型。
-- 可用的 `agentseek chat` 或 `agentseek turn`。
+- 作为 CLI tool 安装的 AgentSeek。
+- `.env` 中的模型设置。
+- 可以通过 `agentseek chat` 或 `agentseek turn` 走通的本地 runtime 路径。
 
 ## 下一步
 
-- 构建应用项目：[构建你的第一个 harness 应用](02-first-harness-app.zh.md)。
-- 查看可用命令：[CLI 参考](../reference/cli.zh.md)。
+- 创建可编辑项目：[第一个 harness 应用](02-first-harness-app.zh.md)。
+- 查准确参数：[CLI 参考](../reference/cli.zh.md)。

@@ -3,87 +3,104 @@ title: 如何配置 MCP 服务器
 type: how-to
 audience: [A2, A4]
 runs: yes
-verified_on: 2026-05-28
+verified_on: 2026-06-12
 sources:
   - src/agentseek/env.py
   - entrypoint.sh
+  - pyproject.toml
 ---
 
 # 如何配置 MCP 服务器
 
-当你希望 agent 通过 MCP 调用外部工具或服务时使用本指南。
-agentseek 通过 `bub-mcp` 消费 MCP 配置，后者读取
-`${BUB_MCP_CONFIG_PATH}` (默认: `${BUB_HOME}/mcp.json`) 处的文件。
+当你要让 AgentSeek 调用 MCP server 暴露的工具时使用本页。
 
 ## 前置条件
 
-- 已安装 agentseek (`bub-mcp` 是核心依赖，`pyproject.toml:21`)。
-- 至少有一个想注册的 MCP 服务器。
+- 项目环境中已安装 `bub-mcp`。
+- 至少有一个能在同一环境中运行的 MCP server。
 
-## 选择位置
-
-| 你想要… | 把 `mcp.json` 放在 | 需要设置的变量 |
-| --- | --- | --- |
-| 将 MCP 放在 Bub 运行时状态旁 (默认) | `.agentseek/mcp.json` | 无 (默认) |
-| 与项目的 `.agents/` skills 目录共置 | `.agents/mcp.json` | `AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json` |
-| 使用自定义位置 | 任意 | `AGENTSEEK_MCP_CONFIG_PATH=<path>` |
-
-在 Docker 中，entrypoint 会自动发现 `${workspace}/.agents/mcp.json` 并
-把它 symlink 到 `${AGENTSEEK_HOME}/mcp.json` (`entrypoint.sh:13`, `:37`)。
+```bash
+uv add bub-mcp
+```
 
 ## 步骤
 
-1. 编写 MCP server 文件。条目格式见 [如何添加 MCP 服务器](add-mcp-server.zh.md)。
+1. 在项目中创建 `.agents/mcp.json`。
 
-   ```json title=".agentseek/mcp.json"
+   ```json title=".agents/mcp.json"
    {
      "mcpServers": {
-       "echo": {
-         "command": "uvx",
-         "args": ["mcp-server-echo"]
+       "local-tools": {
+         "command": "python",
+         "args": ["-m", "my_package.mcp_server"],
+         "env": {
+           "LOG_LEVEL": "info"
+         }
+       },
+       "github": {
+         "command": "npx",
+         "args": ["-y", "@modelcontextprotocol/server-github"],
+         "env": {
+           "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_fake_replace_me"
+         }
        }
      }
    }
    ```
 
-2. 如果选择了非默认位置，设置路径：
+2. 让 AgentSeek 读取该文件。
 
    ```bash title=".env"
    AGENTSEEK_MCP_CONFIG_PATH=.agents/mcp.json
    ```
 
-3. 通过运行一次 chat session 验证文件被读取。
+3. 重启 runtime。
 
-   ```bash title="not executed in this run"
+   ```bash
    uv run agentseek chat
    ```
 
+在 Docker Compose 默认配置中，该路径已经是 `/workspace/.agents/mcp.json`。
+
 ### CLI 快捷方式
 
-`agentseek mcp` 子命令可以替你管理已解析到的 `mcp.json` 中的条目，
-不必再手工编辑文件：
+当当前 CLI 环境已安装 `bub-mcp` 时，`agentseek mcp` 可以编辑同一个配置文件。
 
 ```bash
 uv run agentseek mcp list
-uv run agentseek mcp add <name> <target> --transport <http|sse|stdio>
-uv run agentseek mcp remove <name>
 ```
 
-完整的参数列表见 [CLI 参考](../reference/cli.zh.md)。文件路径仍由上文所述的
-`AGENTSEEK_MCP_CONFIG_PATH` 控制，CLI 只是写穿该路径。
+```text title="output"
+No MCP tools registered.
+```
+
+```bash
+uv run agentseek mcp add github https://example.com/mcp \
+  --transport http --header "Authorization: Bearer $TOKEN"
+```
+
+```bash
+uv run agentseek mcp add local-tools --transport stdio \
+  --env LOG_LEVEL=info -- python -m my_package.mcp_server
+```
+
+如果用自定义路径，先创建父目录再运行 `mcp add`。
 
 ## 故障排查
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
-| MCP server 没出现在 `tools/list` 中 | `mcp.json` 在 Bub 不读取的路径上 | 把 `AGENTSEEK_MCP_CONFIG_PATH` 设为文件路径。 |
-| 对 `mcp.json` 的修改没有生效 | 进程在编辑之前就启动了 | 重启 `agentseek chat` / `agentseek gateway`。 |
+| `No such command 'mcp'` | 未安装 `bub-mcp`。 | 将 `bub-mcp` 加入项目依赖。 |
+| 工具缺失 | server 命令启动失败。 | 在 AgentSeek 之外运行该 server 命令。 |
+| 鉴权失败 | `env` 中缺少 token。 | 在对应 server 条目下添加凭据。 |
+| 修改没有生效 | runtime 在编辑前已经启动。 | 重启 `agentseek chat` 或 `agentseek gateway`。 |
 
 ## 回退
 
-删除 `mcp.json` 文件。如果设置过 `AGENTSEEK_MCP_CONFIG_PATH`，取消设置。
+从 `mcp.json` 中移除 server 条目。如果设置过 `AGENTSEEK_MCP_CONFIG_PATH`，
+取消设置。
 
 ## 相关
 
-- 操作指南: [如何添加 MCP 服务器](add-mcp-server.zh.md), [如何配置 Docker workspace](configure-docker-workspace.zh.md)
-- 参考: [环境变量参考](../reference/environment.zh.md), [Docker 参考](../reference/docker.zh.md)
+- 参考：[环境变量](../reference/environment.zh.md)
+- Docker：[如何使用 Docker Compose 运行](run-with-docker-compose.zh.md)

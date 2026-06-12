@@ -1,29 +1,21 @@
 ---
-title: Reference index
+title: Reference
 type: reference
 audience: [A2, A3, A4]
 runs: no
-verified_on: 2026-05-28
+verified_on: 2026-06-12
 sources:
-  - src/agentseek/cli/runtime.py
+  - docs/reference/cli.md
+  - docs/reference/templates.md
+  - docs/reference/environment.md
 ---
 
 # Reference
 
-Lookup tables for runtime behaviour. Reference pages mirror facts that live in
-the source files listed in each page's `sources:` block. When you see drift,
-the source file wins.
-
-| Page | Mirrors |
+| Page | Lookup |
 | --- | --- |
-| [Environment variables](environment.md) | `src/agentseek/env.py` — `AGENTSEEK_*` / `BUB_*` aliases. |
-| [CLI](cli.md) | `src/agentseek/cli/runtime.py` plus `agentseek <subcommand> --help`. |
-| [File layout](file-layout.md) | `.agentseek/`, `.agents/`, plugin sandbox. |
-| [Packages](packages.md) | `pyproject.toml` — extras, workspace members, contrib entry points. |
-| [Templates](templates.md) | `templates/index.json` and each `templates/<framework>/<name>/`. |
-| [Docker](docker.md) | `entrypoint.sh`, `docker-compose.yml`, `Dockerfile`. |
-
-## See also
-
-- How-to: [How-to guides](../how-to/index.md)
-- Concepts: [Explanation](../explanation/index.md)
+| [CLI](cli.md) | Commands, arguments, and flags. |
+| [Templates](templates.md) | Bundled project starters and inputs. |
+| [Environment variables](environment.md) | Runtime settings, aliases, and precedence. |
+| [Packages](packages.md) | Distribution, dependencies, contrib packages, and workspace members. |
+| [File layout](file-layout.md) | Workspace paths and overrides. |

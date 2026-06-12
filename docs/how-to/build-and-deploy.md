@@ -3,7 +3,7 @@ title: How to build and deploy
 type: how-to
 audience: [A4]
 runs: yes
-verified_on: 2026-06-08
+verified_on: 2026-06-12
 sources:
   - src/agentseek/cli/commands/build.py
   - src/agentseek/cli/commands/deploy.py
@@ -12,70 +12,65 @@ sources:
 
 # How to build and deploy
 
-Use this when you have a generated project and want a container image plus
-Compose / Kubernetes manifests.
+Use this when you have a generated project and need deployable artifacts.
 
 ## Prerequisites
 
-- `agentseek` installed in the project environment.
-- `docker` and optionally `docker buildx`.
-- For `deploy`, `--dry-run` is required in the current implementation.
+- Run commands from a generated project root.
+- The project has a `Dockerfile`.
+- Docker is installed.
 
-## Build
+## Build the image
 
-```bash title="not executed in this run"
+```bash
 uv run agentseek build --tag my-agent:0.1.0
 ```
 
-Dry-run the resolved Docker command:
+Preview the Docker command first when you want to check paths or tags:
 
-```bash title="not executed in this run"
+```bash
 uv run agentseek build --dry-run --tag my-agent:0.1.0
 ```
 
-Common flags:
+Push after a successful build when your registry login is ready:
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--tag`, `-t` | `<cwd-slug>:latest` | Image tag. |
-| `--file`, `-f` | `Dockerfile` | Dockerfile path. |
-| `--context` | `.` | Build context directory. |
-| `--platform` | - | Comma-separated targets. |
-| `--push` | off | Push after build. |
-| `--no-cache` | off | Skip cache. |
-| `--build-arg KEY=VALUE` | - | Repeatable build-time variable. |
-| `--dry-run` | off | Print without executing. |
+```bash
+uv run agentseek build --tag registry.example.com/my-agent:0.1.0 --push
+```
 
-## Deploy manifests
+## Generate manifests
 
-```bash title="not executed in this run"
+```bash
 uv run agentseek deploy --dry-run --image my-agent:0.1.0
 ```
 
-Common flags:
+```text title="output"
+wrote deploy/docker-compose.yaml
+wrote deploy/k8s/deployment.yaml
+wrote deploy/k8s/service.yaml
+agentseek deploy --dry-run --mode both → 3 file(s) under deploy (image=my-agent:0.1.0, slug=my-bub-agent).
+```
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--dry-run` | required | Generate manifests without applying them. |
-| `--mode` | `both` | `docker-compose`, `k8s`, or `both`. |
-| `--output` | `deploy` | Output directory. |
-| `--image` | `<project-slug>:latest` | Container image reference. |
-| `--slug` | inferred | Service / deployment name stem. |
-| `--port` | `8000` | Service port. |
-| `--replicas` | `1` | Kubernetes replicas. |
-| `--namespace` | `default` | Kubernetes namespace. |
+Choose one target when you do not need both Compose and Kubernetes:
+
+```bash
+uv run agentseek deploy --dry-run --mode k8s --image my-agent:0.1.0
+```
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `agentseek build` not found | Project environment is not synced | Run `uv sync`, then retry with `uv run agentseek build`. |
-| `--push` fails with `unauthorized` | Registry login missing | Run `docker login <registry>`. |
-| `agentseek deploy` errors without `--dry-run` | Current deploy command only writes manifests | Add `--dry-run`. |
-| Manifest references the wrong image | `--image` not set | Pass `--image my-agent:0.1.0`. |
+| `agentseek build` is unavailable | AgentSeek is not installed in this project. | Run `uv add agentseek`, then retry with `uv run agentseek build`. |
+| `--push` fails with `unauthorized` | Registry login is missing. | Run `docker login <registry>`. |
+| `deploy` rejects the command | `--dry-run` is required. | Add `--dry-run`. |
+| Manifest references the wrong image | `--image` was omitted. | Pass the image explicitly. |
+
+## Rollback
+
+Remove the generated `deploy/` directory when you do not want the manifests.
 
 ## Related
 
 - [CLI reference](../reference/cli.md)
-- [Docker reference](../reference/docker.md)
 - [How to run with Docker Compose](run-with-docker-compose.md)

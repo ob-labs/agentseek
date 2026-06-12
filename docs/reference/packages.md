@@ -3,7 +3,7 @@ title: Packages reference
 type: reference
 audience: [A2, A3, A4]
 runs: no
-verified_on: 2026-06-08
+verified_on: 2026-06-12
 sources:
   - pyproject.toml
   - contrib/README.md
@@ -11,81 +11,72 @@ sources:
 
 # Packages reference
 
-AgentSeek ships one top-level Python package, `agentseek`. The package exposes
-the public console script and the embeddable harness library.
+## Distribution
 
-| Field | Value | Source |
-| --- | --- | --- |
-| Name | `agentseek` | `pyproject.toml` |
-| Version | `0.0.2` | `pyproject.toml` |
-| Python | `>=3.12,<4.0` | `pyproject.toml` |
-| Console script | `agentseek = "agentseek.__main__:app"` | `pyproject.toml` |
-| Build backend | `pdm.backend` | `pyproject.toml` |
-| Build includes | `src/agentseek`, `src/skills` | `pyproject.toml` |
+| Field | Value |
+| --- | --- |
+| Package name | `agentseek` |
+| Version | `0.0.2` |
+| Python | `>=3.12,<4.0` |
+| Console script | `agentseek = "agentseek.__main__:app"` |
+| Build backend | `pdm.backend` |
+| Build includes | `src/agentseek`, `src/skills` |
 
-## Core dependency groups
-
-Runtime dependencies include both the harness runtime and the project command tooling:
+## Runtime dependencies
 
 | Package | Purpose |
 | --- | --- |
-| `bub` | Hook-first runtime, channels, plugins, and CLI foundation. |
+| `bub` | Runtime kernel, channels, plugins, and CLI foundation. |
 | `cookiecutter` | Template rendering for `agentseek create`. |
 | `jinja2` | Template rendering support. |
-| `logfire` | Local instrumentation and log integration. |
+| `logfire` | Instrumentation and logging integration. |
 | `npx-skills` | Skill CLI wrapper for `agentseek skills`. |
 | `pydantic-settings` | Runtime settings. |
 | `typer` | CLI construction. |
 
-Development dependency groups remain in `pyproject.toml`:
+## Dependency groups
 
-| Group | Purpose |
+| Group | Contents |
 | --- | --- |
 | `dev` | Tests, type checks, docs, and example development. |
-| `plugins` | Workspace plugin packages used while developing the monorepo. |
+| `plugins` | Plugin packages used while developing the workspace. |
+
+## Plugin group packages
+
+| Package |
+| --- |
+| `bub-feishu` |
+| `bub-mcp` |
+| `bub-tapestore-otel` |
+| `agentseek-schedule-sqlalchemy` |
+| `agentseek-ag-ui` |
+| `agentseek-langchain` |
+| `agentseek-tapestore-oceanbase` |
+| `agentseek-contextseek` |
 
 ## Contrib packages
 
-Contrib packages are optional extensions installed through
-`agentseek plugin install <package>` or by depending on them directly from a
-generated project.
-
 | Package | Bub entry point | Workspace path |
 | --- | --- | --- |
-| `agentseek-ag-ui` | n/a | `contrib/agentseek-ag-ui` |
+| `agentseek-ag-ui` | `ag-ui` | `contrib/agentseek-ag-ui` |
 | `agentseek-langchain` | `langchain` | `contrib/agentseek-langchain` |
 | `agentseek-tapestore-oceanbase` | `tapestore-oceanbase` | `contrib/agentseek-tapestore-oceanbase` |
 | `agentseek-schedule-sqlalchemy` | `schedule` | `contrib/agentseek-schedule-sqlalchemy` |
 | `agentseek-contextseek` | `contextseek` | `contrib/agentseek-contextseek` |
 
-Entry points are declared by each contrib package under
-`[project.entry-points.bub]`.
-
 ## uv workspace members
 
-```text
-contrib/agentseek-ag-ui
-contrib/agentseek-langchain
-contrib/agentseek-schedule-sqlalchemy
-contrib/agentseek-tapestore-oceanbase
-contrib/agentseek-contextseek
-.agentseek/agentseek-project
-```
-
-The trailing `.agentseek/agentseek-project` is the default plugin sandbox.
-Keeping it as a workspace member lets uv resolve locally installed plugins
-against the same lockfile during development.
+| Path |
+| --- |
+| `contrib/agentseek-ag-ui` |
+| `contrib/agentseek-langchain` |
+| `contrib/agentseek-schedule-sqlalchemy` |
+| `contrib/agentseek-tapestore-oceanbase` |
+| `contrib/agentseek-contextseek` |
+| `.agentseek/agentseek-project` |
 
 ## Bundled skills
 
-`[tool.pdm.build].skills` bundles these skills into the wheel:
-
-| Source | Subpath | Skills included |
+| Source | Subpath | Included skills |
 | --- | --- | --- |
 | `git+https://github.com/PsiACE/skills.git` | `skills` | `friendly-python`, `piglet` |
-
-## See also
-
-- [CLI reference](cli.md)
-- [File layout reference](file-layout.md)
-- [How to install a plugin](../how-to/install-a-plugin.md)

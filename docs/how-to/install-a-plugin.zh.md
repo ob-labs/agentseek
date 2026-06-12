@@ -3,92 +3,76 @@ title: 如何安装一个 plugin
 type: how-to
 audience: [A2, A3]
 runs: yes
-verified_on: 2026-05-28
+verified_on: 2026-06-12
 sources:
   - src/agentseek/cli/runtime.py
+  - src/agentseek/cli/commands/plugin.py
   - src/agentseek/env.py
 ---
 
 # 如何安装一个 plugin
 
-当你需要向 agentseek workspace 添加新的 Bub 兼容 plugin (channel、
-模型 provider、store、工具包、调度器等) 时使用本指南。
-plugin 会安装到 **plugin sandbox**，即位于 `AGENTSEEK_PROJECT` /
-`BUB_PROJECT` 的 uv 管理项目中。
+当你要向 AgentSeek workspace 添加 Bub 兼容 plugin 时使用本页。
 
 ## 前置条件
 
-- 已安装 agentseek，并在 `PATH` 上可作为 `uv run agentseek` 调用。
-- 具备网络访问 —— `agentseek plugin install` 会解析 git URL 与 Bub contrib
-  registry。
+- AgentSeek 可通过 `agentseek` 调用。
+- 能访问 git URL 或 Bub contrib registry。
 
 ## 步骤
 
-1. 选择 plugin spec。`agentseek plugin install` 的参数格式见 [CLI 参考](../reference/cli.zh.md)：
+1. 选择 plugin spec。
 
-   - 一个 git URL
-   - `owner/repo`
-   - `bub-contrib` 中的包名 (通常是 `name@branch`)
+   ```text
+   bub-feishu@main
+   ob-labs/agentseek
+   https://github.com/example/plugin.git
+   agentseek-contextseek
+   ```
 
-   它 **不是** 针对任意发行名的通用 PyPI 安装器。
-
-2. (可选) 钉住 sandbox 位置。默认是
-   `${BUB_HOME}/agentseek-project` (`src/agentseek/env.py:72`)。如果想
-   让 plugin 不进入你的仓库，设置：
+2. 如果不想把 plugin sandbox 放在 workspace 下，钉住它的位置。
 
    ```bash title=".env"
    AGENTSEEK_PROJECT=/home/me/.config/agentseek/plugin-sandbox
    ```
 
-3. 安装 plugin。第一次调用通过
-   `uv init --bare --name agentseek-project --app` 初始化 sandbox，并加入 Bub
-   依赖 (`src/agentseek/cli/runtime.py:134`)。
+3. 安装 plugin。
 
-   ```bash title="not executed in this run"
-   uv run agentseek plugin install bub-feishu@main
+   ```bash
+   agentseek plugin install bub-feishu@main
    ```
 
-4. 验证 sandbox 现在列出了该 plugin：
+4. 检查 sandbox 包文件。
 
-   ```bash title="not executed in this run"
-   cat "${BUB_PROJECT:-.agentseek/agentseek-project}/pyproject.toml"
+   ```bash
+   cat "${BUB_PROJECT:-${AGENTSEEK_PROJECT:-.agentseek/agentseek-project}}/pyproject.toml"
    ```
-
-### CLI 快捷方式
-
-对于安装而言，库形式 **就是** CLI 形式。没有嵌入式 API；
-`agentseek plugin install` 会在 sandbox 内 shell out 到 `uv`。
-
-上游 Bub 的 `bub install <spec>` 等效。agentseek CLI
-仅添加了 sandbox 默认值与品牌化。
 
 ## 移除一个 plugin
 
-```bash title="not executed in this run"
-uv run agentseek plugin uninstall <package-name>
+```bash
+agentseek plugin uninstall <package-name>
 ```
 
 `PACKAGES` 是 sandbox `pyproject.toml` 中列出的发行包名。
 
-## 更新 plugin
+## 更新一个 plugin
 
-```bash title="not executed in this run"
-uv run agentseek plugin update              # update all
-uv run agentseek plugin update bub-feishu   # update one
+```bash
+agentseek plugin update              # update all
+agentseek plugin update bub-feishu   # update one
 ```
 
 ## 故障排查
 
 | 现象 | 可能原因 | 解决 |
 | --- | --- | --- |
-| 首次安装报 `FileNotFoundError` | sandbox 路径缺失 | agentseek 的 `_ensure_plugin_sandbox` (`src/agentseek/cli/runtime.py:123`) 会创建它；若仍出现，请提 bug。 |
-| plugin 已加载但未被运行时识别 | plugin 在 sandbox 中，但运行时读取了不同的 `BUB_PROJECT` | 确认 `${BUB_PROJECT}` 与安装目标路径一致。 |
+| plugin 安装到了错误位置 | 设置了其他 project 路径。 | 检查 `AGENTSEEK_PROJECT` 与 `BUB_PROJECT`。 |
+| plugin 已安装但未加载 | runtime 读取了另一个 sandbox。 | 用同一个 project 路径启动 runtime。 |
 
 ## 回退
 
-`uv run agentseek plugin uninstall <name>` 从 sandbox 中移除该包。如要丢弃
-整个 sandbox，删除 `${AGENTSEEK_PROJECT}` (默认
-`.agentseek/agentseek-project`)。下一次安装会重新构建。
+卸载该包，或删除 `${AGENTSEEK_PROJECT}` 丢弃整个 sandbox。下一次安装会重新创建。
 
 ## 相关
 

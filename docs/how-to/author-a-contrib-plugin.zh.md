@@ -11,21 +11,18 @@ sources:
 
 # 如何编写一个 contrib plugin
 
-当你需要在本 monorepo 中以 `contrib/agentseek-<feature>/` 形式存在的
-Bub 兼容 plugin 时使用本指南。plugin 契约、README 结构与
-分发约定由 [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md) 维护 —— 本页
-指向那份文档，并列出 agentseek 特有的不可省略环节。
+当你要在 `contrib/agentseek-<feature>/` 下添加 Bub 兼容 plugin 时使用本页。
 
 ## 前置条件
 
-- 先阅读 [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md)。它是 README 标准的
-  唯一权威来源。
-- 决定你的 plugin 属于哪个 Bub entry point 组 (`[project.entry-points.bub]`)。
+- 阅读 [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md)。
+- 决定该 plugin 注册哪个 Bub hook 或 entry point。
 
 ## 步骤
 
-1. 在 `contrib/agentseek-<feature>/` 下创建 workspace 成员，并将其
-   加入 `pyproject.toml:101` 的 workspace 列表：
+1. 创建 `contrib/agentseek-<feature>/`。
+
+2. 将它加入根 workspace。
 
    ```toml title="pyproject.toml"
    [tool.uv.workspace]
@@ -36,8 +33,7 @@ Bub 兼容 plugin 时使用本指南。plugin 契约、README 结构与
    ]
    ```
 
-2. 遵循 contrib 的 **命名约定**
-   ([contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md), "agentseek follows Bub's extension conventions")：
+3. 使用标准命名。
 
    | 项 | 约定 |
    | --- | --- |
@@ -45,10 +41,8 @@ Bub 兼容 plugin 时使用本指南。plugin 契约、README 结构与
    | Python 包 | `agentseek_<feature>` |
    | Bub entry point 组 | `[project.entry-points.bub]` |
    | 环境变量 | 优先 `AGENTSEEK_*`；对 Bub 运行时设置接受 `BUB_*` |
-   | 两种前缀同时存在时 | `BUB_*` 优先 (与 `apply_agentseek_env_aliases` 一致，`src/agentseek/env.py:63`) |
 
-3. 按照 [contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md) 的章节顺序 ("README Standard")
-   编写 README：
+4. 按这些章节写包 README。
 
    1. `At A Glance`
    2. `When To Use It`
@@ -59,36 +53,28 @@ Bub 兼容 plugin 时使用本指南。plugin 契约、README 结构与
    7. `Verify`
    8. `Limitations`
 
-4. (可选) 在根 `pyproject.toml:27` 中将该包暴露为 extra：
+5. 如果希望开发者从根项目安装它，将该包暴露为 optional dependency。
 
    ```toml title="pyproject.toml"
    [project.optional-dependencies]
    <feature> = ["agentseek-<feature>"]
    ```
 
-   并在 `[tool.uv.sources]` 中钉住 workspace 来源
-   (`pyproject.toml:87`)：
+6. 钉住 workspace 来源。
 
    ```toml
    agentseek-<feature> = { workspace = true }
    ```
 
-5. 使用捆绑的 `plugin-creator` skill 来脚手架包结构。
-   agentseek 改造版镜像了上游 Bub 的 contrib 流程，但
-   专门针对 `contrib/agentseek-*`、`AGENTSEEK_*` 别名以及捆绑的
-   `src/skills` (参见 [扩展模型](../explanation/extension-model.zh.md))。
-
 ### CLI 快捷方式
 
-没有 `agentseek plugin new` 命令。请在 chat session 中使用
-`plugin-creator` skill，或者复制已有的 `contrib/agentseek-*/` 再
-重命名。
+没有 `agentseek plugin new` 命令。使用 `plugin-creator` skill，或复制已有的
+`contrib/agentseek-*/` 包并重命名。
 
 ## 边界
 
-- **不要** 把每个包的 README 复制进 `docs/`。改为交叉链接。
-- 主 `docs/` 树只记录 `src/agentseek` 和 `src/skills`
-  ([contrib README](https://github.com/ob-labs/agentseek/blob/main/contrib/README.md), "Documentation Boundary")。
+- 包特定文档留在包 README。
+- `docs/` 中只链接 contrib README，不复制内容。
 
 ## 相关
 

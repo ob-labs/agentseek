@@ -1,29 +1,23 @@
 ---
-title: Explanation — understanding agentseek
+title: Concepts
 type: explanation
 audience: [A2, A3, A5]
 runs: no
-verified_on: 2026-06-08
+verified_on: 2026-06-12
 sources:
-  - README.md
   - docs/index.md
-  - pyproject.toml
+  - docs/explanation/what-agentseek-is.md
+  - docs/explanation/runtime-data-model.md
 ---
 
-# Explanation
+# Concepts
 
-These pages explain the design and architecture of AgentSeek.
+Read these pages when you want the design model behind the project.
 
-| Page | Read it when |
-| --- | --- |
-| [What AgentSeek is](what-agentseek-is.md) | You need the high-level framing and non-goals. |
-| [Command overview](cli-surface.md) | You want to understand how commands are organized. |
-| [Bub relationship](bub-relationship.md) | You want the boundary between Bub and AgentSeek. |
-| [LangChain relationship](langchain-relationship.md) | You use LangChain, LangGraph, or DeepAgents and want the integration model. |
-| [Runtime data model](runtime-data-model.md) | You are reasoning about tapes, skills, plugins, MCP, and channels. |
-| [Extension model](extension-model.md) | You need to choose between instructions, skills, plugins, MCP, and contrib packages. |
-| [Where things live](where-things-live.md) | You are navigating the repository. |
-
-Use [Tutorials](../tutorials/index.md) for guided walkthroughs,
-[How-to guides](../how-to/index.md) for task recipes, and
-[Reference](../reference/index.md) for exact command, package, and file facts.
+- [What AgentSeek is](what-agentseek-is.md) explains the harness idea.
+- [Runtime data model](runtime-data-model.md) explains what flows through a turn.
+- [Extension model](extension-model.md) explains where to put new behavior.
+- [Bub relationship](bub-relationship.md) explains the runtime foundation.
+- [LangChain relationship](langchain-relationship.md) explains how LangChain apps fit.
+- [CLI reference](../reference/cli.md) lists commands by lifecycle stage.
+- [File layout](../reference/file-layout.md) lists repository and runtime paths.
