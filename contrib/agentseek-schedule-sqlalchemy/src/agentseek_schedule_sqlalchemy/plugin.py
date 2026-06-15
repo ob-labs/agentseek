@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 from collections.abc import Callable, Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from apscheduler.jobstores.base import BaseJobStore
 from apscheduler.schedulers import SchedulerAlreadyRunningError
@@ -19,6 +19,9 @@ from agentseek_schedule_sqlalchemy.config import (
     onboard_config as collect_onboard_config,
 )
 from agentseek_schedule_sqlalchemy.job_store import build_sqlalchemy_jobstore
+
+if TYPE_CHECKING:
+    from agentseek_schedule_sqlalchemy.channel import ScheduleFramework
 
 SchedulerFactory = Callable[[], BaseScheduler]
 
@@ -50,7 +53,9 @@ class ScheduleImpl:
     so APScheduler kept jobs in memory-only ``_pending_jobs`` and nothing reached the DB.
     """
 
-    def __init__(self, framework: object | None = None, scheduler_factory: SchedulerFactory | None = None) -> None:
+    def __init__(
+        self, framework: "ScheduleFramework | None" = None, scheduler_factory: SchedulerFactory | None = None
+    ) -> None:
         from agentseek_schedule_sqlalchemy import tools  # noqa: F401
 
         self.framework = framework
@@ -113,5 +118,5 @@ class ScheduleImpl:
         ScheduleChannel.bind_framework(self.framework, loop)
 
 
-def main(framework: object | None = None) -> ScheduleImpl:
+def main(framework: "ScheduleFramework | None" = None) -> ScheduleImpl:
     return ScheduleImpl(framework)

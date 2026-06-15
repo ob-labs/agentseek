@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Callable, Sequence
-from typing import NoReturn
+from typing import Any, NoReturn
 
 import click
 import typer
@@ -42,12 +42,10 @@ class _ContextSeekForwardingGroup(TyperGroup):
     token (including ``--help``) flows through to ``contextseek.cli.run_cli``.
     """
 
-    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
+    def get_command(self, ctx: Any, cmd_name: str) -> Any:
         return _build_forward_command(cmd_name)
 
-    def resolve_command(
-        self, ctx: click.Context, args: list[str]
-    ) -> tuple[str | None, click.Command | None, list[str]]:
+    def resolve_command(self, ctx: Any, args: list[str]) -> Any:
         if not args:
             args = ["--help"]
         cmd = _build_forward_command(args[0])

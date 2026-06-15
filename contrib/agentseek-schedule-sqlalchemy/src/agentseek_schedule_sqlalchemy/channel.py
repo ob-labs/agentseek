@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 from asyncio import Event
-from typing import ClassVar
+from typing import ClassVar, Protocol
 
 from apscheduler.schedulers import SchedulerAlreadyRunningError
 from apscheduler.schedulers.base import BaseScheduler
@@ -10,19 +10,23 @@ from bub.channels.message import ChannelMessage
 from loguru import logger
 
 
+class ScheduleFramework(Protocol):
+    async def process_inbound(self, message: ChannelMessage) -> object: ...
+
+
 class ScheduleChannel(Lifecycle):
     """Starts/stops BackgroundScheduler when this channel is enabled (e.g. gateway)."""
 
     name: ClassVar[str] = "schedule"
-    _framework: ClassVar[object | None] = None
+    _framework: ClassVar[ScheduleFramework | None] = None
     _loop: ClassVar[asyncio.AbstractEventLoop | None] = None
 
-    def __init__(self, scheduler: BaseScheduler, *, framework: object | None = None) -> None:
+    def __init__(self, scheduler: BaseScheduler, *, framework: ScheduleFramework | None = None) -> None:
         self.scheduler = scheduler
         self._instance_framework = framework
 
     @classmethod
-    def bind_framework(cls, framework: object | None, loop: asyncio.AbstractEventLoop | None = None) -> None:
+    def bind_framework(cls, framework: ScheduleFramework | None, loop: asyncio.AbstractEventLoop | None = None) -> None:
         if framework is None:
             return
         cls._framework = framework
@@ -36,7 +40,7 @@ class ScheduleChannel(Lifecycle):
         cls._loop = None
 
     @classmethod
-    def current_framework(cls) -> object:
+    def current_framework(cls) -> ScheduleFramework:
         if cls._framework is None:
             raise RuntimeError("no live schedule framework available, cannot deliver scheduled message")
         return cls._framework
