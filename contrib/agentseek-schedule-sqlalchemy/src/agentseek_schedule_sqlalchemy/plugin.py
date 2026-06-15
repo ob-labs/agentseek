@@ -1,13 +1,12 @@
-import asyncio
-import contextlib
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from apscheduler.jobstores.base import BaseJobStore
-from apscheduler.schedulers import SchedulerAlreadyRunningError
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.base import BaseScheduler
 from bub import hookimpl
+from bub.channels import Channel
+from bub.framework import BubFramework
 from bub.types import Envelope, MessageHandler, State
 from loguru import logger
 
@@ -20,15 +19,11 @@ from agentseek_schedule_sqlalchemy.config import (
 )
 from agentseek_schedule_sqlalchemy.job_store import build_sqlalchemy_jobstore
 
-if TYPE_CHECKING:
-    from agentseek_schedule_sqlalchemy.channel import ScheduleFramework
-
 SchedulerFactory = Callable[[], BaseScheduler]
 
 
 def build_scheduler(*, jobstore: BaseJobStore, jobstore_alias: str = "default") -> BaseScheduler:
-    """Build a background scheduler with an injected job store."""
-    return BackgroundScheduler(jobstores={jobstore_alias: jobstore})
+    return AsyncIOScheduler(jobstores={jobstore_alias: jobstore})
 
 
 def build_sqlalchemy_scheduler(
@@ -46,15 +41,10 @@ def _default_scheduler() -> BaseScheduler:
 
 
 class ScheduleImpl:
-    """Schedule plugin backed by an injected APScheduler scheduler.
-
-    Uses BackgroundScheduler so the scheduler can start without the ``schedule`` channel.
-    ``bub chat`` only enables the ``cli`` channel; previously AsyncIOScheduler never started,
-    so APScheduler kept jobs in memory-only ``_pending_jobs`` and nothing reached the DB.
-    """
+    """Schedule plugin backed by an APScheduler SQLAlchemy job store."""
 
     def __init__(
-        self, framework: "ScheduleFramework | None" = None, scheduler_factory: SchedulerFactory | None = None
+        self, framework: BubFramework | None = None, scheduler_factory: SchedulerFactory | None = None
     ) -> None:
         from agentseek_schedule_sqlalchemy import tools  # noqa: F401
 
@@ -63,8 +53,8 @@ class ScheduleImpl:
         self._scheduler: BaseScheduler | None = None
 
     @classmethod
-    def from_scheduler(cls, scheduler: BaseScheduler) -> "ScheduleImpl":
-        return cls(scheduler_factory=lambda: scheduler)
+    def from_scheduler(cls, scheduler: BaseScheduler, framework: BubFramework | None = None) -> "ScheduleImpl":
+        return cls(framework=framework, scheduler_factory=lambda: scheduler)
 
     @property
     def scheduler(self) -> BaseScheduler:
@@ -72,31 +62,16 @@ class ScheduleImpl:
             self._scheduler = self._scheduler_factory()
         return self._scheduler
 
-    def _ensure_scheduler_started(self) -> BaseScheduler:
-        scheduler = self.scheduler
-        if scheduler.running:
-            return scheduler
-        with contextlib.suppress(SchedulerAlreadyRunningError):
-            scheduler.start()
-        return scheduler
-
     @hookimpl
     def load_state(self, message: Envelope, session_id: str) -> State:
-        # Runs before tools on every inbound message — covers CLI-only ``bub chat``.
-        try:
-            scheduler = self._ensure_scheduler_started()
-        except Exception as exc:
-            logger.warning(f"Schedule plugin disabled: {exc}")
-            return {}
-        self._bind_live_framework()
-        return {"scheduler": scheduler}
+        return {"scheduler": self.scheduler}
 
     @hookimpl
     def onboard_config(self, current_config: dict[str, Any]) -> dict[str, Any] | None:
         return collect_onboard_config(current_config)
 
     @hookimpl
-    def provide_channels(self, message_handler: MessageHandler) -> list:
+    def provide_channels(self, message_handler: MessageHandler) -> list[Channel]:
         from agentseek_schedule_sqlalchemy.channel import ScheduleChannel
 
         try:
@@ -105,18 +80,3 @@ class ScheduleImpl:
             logger.warning(f"Schedule plugin disabled: {exc}")
             return []
         return [ScheduleChannel(scheduler, framework=self.framework)]
-
-    def _bind_live_framework(self) -> None:
-        if self.framework is None:
-            return
-        from agentseek_schedule_sqlalchemy.channel import ScheduleChannel
-
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-        ScheduleChannel.bind_framework(self.framework, loop)
-
-
-def main(framework: "ScheduleFramework | None" = None) -> ScheduleImpl:
-    return ScheduleImpl(framework)

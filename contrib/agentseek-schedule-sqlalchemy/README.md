@@ -123,17 +123,13 @@ The second form only controls the scheduler fallback URL. A separate tape store 
 
 ## Runtime Behavior
 
-`ScheduleImpl` starts the scheduler lazily from `load_state()`, which runs before tools on every
-inbound message. This is the key behavior that keeps scheduling usable in Bub's CLI flow,
-including `bub chat` and the agentseek distribution entry point built on the same runtime: even
-when only the `cli` channel is active, the scheduler is started and jobs are persisted instead of
-being left in APScheduler's in-memory pending queue.
-
-When the `schedule` channel is enabled in a gateway runtime, `ScheduleChannel` also starts the same scheduler on channel startup and shuts it down cleanly on channel stop.
+`ScheduleImpl` follows the standard `bub-schedule` runtime model: `load_state()` exposes the
+scheduler in state, while the `schedule` lifecycle channel binds the live `BubFramework`, starts
+the scheduler, and shuts it down when the channel stops. Scheduled reminders are async jobs that
+deliver messages through the currently running framework.
 
 If scheduler construction fails, the plugin does not crash the framework:
 
-- `load_state()` logs `Schedule plugin disabled: ...` and returns an empty state
 - `provide_channels()` logs the same warning and returns no `schedule` channel
 
 ### Test-Covered Behavior
@@ -141,7 +137,7 @@ If scheduler construction fails, the plugin does not crash the framework:
 Current tests cover these behaviors:
 
 - SQLAlchemy job store round-trip persistence with SQLite
-- `ScheduleImpl.load_state()` starts the injected scheduler
+- `ScheduleImpl.load_state()` exposes the injected scheduler
 - `onboard_config()` can write the `schedule` section
 - registered `schedule` config resolves from `config.yml`
 - environment variables override `config.yml` for registered settings
@@ -150,6 +146,7 @@ Current tests cover these behaviors:
 - fallback from `AGENTSEEK_TAPESTORE_SQLALCHEMY_URL`
 - `schedule.trigger` executes both sync and async jobs
 - `schedule.trigger` does not shift an interval job's `next_run_time`
+- scheduled reminders deliver through the live schedule framework
 
 ## Verify
 

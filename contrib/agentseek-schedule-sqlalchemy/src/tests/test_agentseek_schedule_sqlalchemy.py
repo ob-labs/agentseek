@@ -5,7 +5,7 @@ import importlib
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import yaml
@@ -80,28 +80,32 @@ def _reset_bub_config(tmp_path, monkeypatch) -> Iterator[None]:
 
 def test_jobstore_roundtrip_with_sqlite(tmp_path) -> None:
     """Built-in SQLAlchemyJobStore should persist jobs without agentseek helpers."""
-    settings = ScheduleSQLAlchemySettings(
-        url=_sqlite_url(tmp_path, "roundtrip.sqlite"),
-        tablename=_test_table_name("apscheduler_jobs_test_roundtrip"),
-    )
-    store = build_sqlalchemy_jobstore(settings=settings)
-    scheduler = build_scheduler(jobstore=store)
-    scheduler.start()
 
-    scheduler.add_job(
-        "agentseek_schedule_sqlalchemy.jobs:_noop",
-        "date",
-        run_date=datetime.now(UTC) + timedelta(minutes=1),
-        id="test-1",
-    )
-    assert store.lookup_job("test-1") is not None
-    jobs = store.get_all_jobs()
-    assert len(jobs) == 1
-    assert jobs[0].id == "test-1"
+    async def _run() -> None:
+        settings = ScheduleSQLAlchemySettings(
+            url=_sqlite_url(tmp_path, "roundtrip.sqlite"),
+            tablename=_test_table_name("apscheduler_jobs_test_roundtrip"),
+        )
+        store = build_sqlalchemy_jobstore(settings=settings)
+        scheduler = build_scheduler(jobstore=store)
+        scheduler.start()
 
-    scheduler.remove_job("test-1")
-    assert store.lookup_job("test-1") is None
-    scheduler.shutdown()
+        scheduler.add_job(
+            "agentseek_schedule_sqlalchemy.jobs:_noop",
+            "date",
+            run_date=datetime.now(UTC) + timedelta(minutes=1),
+            id="test-1",
+        )
+        assert store.lookup_job("test-1") is not None
+        jobs = store.get_all_jobs()
+        assert len(jobs) == 1
+        assert jobs[0].id == "test-1"
+
+        scheduler.remove_job("test-1")
+        assert store.lookup_job("test-1") is None
+        scheduler.shutdown()
+
+    asyncio.run(_run())
 
 
 def test_schedule_impl_uses_injected_scheduler(tmp_path) -> None:
@@ -119,7 +123,7 @@ def test_schedule_impl_uses_injected_scheduler(tmp_path) -> None:
     state = plugin.load_state(message=None, session_id="schedule:test")
 
     assert state["scheduler"] is scheduler
-    assert scheduler.running
+    assert not scheduler.running
     assert [channel.name for channel in plugin.provide_channels(message_handler=_message_handler)] == ["schedule"]
 
 
@@ -383,19 +387,14 @@ def test_schedule_trigger_executes_async_job(scheduler: BackgroundScheduler, too
     assert "triggered: async-job" in result
 
 
-def test_scheduled_reminder_uses_live_framework(monkeypatch) -> None:
+def test_scheduled_reminder_uses_live_framework() -> None:
     framework = _LiveFramework()
-    ScheduleChannel.bind_framework(framework)
-
-    def _fail_fresh_framework() -> None:
-        raise AssertionError("fresh framework fallback should not be used")
-
-    monkeypatch.setattr("agentseek_schedule_sqlalchemy.jobs.BubFramework", _fail_fresh_framework)
+    ScheduleChannel._framework = cast(Any, framework)
 
     try:
-        run_scheduled_reminder("wake up", "cli:room-1")
+        asyncio.run(run_scheduled_reminder("wake up", "cli:room-1"))
     finally:
-        ScheduleChannel.clear_framework(framework)
+        ScheduleChannel._framework = None
 
     assert len(framework.messages) == 1
     assert framework.messages[0].content == "wake up"
@@ -408,7 +407,7 @@ def test_schedule_trigger_uses_async_live_framework_for_reminder_job(
     tool_context: ToolContext,
 ) -> None:
     framework = _LiveFramework()
-    ScheduleChannel.bind_framework(framework)
+    ScheduleChannel._framework = cast(Any, framework)
     next_run = datetime.now(UTC) + timedelta(hours=1)
     scheduler.add_job(
         run_scheduled_reminder,
@@ -425,7 +424,7 @@ def test_schedule_trigger_uses_async_live_framework_for_reminder_job(
     try:
         result = _trigger("reminder-job", tool_context)
     finally:
-        ScheduleChannel.clear_framework(framework)
+        ScheduleChannel._framework = None
 
     assert len(framework.messages) == 1
     assert framework.messages[0].content == "follow up"

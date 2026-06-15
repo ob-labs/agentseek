@@ -13,7 +13,7 @@ from bub import tool
 from pydantic import BaseModel, Field
 from republic import ToolContext
 
-from agentseek_schedule_sqlalchemy.jobs import run_scheduled_reminder, run_scheduled_reminder_async
+from agentseek_schedule_sqlalchemy.jobs import run_scheduled_reminder
 
 MISSING_SCHEDULER_MESSAGE = "scheduler not found in state, is ScheduleImpl plugin loaded?"
 MISSING_TRIGGER_ARGUMENTS_MESSAGE = "One of after_seconds, interval_seconds, or cron must be set"
@@ -39,14 +39,6 @@ def _get_job_or_raise(scheduler: BaseScheduler, job_id: str) -> Job:
 
 
 async def _run_job_now(job: Job) -> None:
-    if job.func is run_scheduled_reminder:
-        kwargs = dict(job.kwargs or {})
-        await run_scheduled_reminder_async(
-            message=str(kwargs.get("message", "")),
-            session_id=str(kwargs.get("session_id", "")),
-            workspace=kwargs.get("workspace"),
-        )
-        return
     result = job.func(*(job.args or ()), **(job.kwargs or {}))
     if inspect.isawaitable(result):
         await result
