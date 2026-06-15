@@ -33,6 +33,19 @@ sources:
 | `deepagents/research` | Pure DeepAgents research agent with Tavily search and streamed tool/sub-agent UI. |
 | `deepagents/content-builder` | DeepAgents content builder with brand memory, skills, subagents, image generation, and streamed UI. |
 
+## Selection
+
+| Need | Start with |
+| --- | --- |
+| Recommended AgentSeek harness app | `deepagents/default` |
+| Lightest harness app without LangChain | `bub/default` |
+| Bub app with semantic memory | `bub/contextseek` |
+| LangChain app inside AgentSeek runtime | `langchain/default` |
+| Pure LangChain app with `langgraph dev` | `langchain/markdown-messages` |
+| Remote LangGraph service | `langchain/cli-remote` |
+| Deep research workflow | `deepagents/research` |
+| Content workflow with memory, skills, and images | `deepagents/content-builder` |
+
 ## `agentseek create` forms
 
 | Form | Meaning |

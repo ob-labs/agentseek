@@ -15,8 +15,9 @@ sources:
 
 AgentSeek 是面向 agent 应用的 database-native harness。
 
-它为项目生命周期提供一个统一的操作表面：创建 starter project、本地运行、
-接入运行时扩展、构建镜像，以及通过 CLI、gateway 或聊天集成运行 channel。
+AgentSeek 帮团队把 agent 运行时数据变成数据库工作负载：turn、context、
+工具调用、任务、反馈、checkpoint、memory 和观测数据都保持可查询，而不是散落在
+日志和外围系统里。
 
 ## 它解决的问题
 
@@ -24,7 +25,7 @@ Agent 项目通常从代码和 prompt 开始。真正的运行时事实会随后
 上下文、trace、checkpoint、反馈和评估数据。
 
 如果这些事实散落在不同系统里，回放和运维会变困难。AgentSeek 采用相反的模型：
-运行时数据从一开始就应该持久、可查询。
+运行时数据从一开始就应该持久、可查询，并能继续服务调试、评估和产品迭代。
 
 ## 模型
 
@@ -36,6 +37,10 @@ AgentSeek 分开处理三类关注点：
 
 因此 AgentSeek 是 harness，不是 agent framework 的替代品。LangChain、DeepAgents、
 Bub-native 或自定义应用都可以沿用自己的应用结构，同时进入同一套生命周期。
+
+Database-native 不等于 database-coupled。AgentSeek 定义运行时形状和扩展点；
+实际后端可以在开发时保持本地存储，在项目需要时切换到 OceanBase、seekdb 或其他
+受支持的 store。
 
 ## AgentSeek 负责什么
 

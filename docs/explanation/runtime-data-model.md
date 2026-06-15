@@ -43,12 +43,20 @@ rewriting the agent.
 
 ## Tape
 
-A tape is the durable record of runtime facts. It captures the interaction and
-the steps around it so the data can be replayed, inspected, compared, or used
-for evaluation.
+A tape is the durable stream of runtime facts around a turn: the inbound
+message, model calls, tool calls, tool results, anchors, and derived views.
 
 This is the practical meaning of database-native in AgentSeek: runtime data is
 not treated as throwaway logs.
+
+Bub exposes tape persistence through the `provide_tape_store` hook. The local
+default can stay lightweight during development; a project can later install a
+store such as `agentseek-tapestore-oceanbase` when the same data should become
+queryable SQL.
+
+Because the tape keeps input, steps, and output in one shape, debugging,
+replay, trajectory comparison, evaluation, and training can read from the same
+substrate instead of separate side pipelines.
 
 ## Skill
 
@@ -77,6 +85,9 @@ are configuration. Plugins affect the runtime. Tapes are the durable substrate.
 
 Keeping those roles separate makes the project easier to operate and easier to
 extend.
+
+The important boundary is not "where can I put this file?" It is whether the
+change is guidance, a declared tool, runtime behavior, or durable runtime data.
 
 ## Next
 

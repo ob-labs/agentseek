@@ -1,5 +1,5 @@
 ---
-title: Documentation
+title: Docs
 type: explanation
 audience: [A1, A2, A3, A4, A5]
 runs: no
@@ -12,28 +12,13 @@ sources:
   - docs/reference/index.md
 ---
 
-# Documentation
+# Docs
 
-Choose the page by what you are trying to do now.
+AgentSeek documentation follows the developer path from first run to operation.
 
-## Learn
+## Sections
 
-Start with [Tutorials](tutorials/index.md) if you want a guided path to a
-working result.
-
-## Do a task
-
-Use [How-to guides](how-to/index.md) when you already have a specific task.
-
-## Understand
-
-Read [Concepts](explanation/index.md) when you want the design behind the runtime.
-
-## Look up
-
-Open [Reference](reference/index.md) when you need exact command, environment,
-package, template, or file-layout details.
-
-## Browse integrations
-
-Use [Hub](hub.md) to find bundled and contrib integrations.
+- [Tutorials](tutorials/index.md): guided paths to a working result.
+- [How-to](how-to/index.md): focused recipes for a specific task.
+- [Concepts](explanation/index.md): design context behind the harness.
+- [Reference](reference/index.md): exact commands, variables, packages, templates, and paths.

@@ -15,9 +15,9 @@ sources:
 
 AgentSeek is a database-native harness for agent applications.
 
-It gives a project one operational surface for the whole lifecycle: create a
-starter project, run it locally, attach runtime extensions, build an image, and
-operate channels such as CLI, gateway, or chat integrations.
+It turns agent runtime data into a database workload: turns, context, tool
+calls, tasks, feedback, checkpoints, memory, and observability data stay
+queryable instead of being scattered across logs and side systems.
 
 ## The problem it solves
 
@@ -26,8 +26,8 @@ later: messages, tool calls, context, traces, checkpoints, feedback, and
 evaluation data.
 
 If those facts land in unrelated systems, replay and operation become hard.
-AgentSeek starts from the opposite model: runtime data should be durable and
-queryable from the beginning.
+AgentSeek starts from the opposite model: runtime data should be durable,
+queryable, and ready to feed debugging, evaluation, and product iteration.
 
 ## The model
 
@@ -41,6 +41,11 @@ AgentSeek separates three concerns:
 That makes AgentSeek a harness, not a replacement for agent frameworks. A
 LangChain, DeepAgents, Bub-native, or custom app can run through the same
 lifecycle without giving up its own application structure.
+
+Database-native does not mean database-coupled. AgentSeek defines the runtime
+shape and extension points; the actual backend can remain local during
+development and move to OceanBase, seekdb, or another supported store when the
+project needs it.
 
 ## What AgentSeek owns
 

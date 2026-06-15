@@ -11,7 +11,7 @@ The binding export is:
 ## Quickstart
 
 ```bash
-uv sync --extra langchain
+uv sync
 uv pip install -r requirements.txt
 
 cp .env.example .env
@@ -19,9 +19,9 @@ cp .env.example .env
 
 export PYTHONPATH=src
 export AGENTSEEK_LANGCHAIN_SPEC={{ cookiecutter.project_slug }}.demo_binding:build_spec
+export AGENTSEEK_AG_UI_PORT=18088
 
-uv run --no-sync --no-env-file agentseek run "Plan a rollback-safe migration." \
-  --session-id {{ cookiecutter.project_slug }}-demo
+uv run agentseek gateway --enable-channel ag-ui
 ```
 
 ## Files

@@ -40,10 +40,17 @@ Channel 让同一个应用可以出现在不同开发场景和交付场景中，
 
 ## Tape
 
-Tape 是运行时事实的持久记录。它捕获一次交互及其周围步骤，使这些数据可以被回放、
-检查、比较或用于评估。
+Tape 是围绕 turn 的运行时事实流：输入消息、model call、工具调用、工具结果、anchor
+和派生视图。
 
 这就是 AgentSeek 中 database-native 的实际含义：运行时数据不是一次性日志。
+
+Bub 通过 `provide_tape_store` hook 暴露 tape 持久化。开发时可以保持轻量本地默认值；
+当同一份数据需要成为可查询 SQL 时，项目可以安装 `agentseek-tapestore-oceanbase`
+这样的 store。
+
+因为 tape 用同一种形状保存输入、步骤和输出，调试、回放、trajectory 比较、评估和训练
+可以读取同一个底座，而不是各自维护一条旁路数据管道。
 
 ## Skill
 
@@ -70,6 +77,9 @@ Plugin 改变 runtime 行为。Plugins 添加 hook、channel、storage、schedul
 Tape 是持久底座。
 
 保持这些角色分离，项目更容易运维，也更容易扩展。
+
+关键边界不是“这个文件放哪里”，而是一次改动属于 guidance、声明式工具、runtime 行为，
+还是持久运行时数据。
 
 ## 下一步
 

@@ -41,6 +41,14 @@ sources:
 | `dev` | Tests、type checks、docs 和 example development。 |
 | `plugins` | 开发 workspace 时使用的 plugin packages。 |
 
+## 包边界
+
+| 边界 | 含义 |
+| --- | --- |
+| Core package | `agentseek` 提供 console script、项目命令、runtime defaults 和 bundled skills。 |
+| Contrib package | 可选 integration package，拥有自己的依赖、测试、README 和 Bub entry point。 |
+| Plugin environment | `.agentseek/agentseek-project` 是用于 plugin dependency resolution 的 uv project，不是 runtime sandbox boundary。 |
+
 ## Plugin group packages
 
 | Package |

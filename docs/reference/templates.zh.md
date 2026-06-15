@@ -33,6 +33,19 @@ sources:
 | `deepagents/research` | 带 Tavily 搜索和 streamed tool/sub-agent UI 的纯 DeepAgents research agent。 |
 | `deepagents/content-builder` | 带品牌记忆、skills、subagents、图片生成和 streamed UI 的 DeepAgents content builder。 |
 
+## 选择入口
+
+| 需求 | 起点 |
+| --- | --- |
+| 推荐的 AgentSeek harness app | `deepagents/default` |
+| 不带 LangChain 的最轻 harness app | `bub/default` |
+| 带语义 memory 的 Bub app | `bub/contextseek` |
+| 进入 AgentSeek runtime 的 LangChain app | `langchain/default` |
+| 使用 `langgraph dev` 的纯 LangChain app | `langchain/markdown-messages` |
+| 远程 LangGraph service | `langchain/cli-remote` |
+| Deep research workflow | `deepagents/research` |
+| 带 memory、skills 和图片生成的 content workflow | `deepagents/content-builder` |
+
 ## `agentseek create` 形态
 
 | 形式 | 含义 |

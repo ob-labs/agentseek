@@ -8,8 +8,12 @@
 AgentSeek is a database-native agent harness by the
 [OceanBase](https://en.oceanbase.com/) OSS Team.
 
-It helps you move from a local agent turn to an editable application project,
-then to runtime extensions and deployment manifests when the project is ready.
+AgentSeek turns agent runtime data into a database workload: turns, context,
+tool calls, tasks, feedback, checkpoints, memory, and observability data stay
+queryable instead of being scattered across logs and side systems.
+
+> **"Deep Agents in Action"**: a free LangChain / DeepAgents course with AgentSeek labs.
+> [Course repo](https://github.com/datawhalechina/deepagents-in-action/)
 
 ## Start Here
 
@@ -26,17 +30,20 @@ uvx agentseek chat
 Create a project you can edit:
 
 ```bash
-uvx agentseek create bub/default --no-input
-cd my_bub_agent
+uvx agentseek create deepagents/default --no-input
+cd my_deepagent
 cp .env.example .env
 uv sync
-npm install --prefix frontend
+uv pip install -r requirements.txt
 ```
 
-Set `AGENTSEEK_API_KEY` in `.env`, then start the app:
+Set `AGENTSEEK_API_KEY` in `.env`, then start the harness gateway:
 
 ```bash
-uv run agentseek run --no-browser
+export PYTHONPATH=src
+export AGENTSEEK_LANGCHAIN_SPEC=my_deepagent.demo_binding:build_spec
+export AGENTSEEK_AG_UI_PORT=18088
+uv run agentseek gateway --enable-channel ag-ui
 ```
 
 ## Documentation
@@ -57,7 +64,7 @@ uv run agentseek run --no-browser
 
 ## Development
 
-Contributors work from a repository checkout:
+Contributors work from a local source copy:
 
 ```bash
 git clone https://github.com/ob-labs/agentseek.git

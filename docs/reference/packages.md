@@ -41,6 +41,14 @@ sources:
 | `dev` | Tests, type checks, docs, and example development. |
 | `plugins` | Plugin packages used while developing the workspace. |
 
+## Package boundaries
+
+| Boundary | Meaning |
+| --- | --- |
+| Core package | `agentseek` provides the console script, project commands, runtime defaults, and bundled skills. |
+| Contrib package | Optional integration package with its own dependencies, tests, README, and Bub entry point. |
+| Plugin environment | `.agentseek/agentseek-project` is the uv project used for plugin dependency resolution. It is not a runtime sandbox boundary. |
+
 ## Plugin group packages
 
 | Package |
