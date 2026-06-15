@@ -10,12 +10,14 @@ from typing import Any
 import pytest
 import yaml
 from agentseek_schedule_sqlalchemy import tools
+from agentseek_schedule_sqlalchemy.channel import ScheduleChannel
 from agentseek_schedule_sqlalchemy.config import (
     ScheduleSQLAlchemySettings,
     get_schedule_settings,
     onboard_config,
 )
 from agentseek_schedule_sqlalchemy.job_store import build_sqlalchemy_jobstore
+from agentseek_schedule_sqlalchemy.jobs import run_scheduled_reminder
 from agentseek_schedule_sqlalchemy.plugin import ScheduleImpl, _default_scheduler, build_scheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -42,6 +44,14 @@ def _trigger(job_id: str, context: ToolContext) -> str:
         raise RuntimeError("schedule.trigger handler is not registered")
 
     return _trigger_result(handler(job_id, context=context))
+
+
+class _LiveFramework:
+    def __init__(self) -> None:
+        self.messages: list[Any] = []
+
+    async def process_inbound(self, message: Any) -> None:
+        self.messages.append(message)
 
 
 def _load_bub_config(config_path) -> None:
@@ -371,6 +381,57 @@ def test_schedule_trigger_executes_async_job(scheduler: BackgroundScheduler, too
 
     assert execution_log == ["payload"]
     assert "triggered: async-job" in result
+
+
+def test_scheduled_reminder_uses_live_framework(monkeypatch) -> None:
+    framework = _LiveFramework()
+    ScheduleChannel.bind_framework(framework)
+
+    def _fail_fresh_framework() -> None:
+        raise AssertionError("fresh framework fallback should not be used")
+
+    monkeypatch.setattr("agentseek_schedule_sqlalchemy.jobs.BubFramework", _fail_fresh_framework)
+
+    try:
+        run_scheduled_reminder("wake up", "cli:room-1")
+    finally:
+        ScheduleChannel.clear_framework(framework)
+
+    assert len(framework.messages) == 1
+    assert framework.messages[0].content == "wake up"
+    assert framework.messages[0].channel == "cli"
+    assert framework.messages[0].chat_id == "room-1"
+
+
+def test_schedule_trigger_uses_async_live_framework_for_reminder_job(
+    scheduler: BackgroundScheduler,
+    tool_context: ToolContext,
+) -> None:
+    framework = _LiveFramework()
+    ScheduleChannel.bind_framework(framework)
+    next_run = datetime.now(UTC) + timedelta(hours=1)
+    scheduler.add_job(
+        run_scheduled_reminder,
+        trigger=IntervalTrigger(minutes=5),
+        id="reminder-job",
+        kwargs={
+            "message": "follow up",
+            "session_id": "cli:room-2",
+            "workspace": None,
+        },
+        next_run_time=next_run,
+    )
+
+    try:
+        result = _trigger("reminder-job", tool_context)
+    finally:
+        ScheduleChannel.clear_framework(framework)
+
+    assert len(framework.messages) == 1
+    assert framework.messages[0].content == "follow up"
+    assert framework.messages[0].channel == "cli"
+    assert framework.messages[0].chat_id == "room-2"
+    assert "triggered: reminder-job" in result
 
 
 def test_schedule_trigger_raises_for_missing_job(tool_context: ToolContext) -> None:

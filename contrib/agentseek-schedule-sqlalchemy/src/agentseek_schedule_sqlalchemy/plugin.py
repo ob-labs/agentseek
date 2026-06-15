@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -49,15 +50,16 @@ class ScheduleImpl:
     so APScheduler kept jobs in memory-only ``_pending_jobs`` and nothing reached the DB.
     """
 
-    def __init__(self, scheduler_factory: SchedulerFactory) -> None:
+    def __init__(self, framework: object | None = None, scheduler_factory: SchedulerFactory | None = None) -> None:
         from agentseek_schedule_sqlalchemy import tools  # noqa: F401
 
-        self._scheduler_factory = scheduler_factory
+        self.framework = framework
+        self._scheduler_factory = scheduler_factory or _default_scheduler
         self._scheduler: BaseScheduler | None = None
 
     @classmethod
     def from_scheduler(cls, scheduler: BaseScheduler) -> "ScheduleImpl":
-        return cls(lambda: scheduler)
+        return cls(scheduler_factory=lambda: scheduler)
 
     @property
     def scheduler(self) -> BaseScheduler:
@@ -81,6 +83,7 @@ class ScheduleImpl:
         except Exception as exc:
             logger.warning(f"Schedule plugin disabled: {exc}")
             return {}
+        self._bind_live_framework()
         return {"scheduler": scheduler}
 
     @hookimpl
@@ -96,7 +99,19 @@ class ScheduleImpl:
         except Exception as exc:
             logger.warning(f"Schedule plugin disabled: {exc}")
             return []
-        return [ScheduleChannel(scheduler)]
+        return [ScheduleChannel(scheduler, framework=self.framework)]
+
+    def _bind_live_framework(self) -> None:
+        if self.framework is None:
+            return
+        from agentseek_schedule_sqlalchemy.channel import ScheduleChannel
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        ScheduleChannel.bind_framework(self.framework, loop)
 
 
-main = ScheduleImpl(_default_scheduler)
+def main(framework: object | None = None) -> ScheduleImpl:
+    return ScheduleImpl(framework)
