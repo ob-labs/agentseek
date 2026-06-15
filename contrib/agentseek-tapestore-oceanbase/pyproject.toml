@@ -4,10 +4,10 @@ version = "0.1.0"
 description = "OceanBase compatibility and vector enhancement for bub-tapestore-sqlalchemy"
 readme = "README.md"
 authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
 dependencies = [
     "any-llm-sdk",
-    "bub>=0.3.7",
+    "bub==0.3.9",
     "bub-tapestore-sqlalchemy",
     "pymysql>=1.1.0",
     "pyobvector>=0.2.22",

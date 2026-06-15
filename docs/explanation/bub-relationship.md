@@ -28,7 +28,7 @@ interesting is a plugin.
 `agentseek` wraps that kernel for "a real project running in a real workspace". That means
 opinionated defaults (where data lives, what variables look like, what the install sandbox is
 named) and a branded CLI. It does not mean replacing or hiding Bub: `agentseek` depends on
-Bub as a regular distribution (`bub>=0.3.7`) and the runtime is plain Bub once started.
+Bub as a regular distribution (`bub==0.3.9`) and the runtime is plain Bub once started.
 
 ## How it works
 

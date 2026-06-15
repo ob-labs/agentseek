@@ -32,8 +32,8 @@ import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
-import click
 import typer
 from typer.core import TyperGroup
 
@@ -52,7 +52,7 @@ class _SwallowArgsGroup(TyperGroup):
     ``ctx.args``, leaving callback-side argparse to interpret them.
     """
 
-    def parse_args(self, ctx: click.Context, args: list[str]) -> list[str]:
+    def parse_args(self, ctx: Any, args: list[str]) -> list[str]:
         ctx.args = list(args)
         return []
 

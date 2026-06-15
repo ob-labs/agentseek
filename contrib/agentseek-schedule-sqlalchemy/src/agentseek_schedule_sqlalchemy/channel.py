@@ -1,33 +1,41 @@
 import asyncio
-import contextlib
 from asyncio import Event
 from typing import ClassVar
 
-from apscheduler.schedulers import SchedulerAlreadyRunningError
 from apscheduler.schedulers.base import BaseScheduler
-from bub.channels import Channel
+from bub.channels import Lifecycle
+from bub.framework import BubFramework
 from loguru import logger
 
 
-class ScheduleChannel(Channel):
-    """Starts/stops BackgroundScheduler when this channel is enabled (e.g. gateway)."""
+class ScheduleChannel(Lifecycle):
+    """Starts/stops the scheduler and binds the live Bub framework."""
 
     name: ClassVar[str] = "schedule"
+    _framework: ClassVar[BubFramework | None] = None
 
-    def __init__(self, scheduler: BaseScheduler) -> None:
+    def __init__(self, scheduler: BaseScheduler, *, framework: BubFramework | None = None) -> None:
         self.scheduler = scheduler
+        self._instance_framework = framework
+
+    @classmethod
+    def current_framework(cls) -> BubFramework:
+        if cls._framework is None:
+            raise RuntimeError("no live schedule framework available, cannot deliver scheduled message")
+        return cls._framework
 
     async def start(self, stop_event: Event) -> None:
+        ScheduleChannel._framework = self._instance_framework
+
+        loop = asyncio.get_running_loop()
         if not self.scheduler.running:
-            with contextlib.suppress(SchedulerAlreadyRunningError):
-                self.scheduler.start()
+            loop.call_soon_threadsafe(self.scheduler.start)
         logger.info("schedule.start complete")
 
     async def stop(self) -> None:
-        if not self.scheduler.running:
-            logger.info("schedule.stop complete (idle)")
-            return
-        # BackgroundScheduler.shutdown() blocks until the worker thread stops.
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, lambda: self.scheduler.shutdown(wait=True))
+        if self.scheduler.running:
+            loop.call_soon_threadsafe(self.scheduler.shutdown)
+
+        ScheduleChannel._framework = None
         logger.info("schedule.stop complete")

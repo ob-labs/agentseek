@@ -5,18 +5,17 @@ description = "A database-native Agent Harness for runtime data workflows, power
 authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
 readme = "README.md"
 keywords = ['python']
-requires-python = ">=3.12,<4.0"
+requires-python = ">=3.12,<3.14"
 classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "bub>=0.3.7",
+    "bub==0.3.9",
     "cookiecutter>=2.5",
     "jinja2>=3.1",
     "logfire>=4.33.0",
@@ -76,10 +75,10 @@ index-url = "https://pypi.org/simple"
 
 [tool.uv.sources]
 # bub-contrib: pin to a specific commit so resolves are reproducible across environments.
-bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-feishu" }
-bub-mcp = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-mcp" }
-bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-tapestore-sqlalchemy" }
-bub-tapestore-otel = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "75c0778c7083fc9355d1c46d2816077290ae8349", subdirectory = "packages/bub-tapestore-otel" }
+bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "d9f177145b45d67cc0ca4703a495f062df8e3c32", subdirectory = "packages/bub-feishu" }
+bub-mcp = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "d9f177145b45d67cc0ca4703a495f062df8e3c32", subdirectory = "packages/bub-mcp" }
+bub-tapestore-sqlalchemy = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "d9f177145b45d67cc0ca4703a495f062df8e3c32", subdirectory = "packages/bub-tapestore-sqlalchemy" }
+bub-tapestore-otel = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "d9f177145b45d67cc0ca4703a495f062df8e3c32", subdirectory = "packages/bub-tapestore-otel" }
 agentseek-tapestore-oceanbase = { workspace = true }
 agentseek-langchain = { workspace = true }
 agentseek-schedule-sqlalchemy = { workspace = true }

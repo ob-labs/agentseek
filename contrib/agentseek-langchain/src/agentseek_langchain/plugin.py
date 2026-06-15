@@ -88,4 +88,6 @@ class LangChainRunnablePlugin:
         return AsyncStreamEvents(iterator(), state=stream_state)
 
 
-main = LangChainRunnablePlugin()
+def main(framework: object | None = None) -> LangChainRunnablePlugin:
+    del framework
+    return LangChainRunnablePlugin()
