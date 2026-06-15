@@ -18,7 +18,7 @@ sources:
 
 ## 1. 选择 starter
 
-本教程使用 `bub/default`。它是内置模板里最小的完整 harness app。
+本教程使用 `bub/default`。它是仓库模板目录里最小的完整 harness app。
 
 你可以先查看可用 starter：
 

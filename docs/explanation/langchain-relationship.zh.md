@@ -52,7 +52,7 @@ LangGraph or DeepAgents application
 
 ## 模板路径
 
-AgentSeek 同时提供纯 LangChain 模板和带 harness 的模板。这样可以渐进采用：
+AgentSeek 仓库同时维护纯 LangChain 模板和带 harness 的模板。这样可以渐进采用：
 
 - 当你想要最小依赖树，或计划直接使用 `langgraph dev` 时，从纯 LangChain 模板开始。
 - 当你从第一天就需要 channel、项目生命周期命令或运行时数据时，从带 harness 的模板开始。

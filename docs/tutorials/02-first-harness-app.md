@@ -20,7 +20,7 @@ local app loop.
 ## 1. Choose the starter
 
 This tutorial uses `bub/default`. It is the smallest full harness app in the
-bundled templates.
+repository template catalogue.
 
 You can see the available starters first:
 

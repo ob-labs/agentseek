@@ -1,4 +1,121 @@
 categories:
+  - name: Templates
+    items:
+      - name: deepagents/default
+        description: Recommended AgentSeek harness app with a local `create_deep_agent(...)` runnable bound through `agentseek-langchain`.
+        description_zh: 推荐的 AgentSeek harness app，通过 `agentseek-langchain` 绑定本地 `create_deep_agent(...)` runnable。
+        create: uvx agentseek create deepagents/default --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - deepagents
+          - harness
+          - langchain
+          - runtime-data
+
+      - name: deepagents/research
+        description: Pure DeepAgents research agent with Tavily search and streamed tool/sub-agent UI.
+        description_zh: 带 Tavily 搜索和 streamed tool/sub-agent UI 的纯 DeepAgents research agent。
+        create: uvx agentseek create deepagents/research --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - deepagents
+          - research
+          - tavily
+          - streaming
+
+      - name: deepagents/content-builder
+        description: DeepAgents content builder with brand memory, skills, subagents, image generation, and streamed UI.
+        description_zh: 带品牌记忆、skills、subagents、图片生成和 streamed UI 的 DeepAgents content builder。
+        create: uvx agentseek create deepagents/content-builder --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - deepagents
+          - content
+          - memory
+          - image-generation
+
+      - name: langchain/default
+        description: LangChain `create_agent` with CopilotKit middleware over `agentseek-langchain`.
+        description_zh: 通过 `agentseek-langchain` 接入的 LangChain `create_agent` + CopilotKit middleware。
+        create: uvx agentseek create langchain/default --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - langchain
+          - copilotkit
+          - harness
+
+      - name: langchain/cli-remote
+        description: Remote LangGraph CLI agent bridged through `LangGraphClientRunnable`.
+        description_zh: 通过 `LangGraphClientRunnable` 桥接的远程 LangGraph CLI agent。
+        create: uvx agentseek create langchain/cli-remote --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - langchain
+          - langgraph
+          - remote
+
+      - name: langchain/sandbox
+        description: DeepAgents sandbox coding agent with LangSmith sandbox backend and streaming UI.
+        description_zh: 带 LangSmith sandbox 后端和 streaming UI 的 DeepAgents coding agent。
+        create: uvx agentseek create langchain/sandbox --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - langchain
+          - deepagents
+          - sandbox
+          - coding
+
+      - name: langchain/markdown-messages
+        description: Pure LangChain `create_agent` with `langgraph dev` backend and markdown-rendering React frontend.
+        description_zh: 纯 LangChain `create_agent`，使用 `langgraph dev` 后端和支持 Markdown 渲染的 React 前端。
+        create: uvx agentseek create langchain/markdown-messages --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - langchain
+          - langgraph
+          - markdown
+          - frontend
+
+      - name: bub/default
+        description: Lightweight Bub agent with `agentseek gateway` and a CopilotKit frontend, without LangChain.
+        description_zh: 轻量 Bub agent，包含 `agentseek gateway` 和 CopilotKit 前端，不使用 LangChain。
+        create: uvx agentseek create bub/default --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - bub
+          - gateway
+          - copilotkit
+          - no-langchain
+
+      - name: bub/contextseek
+        description: Bub agent with ContextSeek semantic memory layer and ctx HTTP API.
+        description_zh: 带 ContextSeek 语义记忆层和 ctx HTTP API 的 Bub agent。
+        create: uvx agentseek create bub/contextseek --no-input
+        badges:
+          - label: template
+        tags:
+          - template
+          - bub
+          - contextseek
+          - memory
+          - ctx
+
   - name: Plugins
     items:
       - name: agentseek-ag-ui

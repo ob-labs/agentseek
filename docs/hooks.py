@@ -21,17 +21,20 @@ HUB_TEMPLATE_CONTEXT = {
         "entry_point_label": "Entry point",
         "path_label": "Path",
         "install_command_label": "Install command",
+        "create_command_label": "Create command",
         "copy_label": "Copy",
         "copied_label": "Copied",
         "readme_label": "README",
         "skill_doc_label": "SKILL.md",
         "category_labels": {
             "Plugins": "Plugins",
+            "Templates": "Templates",
             "Skills": "Skills",
             "Friends": "Friends",
         },
         "badge_labels": {
             "plugin": "plugin",
+            "template": "template",
             "skill": "skill",
             "bundled": "bundled",
             "local": "local",
@@ -53,17 +56,20 @@ HUB_TEMPLATE_CONTEXT = {
         "entry_point_label": "入口点",
         "path_label": "路径",
         "install_command_label": "安装命令",
+        "create_command_label": "创建命令",
         "copy_label": "复制",
         "copied_label": "已复制",
         "readme_label": "README",
         "skill_doc_label": "SKILL.md",
         "category_labels": {
             "Plugins": "插件",
+            "Templates": "模板",
             "Skills": "技能",
             "Friends": "生态项目",
         },
         "badge_labels": {
             "plugin": "插件",
+            "template": "模板",
             "skill": "技能",
             "bundled": "内置",
             "local": "本地",
@@ -91,6 +97,9 @@ def _render_hub_page(docs_dir: Path) -> None:
         output_path = docs_dir / ("hub.md" if locale == "en" else f"hub.{locale}.md")
         rendered = template.render(categories=categories, ui=context)
         output_path.write_text(rendered.rstrip() + "\n", encoding="utf-8")
+
+
+_render_hub_page(Path(__file__).resolve().parent)
 
 
 def on_config(config, **kwargs):

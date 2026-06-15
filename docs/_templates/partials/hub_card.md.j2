@@ -1,5 +1,5 @@
 {% set item_description = item.get("description_" ~ ui.locale, item.description) %}
-        <article class="hub-card" data-search="{{ [category.name, ui.category_labels.get(category.name, category.name), item.name, item.description, item_description, (item.tags | default([]) | join(' '))] | join(' ') | lower }}">
+        <article class="hub-card" data-search="{{ [category.name, ui.category_labels.get(category.name, category.name), item.name, item.description, item_description, item.install | default(''), item.create | default(''), (item.tags | default([]) | join(' '))] | join(' ') | lower }}">
           <div class="hub-card-header">
 {% if item.repo_url %}
             <a class="hub-card-name" href="{{ item.repo_url }}">{{ item.name }}</a>
@@ -25,6 +25,14 @@
               <code>{{ item.install }}</code>
             </div>
             <button type="button" class="hub-copy-btn" data-copy-cmd="{{ item.install }}" data-copy-label="{{ ui.copy_label }}" data-copied-label="{{ ui.copied_label }}">{{ ui.copy_label }}</button>
+          </div>
+{% endif %}
+{% if item.create %}
+          <div class="hub-install">
+            <div class="hub-install-cmd" tabindex="0" role="group" aria-label="{{ ui.create_command_label }}">
+              <code>{{ item.create }}</code>
+            </div>
+            <button type="button" class="hub-copy-btn" data-copy-cmd="{{ item.create }}" data-copy-label="{{ ui.copy_label }}" data-copied-label="{{ ui.copied_label }}">{{ ui.copy_label }}</button>
           </div>
 {% endif %}
 {% if item.readme_url or item.skill_url %}

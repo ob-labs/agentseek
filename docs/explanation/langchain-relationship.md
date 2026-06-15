@@ -59,7 +59,8 @@ not need to become a Bub application to benefit from the harness.
 
 ## Template paths
 
-AgentSeek includes both pure LangChain templates and harness-backed templates.
+The AgentSeek repository maintains both pure LangChain templates and
+harness-backed templates.
 This keeps adoption gradual:
 
 - Start with a pure LangChain template when you want the smallest dependency

@@ -15,7 +15,7 @@ sources:
 | 页面 | 查找内容 |
 | --- | --- |
 | [CLI](cli.zh.md) | 命令、参数和选项。 |
-| [模板](templates.zh.md) | 内置项目起点和输入变量。 |
+| [模板](templates.zh.md) | 仓库维护的项目起点和输入变量。 |
 | [环境变量](environment.zh.md) | 运行时设置、别名和优先级。 |
 | [包](packages.zh.md) | 发布包、依赖、contrib 包和 workspace 成员。 |
 | [文件布局](file-layout.zh.md) | Workspace 路径和覆盖变量。 |

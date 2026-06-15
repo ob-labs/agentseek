@@ -40,6 +40,9 @@ nav:
           - Environment variables: reference/environment.md
           - Packages: reference/packages.md
           - File layout: reference/file-layout.md
+  - Blog:
+      - Overview: blog/index.md
+      - Introducing AgentSeek: blog/introducing-agentseek.md
   - Hub: hub.md
 
 hooks:
@@ -79,6 +82,8 @@ plugins:
             Runtime data model: Runtime data model
             Extension model: Extension model
             Reference: Reference
+            Blog: Blog
+            Introducing AgentSeek: Introducing AgentSeek
             CLI: CLI
             Templates: Templates
             Environment variables: Environment variables
@@ -114,6 +119,8 @@ plugins:
             Runtime data model: 运行时数据模型
             Extension model: 扩展模型
             Reference: 参考
+            Blog: 博客
+            Introducing AgentSeek: 认识 AgentSeek
             CLI: CLI
             Templates: 模板
             Environment variables: 环境变量

@@ -15,7 +15,7 @@ sources:
 | Page | Lookup |
 | --- | --- |
 | [CLI](cli.md) | Commands, arguments, and flags. |
-| [Templates](templates.md) | Bundled project starters and inputs. |
+| [Templates](templates.md) | Repository-maintained project starters and inputs. |
 | [Environment variables](environment.md) | Runtime settings, aliases, and precedence. |
 | [Packages](packages.md) | Distribution, dependencies, contrib packages, and workspace members. |
 | [File layout](file-layout.md) | Workspace paths and overrides. |
