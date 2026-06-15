@@ -3,7 +3,7 @@ title: Packages reference
 type: reference
 audience: [A2, A3, A4]
 runs: no
-verified_on: 2026-06-12
+verified_on: 2026-06-15
 sources:
   - pyproject.toml
   - contrib/README.md
@@ -16,8 +16,8 @@ sources:
 | Field | Value |
 | --- | --- |
 | Package name | `agentseek` |
-| Version | `0.0.2` |
-| Python | `>=3.12,<4.0` |
+| Version | `0.0.3` |
+| Python | `>=3.12,<3.14` |
 | Console script | `agentseek = "agentseek.__main__:app"` |
 | Build backend | `pdm.backend` |
 | Build includes | `src/agentseek`, `src/skills` |
