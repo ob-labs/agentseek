@@ -3,7 +3,7 @@ title: 模板参考
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-06-12
+verified_on: 2026-06-16
 sources:
   - templates/index.json
   - templates/bub/default/README.md
@@ -25,7 +25,7 @@ sources:
 | --- | --- |
 | `bub/default` | 轻量 Bub agent：`agentseek gateway` + CopilotKit 前端，不使用 LangChain。 |
 | `bub/contextseek` | 带 ContextSeek 语义记忆层和 ctx HTTP API 的 Bub agent。 |
-| `langchain/default` | 通过 `agentseek-langchain` 接入的 LangChain `create_agent` + CopilotKit middleware。 |
+| `langchain/default` | 通过 `agentseek-langchain` 接入的 LangChain `create_agent` + CopilotKit middleware，可选 Phoenix/SeekDB OTEL tracing。 |
 | `langchain/cli-remote` | 通过 `LangGraphClientRunnable` 桥接的远程 LangGraph CLI agent。 |
 | `langchain/markdown-messages` | 纯 LangChain `create_agent` + `langgraph dev` 后端，`useStream` + react-markdown 前端。 |
 | `langchain/sandbox` | 带 LangSmith sandbox 后端和 streaming UI 的 DeepAgents coding agent。 |

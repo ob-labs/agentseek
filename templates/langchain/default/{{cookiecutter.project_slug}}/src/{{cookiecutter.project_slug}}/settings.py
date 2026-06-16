@@ -28,6 +28,22 @@ class ProjectSettings(BaseSettings):
     openai_api_key: str = Field(default="", validation_alias=AliasChoices("OPENAI_API_KEY"))
     openai_api_base: str = Field(default="", validation_alias=AliasChoices("OPENAI_API_BASE"))
     openai_base_url: str = Field(default="", validation_alias=AliasChoices("OPENAI_BASE_URL"))
+    otel_enabled: bool = Field(default=False, validation_alias=AliasChoices("AGENTSEEK_OTEL_ENABLED"))
+    otel_service_name: str = Field(
+        default="{{ cookiecutter.project_slug }}",
+        validation_alias=AliasChoices("AGENTSEEK_OTEL_SERVICE_NAME", "OTEL_SERVICE_NAME"),
+    )
+    otel_project_name: str = Field(
+        default="{{ cookiecutter.project_slug }}",
+        validation_alias=AliasChoices("AGENTSEEK_OTEL_PROJECT_NAME", "OTEL_PROJECT_NAME"),
+    )
+    otel_traces_endpoint: str = Field(
+        default="http://127.0.0.1:6006/v1/traces",
+        validation_alias=AliasChoices(
+            "AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+        ),
+    )
 
     def apply_openai_env_bridge(self) -> None:
         mid = self.model.strip()

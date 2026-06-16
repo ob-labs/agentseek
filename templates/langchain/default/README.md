@@ -2,7 +2,8 @@
 
 Scaffolds a `create_agent` project with CopilotKit middleware bound to
 agentseek via `agentseek-langchain`, for local AG-UI development, and also
-includes a first-class Feishu gateway path.
+includes a first-class Feishu gateway path plus optional OpenTelemetry export
+to Phoenix backed by SeekDB.
 
 ## Architecture
 
@@ -14,6 +15,7 @@ Browser (CopilotKit v2)
         -> agentseek gateway :{{ gateway_port }}  /agent  (AG-UI channel)
           -> agentseek-langchain messages_spec(...)
             -> create_agent(...) + CopilotKitMiddleware
+              -> OpenTelemetry spans -> Phoenix :6006/v1/traces -> SeekDB
 ```
 
 | LangChain guide | Generated project | Conversion point |
@@ -43,11 +45,13 @@ Browser (CopilotKit v2)
   pyproject.toml
   requirements.txt
   Dockerfile
+  docker-compose.yml
   .env.example
   src/{{ project_slug }}/
     __init__.py
     demo_binding.py
     middleware.py
+    observability.py
     settings.py
     feishu.py
     dev.py
@@ -82,3 +86,23 @@ def build_spec():
 The middleware follows the CopilotKit guide pattern: normalize context, then
 turn `output_schema` into LangChain structured output. The frontend uses
 Hashbrown to parse assistant JSON into React components.
+
+OpenTelemetry support is registered inside the generated LangChain application,
+not inside Bub or the message forwarding layer:
+
+```python
+from .observability import configure_tracing
+
+def build_agent():
+    settings = get_settings()
+    configure_tracing(settings)
+    return create_agent(...)
+```
+
+The generated `docker-compose.yml` starts the LangChain app and CopilotKit
+frontend by default. Its `otel` profile adds `ghcr.io/psiace/phoenix:mysql`
+with `PHOENIX_SQL_DATABASE_URL=mysql://root@seekdb:2881/phoenix` and a
+`quay.io/oceanbase/seekdb:latest` backend. Its `feishu` profile starts the
+Feishu gateway with the same LangChain spec and environment surface. Users can
+turn profiles on with `COMPOSE_PROFILES=otel`, `COMPOSE_PROFILES=feishu`, or
+`COMPOSE_PROFILES=otel,feishu` in `.env`.

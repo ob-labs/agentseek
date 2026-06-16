@@ -22,6 +22,47 @@ The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`,
 the CopilotKit runtime to `http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit`,
 and the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`.
 
+### Phoenix Tracing
+
+The generated LangChain app can export OpenTelemetry spans directly to Phoenix.
+Bub and the gateway only forward messages; tracing is registered in the
+LangChain application process.
+
+Start the default local stack:
+
+```bash
+uv run agentseek run --no-browser
+```
+
+To run the same stack with local Phoenix tracing, enable the `otel` compose
+profile in `.env`:
+
+```env
+COMPOSE_PROFILES=otel
+AGENTSEEK_OTEL_ENABLED=true
+```
+
+Then use the same run command:
+
+```bash
+uv run agentseek run --no-browser
+```
+
+The compose stack exports traces to Phoenix at `http://phoenix:6006/v1/traces`.
+For non-compose runs, enable OTEL in `.env`:
+
+```bash
+AGENTSEEK_OTEL_ENABLED=true
+AGENTSEEK_OTEL_SERVICE_NAME={{ cookiecutter.project_slug }}
+AGENTSEEK_OTEL_PROJECT_NAME={{ cookiecutter.project_slug }}
+AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
+```
+
+Phoenix is available at `http://127.0.0.1:6006`. The compose stack uses
+`ghcr.io/psiace/phoenix:mysql` and persists Phoenix data in
+`quay.io/oceanbase/seekdb:latest` through
+`PHOENIX_SQL_DATABASE_URL=mysql://root@seekdb:2881/phoenix`.
+
 ### Feishu Channel
 
 This template also ships a first-class Feishu gateway path for group-chat use
@@ -64,6 +105,16 @@ Then start the Feishu-only gateway:
 
 ```bash
 uv run serve-feishu
+```
+
+For compose-based Feishu testing, use `COMPOSE_PROFILES` in `.env`, then run
+`docker compose up`:
+
+```env
+COMPOSE_PROFILES=feishu
+# Or, with Phoenix tracing:
+# COMPOSE_PROFILES=feishu,otel
+# AGENTSEEK_OTEL_ENABLED=true
 ```
 
 `serve-feishu` forces direct websocket connections by setting `NO_PROXY=*`

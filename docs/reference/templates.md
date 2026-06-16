@@ -3,7 +3,7 @@ title: Templates reference
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-06-12
+verified_on: 2026-06-16
 sources:
   - templates/index.json
   - templates/bub/default/README.md
@@ -25,7 +25,7 @@ sources:
 | --- | --- |
 | `bub/default` | Lightweight Bub agent: `agentseek gateway` + CopilotKit frontend, no LangChain. |
 | `bub/contextseek` | Bub agent with ContextSeek semantic memory layer and ctx HTTP API. |
-| `langchain/default` | LangChain `create_agent` + CopilotKit middleware over `agentseek-langchain`. |
+| `langchain/default` | LangChain `create_agent` + CopilotKit middleware over `agentseek-langchain`, with optional Phoenix/SeekDB OTEL tracing. |
 | `langchain/cli-remote` | Remote LangGraph CLI agent bridged via `LangGraphClientRunnable`. |
 | `langchain/markdown-messages` | Pure LangChain `create_agent` + `langgraph dev` backend, `useStream` + react-markdown frontend. |
 | `langchain/sandbox` | DeepAgents sandbox coding agent with LangSmith sandbox backend and streaming UI. |

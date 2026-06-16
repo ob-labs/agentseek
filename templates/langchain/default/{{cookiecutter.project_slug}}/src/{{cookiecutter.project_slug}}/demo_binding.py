@@ -9,6 +9,7 @@ from copilotkit import CopilotKitMiddleware, CopilotKitState
 from langchain.agents import create_agent
 
 from .middleware import apply_structured_output_schema, normalize_context
+from .observability import configure_tracing
 from .settings import get_settings
 
 
@@ -29,6 +30,7 @@ def build_agent() -> Any:
         msg = "Set AGENTSEEK_MODEL (e.g. openai:gpt-4o-mini) for the {{ cookiecutter.project_name }} agent."
         raise RuntimeError(msg)
     settings.apply_openai_env_bridge()
+    configure_tracing(settings)
     return create_agent(
         model=model,
         tools=[],
