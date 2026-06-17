@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import typer
-from agentseek_cli.app import build_app, iter_command_groups, register_version_command
+from agentseek_cli.app import DEPRECATION_NOTICE, build_app, iter_command_groups, register_version_command
 from agentseek_cli.plugin import AgentSeekCliPlugin
 from typer.testing import CliRunner
 
@@ -23,12 +23,15 @@ def test_build_app_help_lists_groups() -> None:
     for name in EXPECTED_GROUPS:
         assert name in result.stdout
     assert VERSION_COMMAND in result.stdout
+    assert "agentseek-cli is deprecated" in result.stdout
+    assert "agentseek>=0.0.3" in result.stdout
 
 
 def test_build_app_version_reports_cli_package() -> None:
     result = CliRunner().invoke(build_app(), [VERSION_COMMAND])
     assert result.exit_code == 0
     assert "agentseek-cli" in result.stdout
+    assert DEPRECATION_NOTICE in result.stderr
 
 
 def test_plugin_register_cli_commands_overrides_framework_run() -> None:

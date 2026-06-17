@@ -15,7 +15,13 @@ import typer
 
 from agentseek_cli.commands import api, build, create, ctx, deploy, run, skills
 
-CLI_HELP = "AgentSeek project-lifecycle CLI. Scaffold, run, build, deploy, manage API services, skills, and context."
+DEPRECATION_NOTICE = (
+    "agentseek-cli is deprecated. Install and use agentseek>=0.0.3 instead: pip install -U 'agentseek>=0.0.3'."
+)
+CLI_HELP = (
+    "AgentSeek project-lifecycle CLI. Scaffold, run, build, deploy, manage API services, skills, and context.\n\n"
+    f"{DEPRECATION_NOTICE}"
+)
 VERSION_COMMAND_NAME = "version"
 
 
@@ -84,7 +90,14 @@ def build_app() -> typer.Typer:
         panel = COMMAND_PANELS.get(name)
         app.add_typer(sub, name=name, rich_help_panel=panel)
     register_version_command(app)
+
+    @app.callback()
+    def deprecation_notice_callback(ctx: typer.Context) -> None:
+        """Emit the package-level deprecation notice for normal command execution."""
+        if not ctx.resilient_parsing:
+            typer.secho(DEPRECATION_NOTICE, err=True, fg=typer.colors.YELLOW)
+
     return app
 
 
-__all__ = ["CLI_HELP", "build_app", "iter_command_groups", "register_version_command"]
+__all__ = ["CLI_HELP", "DEPRECATION_NOTICE", "build_app", "iter_command_groups", "register_version_command"]
