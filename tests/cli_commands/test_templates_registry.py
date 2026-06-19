@@ -42,9 +42,7 @@ def test_registered_templates_point_to_cookiecutter_directories() -> None:
 def test_registered_templates_have_readme() -> None:
     """Every registered template has a top-level README for template users."""
     missing_readmes = sorted(
-        key
-        for key in _registered_templates()
-        if not (TEMPLATES_ROOT / key / "README.md").is_file()
+        key for key in _registered_templates() if not (TEMPLATES_ROOT / key / "README.md").is_file()
     )
 
     assert not missing_readmes, f"registered template(s) missing README.md: {missing_readmes}"
