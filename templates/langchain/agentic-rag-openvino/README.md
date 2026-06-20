@@ -132,3 +132,9 @@ cd frontend && npm install && npm run dev
 - **Supports CPU, GPU, NPU** via a single `OPENVINO_DEVICE` env var.
 - **No PyTorch at runtime**: only `openvino` and `openvino-genai` are needed
   for inference. PyTorch/optimum are only used during model conversion.
+- **`openvino-genai` over `langchain-huggingface`**: LangChain's official
+  OpenVINO path (`HuggingFacePipeline(backend="openvino")`) requires PyTorch
+  at runtime and only supports LLMs. We use Intel's `openvino_genai` package
+  which provides native `LLMPipeline`, `TextEmbeddingPipeline`, and reranking
+  without PyTorch (~200 MB vs ~2 GB install). The generated README documents
+  both approaches.

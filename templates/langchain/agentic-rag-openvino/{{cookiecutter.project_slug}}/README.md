@@ -197,3 +197,60 @@ The RAG pipeline flows through a LangGraph `StateGraph`:
 
 All 3 models load once at startup via `openvino_genai` pipelines. No PyTorch
 runtime is needed — only the OpenVINO inference engine.
+
+## Why `openvino-genai` instead of `langchain-huggingface`?
+
+LangChain's official OpenVINO integration uses `HuggingFacePipeline` with
+`backend="openvino"` (see [docs](https://python.langchain.com/docs/integrations/llms/openvino)):
+
+```python
+# Official LangChain way (requires PyTorch + transformers + optimum-intel)
+from langchain_huggingface import HuggingFacePipeline
+
+ov_llm = HuggingFacePipeline.from_model_id(
+    model_id="ov_model_dir",
+    task="text-generation",
+    backend="openvino",
+    model_kwargs={"device": "CPU", "ov_config": ov_config},
+)
+```
+
+This template uses `openvino-genai` (Intel's newer GenAI API) instead:
+
+```python
+# Our approach (no PyTorch at runtime)
+import openvino_genai
+pipe = openvino_genai.LLMPipeline("./model", "CPU")
+```
+
+| | `HuggingFacePipeline` (official) | `openvino_genai` (this template) |
+| --- | --- | --- |
+| Runtime deps | PyTorch + transformers + optimum | openvino + openvino-genai only |
+| Install size | ~2 GB+ | ~200 MB |
+| Embeddings | Not supported via this path | `TextEmbeddingPipeline` native |
+| Reranking | Not supported | Compiled cross-encoder model |
+| Streaming | HF pipeline `stream()` | `StreamerBase` protocol |
+
+We chose `openvino-genai` because it provides native embedding and reranking
+pipelines (not just LLM), avoids the ~2 GB PyTorch install, and matches the
+patterns in Intel's [RAG notebook](https://github.com/openvinotoolkit/openvino_notebooks/tree/latest/notebooks/llm-rag-langchain).
+
+To switch to the official approach, replace `ov_models.py` with:
+
+```bash
+pip install langchain-huggingface "optimum[openvino,nncf]"
+```
+
+```python
+from langchain_huggingface import HuggingFacePipeline
+
+llm = HuggingFacePipeline.from_model_id(
+    model_id="./models/tiny-llama-1b-chat/INT4_compressed_weights",
+    task="text-generation",
+    backend="openvino",
+    model_kwargs={"device": "CPU"},
+    pipeline_kwargs={"max_new_tokens": 512},
+)
+```
+
+Note: this adds PyTorch as a runtime dependency and loses native embedding/reranking support.
