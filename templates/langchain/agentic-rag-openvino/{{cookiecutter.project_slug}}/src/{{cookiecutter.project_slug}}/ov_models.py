@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import queue
 from pathlib import Path
-from threading import Event, Thread
+from threading import Thread
 from typing import Any, Iterator, List, Optional, Sequence
 
 import numpy as np
@@ -18,47 +18,50 @@ from langchain_core.outputs import GenerationChunk
 from pydantic import ConfigDict
 
 
-class _ChunkStreamer:
-    """Token streamer that buffers and yields decoded text chunks."""
+def _make_streamer_class():
+    """Create streamer class inheriting from openvino_genai.StreamerBase."""
+    import openvino_genai
 
-    def __init__(self, tokenizer: Any):
-        import openvino_genai
+    class _ChunkStreamer(openvino_genai.StreamerBase):
+        """Token streamer implementing StreamerBase protocol."""
 
-        self.tokenizer = tokenizer
-        self.tokens_cache: list[int] = []
-        self.text_queue: queue.Queue[str | None] = queue.Queue()
-        self.print_len = 0
+        def __init__(self, tokenizer: Any):
+            super().__init__()
+            self.tokenizer = tokenizer
+            self.tokens_cache: list[int] = []
+            self.text_queue: queue.Queue[str | None] = queue.Queue()
+            self.print_len = 0
 
-    def __iter__(self):
-        return self
+        def __iter__(self):
+            return self
 
-    def __next__(self) -> str:
-        value = self.text_queue.get()
-        if value is None:
-            raise StopIteration
-        return value
+        def __next__(self) -> str:
+            value = self.text_queue.get()
+            if value is None:
+                raise StopIteration
+            return value
 
-    def put(self, token_id: int):
-        import openvino_genai
+        def write(self, token_id: int) -> openvino_genai.StreamingStatus:
+            self.tokens_cache.append(token_id)
+            text = self.tokenizer.decode(self.tokens_cache)
+            if len(text) > self.print_len and text[-1] != chr(65533):
+                word = text[self.print_len :]
+                self.print_len = len(text)
+                self.text_queue.put(word)
+            return openvino_genai.StreamingStatus.RUNNING
 
-        self.tokens_cache.append(token_id)
-        text = self.tokenizer.decode(self.tokens_cache)
-        if len(text) > self.print_len and text[-1] != chr(65533):
-            word = text[self.print_len :]
-            self.print_len = len(text)
-            self.text_queue.put(word)
-        return openvino_genai.StreamingStatus.RUNNING
+        def end(self):
+            text = self.tokenizer.decode(self.tokens_cache)
+            if len(text) > self.print_len:
+                self.text_queue.put(text[self.print_len :])
+            self.text_queue.put(None)
 
-    def end(self):
-        text = self.tokenizer.decode(self.tokens_cache)
-        if len(text) > self.print_len:
-            self.text_queue.put(text[self.print_len :])
-        self.text_queue.put(None)
+        def reset(self):
+            self.tokens_cache = []
+            self.text_queue = queue.Queue()
+            self.print_len = 0
 
-    def reset(self):
-        self.tokens_cache = []
-        self.text_queue = queue.Queue()
-        self.print_len = 0
+    return _ChunkStreamer
 
 
 class OpenVINOLLM(LLM):
@@ -104,13 +107,12 @@ class OpenVINOLLM(LLM):
         self.config.max_new_tokens = self.max_new_tokens
         if stop:
             self.config.stop_strings = set(stop)
-        streamer = _ChunkStreamer(self.tokenizer)
-        done = Event()
+        StreamerCls = _make_streamer_class()
+        streamer = StreamerCls(self.tokenizer)
 
         def generate():
             streamer.reset()
             self.ov_pipe.generate(prompt, self.config, streamer)
-            done.set()
             streamer.end()
 
         t = Thread(target=generate)

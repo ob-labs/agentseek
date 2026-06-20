@@ -7,7 +7,6 @@
   "embedding_model_path": "./models/bge-small-en-v1.5",
   "rerank_model_path": "./models/bge-reranker-v2-m3",
   "device": "CPU",
-  "seekdb_path": "./.seekdb-data",
   "seekdb_db_name": "test",
   "vector_table_name": "rag_documents",
   "frontend_port": "5174",
