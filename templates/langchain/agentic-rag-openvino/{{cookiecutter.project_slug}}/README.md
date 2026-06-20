@@ -137,6 +137,50 @@ graph = create_agent(model=model, tools=[retrieve], system_prompt=...)
 `ChatHuggingFace` provides `bind_tools()`, enabling the standard
 `create_agent` flow where the LLM decides when to call retrieval tools.
 
+## Advanced: native `openvino-genai` approach (with reranking)
+
+The official `langchain-huggingface` path covers LLM and embeddings. For
+**cross-encoder reranking**, you can use Intel's lower-level `openvino-genai`
+package directly. This avoids `langchain-huggingface` entirely and provides
+native `TextEmbeddingPipeline` + `TextRerankPipeline` + `LLMPipeline`:
+
+```bash
+pip install openvino-genai
+optimum-cli export openvino --model BAAI/bge-reranker-v2-m3 \
+  --task text-classification ./models/bge-reranker-v2-m3
+```
+
+```python
+import openvino_genai
+
+# Native embedding pipeline
+emb_pipe = openvino_genai.TextEmbeddingPipeline("./models/bge-small-en-v1.5", "CPU")
+vec = emb_pipe.embed_query("hello")  # 384-dim
+
+# Native LLM pipeline
+llm_pipe = openvino_genai.LLMPipeline("./models/tiny-llama/INT4", "CPU")
+answer = llm_pipe.generate("What is RAG?", config)
+
+# Native reranker (cross-encoder)
+import openvino as ov
+core = ov.Core()
+reranker = core.compile_model("./models/bge-reranker-v2-m3/openvino_model.xml", "CPU")
+tokenizer = openvino_genai.Tokenizer("./models/bge-reranker-v2-m3")
+```
+
+Trade-offs vs the `langchain-huggingface` approach:
+
+| | `langchain-huggingface` (default) | `openvino-genai` (native) |
+| --- | --- | --- |
+| LangChain integration | Official, `bind_tools` works | Custom wrappers needed |
+| Reranking | Not supported | Native pipeline |
+| Install size | ~2 GB (PyTorch via optimum) | ~200 MB (no PyTorch) |
+| `create_agent` compatible | Yes | No (`LLM` base, no `bind_tools`) |
+
+Use `openvino-genai` when you need reranking or want the smallest possible
+install. Use `langchain-huggingface` (this template's default) when you want
+standard LangChain tool-calling and `create_agent` compatibility.
+
 ## Hardware requirements
 
 - **Minimum**: 8 GB RAM, x86_64 CPU with AVX2 (Intel 4th gen+, AMD Zen+)
