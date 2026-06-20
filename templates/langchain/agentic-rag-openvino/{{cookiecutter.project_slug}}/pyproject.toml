@@ -1,0 +1,36 @@
+[project]
+name = "{{ cookiecutter.project_slug }}"
+version = "0.1.0"
+description = "{{ cookiecutter.project_name }} — LangChain agentic RAG with OpenVINO local models, served by langgraph dev."
+authors = [{ name = "{{ cookiecutter.author }}" }]
+requires-python = ">=3.10"
+dependencies = [
+    "bs4",
+    "faiss-cpu>=1.7",
+    "httpx>=0.28",
+    "langchain>=1.0",
+    "langchain-community>=0.3",
+    "langchain-text-splitters>=0.3.0",
+    "langgraph-cli[inmem]>=0.4",
+    "numpy",
+    "openvino>=2024.0",
+    "openvino-genai>=2024.0",
+    "optimum[openvino]>=1.19",
+    "pypdf",
+    "python-dotenv>=1.0",
+    "requests",
+]
+
+[project.scripts]
+ingest = "{{ cookiecutter.project_slug }}.ingest:main"
+convert-models = "{{ cookiecutter.project_slug }}.convert_models:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
