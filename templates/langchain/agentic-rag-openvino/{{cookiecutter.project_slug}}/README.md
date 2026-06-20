@@ -1,15 +1,25 @@
 # {{ cookiecutter.project_name }}
 
-LangChain RAG with local [OpenVINO](https://docs.openvino.ai/) LLM inference
-and [OceanBase/SeekDB](https://github.com/oceanbase/seekdb) vector store with
-seekdb embed (384-dim, no API key).
+LangChain RAG running **fully local** with 3 [OpenVINO](https://docs.openvino.ai/)
+models for inference and [OceanBase/SeekDB](https://github.com/oceanbase/seekdb)
+as the vector store. No cloud API keys required.
 
 Scaffolded with `agentseek create langchain/agentic-rag-openvino`.
 
-The backend serves a retrieve→generate graph through `langgraph dev`.
-LLM generation runs locally via OpenVINO GenAI (no cloud API keys).
-Embeddings use seekdb embed (built into langchain-oceanbase).
-The frontend streams the RAG workflow with tool-call cards.
+## Architecture
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│  All inference runs locally via OpenVINO GenAI           │
+├─────────────────────────────────────────────────────────┤
+│  Embedding:  bge-small-en-v1.5    (384-dim vectors)     │
+│  Reranker:   bge-reranker-v2-m3   (cross-encoder)       │
+│  LLM:        TinyLlama-1.1B-Chat  (INT4 compressed)     │
+├─────────────────────────────────────────────────────────┤
+│  Vector DB:  OceanBase/SeekDB (docker or embedded)      │
+│  Serving:    langgraph dev → React frontend             │
+└─────────────────────────────────────────────────────────┘
+```
 
 ## Setup
 
@@ -20,26 +30,73 @@ uv sync
 npm install --prefix frontend
 ```
 
-### 2. Download and convert models
+### 2. Download and convert OpenVINO models
+
+The project uses 3 models, all converted to OpenVINO IR format via
+[Optimum Intel](https://huggingface.co/docs/optimum/intel/index):
 
 ```bash
 uv run convert-models
 ```
 
-This downloads and converts:
+This runs `optimum-cli export openvino` for each model:
 
-| Model | Purpose | Size |
-| --- | --- | --- |
-| TinyLlama-1.1B-Chat (INT4) | LLM generation | ~700 MB |
-| bge-reranker-v2-m3 | Reranking (optional) | ~1.1 GB |
+| Model | HuggingFace ID | Task | Format | Size |
+| --- | --- | --- | --- | --- |
+| **LLM** | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | text-generation-with-past | INT4 | ~700 MB |
+| **Embeddings** | `BAAI/bge-small-en-v1.5` | feature-extraction | FP32 | ~130 MB |
+| **Reranker** | `BAAI/bge-reranker-v2-m3` | text-classification | FP32 | ~1.1 GB |
 
-To use a different LLM (e.g. Phi-3, Qwen2), convert it manually:
+After conversion, the `models/` directory contains:
 
-```bash
-optimum-cli export openvino --model <hf-model-id> --task text-generation-with-past --weight-format int4 ./models/<name>/INT4_compressed_weights
+```text
+models/
+  tiny-llama-1b-chat/INT4_compressed_weights/
+    openvino_model.xml + .bin, tokenizer files
+  bge-small-en-v1.5/
+    openvino_model.xml + .bin, tokenizer files
+  bge-reranker-v2-m3/
+    openvino_model.xml + .bin, tokenizer files
 ```
 
-Then update `LLM_MODEL_PATH` in `.env`.
+#### Using a different LLM
+
+Convert any HuggingFace causal-LM to OpenVINO with:
+
+```bash
+optimum-cli export openvino \
+  --model <hf-model-id> \
+  --task text-generation-with-past \
+  --weight-format int4 \
+  ./models/<name>/INT4_compressed_weights
+```
+
+Examples:
+
+```bash
+# Phi-3-mini (3.8B, ~2.2 GB INT4)
+optimum-cli export openvino --model microsoft/Phi-3-mini-4k-instruct \
+  --task text-generation-with-past --weight-format int4 \
+  ./models/phi-3-mini/INT4_compressed_weights
+
+# Qwen2-1.5B (1.5B, ~1 GB INT4)
+optimum-cli export openvino --model Qwen/Qwen2-1.5B-Instruct \
+  --task text-generation-with-past --weight-format int4 \
+  ./models/qwen2-1.5b/INT4_compressed_weights
+```
+
+Then set `LLM_MODEL_PATH` in `.env` to the new directory.
+
+#### Using a different embedding model
+
+```bash
+optimum-cli export openvino --model BAAI/bge-base-en-v1.5 \
+  --task feature-extraction \
+  ./models/bge-base-en-v1.5
+```
+
+Then set `EMBEDDING_MODEL_PATH` in `.env`. Note: changing the embedding model
+requires re-ingesting all documents (the vector dimensions may differ).
 
 ### 3. Start SeekDB
 
@@ -47,12 +104,30 @@ Then update `LLM_MODEL_PATH` in `.env`.
 docker compose up -d        # wait ~60s on first run
 ```
 
+Or use the embedded Python service (Linux only):
+
+```python
+import pylibseekdb
+pylibseekdb.open_with_service("./seekdb-data", port=2881)
+```
+
 ### 4. Configure environment
 
 ```bash
 cp .env.example .env
-# Edit .env if you changed model paths or want to enable LangSmith tracing
 ```
+
+Key variables:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `LLM_MODEL_PATH` | ./models/tiny-llama-1b-chat/INT4_compressed_weights | OpenVINO LLM directory |
+| `EMBEDDING_MODEL_PATH` | ./models/bge-small-en-v1.5 | OpenVINO embedding model directory |
+| `RERANK_MODEL_PATH` | ./models/bge-reranker-v2-m3 | OpenVINO reranker directory (remove to disable) |
+| `OPENVINO_DEVICE` | CPU | Inference device: CPU, GPU, or NPU |
+| `MAX_NEW_TOKENS` | 512 | Max tokens for LLM generation |
+| `SEEKDB_HOST` | 127.0.0.1 | SeekDB host |
+| `SEEKDB_PORT` | 2881 | SeekDB port |
 
 ## Ingest
 
@@ -70,7 +145,8 @@ uv run ingest ./notes/ https://example.com/article ./paper.pdf
 ```
 
 Documents are split into 1000-character chunks with 200-character overlap,
-embedded via seekdb embed (384-dim, no API key), and indexed into SeekDB.
+embedded with the OpenVINO bge-small-en-v1.5 model (384-dim), and indexed
+into OceanBase/SeekDB.
 
 ## Run
 
@@ -99,29 +175,25 @@ What is task decomposition?
 
 Expected behavior:
 
-- The **retrieve** step searches the knowledge base.
-- The **generate** step produces an answer grounded in the retrieved context.
-- The final response renders as markdown.
+1. The **retrieve** node embeds the query, searches SeekDB, and reranks results.
+2. The **generate** node feeds context + question to the local LLM.
+3. The answer renders as markdown in the frontend.
 
 ## Hardware requirements
 
-- **Minimum**: 8 GB RAM, any x86_64 CPU with AVX2 (Intel 4th gen+, AMD Zen+)
-- **Recommended**: 16 GB RAM, Intel Core Ultra / Xeon with AMX for best throughput
-- **GPU acceleration**: Set `OPENVINO_DEVICE=GPU` with Intel Arc/iGPU
+- **Minimum**: 8 GB RAM, x86_64 CPU with AVX2 (Intel 4th gen+, AMD Zen+)
+- **Recommended**: 16 GB RAM, Intel Core Ultra / Xeon with AMX
+- **GPU acceleration**: Set `OPENVINO_DEVICE=GPU` with Intel Arc / iGPU
 - **NPU acceleration**: Set `OPENVINO_DEVICE=NPU` on Intel Core Ultra laptops
 
-## Using larger models
+## How it works
 
-For better quality, swap the LLM to a larger model:
+The RAG pipeline flows through a LangGraph `StateGraph`:
 
-```bash
-# Example: Phi-3-mini (3.8B params, INT4 ~2.2 GB)
-optimum-cli export openvino \
-  --model microsoft/Phi-3-mini-4k-instruct \
-  --task text-generation-with-past \
-  --weight-format int4 \
-  ./models/phi-3-mini/INT4_compressed_weights
+1. **Embed query** — bge-small-en-v1.5 converts the question to a 384-dim vector
+2. **Retrieve** — OceanBase/SeekDB returns top-k similar documents
+3. **Rerank** — bge-reranker-v2-m3 cross-encoder re-scores and keeps top 3
+4. **Generate** — TinyLlama (or your chosen LLM) produces an answer from context
 
-# Update .env
-LLM_MODEL_PATH=./models/phi-3-mini/INT4_compressed_weights
-```
+All 3 models load once at startup via `openvino_genai` pipelines. No PyTorch
+runtime is needed — only the OpenVINO inference engine.
