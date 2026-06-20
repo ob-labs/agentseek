@@ -174,12 +174,21 @@ Trade-offs vs the `langchain-huggingface` approach:
 | --- | --- | --- |
 | LangChain integration | Official, `bind_tools` works | Custom wrappers needed |
 | Reranking | Not supported | Native pipeline |
-| Install size | ~2 GB (PyTorch via optimum) | ~200 MB (no PyTorch) |
+| Runtime PyTorch | Yes (optimum-intel loads via torch) | No (pure C++ inference) |
 | `create_agent` compatible | Yes | No (`LLM` base, no `bind_tools`) |
 
-Use `openvino-genai` when you need reranking or want the smallest possible
-install. Use `langchain-huggingface` (this template's default) when you want
-standard LangChain tool-calling and `create_agent` compatibility.
+**Note on PyTorch**: both approaches need `optimum-cli` for initial model
+conversion, which pulls in PyTorch. The difference is at **inference runtime**:
+`langchain-huggingface` uses `optimum-intel` internally (which imports torch),
+while `openvino-genai` is a pure C++ inference engine with only a thin Python
+binding — no torch imported at runtime. In practice, since `optimum[openvino]`
+is in `pyproject.toml` for `convert-models`, PyTorch ends up installed in both
+cases. The benefit of `openvino-genai` is smaller runtime memory footprint
+(torch not loaded into process) and native reranking support.
+
+Use `openvino-genai` when you need reranking or want lower runtime memory.
+Use `langchain-huggingface` (this template's default) when you want standard
+LangChain tool-calling and `create_agent` compatibility.
 
 ## Hardware requirements
 

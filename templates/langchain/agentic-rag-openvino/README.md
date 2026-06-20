@@ -93,3 +93,8 @@ cd frontend && npm install && npm run dev  # frontend
 - **INT4 for LLM, FP32 for embeddings**: LLM benefits most from compression;
   embedding quality degrades with quantization.
 - **Supports CPU, GPU, NPU** via `OPENVINO_DEVICE` env var.
+- **PyTorch in the venv** (via `optimum[openvino]`) is used only for model
+  conversion (`convert-models`). At runtime, `langchain-huggingface` uses
+  optimum-intel which does import torch. The generated README documents an
+  alternative `openvino-genai` path that avoids torch at runtime and adds
+  native reranking — see "Advanced" section.
