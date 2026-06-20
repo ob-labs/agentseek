@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Annotated, Any
 
 from dotenv import load_dotenv
-from langchain_core.documents import Document
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langchain_oceanbase.vectorstores import OceanbaseVectorStore
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
 
 from .ov_models import OpenVINOEmbeddings, OpenVINOLLM, OpenVINOReranker
@@ -67,49 +68,33 @@ prompt_template = PromptTemplate.from_template(RAG_PROMPT)
 
 
 class RAGState(TypedDict):
-    messages: list[dict[str, Any]]
+    messages: Annotated[list[BaseMessage], add_messages]
     context: str
-    answer: str
+
+
+def _get_last_human_query(messages: list[BaseMessage]) -> str:
+    for msg in reversed(messages):
+        if isinstance(msg, HumanMessage):
+            return msg.content if isinstance(msg.content, str) else ""
+    return ""
 
 
 def retrieve_node(state: RAGState, config: RunnableConfig) -> dict:
     """Retrieve relevant documents for the last user message."""
-    messages = state["messages"]
-    query = ""
-    for msg in reversed(messages):
-        if isinstance(msg, dict) and msg.get("role") == "user":
-            query = msg["content"]
-            break
-        elif hasattr(msg, "type") and msg.type == "human":
-            query = msg.content
-            break
-
+    query = _get_last_human_query(state["messages"])
     docs = vector_store.similarity_search(query, k=6 if reranker else 4)
     if reranker:
         docs = list(reranker.compress_documents(docs, query))
-
     context = "\n\n".join(doc.page_content for doc in docs)
     return {"context": context}
 
 
 def generate_node(state: RAGState, config: RunnableConfig) -> dict:
     """Generate answer using retrieved context."""
-    messages = state["messages"]
-    query = ""
-    for msg in reversed(messages):
-        if isinstance(msg, dict) and msg.get("role") == "user":
-            query = msg["content"]
-            break
-        elif hasattr(msg, "type") and msg.type == "human":
-            query = msg.content
-            break
-
+    query = _get_last_human_query(state["messages"])
     filled_prompt = prompt_template.format(context=state["context"], question=query)
     answer = llm.invoke(filled_prompt)
-    return {
-        "answer": answer,
-        "messages": messages + [{"role": "assistant", "content": answer}],
-    }
+    return {"messages": [AIMessage(content=answer)]}
 
 
 builder = StateGraph(RAGState)

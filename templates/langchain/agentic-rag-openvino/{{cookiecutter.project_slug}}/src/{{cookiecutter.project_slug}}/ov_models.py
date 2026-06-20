@@ -112,8 +112,10 @@ class OpenVINOLLM(LLM):
 
         def generate():
             streamer.reset()
-            self.ov_pipe.generate(prompt, self.config, streamer)
-            streamer.end()
+            try:
+                self.ov_pipe.generate(prompt, self.config, streamer)
+            finally:
+                streamer.end()
 
         t = Thread(target=generate)
         t.start()

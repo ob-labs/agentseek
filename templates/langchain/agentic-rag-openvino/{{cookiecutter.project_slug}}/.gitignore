@@ -1,0 +1,8 @@
+.env
+.seekdb-data/
+models/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+dist/

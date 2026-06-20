@@ -19,4 +19,4 @@ services:
       retries: 60
       start_period: 60s
     volumes:
-      - ./.seekdb-data:/var/lib/oceanbase
+      - {{ cookiecutter.seekdb_path }}:/var/lib/oceanbase
