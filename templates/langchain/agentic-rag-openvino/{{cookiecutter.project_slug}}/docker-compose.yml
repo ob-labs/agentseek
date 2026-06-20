@@ -1,0 +1,10 @@
+services:
+  seekdb:
+    image: quay.io/oceanbase/seekdb:latest
+    ports:
+      - "2881:2881"
+    volumes:
+      - seekdb_data:{{ cookiecutter.seekdb_path }}
+
+volumes:
+  seekdb_data:

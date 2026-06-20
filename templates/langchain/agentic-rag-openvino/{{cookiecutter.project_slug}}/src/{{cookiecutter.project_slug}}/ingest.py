@@ -1,4 +1,4 @@
-"""Document ingestion CLI — builds a FAISS index with OpenVINO embeddings.
+"""Document ingestion CLI — indexes into OceanBase/SeekDB with OpenVINO embeddings.
 
 Usage:
     uv run ingest path/to/docs/
@@ -12,8 +12,8 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
+from langchain_oceanbase.vectorstores import OceanbaseVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from .ov_models import OpenVINOEmbeddings
@@ -22,13 +22,30 @@ load_dotenv()
 
 EMBEDDING_MODEL_PATH = os.getenv("EMBEDDING_MODEL_PATH", "{{ cookiecutter.embedding_model_path }}")
 DEVICE = os.getenv("OPENVINO_DEVICE", "{{ cookiecutter.device }}")
-FAISS_INDEX_PATH = os.getenv("FAISS_INDEX_PATH", "./faiss_index")
 
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
     chunk_overlap=200,
     add_start_index=True,
 )
+
+
+def _get_vector_store() -> OceanbaseVectorStore:
+    embeddings = OpenVINOEmbeddings.from_model_path(EMBEDDING_MODEL_PATH, device=DEVICE)
+    embedding_dim = len(embeddings.embed_query("dim"))
+    return OceanbaseVectorStore(
+        embedding_function=embeddings,
+        table_name=os.getenv("VECTOR_TABLE_NAME", "{{ cookiecutter.vector_table_name }}"),
+        connection_args={
+            "host": os.getenv("SEEKDB_HOST", "127.0.0.1"),
+            "port": os.getenv("SEEKDB_PORT", "2881"),
+            "user": os.getenv("SEEKDB_USER", "root@test"),
+            "password": os.getenv("SEEKDB_PASSWORD", ""),
+            "db_name": os.getenv("SEEKDB_DB_NAME", "{{ cookiecutter.seekdb_db_name }}"),
+        },
+        vidx_metric_type="l2",
+        embedding_dim=embedding_dim,
+    )
 
 
 def load_directory(directory: Path) -> list[Document]:
@@ -92,18 +109,9 @@ def main() -> None:
     splits = text_splitter.split_documents(all_docs)
     print(f"Split {len(all_docs)} document(s) into {len(splits)} chunks.")
 
-    embeddings = OpenVINOEmbeddings.from_model_path(EMBEDDING_MODEL_PATH, device=DEVICE)
-
-    index_path = Path(FAISS_INDEX_PATH)
-    if index_path.exists():
-        print(f"Loading existing index from {index_path}")
-        db = FAISS.load_local(str(index_path), embeddings, allow_dangerous_deserialization=True)
-        db.add_documents(splits)
-    else:
-        db = FAISS.from_documents(splits, embeddings)
-
-    db.save_local(str(index_path))
-    print(f"Indexed {len(splits)} chunks into {index_path}/")
+    vector_store = _get_vector_store()
+    ids = vector_store.add_documents(splits)
+    print(f"Indexed {len(ids)} chunks into table '{vector_store.table_name}'.")
 
 
 if __name__ == "__main__":

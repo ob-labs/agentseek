@@ -129,9 +129,8 @@ class OpenVINOLLM(LLM):
 class OpenVINOEmbeddings(Embeddings):
     """LangChain embeddings via OpenVINO GenAI TextEmbeddingPipeline."""
 
-    ov_pipe: Any = None
-
-    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+    def __init__(self, ov_pipe: Any):
+        self._ov_pipe = ov_pipe
 
     @classmethod
     def from_model_path(
@@ -144,10 +143,10 @@ class OpenVINOEmbeddings(Embeddings):
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         texts = [t.replace("\n", " ") for t in texts]
-        return self.ov_pipe.embed_documents(texts)
+        return self._ov_pipe.embed_documents(texts)
 
     def embed_query(self, text: str) -> List[float]:
-        return self.ov_pipe.embed_query(text)
+        return self._ov_pipe.embed_query(text)
 
 
 class OpenVINOReranker(BaseDocumentCompressor):

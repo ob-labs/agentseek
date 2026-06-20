@@ -1,14 +1,15 @@
 # {{ cookiecutter.project_name }}
 
-LangChain agentic RAG running entirely on local hardware with
-[OpenVINO](https://docs.openvino.ai/) — no cloud API keys required.
+LangChain RAG with local [OpenVINO](https://docs.openvino.ai/) LLM inference
+and [OceanBase/SeekDB](https://github.com/oceanbase/seekdb) vector store with
+seekdb embed (384-dim, no API key).
 
 Scaffolded with `agentseek create langchain/agentic-rag-openvino`.
 
-The backend serves a `create_agent(...)` graph through `langgraph dev`.
-All inference (LLM, embeddings, reranking) runs locally via OpenVINO GenAI.
-The frontend streams user messages, tool calls (retrieval), and the final
-markdown answer.
+The backend serves a retrieve→generate graph through `langgraph dev`.
+LLM generation runs locally via OpenVINO GenAI (no cloud API keys).
+Embeddings use seekdb embed (built into langchain-oceanbase).
+The frontend streams the RAG workflow with tool-call cards.
 
 ## Setup
 
@@ -25,15 +26,14 @@ npm install --prefix frontend
 uv run convert-models
 ```
 
-This downloads and converts three models to OpenVINO IR format:
+This downloads and converts:
 
 | Model | Purpose | Size |
 | --- | --- | --- |
 | TinyLlama-1.1B-Chat (INT4) | LLM generation | ~700 MB |
-| bge-small-en-v1.5 | Embeddings (384-dim) | ~130 MB |
 | bge-reranker-v2-m3 | Reranking (optional) | ~1.1 GB |
 
-To use a different LLM (e.g. Llama-3, Phi-3, Qwen2), convert it manually:
+To use a different LLM (e.g. Phi-3, Qwen2), convert it manually:
 
 ```bash
 optimum-cli export openvino --model <hf-model-id> --task text-generation-with-past --weight-format int4 ./models/<name>/INT4_compressed_weights
@@ -41,7 +41,13 @@ optimum-cli export openvino --model <hf-model-id> --task text-generation-with-pa
 
 Then update `LLM_MODEL_PATH` in `.env`.
 
-### 3. Configure environment
+### 3. Start SeekDB
+
+```bash
+docker compose up -d        # wait ~60s on first run
+```
+
+### 4. Configure environment
 
 ```bash
 cp .env.example .env
@@ -50,7 +56,7 @@ cp .env.example .env
 
 ## Ingest
 
-Before running the agent, ingest documents into the FAISS index:
+Before running the agent, ingest documents into the knowledge base:
 
 ```bash
 # Web pages
@@ -64,7 +70,7 @@ uv run ingest ./notes/ https://example.com/article ./paper.pdf
 ```
 
 Documents are split into 1000-character chunks with 200-character overlap,
-embedded locally via bge-small-en-v1.5 (384-dim), and stored in a FAISS index.
+embedded via seekdb embed (384-dim, no API key), and indexed into SeekDB.
 
 ## Run
 
@@ -93,9 +99,9 @@ What is task decomposition?
 
 Expected behavior:
 
-- A **Tool: retrieve** card appears while the agent searches the knowledge base.
-- The card collapses with a "DONE" badge after retrieval completes.
-- The final assistant response renders as markdown.
+- The **retrieve** step searches the knowledge base.
+- The **generate** step produces an answer grounded in the retrieved context.
+- The final response renders as markdown.
 
 ## Hardware requirements
 

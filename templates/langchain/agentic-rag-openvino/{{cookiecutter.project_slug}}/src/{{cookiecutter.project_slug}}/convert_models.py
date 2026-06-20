@@ -1,4 +1,4 @@
-"""Download and convert models to OpenVINO IR format.
+"""Download and convert 3 models to OpenVINO IR format.
 
 Usage:
     uv run convert-models
