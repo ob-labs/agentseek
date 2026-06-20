@@ -189,7 +189,7 @@ class OpenVINOReranker(BaseDocumentCompressor):
         outputs = self.ov_model(
             {"input_ids": features.input_ids, "attention_mask": features.attention_mask}
         )
-        scores = outputs[0][:, 1] if outputs[0].shape[1] > 1 else outputs[0].flatten()
+        scores = outputs[0].flatten()
         scores = 1 / (1 + np.exp(-scores))
         ranked = sorted(
             zip(scores, range(len(documents))), key=lambda x: x[0], reverse=True

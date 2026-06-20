@@ -8,9 +8,7 @@
   "seekdb_path": "./.seekdb-data",
   "seekdb_db_name": "test",
   "vector_table_name": "rag_documents",
-  "gateway_port": "8089",
   "frontend_port": "5174",
-  "copilotkit_port": "4001",
   "_agentseek_source_path": "",
   "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git"
 }

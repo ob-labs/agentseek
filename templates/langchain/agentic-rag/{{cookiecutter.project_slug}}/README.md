@@ -53,8 +53,9 @@ uv run ingest ./notes/ https://example.com/article
 ```
 
 Documents are split into 1000-character chunks with 200-character overlap,
-embedded via seekdb embed (384-dim, no API key), and indexed into the
-configured SeekDB table.
+embedded via `DefaultEmbeddingFunctionAdapter` from `langchain-oceanbase`
+(384-dim, runs locally, no API key), and indexed into the configured SeekDB
+table.
 
 ## Run
 

@@ -60,9 +60,7 @@ npm run dev
 | `seekdb_path` | ./.seekdb-data | Local data path (Docker volume mount) |
 | `seekdb_db_name` | test | SeekDB database name |
 | `vector_table_name` | rag_documents | Vector store table name |
-| `gateway_port` | 8089 | (Reserved, unused in langgraph mode) |
 | `frontend_port` | 5174 | Frontend Vite dev server port |
-| `copilotkit_port` | 4001 | (Reserved, unused in langgraph mode) |
 
 ## Generated layout
 
