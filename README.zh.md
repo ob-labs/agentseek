@@ -5,27 +5,14 @@
 [![License](https://img.shields.io/github/license/ob-labs/agentseek.svg)](LICENSE)
 [![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
 
-AgentSeek 是由 [OceanBase](https://www.oceanbase.com/) OSS Team 提供的
-数据库原生 agent harness。
-
-AgentSeek 帮团队把 agent 运行时数据变成数据库工作负载：turn、context、
-工具调用、任务、反馈、checkpoint、memory 和观测数据都保持可查询，而不是散落在
-日志和外围系统里。
+AgentSeek 是面向本地 AI 生态应用开发的 template-first toolkit。它帮助开发者
+创建应用、运行应用、查看本地生命周期状态，并诊断常见环境问题，然后再逐步进入
+[OceanBase](https://www.oceanbase.com/) AI 生态。
 
 > **《Deep Agents 实战》**：基于 AgentSeek 实验的 LangChain / DeepAgents 免费课程。
 > [课程仓库](https://github.com/datawhalechina/deepagents-in-action/)
 
 ## 从这里开始
-
-用 `uvx` 跑通最短路径：
-
-```bash
-mkdir agentseek-demo
-cd agentseek-demo
-AGENTSEEK_MODEL=openrouter:moonshotai/kimi-k2:free \
-AGENTSEEK_API_KEY=sk-or-v1-replace-me \
-uvx agentseek chat
-```
 
 创建一个可以继续编辑的项目：
 
@@ -37,10 +24,13 @@ uv sync
 npm install --prefix frontend
 ```
 
-在 `.env` 中设置 `AGENTSEEK_API_KEY`，然后启动本地应用：
+在 `.env` 中设置 `BUB_MODEL` 和对应 provider key，然后使用外部生命周期命令：
 
 ```bash
-uv run agentseek run --no-browser
+uvx agentseek doctor
+uvx agentseek dev
+uvx agentseek info
+uvx agentseek task --list
 ```
 
 ## 文档
@@ -49,7 +39,7 @@ uv run agentseek run --no-browser
 
 ## 相关项目
 
-- [Bub](https://github.com/bubbuild/bub)：AgentSeek 底层使用的 hook-first agent runtime。
+- [Bub](https://github.com/bubbuild/bub)：默认生成项目使用的 hook-first agent runtime。
 - [ContextSeek](https://github.com/ob-labs/contextseek)：语义记忆、检索和 MCP 集成。
 - [agentseek-api](https://github.com/ob-labs/agentseek-api)：面向生产 LangGraph 服务的 Agent Protocol server。
 - [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase)：OceanBase 上的 LangGraph checkpoint、store、向量检索和混合检索。

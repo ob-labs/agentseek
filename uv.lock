@@ -25,12 +25,25 @@ wheels = [
 ]
 
 [[package]]
+name = "ansimarkup"
+version = "1.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/17/57/2ca7c2ab234a01ac778b22fed926e7a63194699b4c1695517653723ae85f/ansimarkup-1.5.0.tar.gz", hash = "sha256:96c65d75bbed07d3dcbda8dbede8c2252c984f90d0ca07434b88a6bbf345fad3", size = 13959, upload-time = "2021-01-27T15:37:21.526Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/22/09/3ad81e40d752ef51a9a8c320c9385de0d98a4dad68c0e4f793befc610f56/ansimarkup-1.5.0-py2.py3-none-any.whl", hash = "sha256:3146ca74af5f69e48a9c3d41b31085c0d6378f803edeb364856d37c11a684acf", size = 11124, upload-time = "2021-01-27T15:37:20.308Z" },
+]
+
+[[package]]
 name = "agentseek"
 version = "0.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "bub" },
     { name = "cookiecutter" },
+    { name = "duty" },
     { name = "jinja2" },
     { name = "logfire" },
     { name = "pydantic-settings" },
@@ -66,6 +79,7 @@ plugins = [
 requires-dist = [
     { name = "bub", specifier = "==0.3.9" },
     { name = "cookiecutter", specifier = ">=2.5" },
+    { name = "duty", specifier = ">=1.9" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "logfire", specifier = ">=4.33.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
@@ -771,6 +785,18 @@ wheels = [
 ]
 
 [[package]]
+name = "duty"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "failprint" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c6/2c/71621d8745704916b6c82676507e1846879f0e03efc49030b78f54d005e9/duty-1.9.0.tar.gz", hash = "sha256:83ea0531f470ec49f6acf53d28fd36cabfe000e823f1643e8b0f68b89e7de0dc", size = 137218, upload-time = "2026-02-07T11:54:46.402Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/54/da/69c8dc76088584eae227d6ec3e682aabf972fbfe39bc037b6d6820c4529a/duty-1.9.0-py3-none-any.whl", hash = "sha256:f538c4afc0f513fa7cb9979ab39ada05abcd62afe9c1df90768749f09f0bdbc1", size = 125656, upload-time = "2026-02-07T11:54:44.577Z" },
+]
+
+[[package]]
 name = "dnspython"
 version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -811,6 +837,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8a/0e/97c33bf5009bdbac74fd2beace167cab3f978feb69cc36f1ef79360d6c4e/exceptiongroup-1.3.1-py3-none-any.whl", hash = "sha256:a7a39a3bd276781e98394987d3a5701d0c4edffb633bb7a5144577f82c773598", size = 16740, upload-time = "2025-11-21T23:01:53.443Z" },
+]
+
+[[package]]
+name = "failprint"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ansimarkup" },
+    { name = "jinja2" },
+    { name = "ptyprocess", marker = "sys_platform != 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/79/5e/a0135b4cb91fa3f73e76ee419c67efae904f283619640894100b126a1052/failprint-1.1.0.tar.gz", hash = "sha256:2c16e134781a743e6ee1e4a3d7acf314faa132e5435a8b5a8b774e87a34dc694", size = 47978, upload-time = "2026-02-07T17:31:10.624Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/a0/dec6c7f8e6fa37aaa91e45c7f56db964320c3e976ef04745c4e6a4369f74/failprint-1.1.0-py3-none-any.whl", hash = "sha256:44a21d49b3d36056e080ab7d9abf1f2269efa49c60b663e63d4ecebbfc5090e8", size = 21446, upload-time = "2026-02-07T17:31:08.793Z" },
 ]
 
 [[package]]
@@ -2343,6 +2383,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e9/e6/78ebbb10a8c8e4b61a59249394a4a594c1a7af95593dc933a349c8d00964/pyasn1_modules-0.4.2.tar.gz", hash = "sha256:677091de870a80aae844b1ca6134f54652fa2c8c5a52aa396440ac3106e941e6", size = 307892, upload-time = "2025-03-28T02:41:22.17Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/47/8d/d529b5d697919ba8c11ad626e835d4039be708a35b0d22de83a269a6682c/pyasn1_modules-0.4.2-py3-none-any.whl", hash = "sha256:29253a9207ce32b64c3ac6600edc75368f98473906e8fd1043bd6b5b1de2c14a", size = 181259, upload-time = "2025-03-28T02:41:19.028Z" },
+]
+
+[[package]]
+name = "ptyprocess"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/20/e5/16ff212c1e452235a90aeb09066144d0c5a6a8c0834397e03f5224495c4e/ptyprocess-0.7.0.tar.gz", hash = "sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220", size = 70762, upload-time = "2020-12-28T15:15:30.155Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/22/a6/858897256d0deac81a172289110f31629fc4cee19b6f01283303e18c8db3/ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35", size = 13993, upload-time = "2020-12-28T15:15:28.35Z" },
 ]
 
 [[package]]
