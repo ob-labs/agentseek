@@ -14,23 +14,21 @@ from __future__ import annotations
 
 import json
 import shutil
+import tomllib
 from pathlib import Path
 
 import pytest
 from cookiecutter.main import cookiecutter
+from typer.testing import CliRunner
 
 from agentseek.cli.commands import create as create_module
+from tests.cli_commands.helpers import build_command_app
 
 
 def _patch_template_for_test(template_dir: Path, tmp_path: Path) -> Path:
-    """Copy a template dir and inject ``_agentseek_source_path`` if missing."""
+    """Copy a template dir for isolated cookiecutter rendering."""
     patched = tmp_path / "patched_template" / template_dir.name
     shutil.copytree(template_dir, patched)
-    cc_file = patched / "cookiecutter.json"
-    cc_data = json.loads(cc_file.read_text(encoding="utf-8"))
-    if "_agentseek_source_path" not in cc_data:
-        cc_data["_agentseek_source_path"] = ""
-        cc_file.write_text(json.dumps(cc_data, indent=2) + "\n", encoding="utf-8")
     return patched
 
 
@@ -95,6 +93,12 @@ def test_template_renders_without_unrendered_jinja(
         f"unrendered Jinja in {pyproject}: contains '{{{{' — a cookiecutter "
         "variable was referenced but not substituted."
     )
+    pyproject_data = tomllib.loads(pyproject_text)
+    dependencies = pyproject_data["project"]["dependencies"]
+    assert "bub==0.3.9" in dependencies
+    assert "agentseek-ag-ui" in dependencies
+    assert "agentseek" not in dependencies
+    assert "duty>=1.9" in pyproject_data["dependency-groups"]["dev"]
 
     frontend_pkg = generated / "frontend" / "package.json"
     if frontend_pkg.is_file():
@@ -102,3 +106,50 @@ def test_template_renders_without_unrendered_jinja(
             json.loads(frontend_pkg.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             pytest.fail(f"frontend/package.json is not valid JSON: {exc}")
+
+
+@pytest.mark.parametrize(
+    ("type_name", "template_name", "template_dir"),
+    TEMPLATES,
+    ids=[f"{t}/{n}" for t, n, _ in TEMPLATES],
+)
+def test_template_lifecycle_commands_smoke(
+    type_name: str,
+    template_name: str,
+    template_dir: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Rendered templates expose the AgentSeek lifecycle commands."""
+    del type_name, template_name
+    patched = _patch_template_for_test(template_dir, tmp_path)
+    out_dir = tmp_path / "output"
+    out_dir.mkdir()
+    cookiecutter(
+        template=str(patched),
+        output_dir=str(out_dir),
+        no_input=True,
+    )
+
+    generated = next(p for p in out_dir.iterdir() if p.is_dir())
+    (generated / ".env").write_text(
+        "BUB_MODEL=openai:gpt-4o-mini\nBUB_OPENAI_API_KEY=test-key\n",
+        encoding="utf-8",
+    )
+    (generated / "frontend" / "node_modules").mkdir(parents=True)
+    monkeypatch.chdir(generated)
+
+    app = build_command_app()
+    runner = CliRunner()
+
+    info = runner.invoke(app, ["info"])
+    assert info.exit_code == 0, info.stdout + info.stderr
+    assert "Template: bub/default" in info.stdout
+
+    doctor = runner.invoke(app, ["doctor", "--strict"])
+    assert doctor.exit_code == 0, doctor.stdout + doctor.stderr
+    assert "ok" in doctor.stdout
+
+    dev = runner.invoke(app, ["dev", "--dry-run", "--skip-check"])
+    assert dev.exit_code == 0, dev.stdout + dev.stderr
+    assert "Startup plan" in dev.stdout

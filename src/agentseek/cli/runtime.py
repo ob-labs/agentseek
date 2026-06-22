@@ -9,7 +9,7 @@ from typing import Annotated
 
 import typer
 
-from agentseek.cli.commands import build, chat, create, deploy, run
+from agentseek.cli.commands import chat, create, dev, doctor, info, task
 
 AGENTSEEK_CLI_HELP = "AgentSeek is the Toolkit for App Development Lifecycle."
 AGENTSEEK_AGENT_MODE_HELP = AGENTSEEK_CLI_HELP
@@ -59,9 +59,15 @@ def apply_agentseek_runtime_command_layout(app: typer.Typer) -> None:
     _clear_cli_surface(app)
 
     app.add_typer(create.app, name="create", rich_help_panel=PROJECT_COMMAND_PANEL)
-    app.add_typer(run.app, name="run", rich_help_panel=PROJECT_COMMAND_PANEL)
-    app.add_typer(build.app, name="build", rich_help_panel=PROJECT_COMMAND_PANEL)
-    app.add_typer(deploy.app, name="deploy", rich_help_panel=PROJECT_COMMAND_PANEL)
+    app.add_typer(dev.app, name="dev", rich_help_panel=PROJECT_COMMAND_PANEL)
+    app.add_typer(info.app, name="info", rich_help_panel=PROJECT_COMMAND_PANEL)
+    app.add_typer(doctor.app, name="doctor", rich_help_panel=PROJECT_COMMAND_PANEL)
+    app.command(
+        "task",
+        rich_help_panel=PROJECT_COMMAND_PANEL,
+        context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []},
+        help="Run project duties through Duty's native parser.",
+    )(task.task)
 
 
 def register_app_profile_options(app: typer.Typer) -> None:
