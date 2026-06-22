@@ -183,14 +183,15 @@ def _checks(*, live: bool) -> list[Check]:
         (FRONTEND_PORT, "frontend port"),
         (COPILOTKIT_PORT, "copilotkit port"),
     ):
-        port_in_use = not _port_available(port)
-        status = "ok" if port_in_use else "fail" if live else "ok"
-        detail = f"Port {port} {'is listening' if live else 'is available'}."
-        fix = (
-            "Start the local app with `uvx agentseek dev` before running live checks."
-            if live
-            else f"Stop the process using port {port} or change the template port."
-        )
+        port_available = _port_available(port)
+        if live:
+            status = "fail" if port_available else "ok"
+            detail = f"Port {port} {'is not listening' if port_available else 'is listening'}."
+            fix = "Start the local app with `uvx agentseek dev` before running live checks."
+        else:
+            status = "ok" if port_available else "fail"
+            detail = f"Port {port} {'is available' if port_available else 'is already in use'}."
+            fix = f"Stop the process using port {port} or change the template port."
         checks.append(_check(status, name, detail, fix))
     return checks
 
