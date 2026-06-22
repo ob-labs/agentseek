@@ -45,8 +45,21 @@ def test_default_command_layout_mounts_lifecycle_commands() -> None:
     result = CliRunner().invoke(app, ["--help"])
 
     assert result.exit_code == 0
-    for command in ("create", "run", "build", "deploy"):
+    for command in ("create", "dev", "info", "doctor", "task"):
         assert command in result.output
+    for removed_command in ("run", "build", "deploy", "gateway"):
+        assert removed_command not in result.output
+
+
+def test_removed_commands_are_not_registered() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
+    apply_agentseek_runtime_command_layout(app)
+
+    runner = CliRunner()
+    for command in ("run", "build", "deploy", "gateway"):
+        result = runner.invoke(app, [command])
+        assert result.exit_code == 2
 
 
 # ---------------------------------------------------------------------------

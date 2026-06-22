@@ -5,27 +5,15 @@
 [![License](https://img.shields.io/github/license/ob-labs/agentseek.svg)](LICENSE)
 [![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
 
-AgentSeek is a database-native agent harness by the
-[OceanBase](https://en.oceanbase.com/) OSS Team.
-
-AgentSeek turns agent runtime data into a database workload: turns, context,
-tool calls, tasks, feedback, checkpoints, memory, and observability data stay
-queryable instead of being scattered across logs and side systems.
+AgentSeek is a template-first toolkit for developing AI ecosystem apps locally.
+It helps developers create an app, run it, inspect its local lifecycle, and
+diagnose common setup issues before moving deeper into the
+[OceanBase](https://en.oceanbase.com/) AI ecosystem.
 
 > **"Deep Agents in Action"**: a free LangChain / DeepAgents course with AgentSeek labs.
 > [Course repo](https://github.com/datawhalechina/deepagents-in-action/)
 
 ## Start Here
-
-Run the quickest local path with `uvx`:
-
-```bash
-mkdir agentseek-demo
-cd agentseek-demo
-AGENTSEEK_MODEL=openrouter:moonshotai/kimi-k2:free \
-AGENTSEEK_API_KEY=sk-or-v1-replace-me \
-uvx agentseek chat
-```
 
 Create a project you can edit:
 
@@ -37,10 +25,14 @@ uv sync
 npm install --prefix frontend
 ```
 
-Set `AGENTSEEK_API_KEY` in `.env`, then start the local app:
+Set `BUB_MODEL` and a matching Bub provider key in `.env`, then use the
+external lifecycle commands:
 
 ```bash
-uv run agentseek run --no-browser
+uvx agentseek doctor
+uvx agentseek dev
+uvx agentseek info
+uvx agentseek task --list
 ```
 
 ## Documentation
@@ -50,7 +42,7 @@ project is being redesigned: [docs/index.md](docs/index.md).
 
 ## Related Projects
 
-- [Bub](https://github.com/bubbuild/bub): hook-first agent runtime used underneath AgentSeek.
+- [Bub](https://github.com/bubbuild/bub): hook-first agent runtime used by the default generated project.
 - [ContextSeek](https://github.com/ob-labs/contextseek): semantic memory, retrieval, and MCP integration.
 - [agentseek-api](https://github.com/ob-labs/agentseek-api): Agent Protocol server for production LangGraph serving.
 - [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase): OceanBase-backed LangGraph checkpointing, store, vector search, and hybrid search.
