@@ -1,8 +1,0 @@
-{
-  "dependencies": [
-    "."
-  ],
-  "graphs": {
-    "agent": "./remote_graph.py:build_graph"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "project_name": "Sandbox Coding Agent",
-  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
-  "author": "Your Name",
-  "default_model_provider": "openai",
-  "default_model": "gpt-4.1-mini",
-  "langgraph_port": "2024",
-  "frontend_port": "5175"
-}
