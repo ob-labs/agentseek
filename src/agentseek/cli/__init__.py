@@ -8,20 +8,27 @@ Two layers:
 
 from __future__ import annotations
 
+from agentseek.cli.banner import AGENTSEEK_BANNER, format_agentseek_banner
 from agentseek.cli.runtime import (
+    AGENTSEEK_AGENT_MODE_HELP,
     AGENTSEEK_CLI_HELP,
-    AGENTSEEK_ONBOARD_BANNER,
-    AGENTSEEK_ONBOARD_WELCOME,
+    CliMode,
     agentseek_version,
+    apply_agentseek_agent_command_layout,
     apply_agentseek_runtime_command_layout,
-    resolve_enabled_channels,
+    register_app_profile_options,
+    resolve_cli_mode,
 )
 
 __all__ = [
+    "AGENTSEEK_AGENT_MODE_HELP",
+    "AGENTSEEK_BANNER",
     "AGENTSEEK_CLI_HELP",
-    "AGENTSEEK_ONBOARD_BANNER",
-    "AGENTSEEK_ONBOARD_WELCOME",
+    "CliMode",
     "agentseek_version",
+    "apply_agentseek_agent_command_layout",
     "apply_agentseek_runtime_command_layout",
-    "resolve_enabled_channels",
+    "format_agentseek_banner",
+    "register_app_profile_options",
+    "resolve_cli_mode",
 ]
