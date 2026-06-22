@@ -5,17 +5,18 @@
 [![License](https://img.shields.io/github/license/ob-labs/agentseek.svg)](LICENSE)
 [![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
 
-AgentSeek is a template-first toolkit for developing AI ecosystem apps locally.
-It helps developers create an app, run it, inspect its local lifecycle, and
-diagnose common setup issues before moving deeper into the
-[OceanBase](https://en.oceanbase.com/) AI ecosystem.
+AgentSeek is an application development lifecycle toolkit for AI ecosystem apps.
+
+It helps you create a working app, check local readiness, run the development
+stack, and expose project tasks through one consistent command surface.
+
+Each template can choose its own runtime and project layout. AgentSeek provides
+the shared lifecycle workflow around those generated apps.
 
 > **"Deep Agents in Action"**: a free LangChain / DeepAgents course with AgentSeek labs.
 > [Course repo](https://github.com/datawhalechina/deepagents-in-action/)
 
-## Start Here
-
-Create a project you can edit:
+## Quickstart
 
 ```bash
 uvx agentseek create bub/default --no-input
@@ -25,31 +26,48 @@ uv sync
 npm install --prefix frontend
 ```
 
-Set `BUB_MODEL` and a matching Bub provider key in `.env`, then use the
-external lifecycle commands:
+Set the model and provider credentials required by the selected template.
 
 ```bash
 uvx agentseek doctor
 uvx agentseek dev
-uvx agentseek info
-uvx agentseek task --list
 ```
+
+## Toolkit Surface
+
+| Command | Purpose |
+| --- | --- |
+| `create` | Render an app template. |
+| `doctor` | Check local project readiness. |
+| `dev` | Run the local development stack. |
+| `info` | Print project entry points and lifecycle metadata. |
+| `task` | Run project-defined tasks. |
+
+## Core Concepts
+
+- A template creates a complete editable app.
+- A lifecycle file defines how the app is checked and run.
+- AgentSeek gives those lifecycle tasks a stable command interface.
+
+Bub is one available template path. Future templates can expose the same
+lifecycle commands with different runtimes.
 
 ## Documentation
 
-The documentation is temporarily reduced to a single placeholder while the
-project is being redesigned: [docs/index.md](docs/index.md).
+- [Documentation home](docs/index.md)
+- [Get started](docs/get-started/index.md)
+- [Guides](docs/guides/index.md)
+- [Reference](docs/reference/index.md)
+- [Concepts](docs/concepts/index.md)
 
 ## Related Projects
 
-- [Bub](https://github.com/bubbuild/bub): hook-first agent runtime used by the default generated project.
+- [Bub](https://github.com/bubbuild/bub): hook-first agent runtime used by one AgentSeek template path.
 - [ContextSeek](https://github.com/ob-labs/contextseek): semantic memory, retrieval, and MCP integration.
 - [agentseek-api](https://github.com/ob-labs/agentseek-api): Agent Protocol server for production LangGraph serving.
 - [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase): OceanBase-backed LangGraph checkpointing, store, vector search, and hybrid search.
 
 ## Development
-
-Contributors work from a local source copy:
 
 ```bash
 git clone https://github.com/ob-labs/agentseek.git

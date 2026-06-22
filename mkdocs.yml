@@ -2,11 +2,27 @@ site_name: agentseek
 site_url: https://ob-labs.github.io/agentseek/
 repo_url: https://github.com/ob-labs/agentseek
 repo_name: ob-labs/agentseek
-site_description: A database-native agent harness for runtime data workflows, powered by Bub.
+site_description: Application development lifecycle toolkit for AI ecosystem apps.
 edit_uri: edit/dev/docs/
 
 nav:
   - Home: index.md
+  - Get Started:
+      - Overview: get-started/index.md
+  - Guides:
+      - Overview: guides/index.md
+      - Create a Project: guides/create-project.md
+      - Check a Project: guides/check-project.md
+      - Run Local Development: guides/run-local-development.md
+      - Run Project Tasks: guides/run-project-tasks.md
+  - Reference:
+      - Overview: reference/index.md
+      - CLI: reference/cli.md
+      - Lifecycle File: reference/lifecycle-file.md
+      - Templates: reference/templates.md
+  - Concepts:
+      - Overview: concepts/index.md
+      - Lifecycle Toolkit: concepts/lifecycle-toolkit.md
 
 theme:
   name: terminal
