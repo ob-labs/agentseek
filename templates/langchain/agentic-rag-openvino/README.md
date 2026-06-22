@@ -54,7 +54,8 @@ graph = create_agent(model=model, tools=[retrieve], system_prompt=PROMPT)
 ## Quick start
 
 ```bash
-uvx cookiecutter templates/langchain/agentic-rag-openvino
+uv tool install agentseek                              # install the agentseek CLI once
+agentseek create langchain/agentic-rag-openvino        # scaffold the project
 cd <project_slug>
 cp .env.example .env
 uv sync

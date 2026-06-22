@@ -32,7 +32,8 @@ You also need a running SeekDB instance. The generated project includes a
 
 ```bash
 # 1. Scaffold
-uvx cookiecutter templates/langchain/agentic-rag
+uv tool install agentseek                       # install the agentseek CLI once
+agentseek create langchain/agentic-rag          # scaffold the project
 
 # 2. Backend
 cd <project_slug>
