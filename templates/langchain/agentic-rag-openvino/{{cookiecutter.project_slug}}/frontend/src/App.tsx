@@ -85,7 +85,7 @@ function buildRows(messages: Message[]): Row[] {
 
 export default function App() {
   const apiUrl =
-    import.meta.env.VITE_LANGGRAPH_API_URL ?? "http://127.0.0.1:2024";
+    import.meta.env.VITE_LANGGRAPH_API_URL ?? "http://127.0.0.1:{{ cookiecutter.langgraph_port }}";
 
   const stream = useStream<StreamState>({
     apiUrl,
@@ -105,7 +105,7 @@ export default function App() {
 
   return (
     <main>
-      <h1>Agentic RAG</h1>
+      <h1>{{ cookiecutter.project_name }}</h1>
 
       <section className="chat" aria-label="Conversation">
         {rows.length === 0 && (

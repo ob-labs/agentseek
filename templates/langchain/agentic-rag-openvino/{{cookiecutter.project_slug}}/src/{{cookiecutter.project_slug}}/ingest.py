@@ -112,6 +112,8 @@ def main() -> None:
     print(f"Split {len(all_docs)} document(s) into {len(splits)} chunks.")
 
     vector_store = _get_vector_store()
+    # NOTE: Re-running ingest will add duplicate documents. To avoid this,
+    # clear the table first or use upsert logic before re-indexing.
     ids = vector_store.add_documents(splits)
     print(f"Indexed {len(ids)} chunks into table '{vector_store.table_name}'.")
 

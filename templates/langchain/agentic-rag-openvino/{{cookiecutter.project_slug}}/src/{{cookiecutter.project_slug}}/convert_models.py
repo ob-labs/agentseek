@@ -6,21 +6,25 @@ Usage:
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
+# Model IDs default to cookiecutter values but can be overridden via env vars.
+LLM_MODEL_ID = os.getenv("LLM_MODEL_ID", "{{ cookiecutter.llm_model_id }}")
+EMBEDDING_MODEL_ID = os.getenv("EMBEDDING_MODEL_ID", "{{ cookiecutter.embedding_model_id }}")
 
 MODELS = {
     "llm": {
-        "model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-        "output_dir": "./models/tiny-llama-1b-chat/INT4_compressed_weights",
+        "model_id": LLM_MODEL_ID,
+        "output_dir": "{{ cookiecutter.llm_model_path }}",
         "task": "text-generation-with-past",
         "weight_format": "int4",
     },
     "embedding": {
-        "model_id": "BAAI/bge-small-en-v1.5",
-        "output_dir": "./models/bge-small-en-v1.5",
+        "model_id": EMBEDDING_MODEL_ID,
+        "output_dir": "{{ cookiecutter.embedding_model_path }}",
         "task": "feature-extraction",
         "weight_format": None,
     },

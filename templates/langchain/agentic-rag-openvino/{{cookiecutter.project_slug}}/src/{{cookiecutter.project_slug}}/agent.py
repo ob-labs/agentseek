@@ -31,22 +31,39 @@ embeddings = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL_PATH,
     model_kwargs={"device": "cpu", "backend": "openvino"},
 )
-EMBEDDING_DIM = len(embeddings.embed_query("dim"))
+
+_embedding_dim: int | None = None
+
+
+def _get_embedding_dim() -> int:
+    """Lazily compute embedding dimension to avoid inference at import time."""
+    global _embedding_dim
+    if _embedding_dim is None:
+        _embedding_dim = len(embeddings.embed_query("dim"))
+    return _embedding_dim
+
 
 # --- Vector store ---
-vector_store = OceanbaseVectorStore(
-    embedding_function=embeddings,
-    table_name=VECTOR_TABLE_NAME,
-    connection_args={
-        "host": SEEKDB_HOST,
-        "port": SEEKDB_PORT,
-        "user": SEEKDB_USER,
-        "password": SEEKDB_PASSWORD,
-        "db_name": SEEKDB_DB_NAME,
-    },
-    vidx_metric_type="l2",
-    embedding_dim=EMBEDDING_DIM,
-)
+try:
+    vector_store = OceanbaseVectorStore(
+        embedding_function=embeddings,
+        table_name=VECTOR_TABLE_NAME,
+        connection_args={
+            "host": SEEKDB_HOST,
+            "port": SEEKDB_PORT,
+            "user": SEEKDB_USER,
+            "password": SEEKDB_PASSWORD,
+            "db_name": SEEKDB_DB_NAME,
+        },
+        vidx_metric_type="l2",
+        embedding_dim=_get_embedding_dim(),
+    )
+except Exception as exc:
+    raise ConnectionError(
+        f"Cannot connect to SeekDB at {SEEKDB_HOST}:{SEEKDB_PORT}. "
+        "Did you run `docker compose up -d`?  "
+        f"Original error: {exc}"
+    ) from exc
 
 
 @tool(response_format="content_and_artifact")

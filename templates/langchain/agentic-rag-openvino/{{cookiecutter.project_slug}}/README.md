@@ -28,6 +28,10 @@ times to search the knowledge base.
 
 ## Setup
 
+> **Python 3.10+ required** (not 3.12+). OpenVINO runtime and
+> `optimum[openvino]` have limited Python 3.13+ support, so this template
+> uses `requires-python = ">=3.10"`.
+
 ### 1. Install dependencies
 
 ```bash

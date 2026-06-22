@@ -3,12 +3,15 @@
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
   "author": "Your Name",
   "system_prompt": "You are a helpful assistant. Use the following context to answer the user's question. If the context does not contain relevant information, say you don't know.",
+  "langgraph_port": "2024",
+  "frontend_port": "5174",
+  "llm_model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "embedding_model_id": "BAAI/bge-small-en-v1.5",
   "llm_model_path": "./models/tiny-llama-1b-chat/INT4_compressed_weights",
   "embedding_model_path": "./models/bge-small-en-v1.5",
   "device": "CPU",
   "seekdb_db_name": "test",
   "vector_table_name": "rag_documents",
-  "frontend_port": "5174",
   "_agentseek_source_path": "",
   "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git"
 }
