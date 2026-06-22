@@ -1,8 +1,0 @@
-{
-  "dependencies": [
-    "."
-  ],
-  "graphs": {
-    "{{ cookiecutter.assistant_id }}": "./src/{{ cookiecutter.project_slug }}/remote_graph.py:graph"
-  }
-}

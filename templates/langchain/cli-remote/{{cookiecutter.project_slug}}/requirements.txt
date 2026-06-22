@@ -1,4 +1,0 @@
-langchain>=1.0.0
-langchain-openai>=0.3.0
-langgraph-cli[inmem]
-pydantic-settings>=2.0.0

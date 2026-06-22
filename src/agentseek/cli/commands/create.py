@@ -15,11 +15,11 @@ to ``contrib/``).  At runtime the command resolves them in two ways:
 Spec resolution:
 
 * ``agentseek create``                                — interactive type + template selection.
-* ``agentseek create deepagents``                     — ``templates/deepagents/default``.
-* ``agentseek create langchain/cli-remote``           — ``templates/langchain/cli-remote``.
-* ``agentseek create langchain --list-templates``     — list templates available for the type.
-* ``agentseek create langchain --template cli-remote``— same as ``langchain/cli-remote``.
-* ``agentseek create langchain --template``           — list templates for the type (same as --list-templates).
+* ``agentseek create bub``                            — ``templates/bub/default``.
+* ``agentseek create bub/default``                    — ``templates/bub/default``.
+* ``agentseek create bub --list-templates``           — list templates available for the type.
+* ``agentseek create bub --template default``         — same as ``bub/default``.
+* ``agentseek create bub --template``                 — list templates for the type (same as --list-templates).
 * ``agentseek create --template``                     — list all templates across all types.
 * ``agentseek create https://github.com/x/y.git``    — passthrough to cookiecutter.
 * ``agentseek create /path/to/template``              — passthrough to cookiecutter.
@@ -65,8 +65,8 @@ app = typer.Typer(
     cls=_SwallowArgsGroup,
 )
 
-KNOWN_TYPES: tuple[str, ...] = ("deepagents", "langchain", "bub")
-DEFAULT_TYPE = "deepagents"
+KNOWN_TYPES: tuple[str, ...] = ("bub",)
+DEFAULT_TYPE = "bub"
 
 _TEMPLATE_LIST_SENTINEL = "__list__"
 
@@ -251,7 +251,7 @@ def _print_all_templates(templates_root: Path, descriptions: dict[str, str]) -> 
         _print_templates_table(project_type, templates, descriptions)
     if total:
         typer.echo("\n  Usage:")
-        typer.echo("    agentseek create <type>/<name>       e.g. agentseek create langchain/cli-remote")
+        typer.echo("    agentseek create <type>/<name>       e.g. agentseek create bub/default")
         typer.echo("    agentseek create <type>              use default template for the type")
         typer.echo("    agentseek create                     interactive selection")
         typer.echo()
@@ -370,8 +370,7 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
         nargs="?",
         default=None,
         help=(
-            "Template spec. Can be a framework type (deepagents, langchain, bub), "
-            "a type/name pair (langchain/cli-remote), a git URL, or a local path."
+            "Template spec. Can be a framework type (bub), a type/name pair (bub/default), a git URL, or a local path."
         ),
     )
     parser.add_argument(
@@ -380,7 +379,7 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
         default=None,
         const=_TEMPLATE_LIST_SENTINEL,
         help=(
-            "Named template under the chosen type (e.g. --template cli-remote). "
+            "Named template under the chosen type (e.g. --template default). "
             "Pass --template with no value to list available templates."
         ),
     )
@@ -478,11 +477,11 @@ def _split_spec(args: argparse.Namespace) -> tuple[str | None, str | None]:
     spec = args.spec
     if spec is None:
         return None, None
-    # "langchain/cli-remote" → ("langchain", "cli-remote")
+    # "bub/default" → ("bub", "default")
     if "/" in spec and not _is_external_spec(spec):
         parts = spec.split("/", 1)
         return parts[0], parts[1]
-    # "deepagents" → ("deepagents", None) — name resolved later
+    # "bub" → ("bub", None) — name resolved later
     return spec, None
 
 

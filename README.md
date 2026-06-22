@@ -30,30 +30,23 @@ uvx agentseek chat
 Create a project you can edit:
 
 ```bash
-uvx agentseek create deepagents/default --no-input
-cd my_deepagent
+uvx agentseek create bub/default --no-input
+cd my_bub_agent
 cp .env.example .env
 uv sync
-uv pip install -r requirements.txt
+npm install --prefix frontend
 ```
 
-Set `AGENTSEEK_API_KEY` in `.env`, then start the harness gateway:
+Set `AGENTSEEK_API_KEY` in `.env`, then start the local app:
 
 ```bash
-export PYTHONPATH=src
-export AGENTSEEK_LANGCHAIN_SPEC=my_deepagent.demo_binding:build_spec
-export AGENTSEEK_AG_UI_PORT=18088
-uv run agentseek gateway --enable-channel ag-ui
+uv run agentseek run --no-browser
 ```
 
 ## Documentation
 
-- [Home](docs/index.md): the shortest route through the docs.
-- [Tutorials](docs/tutorials/index.md): guided first runs.
-- [First harness app](docs/tutorials/02-first-harness-app.md): create and run an editable project.
-- [How-to guides](docs/how-to/index.md): focused recipes after the first run.
-- [Reference](docs/reference/index.md): commands, environment variables, packages, and templates.
-- [Hub](docs/hub.md): bundled and contrib integrations.
+The documentation is temporarily reduced to a single placeholder while the
+project is being redesigned: [docs/index.md](docs/index.md).
 
 ## Related Projects
 

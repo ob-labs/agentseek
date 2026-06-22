@@ -30,30 +30,22 @@ uvx agentseek chat
 创建一个可以继续编辑的项目：
 
 ```bash
-uvx agentseek create deepagents/default --no-input
-cd my_deepagent
+uvx agentseek create bub/default --no-input
+cd my_bub_agent
 cp .env.example .env
 uv sync
-uv pip install -r requirements.txt
+npm install --prefix frontend
 ```
 
-在 `.env` 中设置 `AGENTSEEK_API_KEY`，然后启动 harness gateway：
+在 `.env` 中设置 `AGENTSEEK_API_KEY`，然后启动本地应用：
 
 ```bash
-export PYTHONPATH=src
-export AGENTSEEK_LANGCHAIN_SPEC=my_deepagent.demo_binding:build_spec
-export AGENTSEEK_AG_UI_PORT=18088
-uv run agentseek gateway --enable-channel ag-ui
+uv run agentseek run --no-browser
 ```
 
 ## 文档
 
-- [首页](docs/index.zh.md)：从文档中选择最短路径。
-- [教程](docs/tutorials/index.zh.md)：跟随引导完成首次运行。
-- [第一个 harness 应用](docs/tutorials/02-first-harness-app.zh.md)：创建并运行可编辑项目。
-- [操作指南](docs/how-to/index.zh.md)：首次跑通后的任务食谱。
-- [参考](docs/reference/index.zh.md)：命令、环境变量、包和模板。
-- [Hub](docs/hub.zh.md)：bundled 与 contrib integrations。
+重构期间，文档暂时收缩为一个占位页：[docs/index.md](docs/index.md)。
 
 ## 相关项目
 

@@ -1,11 +1,3 @@
 {
-  "deepagents/default": "Local create_deep_agent runnable bound to agentseek-langchain.",
-  "deepagents/research": "Pure DeepAgents research agent with Tavily search and streamed tool/sub-agent UI.",
-  "deepagents/content-builder": "DeepAgents content builder with brand memory, skills, subagents, image generation, and streamed UI.",
-  "langchain/default": "LangChain create_agent + CopilotKit middleware over agentseek-langchain.",
-  "langchain/cli-remote": "Remote LangGraph CLI agent bridged via LangGraphClientRunnable.",
-  "langchain/sandbox": "DeepAgents sandbox coding agent with LangSmith sandbox backend, tool-call cards, and join/rejoin streaming UI.",
-  "langchain/markdown-messages": "Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek runtime.",
-  "bub/default": "Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain.",
-  "bub/contextseek": "Bub agent with ContextSeek semantic memory layer and ctx HTTP API for feeding and inspecting context."
+  "bub/default": "Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain."
 }

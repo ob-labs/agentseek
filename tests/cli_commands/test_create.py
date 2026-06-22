@@ -70,11 +70,11 @@ def test_unknown_type_exits_2() -> None:
 
 
 def test_list_templates_for_type_prints_bundled_names() -> None:
-    templates = create_module._list_templates("langchain")
+    templates = create_module._list_templates("bub")
     assert len(templates) >= 1
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--list-templates"])
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--list-templates"])
     assert result.exit_code == 0
-    assert "langchain" in result.output
+    assert "bub" in result.output
     for name in templates:
         assert name in result.output
 
@@ -96,12 +96,12 @@ def test_template_flag_no_value_lists_all_templates() -> None:
 
 
 def test_template_flag_no_value_with_type_lists_type_templates() -> None:
-    """``agentseek create langchain --template`` should list langchain templates only."""
-    templates = create_module._list_templates("langchain")
+    """``agentseek create bub --template`` should list bub templates only."""
+    templates = create_module._list_templates("bub")
     assert len(templates) >= 1
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--template"])
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--template"])
     assert result.exit_code == 0
-    assert "langchain" in result.output
+    assert "bub" in result.output
     for name in templates:
         assert name in result.output
     assert "Usage:" not in result.output
@@ -113,8 +113,6 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
         monkeypatch,
         tmp_path,
         {
-            "deepagents/default": "Default DeepAgents template.",
-            "langchain/remote-only": "Remote-only LangChain template.",
             "bub/default": "Default Bub template.",
         },
     )
@@ -123,9 +121,8 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
 
     assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
-    assert "deepagents/default" in result.output
-    assert "langchain/remote-only" in result.output
-    assert "Remote-only LangChain template." in result.output
+    assert "bub/default" in result.output
+    assert "Default Bub template." in result.output
     assert "Usage:" in result.output
 
 
@@ -134,14 +131,14 @@ def test_template_flag_no_value_for_type_uses_remote_checkout(monkeypatch, tmp_p
     clone_calls = _mock_remote_template_repo(
         monkeypatch,
         tmp_path,
-        {"langchain/remote-only": "Remote-only LangChain template."},
+        {"bub/remote-only": "Remote-only Bub template."},
     )
 
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--template", "--checkout", "release/next"])
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--template", "--checkout", "release/next"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, "release/next", str(tmp_path / "cookiecutters"), True)]
-    assert "langchain/remote-only" in result.output
+    assert "bub/remote-only" in result.output
     assert "Usage:" not in result.output
 
 
@@ -150,16 +147,16 @@ def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path:
     clone_calls = _mock_remote_template_repo(
         monkeypatch,
         tmp_path,
-        {"langchain/cached": "Cached LangChain template."},
+        {"bub/cached": "Cached Bub template."},
         cached=True,
     )
 
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--template"])
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--template"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == []
-    assert "langchain/cached" in result.output
-    assert "Cached LangChain template." in result.output
+    assert "bub/cached" in result.output
+    assert "Cached Bub template." in result.output
 
 
 # -- template resolution ---------------------------------------------------
@@ -178,7 +175,7 @@ def test_resolve_type_template_local() -> None:
 
 
 def test_list_templates_returns_names() -> None:
-    templates = create_module._list_templates("langchain")
+    templates = create_module._list_templates("bub")
     assert len(templates) >= 1
     assert "default" in templates
 
@@ -191,17 +188,17 @@ def test_list_templates_unknown_type_returns_empty() -> None:
 
 
 def test_spec_with_slash_splits_into_type_and_name() -> None:
-    """``langchain/cli-remote`` → type=langchain, name=cli-remote."""
-    args = create_module._parse_argv(["langchain/cli-remote", "--no-input"])
+    """``bub/default`` → type=bub, name=default."""
+    args = create_module._parse_argv(["bub/default", "--no-input"])
     project_type, template_name = create_module._split_spec(args)
-    assert project_type == "langchain"
-    assert template_name == "cli-remote"
+    assert project_type == "bub"
+    assert template_name == "default"
 
 
 def test_spec_plain_type_returns_none_name() -> None:
-    args = create_module._parse_argv(["deepagents", "--no-input"])
+    args = create_module._parse_argv(["bub", "--no-input"])
     project_type, template_name = create_module._split_spec(args)
-    assert project_type == "deepagents"
+    assert project_type == "bub"
     assert template_name is None
 
 
@@ -222,8 +219,8 @@ def test_is_external_spec_url() -> None:
 
 
 def test_is_external_spec_local_type() -> None:
-    assert not create_module._is_external_spec("deepagents")
-    assert not create_module._is_external_spec("langchain/cli-remote")
+    assert not create_module._is_external_spec("bub")
+    assert not create_module._is_external_spec("bub/default")
 
 
 # -- integration with cookiecutter via monkeypatch -------------------------
@@ -246,21 +243,21 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
 
     result = _runner().invoke(
         build_command_app(),
-        ["create", "deepagents", "--template", "default", "--no-input"],
+        ["create", "bub", "--template", "default", "--no-input"],
     )
 
     assert result.exit_code == 0, result.output
     source = captured["source"]
     assert isinstance(source, TemplateSource)
     assert source.directory is None
-    assert "deepagents" in source.template and "default" in source.template
+    assert "bub" in source.template and "default" in source.template
     assert captured["no_input"] is True
     assert Path(str(captured["output_dir"])) == tmp_path
     assert (tmp_path / "fake-project" / "README.md").read_text(encoding="utf-8") == "ok"
 
 
 def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
-    """``agentseek create langchain/cli-remote --no-input`` should resolve correctly."""
+    """``agentseek create bub/default --no-input`` should resolve correctly."""
     captured: dict[str, object] = {}
 
     def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
@@ -271,14 +268,14 @@ def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path
 
     result = _runner().invoke(
         build_command_app(),
-        ["create", "langchain/cli-remote", "--no-input"],
+        ["create", "bub/default", "--no-input"],
     )
 
     assert result.exit_code == 0, result.output
     source = captured["source"]
     assert isinstance(source, TemplateSource)
     assert source.directory is None
-    assert "langchain" in source.template and "cli-remote" in source.template
+    assert "bub" in source.template and "default" in source.template
 
 
 def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> None:

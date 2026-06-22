@@ -1,9 +1,0 @@
-{
-  "dependencies": [
-    "."
-  ],
-  "graphs": {
-    "agent": "./src/{{ cookiecutter.project_slug }}/agent.py:graph"
-  },
-  "env": "./.env"
-}
