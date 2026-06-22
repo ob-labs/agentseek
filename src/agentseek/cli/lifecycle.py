@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from inspect import Parameter, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, NoReturn, cast
 
 import typer
 from duty import Collection
@@ -177,13 +177,14 @@ def _load_metadata(module: ModuleType) -> dict[str, Any]:
             'Add AGENTSEEK = {"version": 1} to the project lifecycle file.',
         )
 
-    version = raw.get("version")
+    metadata = cast(dict[str, Any], raw)
+    version = metadata.get("version")
     if version != SUPPORTED_LIFECYCLE_VERSION:
         _exit_project_error(
             f"Unsupported AgentSeek lifecycle version: {version!r}.",
             f"This AgentSeek release supports version {SUPPORTED_LIFECYCLE_VERSION}.",
         )
-    return raw
+    return metadata
 
 
 def _validate_tasks(collection: Collection) -> None:
@@ -196,7 +197,7 @@ def _validate_tasks(collection: Collection) -> None:
         )
 
 
-def _exit_project_error(summary: str, detail: str) -> None:
+def _exit_project_error(summary: str, detail: str) -> NoReturn:
     typer.echo(summary, err=True)
     typer.echo(detail, err=True)
     raise typer.Exit(2)
