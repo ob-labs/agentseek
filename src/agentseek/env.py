@@ -17,8 +17,7 @@ DEFAULT_AGENTSEEK_HOME = ".agentseek"
 # Basename of Bub config under ``BUB_HOME``.
 DEFAULT_AGENTSEEK_CONFIG = "config.yml"
 
-# Under ``BUB_HOME`` for ``agentseek plugin install`` when ``BUB_PROJECT`` / ``AGENTSEEK_PROJECT`` are unset.
-# Must match ``uv init --name`` in ``_ensure_plugin_sandbox`` (cli/runtime.py).
+# Under ``BUB_HOME`` when ``BUB_PROJECT`` / ``AGENTSEEK_PROJECT`` are unset.
 DEFAULT_PLUGIN_SANDBOX = "agentseek-project"
 
 

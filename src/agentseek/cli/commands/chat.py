@@ -1,20 +1,10 @@
-"""``agentseek chat`` — interactive CLI chat session with lifecycle channels."""
+"""Agent mode interactive chat session."""
 
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Iterable
 
 import typer
-
-
-def resolve_enabled_channels(framework, primary_channels: Iterable[str]) -> list[str]:
-    """Enable requested channels plus Bub support channels exposed as ``*.lifecycle``."""
-    enabled = list(dict.fromkeys(primary_channels))
-    for channel_name in framework.get_channels(lambda _message: None):
-        if channel_name.endswith(".lifecycle") and channel_name not in enabled:
-            enabled.append(channel_name)
-    return enabled
 
 
 def chat(
@@ -30,7 +20,7 @@ def chat(
     framework = ctx.ensure_object(BubFramework)
     manager = ChannelManager(
         framework,
-        enabled_channels=resolve_enabled_channels(framework, ["cli"]),
+        enabled_channels=["cli"],
         stream_output=True,
     )
     channel = manager.get_channel("cli")
