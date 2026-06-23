@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import AsyncIterable
 
 import typer
@@ -16,6 +17,8 @@ from agentseek.cli import (
     register_app_profile_options,
 )
 from agentseek.cli.commands import chat as chat_module
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 
 class _DummyChannel(Channel):
@@ -71,8 +74,9 @@ def test_lifecycle_command_help_does_not_advertise_subcommands() -> None:
     for command in ("doctor", "dev", "info"):
         result = runner.invoke(app, [command, "--help"])
         assert result.exit_code == 0
-        assert f"Usage: agentseek {command} [OPTIONS]" in result.output
-        assert "COMMAND [ARGS]" not in result.output
+        output = ANSI_RE.sub("", result.output)
+        assert f"Usage: agentseek {command} [OPTIONS]" in output
+        assert "COMMAND [ARGS]" not in output
 
 
 def test_task_help_is_available_outside_lifecycle_project() -> None:
