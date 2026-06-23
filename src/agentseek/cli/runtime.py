@@ -12,7 +12,7 @@ import typer
 from agentseek.cli.commands import chat, create, dev, doctor, info, task
 
 AGENTSEEK_CLI_HELP = "AgentSeek is the Toolkit for App Development Lifecycle."
-AGENTSEEK_AGENT_MODE_HELP = AGENTSEEK_CLI_HELP
+AGENTSEEK_AGENT_MODE_HELP = f"{AGENTSEEK_CLI_HELP}\n\nAgent mode is experimental and requires explicit confirmation."
 
 PROJECT_COMMAND_PANEL = "Project"
 
@@ -79,12 +79,8 @@ def register_app_profile_options(app: typer.Typer) -> None:
             CliMode,
             typer.Option("--mode", case_sensitive=False, help="CLI profile."),
         ] = CliMode.CLI,
-        yes: Annotated[
-            bool,
-            typer.Option("--yes", help="Confirm profile prompts."),
-        ] = False,
     ) -> None:
-        del mode, yes
+        del mode
 
 
 def apply_agentseek_agent_command_layout(app: typer.Typer, framework) -> None:
@@ -99,14 +95,10 @@ def apply_agentseek_agent_command_layout(app: typer.Typer, framework) -> None:
             CliMode,
             typer.Option("--mode", case_sensitive=False, help="CLI profile."),
         ] = CliMode.AGENT,
-        yes: Annotated[
-            bool,
-            typer.Option("--yes", help="Confirm profile prompts."),
-        ] = False,
     ) -> None:
         if mode is not CliMode.AGENT:
             return
-        _confirm_agent_mode(yes=yes)
+        _confirm_agent_mode()
         ctx.obj = framework
         if ctx.invoked_subcommand is None:
             from agentseek.cli.banner import format_agentseek_banner
@@ -115,11 +107,9 @@ def apply_agentseek_agent_command_layout(app: typer.Typer, framework) -> None:
             chat.chat(ctx)
 
 
-def _confirm_agent_mode(*, yes: bool) -> None:
-    if yes:
-        return
+def _confirm_agent_mode() -> None:
     confirmed = typer.confirm(
-        "Enter AgentSeek agent mode?",
+        "AgentSeek agent mode is experimental. Enter it?",
         default=False,
     )
     if not confirmed:

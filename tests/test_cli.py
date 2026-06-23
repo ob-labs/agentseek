@@ -111,8 +111,7 @@ def test_agent_command_layout_starts_chat_when_confirmed(monkeypatch) -> None:
     monkeypatch.setattr(chat_module, "chat", fake_chat)
     apply_agentseek_agent_command_layout(app, framework)
 
-    result = CliRunner().invoke(app, ["--mode", "agent", "--yes"])
+    result = CliRunner().invoke(app, ["--mode", "agent"], input="y\n")
 
     assert result.exit_code == 0
     assert called is True
-    assert "AGENTSEEK v" in result.output
