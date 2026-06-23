@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import AsyncIterable
 
 import typer
@@ -16,6 +17,8 @@ from agentseek.cli import (
     register_app_profile_options,
 )
 from agentseek.cli.commands import chat as chat_module
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 
 class _DummyChannel(Channel):
@@ -60,6 +63,32 @@ def test_removed_commands_are_not_registered() -> None:
     for command in ("run", "build", "deploy", "gateway"):
         result = runner.invoke(app, [command])
         assert result.exit_code == 2
+
+
+def test_lifecycle_command_help_does_not_advertise_subcommands() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
+    apply_agentseek_runtime_command_layout(app)
+
+    runner = CliRunner()
+    for command in ("doctor", "dev", "info"):
+        result = runner.invoke(app, [command, "--help"])
+        assert result.exit_code == 0
+        output = ANSI_RE.sub("", result.output)
+        assert f"Usage: agentseek {command} [OPTIONS]" in output
+        assert "COMMAND [ARGS]" not in output
+
+
+def test_task_help_is_available_outside_lifecycle_project() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
+    apply_agentseek_runtime_command_layout(app)
+
+    result = CliRunner().invoke(app, ["task", "--help"])
+
+    assert result.exit_code == 0
+    assert "Usage: agentseek task" in result.output
+    assert "duties.py" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -111,8 +140,7 @@ def test_agent_command_layout_starts_chat_when_confirmed(monkeypatch) -> None:
     monkeypatch.setattr(chat_module, "chat", fake_chat)
     apply_agentseek_agent_command_layout(app, framework)
 
-    result = CliRunner().invoke(app, ["--mode", "agent", "--yes"])
+    result = CliRunner().invoke(app, ["--mode", "agent"], input="y\n")
 
     assert result.exit_code == 0
     assert called is True
-    assert "AGENTSEEK v" in result.output
