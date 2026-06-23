@@ -1,15 +1,13 @@
 # Bub — default template
 
-Scaffolds a Bub AG-UI project with an AgentSeek lifecycle file. The generated
-runtime depends on `bub==0.3.9` plus the AG-UI Bub channel plugin; `duty` is a
-dev dependency for direct local task-runner usage, while AgentSeek brings its
-own duty execution layer.
+Scaffolds a Bub AG-UI project with an AgentSeek lifecycle spec. The generated
+runtime depends on `bub==0.3.9` plus the AG-UI Bub channel plugin.
 
 ## Architecture
 
 ```text
 uvx agentseek dev
-  -> duties.py
+  -> .agentseek/lifecycle.toml
     -> uv run bub gateway --enable-channel ag-ui
         -> BubFramework + ag-ui channel :{{ gateway_port }} /agent
     -> Vite dev server :{{ frontend_port }} (/api/copilotkit/* proxied)
@@ -23,8 +21,8 @@ Two long-running processes start in development:
 | `uv run bub gateway --enable-channel ag-ui` | `{{ gateway_port }}` | Starts the Bub AG-UI gateway. |
 | `npm run dev` | `{{ frontend_port }}` / `{{ copilotkit_port }}` | Starts the Vite app and Copilot Runtime. |
 
-Additional project tasks can be exposed with `@duty` in `duties.py` and run
-through `uvx agentseek task <name>`.
+Additional project tasks can be declared in `.agentseek/lifecycle.toml` and
+run through `uvx agentseek task <name>`.
 
 ## Inputs
 
@@ -44,8 +42,8 @@ through `uvx agentseek task <name>`.
 {{ project_slug }}/
   README.md
   pyproject.toml
+  .agentseek/lifecycle.toml
   .env.example
-  duties.py
   src/{{ project_slug }}/
     __init__.py
   frontend/

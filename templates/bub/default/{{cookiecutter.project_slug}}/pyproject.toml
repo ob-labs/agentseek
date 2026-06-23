@@ -11,7 +11,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "duty>=1.9",
 ]
 
 [build-system]

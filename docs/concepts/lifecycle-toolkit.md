@@ -7,7 +7,7 @@ verified_on: 2026-06-22
 sources:
   - README.md
   - src/agentseek/cli/runtime.py
-  - src/agentseek/cli/lifecycle.py
+  - src/agentseek/cli/lifecycle/core.py
 ---
 
 # Lifecycle Toolkit
@@ -30,7 +30,7 @@ lifecycle behavior.
 
 ```text
 stable command
-  -> project lifecycle file
+  -> project lifecycle spec
     -> template-specific behavior
 ```
 

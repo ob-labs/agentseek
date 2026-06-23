@@ -60,17 +60,21 @@ def apply_agentseek_runtime_command_layout(app: typer.Typer) -> None:
 
     app.add_typer(create.app, name="create", rich_help_panel=PROJECT_COMMAND_PANEL)
     app.command(
-        "dev", rich_help_panel=PROJECT_COMMAND_PANEL, help="Run the current project locally through duties.py."
+        "dev", rich_help_panel=PROJECT_COMMAND_PANEL, help="Run the current project locally through the lifecycle spec."
     )(dev.dev)
-    app.command("info", rich_help_panel=PROJECT_COMMAND_PANEL, help="Show a project summary from duties.py.")(info.info)
+    app.command("info", rich_help_panel=PROJECT_COMMAND_PANEL, help="Show a project summary from the lifecycle spec.")(
+        info.info
+    )
     app.command(
-        "doctor", rich_help_panel=PROJECT_COMMAND_PANEL, help="Check local project readiness through duties.py."
+        "doctor",
+        rich_help_panel=PROJECT_COMMAND_PANEL,
+        help="Check local project readiness through the lifecycle spec.",
     )(doctor.doctor)
     app.command(
         "task",
         rich_help_panel=PROJECT_COMMAND_PANEL,
         context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []},
-        help="Run project duties through Duty's native parser.",
+        help="Run project lifecycle spec tasks.",
     )(task.task)
 
 

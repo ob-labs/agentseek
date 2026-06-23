@@ -1,4 +1,4 @@
-"""``agentseek dev`` — run a generated project through its lifecycle file."""
+"""``agentseek dev`` — run a generated project through its lifecycle spec."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from agentseek.cli.lifecycle import load_lifecycle_project, run_lifecycle_task
 
 app = typer.Typer(
     name="dev",
-    help="Run the current project locally through duties.py.",
+    help="Run the current project locally through the lifecycle spec.",
     add_completion=False,
     no_args_is_help=False,
 )
@@ -27,7 +27,7 @@ def dev(
         typer.Option("--dry-run", help="Print the startup plan without launching services."),
     ] = False,
 ) -> None:
-    """Run the local app defined by ``duties.py``."""
+    """Run the local app defined by the lifecycle spec."""
     project = load_lifecycle_project()
     if not skip_check and not dry_run:
         run_lifecycle_task(project, "doctor", strict=True)

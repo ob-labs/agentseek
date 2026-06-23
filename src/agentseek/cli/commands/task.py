@@ -1,12 +1,10 @@
-"""``agentseek task`` — forward project lifecycle duties."""
+"""``agentseek task`` — run project lifecycle spec tasks."""
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import typer
 
-from agentseek.cli.lifecycle import LIFECYCLE_FILE, load_lifecycle_project, run_duty_cli
+from agentseek.cli.lifecycle import LIFECYCLE_SPEC_FILE, lifecycle_spec_exists, load_lifecycle_project, run_task_cli
 
 
 def _is_help_request(args: list[str]) -> bool:
@@ -14,27 +12,25 @@ def _is_help_request(args: list[str]) -> bool:
 
 
 def _print_task_help() -> None:
-    typer.echo("Usage: agentseek task [DUTY [DUTY_OPTS...] [DUTY_PARAMS...]]")
+    typer.echo("Usage: agentseek task [TASK]")
     typer.echo()
-    typer.echo("Run project-defined tasks from duties.py through Duty's native parser.")
+    typer.echo("Run project-defined lifecycle spec tasks.")
     typer.echo()
     typer.echo("Forms:")
     typer.echo("  agentseek task --list")
-    typer.echo("  agentseek task --help [DUTY...]")
     typer.echo("  agentseek task <name>")
-    typer.echo("  agentseek task <name> key=value")
     typer.echo()
-    typer.echo(f"This command must be run from a project containing {LIFECYCLE_FILE}.")
+    typer.echo(f"This command must be run from a project containing {LIFECYCLE_SPEC_FILE}.")
 
 
 def task(ctx: typer.Context) -> None:
-    """Forward arbitrary duty commands from the current project."""
+    """Run lifecycle spec tasks from the current project."""
     args = list(ctx.args)
-    if _is_help_request(args) and not (Path.cwd() / LIFECYCLE_FILE).is_file():
+    if _is_help_request(args) and not lifecycle_spec_exists():
         _print_task_help()
         return
     project = load_lifecycle_project()
-    code = run_duty_cli(project, args)
+    code = run_task_cli(project, args)
     if code:
         raise typer.Exit(code)
 

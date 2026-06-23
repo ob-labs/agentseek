@@ -6,7 +6,7 @@ runs: yes
 verified_on: 2026-06-23
 sources:
   - src/agentseek/cli/commands/dev.py
-  - "templates/bub/default/{{cookiecutter.project_slug}}/duties.py"
+  - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
 ---
 
 # Run Local Development

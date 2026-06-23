@@ -1,6 +1,6 @@
 ---
 name: agentseek-lifecycle
-description: "Use when helping with AgentSeek-managed projects or AgentSeek-compatible templates: create projects, diagnose lifecycle issues, run doctor/dev/info/task commands, edit generated duties.py files, maintain Cookiecutter template inputs, or explain Duty-based lifecycle tasks. Prefer public AgentSeek CLI and template contracts."
+description: "Use when helping with AgentSeek-managed projects or AgentSeek-compatible templates: create projects, diagnose lifecycle issues, run doctor/dev/info/task commands, edit lifecycle specs, or maintain Cookiecutter template inputs. Prefer public AgentSeek CLI and template contracts."
 ---
 
 # AgentSeek Lifecycle
@@ -8,15 +8,15 @@ description: "Use when helping with AgentSeek-managed projects or AgentSeek-comp
 ## Core Workflow
 
 1. Identify the workspace shape:
-   - Generated project: look for `duties.py`, `.env.example`, `pyproject.toml`, frontend files, and project README.
-   - Template project: look for `cookiecutter.json`, rendered `{{ cookiecutter... }}` paths, generated `duties.py`, and template README.
+   - Generated project: look for `.agentseek/lifecycle.toml`, `.env.example`, `pyproject.toml`, frontend files, and project README.
+   - Template project: look for `cookiecutter.json`, rendered `{{ cookiecutter... }}` paths, generated lifecycle specs, and template README.
 2. Work through the public lifecycle surface:
    - `agentseek create`
    - `agentseek doctor`
    - `agentseek dev`
    - `agentseek info`
    - `agentseek task`
-3. Treat `duties.py` as the compatibility contract between a generated project and AgentSeek.
+3. Treat `.agentseek/lifecycle.toml` as the compatibility contract between a generated project and AgentSeek.
 4. Keep changes narrow:
    - Update generated instructions when lifecycle behavior changes.
    - Preserve non-interactive template rendering.
@@ -25,9 +25,8 @@ description: "Use when helping with AgentSeek-managed projects or AgentSeek-comp
 
 ## Load References
 
-- For lifecycle commands, `duties.py` metadata, task expectations, and public validation commands, read `references/agentseek-lifecycle.md`.
+- For lifecycle specs, task expectations, and public validation commands, read `references/agentseek-lifecycle.md`.
 - For template variables, rendering, `--no-input`, private variables, hooks, and template maintenance, read `references/cookiecutter.md`.
-- For `duties.py` authoring, task arguments, output capture, and `agentseek task` forwarding, read `references/duty.md`.
 
 ## Default Validation
 

@@ -18,7 +18,7 @@ nav:
   - Reference:
       - Overview: reference/index.md
       - CLI: reference/cli.md
-      - Lifecycle File: reference/lifecycle-file.md
+      - Lifecycle Spec: reference/lifecycle-spec.md
       - Templates: reference/templates.md
   - Concepts:
       - Overview: concepts/index.md

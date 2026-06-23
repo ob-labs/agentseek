@@ -16,7 +16,7 @@ Common shape:
   cookiecutter.json
   {{cookiecutter.project_slug}}/
     README.md
-    duties.py
+    .agentseek/lifecycle.toml
     ...
 ```
 
@@ -65,6 +65,6 @@ Prefer normal template files when possible. Hooks are harder to test, can introd
 
 - Keep `cookiecutter.json` defaults compatible with `--no-input`.
 - Keep generated file names and directory names renderable from `cookiecutter` context.
-- Keep generated README commands aligned with the generated `duties.py`.
+- Keep generated README commands aligned with the generated lifecycle spec.
 - Prefer explicit template variables over hidden string replacement in generated files.
-- Render the template after changing variables, path names, hooks, or lifecycle files.
+- Render the template after changing variables, path names, hooks, or lifecycle specs.

@@ -1,6 +1,6 @@
 # {{ cookiecutter.project_name }}
 
-A lightweight Bub AG-UI agent project with an AgentSeek lifecycle file.
+A lightweight Bub AG-UI agent project with an AgentSeek lifecycle spec.
 
 ## Quickstart
 
@@ -19,7 +19,7 @@ the CopilotKit runtime to `http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/a
 and the Bub AG-UI gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`.
 
 The generated runtime depends on `bub==0.3.9` plus the AG-UI Bub channel plugin.
-AgentSeek is only used as an external template and lifecycle tool; `duty` is
-kept in the dev dependency group for direct local task-runner usage.
+AgentSeek is only used as an external template and lifecycle tool. This project
+declares lifecycle behavior in `.agentseek/lifecycle.toml`.
 
 Author: {{ cookiecutter.author }}
