@@ -2,11 +2,16 @@ import { FormEvent, useMemo, useState } from "react";
 import { useStream } from "@langchain/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import ToolCallCard, { type ToolCard } from "./ToolCallCard";
 
+type RawToolCall = { id?: string; name?: string; args?: unknown };
 type Message = {
   id?: string;
   type: string;
   content: unknown;
+  tool_calls?: RawToolCall[];
+  tool_call_id?: string;
+  name?: string;
 };
 type StreamState = {
   messages: Message[];
@@ -28,19 +33,50 @@ function messageText(content: unknown): string {
   return "";
 }
 
-type Row = { key: string; type: "human" | "ai"; body: string };
+type Row =
+  | { kind: "prose"; key: string; type: "human" | "ai"; body: string }
+  | { kind: "card"; key: string; card: ToolCard };
 
 function buildRows(messages: Message[]): Row[] {
   const rows: Row[] = [];
+  const cardByCallId = new Map<string, ToolCard>();
   for (const msg of messages) {
-    if (msg.type === "human" || msg.type === "ai") {
+    if (msg.type === "human") {
+      rows.push({
+        kind: "prose",
+        key: msg.id ?? `h-${rows.length}`,
+        type: "human",
+        body: messageText(msg.content),
+      });
+    } else if (msg.type === "ai") {
+      const calls = msg.tool_calls ?? [];
       const body = messageText(msg.content).trim();
       if (body) {
         rows.push({
-          key: msg.id ?? `${msg.type}-${rows.length}`,
-          type: msg.type,
+          kind: "prose",
+          key: msg.id ?? `a-${rows.length}`,
+          type: "ai",
           body,
         });
+      }
+      for (const call of calls) {
+        const callId = call.id ?? `${msg.id}-${call.name}-${rows.length}`;
+        const card: ToolCard = {
+          callId,
+          name: call.name ?? "tool",
+          args: call.args ?? {},
+          result: null,
+          status: "pending",
+        };
+        cardByCallId.set(callId, card);
+        rows.push({ kind: "card", key: `c-${callId}`, card });
+      }
+    } else if (msg.type === "tool") {
+      const callId = msg.tool_call_id;
+      if (callId && cardByCallId.has(callId)) {
+        const card = cardByCallId.get(callId)!;
+        card.result = messageText(msg.content);
+        card.status = "done";
       }
     }
   }
@@ -49,7 +85,7 @@ function buildRows(messages: Message[]): Row[] {
 
 export default function App() {
   const apiUrl =
-    import.meta.env.VITE_LANGGRAPH_API_URL ?? "http://127.0.0.1:2024";
+    import.meta.env.VITE_LANGGRAPH_API_URL ?? "http://127.0.0.1:{{ cookiecutter.langgraph_port }}";
 
   const stream = useStream<StreamState>({
     apiUrl,
@@ -69,7 +105,7 @@ export default function App() {
 
   return (
     <main>
-      <h1>OpenVINO RAG</h1>
+      <h1>{{ cookiecutter.project_name }}</h1>
 
       <section className="chat" aria-label="Conversation">
         {rows.length === 0 && (
@@ -77,14 +113,18 @@ export default function App() {
             Ask a question about your indexed documents.
           </p>
         )}
-        {rows.map((row) => (
-          <article key={row.key} className={`msg msg--${row.type}`}>
-            <header className="msg__role">{row.type}</header>
-            <div className="msg__body">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{row.body}</ReactMarkdown>
-            </div>
-          </article>
-        ))}
+        {rows.map((row) =>
+          row.kind === "prose" ? (
+            <article key={row.key} className={`msg msg--${row.type}`}>
+              <header className="msg__role">{row.type}</header>
+              <div className="msg__body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{row.body}</ReactMarkdown>
+              </div>
+            </article>
+          ) : (
+            <ToolCallCard key={row.key} card={row.card} />
+          ),
+        )}
         {stream.isLoading && (
           <div className="activity-card" aria-live="polite">
             <div className="activity-card__pulse" aria-hidden="true">
@@ -93,8 +133,8 @@ export default function App() {
               <span />
             </div>
             <div className="activity-card__copy">
-              <strong>Thinking</strong>
-              <span>Retrieving context and generating answer…</span>
+              <strong>Searching knowledge base</strong>
+              <span>Retrieving and synthesizing relevant documents.</span>
             </div>
           </div>
         )}

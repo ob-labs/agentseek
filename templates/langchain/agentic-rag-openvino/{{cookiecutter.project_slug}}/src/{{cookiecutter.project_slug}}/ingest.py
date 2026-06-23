@@ -13,10 +13,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_oceanbase.vectorstores import OceanbaseVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-from .ov_models import OpenVINOEmbeddings
 
 load_dotenv()
 
@@ -31,7 +30,10 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 
 def _get_vector_store() -> OceanbaseVectorStore:
-    embeddings = OpenVINOEmbeddings.from_model_path(EMBEDDING_MODEL_PATH, device=DEVICE)
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL_PATH,
+        model_kwargs={"device": "cpu", "backend": "openvino"},
+    )
     embedding_dim = len(embeddings.embed_query("dim"))
     return OceanbaseVectorStore(
         embedding_function=embeddings,
@@ -110,6 +112,8 @@ def main() -> None:
     print(f"Split {len(all_docs)} document(s) into {len(splits)} chunks.")
 
     vector_store = _get_vector_store()
+    # NOTE: Re-running ingest will add duplicate documents. To avoid this,
+    # clear the table first or use upsert logic before re-indexing.
     ids = vector_store.add_documents(splits)
     print(f"Indexed {len(ids)} chunks into table '{vector_store.table_name}'.")
 
