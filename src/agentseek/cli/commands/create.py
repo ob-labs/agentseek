@@ -152,7 +152,7 @@ def _resolve_type_template(
             install_source_path=install_source_path,
             install_source_url=None if install_source_path else REPO_GIT_URL,
         )
-    typer.echo(f"Template {project_type}/{template_name!s} was not found.", err=True)
+    _print_unknown_template(project_type, template_name, templates_root=templates_root)
     raise typer.Exit(2)
 
 
@@ -492,6 +492,12 @@ def _validate_project_type(project_type: str) -> None:
             err=True,
         )
         raise typer.Exit(2)
+
+
+def _print_unknown_template(project_type: str, template_name: str, *, templates_root: Path) -> None:
+    available = _list_templates(project_type, templates_root)
+    typer.echo(f"Template {project_type}/{template_name} was not found. Supported templates:", err=True)
+    _print_templates_table(project_type, available, _load_template_descriptions(templates_root))
 
 
 def _show_templates(project_type: str | None, *, checkout: str | None = None) -> None:

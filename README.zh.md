@@ -33,9 +33,23 @@ uvx agentseek info
 uvx agentseek task --list
 ```
 
+## 生命周期命令
+
+| 命令 | 用途 |
+| --- | --- |
+| `create` | 渲染应用模板。 |
+| `doctor` | 检查本地项目就绪状态。 |
+| `dev` | 启动本地开发栈。 |
+| `info` | 输出项目入口和 lifecycle 元数据。 |
+| `task` | 运行项目定义的任务。 |
+
 ## 文档
 
-重构期间，文档暂时收缩为一个占位页：[docs/index.md](docs/index.md)。
+- [文档首页](docs/index.md)
+- [快速开始](docs/get-started/index.md)
+- [指南](docs/guides/index.md)
+- [参考](docs/reference/index.md)
+- [概念](docs/concepts/index.md)
 
 ## 相关项目
 

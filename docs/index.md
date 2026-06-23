@@ -46,7 +46,7 @@ uvx agentseek doctor
 uvx agentseek dev
 ```
 
-## Use The Toolkit
+## Lifecycle Commands
 
 | Command | Use it when you want to |
 | --- | --- |

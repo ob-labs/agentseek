@@ -62,6 +62,31 @@ def test_removed_commands_are_not_registered() -> None:
         assert result.exit_code == 2
 
 
+def test_lifecycle_command_help_does_not_advertise_subcommands() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
+    apply_agentseek_runtime_command_layout(app)
+
+    runner = CliRunner()
+    for command in ("doctor", "dev", "info"):
+        result = runner.invoke(app, [command, "--help"])
+        assert result.exit_code == 0
+        assert f"Usage: agentseek {command} [OPTIONS]" in result.output
+        assert "COMMAND [ARGS]" not in result.output
+
+
+def test_task_help_is_available_outside_lifecycle_project() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
+    apply_agentseek_runtime_command_layout(app)
+
+    result = CliRunner().invoke(app, ["task", "--help"])
+
+    assert result.exit_code == 0
+    assert "Usage: agentseek task" in result.output
+    assert "duties.py" in result.output
+
+
 # ---------------------------------------------------------------------------
 # Channel resolution
 # ---------------------------------------------------------------------------

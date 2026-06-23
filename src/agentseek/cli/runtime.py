@@ -45,7 +45,7 @@ def _parse_cli_mode(value: str) -> CliMode:
         return CliMode(value.lower())
     except ValueError:
         typer.echo(f"Unsupported CLI mode: {value}. Expected one of: cli, agent.", err=True)
-        raise typer.Exit(2) from None
+        raise SystemExit(2) from None
 
 
 def _clear_cli_surface(app: typer.Typer) -> None:
@@ -59,9 +59,13 @@ def apply_agentseek_runtime_command_layout(app: typer.Typer) -> None:
     _clear_cli_surface(app)
 
     app.add_typer(create.app, name="create", rich_help_panel=PROJECT_COMMAND_PANEL)
-    app.add_typer(dev.app, name="dev", rich_help_panel=PROJECT_COMMAND_PANEL)
-    app.add_typer(info.app, name="info", rich_help_panel=PROJECT_COMMAND_PANEL)
-    app.add_typer(doctor.app, name="doctor", rich_help_panel=PROJECT_COMMAND_PANEL)
+    app.command(
+        "dev", rich_help_panel=PROJECT_COMMAND_PANEL, help="Run the current project locally through duties.py."
+    )(dev.dev)
+    app.command("info", rich_help_panel=PROJECT_COMMAND_PANEL, help="Show a project summary from duties.py.")(info.info)
+    app.command(
+        "doctor", rich_help_panel=PROJECT_COMMAND_PANEL, help="Check local project readiness through duties.py."
+    )(doctor.doctor)
     app.command(
         "task",
         rich_help_panel=PROJECT_COMMAND_PANEL,

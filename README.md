@@ -33,7 +33,7 @@ uvx agentseek doctor
 uvx agentseek dev
 ```
 
-## Toolkit Surface
+## Lifecycle Commands
 
 | Command | Purpose |
 | --- | --- |
