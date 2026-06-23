@@ -5,6 +5,7 @@ audience: [A2]
 runs: no
 verified_on: 2026-06-23
 sources:
+  - pyproject.toml
   - src/agentseek/__main__.py
   - src/agentseek/cli/runtime.py
   - src/agentseek/cli/commands/create.py
@@ -16,6 +17,14 @@ sources:
 ---
 
 # CLI Reference
+
+## Installation And Invocation
+
+| Command | Description |
+| --- | --- |
+| `uv tool install agentseek` | Install the CLI for daily use. |
+| `agentseek ...` | Run lifecycle commands after installation. |
+| `uvx agentseek ...` | Run one AgentSeek command without installing the tool. |
 
 ## Root Options
 

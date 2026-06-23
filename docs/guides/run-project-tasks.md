@@ -3,7 +3,7 @@ title: Run Project Tasks
 type: how-to
 audience: [A2]
 runs: yes
-verified_on: 2026-06-22
+verified_on: 2026-06-23
 sources:
   - src/agentseek/cli/commands/task.py
   - src/agentseek/cli/lifecycle.py
@@ -11,22 +11,22 @@ sources:
 
 # Run Project Tasks
 
-List the tasks exposed by the generated project.
+List the tasks exposed by the generated project with the installed CLI.
 
 ```bash
-uvx agentseek task --list
+agentseek task --list
 ```
 
 Run a project task by name.
 
 ```bash
-uvx agentseek task info
+agentseek task info
 ```
 
 Pass task arguments as `name=value` pairs.
 
 ```bash
-uvx agentseek task doctor live=false strict=false
+agentseek task doctor live=false strict=false
 ```
 
 ## Next

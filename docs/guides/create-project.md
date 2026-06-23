@@ -5,6 +5,7 @@ audience: [A1, A2]
 runs: yes
 verified_on: 2026-06-23
 sources:
+  - pyproject.toml
   - src/agentseek/cli/commands/create.py
   - templates/index.json
 ---
@@ -13,8 +14,17 @@ sources:
 
 Create a project with an explicit template path.
 
+Install the CLI before running daily lifecycle commands.
+
 ```bash
-uvx agentseek create bub/default --no-input
+uv tool install agentseek
+```
+
+For a one-off project creation without installing the tool, replace
+`agentseek create ...` with `uvx agentseek create ...` once.
+
+```bash
+agentseek create bub/default --no-input
 ```
 
 Change into the generated directory.
@@ -26,31 +36,31 @@ cd my_bub_agent
 ## List Templates
 
 ```bash
-uvx agentseek create --list-templates
+agentseek create --list-templates
 ```
 
 List only `bub` templates.
 
 ```bash
-uvx agentseek create bub --list-templates
+agentseek create bub --list-templates
 ```
 
 ## Select A Template By Type
 
 ```bash
-uvx agentseek create bub --template default --no-input
+agentseek create bub --template default --no-input
 ```
 
 Specify the template source branch when the template is not on the default branch.
 
 ```bash
-uvx agentseek create bub/default --checkout dev --no-input
+agentseek create bub/default --checkout dev --no-input
 ```
 
 ## Compatibility Entry Point
 
 ```bash
-uvx agentseek create --template
+agentseek create --template
 ```
 
 `--template` with no value lists templates. Prefer `--list-templates` in new scripts.

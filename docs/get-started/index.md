@@ -3,8 +3,9 @@ title: Get Started
 type: tutorial
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-06-22
+verified_on: 2026-06-23
 sources:
+  - pyproject.toml
   - README.md
   - templates/index.json
   - templates/bub/default/cookiecutter.json
@@ -15,10 +16,19 @@ sources:
 Create one app, install its local dependencies, and start its development
 workflow.
 
+## Install the CLI
+
+```bash
+uv tool install agentseek
+```
+
+For a one-off run without installing the tool, replace the first
+`agentseek create ...` command with `uvx agentseek create ...`.
+
 ## Create an app
 
 ```bash
-uvx agentseek create bub/default --no-input
+agentseek create bub/default --no-input
 cd my_bub_agent
 ```
 
@@ -39,8 +49,8 @@ Set the model and provider credentials required by the selected template in
 ## Check and run
 
 ```bash
-uvx agentseek doctor
-uvx agentseek dev
+agentseek doctor
+agentseek dev
 ```
 
 Use `Ctrl+C` to stop the local development stack.
