@@ -3,8 +3,9 @@ title: AgentSeek Lifecycle Toolkit
 type: explanation
 audience: [A1, A2, A5]
 runs: yes
-verified_on: 2026-06-22
+verified_on: 2026-06-23
 sources:
+  - pyproject.toml
   - README.md
   - src/agentseek/cli/runtime.py
   - src/agentseek/cli/lifecycle.py
@@ -33,20 +34,26 @@ AgentSeek CLI
 
 ## Try One Template Path
 
+Install the CLI for daily use.
+
+```bash
+uv tool install agentseek
+```
+
 The command below uses the current Bub template. Other templates can follow the
 same lifecycle shape.
 
 ```bash
-uvx agentseek create bub/default --no-input
+agentseek create bub/default --no-input
 cd my_bub_agent
 cp .env.example .env
 uv sync
 npm install --prefix frontend
-uvx agentseek doctor
-uvx agentseek dev
+agentseek doctor
+agentseek dev
 ```
 
-## Use The Toolkit
+## Lifecycle Commands
 
 | Command | Use it when you want to |
 | --- | --- |

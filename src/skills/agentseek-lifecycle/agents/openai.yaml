@@ -1,0 +1,4 @@
+interface:
+  display_name: "AgentSeek Lifecycle"
+  short_description: "Use and maintain AgentSeek lifecycle tooling"
+  default_prompt: "Use $agentseek-lifecycle to update an AgentSeek template lifecycle task."

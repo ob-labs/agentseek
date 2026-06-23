@@ -18,8 +18,17 @@ the shared lifecycle workflow around those generated apps.
 
 ## Quickstart
 
+Install the CLI for daily use.
+
 ```bash
-uvx agentseek create bub/default --no-input
+uv tool install agentseek
+```
+
+For a one-off run without installing the tool, replace the first
+`agentseek create ...` command with `uvx agentseek create ...`.
+
+```bash
+agentseek create bub/default --no-input
 cd my_bub_agent
 cp .env.example .env
 uv sync
@@ -29,11 +38,11 @@ npm install --prefix frontend
 Set the model and provider credentials required by the selected template.
 
 ```bash
-uvx agentseek doctor
-uvx agentseek dev
+agentseek doctor
+agentseek dev
 ```
 
-## Toolkit Surface
+## Lifecycle Commands
 
 | Command | Purpose |
 | --- | --- |

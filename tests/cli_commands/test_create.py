@@ -107,6 +107,26 @@ def test_template_flag_no_value_with_type_lists_type_templates() -> None:
     assert "Usage:" not in result.output
 
 
+def test_template_flag_unknown_value_lists_type_templates() -> None:
+    """A missing --template value should show the supported templates."""
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--template", "missing-template"])
+
+    assert result.exit_code == 2
+    assert "Template bub/missing-template was not found" in result.output
+    assert "Supported templates:" in result.output
+    assert "bub/default" in result.output
+
+
+def test_spec_unknown_template_lists_type_templates() -> None:
+    """A missing type/name spec should show the supported templates."""
+    result = _runner().invoke(build_command_app(), ["create", "bub/missing-template"])
+
+    assert result.exit_code == 2
+    assert "Template bub/missing-template was not found" in result.output
+    assert "Supported templates:" in result.output
+    assert "bub/default" in result.output
+
+
 def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypatch, tmp_path: Path) -> None:
     """Installed CLI should download templates before listing them."""
     clone_calls = _mock_remote_template_repo(
