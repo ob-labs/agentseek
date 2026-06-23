@@ -22,9 +22,6 @@ workflow.
 uv tool install agentseek
 ```
 
-For a one-off run without installing the tool, replace the first
-`agentseek create ...` command with `uvx agentseek create ...`.
-
 ## Create an app
 
 ```bash

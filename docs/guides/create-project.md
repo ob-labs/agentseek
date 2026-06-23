@@ -20,9 +20,6 @@ Install the CLI before running daily lifecycle commands.
 uv tool install agentseek
 ```
 
-For a one-off project creation without installing the tool, replace
-`agentseek create ...` with `uvx agentseek create ...` once.
-
 ```bash
 agentseek create bub/default --no-input
 ```

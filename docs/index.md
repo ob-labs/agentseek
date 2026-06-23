@@ -40,9 +40,6 @@ Install the CLI for daily use.
 uv tool install agentseek
 ```
 
-For a one-off run without installing the tool, replace the first
-`agentseek create ...` command with `uvx agentseek create ...`.
-
 The command below uses the current Bub template. Other templates can follow the
 same lifecycle shape.
 
