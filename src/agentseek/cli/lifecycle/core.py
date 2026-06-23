@@ -314,19 +314,19 @@ def _process_cwd_checks(project: LifecycleProject) -> list[CheckResult]:
 
 
 def _live_checks(project: LifecycleProject) -> list[CheckResult]:
-    return [_run_check(check) for check in project.spec.checks.values()]
+    return [_run_check(name, check) for name, check in project.spec.checks.items()]
 
 
-def _run_check(check: Check) -> CheckResult:
+def _run_check(name: str, check: Check) -> CheckResult:
     if check.wait:
         time.sleep(check.wait)
     for _attempt in range(max(check.attempts, 1)):
         ok = _check_target(check)
         if ok:
-            return _check("ok", check.name, f"{check.target} is reachable.")
+            return _check("ok", name, f"{check.target} is reachable.")
         time.sleep(0.2)
     status = "fail" if check.required else "warn"
-    return _check(status, check.name, f"{check.target} is not reachable.", "Start the local app with `agentseek dev`.")
+    return _check(status, name, f"{check.target} is not reachable.", "Start the local app with `agentseek dev`.")
 
 
 def _check_target(check: Check) -> bool:
