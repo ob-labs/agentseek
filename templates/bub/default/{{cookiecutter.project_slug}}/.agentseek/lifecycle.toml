@@ -40,13 +40,13 @@ env = { FRONTEND_PORT = "{{ cookiecutter.frontend_port }}", COPILOTKIT_PORT = "{
 
 [checks.gateway]
 type = "http"
-url = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
+target = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
 timeout = 2
 attempts = 3
 
 [checks.frontend]
 type = "http"
-url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 timeout = 2
 attempts = 3
 

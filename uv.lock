@@ -44,9 +44,12 @@ dependencies = [
     { name = "bub" },
     { name = "cookiecutter" },
     { name = "duty" },
+    { name = "httpx" },
     { name = "jinja2" },
     { name = "logfire" },
+    { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "python-dotenv" },
     { name = "typer" },
 ]
 
@@ -80,9 +83,12 @@ requires-dist = [
     { name = "bub", specifier = "==0.3.9" },
     { name = "cookiecutter", specifier = ">=2.5" },
     { name = "duty", specifier = ">=1.9" },
+    { name = "httpx", specifier = ">=0.28" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "logfire", specifier = ">=4.33.0" },
+    { name = "pydantic", specifier = ">=2.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0" },
     { name = "typer", specifier = ">=0.12" },
 ]
 

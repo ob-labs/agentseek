@@ -43,7 +43,7 @@ env = { TEST_PROCESS = "true" }
 
 [checks.app]
 type = "http"
-url = "http://127.0.0.1:5173"
+target = "http://127.0.0.1:5173"
 
 [tasks.version]
 description = "Write a task marker."

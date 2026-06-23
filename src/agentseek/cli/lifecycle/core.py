@@ -17,7 +17,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
 
+import httpx
 import typer
+from dotenv import dotenv_values
 from duty import Collection
 from duty._internal.collection import Duty
 
@@ -146,18 +148,18 @@ def _lifecycle_collection(project: LifecycleProject) -> Collection:
 
 def _task_collection(project: LifecycleProject) -> Collection:
     collection = Collection(str(project.path))
-    for task in project.spec.tasks.values():
-        collection.add(Duty(name=task.name, description=task.description, function=_task_function(project, task)))
+    for name, task in project.spec.tasks.items():
+        collection.add(Duty(name=name, description=task.description, function=_task_function(project, name, task)))
     return collection
 
 
-def _task_function(project: LifecycleProject, task: Task):
+def _task_function(project: LifecycleProject, name: str, task: Task):
     def run_task(_ctx: object) -> None:
         code = _run_command(task.command, cwd=project.root / task.cwd, env=os.environ)
         if code:
             raise SystemExit(code)
 
-    run_task.__name__ = f"{task.name}_task"
+    run_task.__name__ = f"{name}_task"
     return run_task
 
 
@@ -173,13 +175,13 @@ def print_info(project: LifecycleProject, *, verbose: bool) -> None:
     print()
     print("Entrypoints")
     print("  Dev: agentseek dev")
-    for service in spec.services.values():
-        print(f"  {service.name.title()}: {service.url}")
+    for name, service in spec.services.items():
+        print(f"  {name.title()}: {service.url}")
     print()
     print("Environment")
     print(f"  .env: {'present' if (project.root / '.env').is_file() else 'missing'}")
-    for requirement in spec.env.values():
-        print(f"  {requirement.name}: {'set' if _env_requirement_configured(env, requirement) else 'missing'}")
+    for name, requirement in spec.env.items():
+        print(f"  {name}: {'set' if _env_requirement_configured(env, name, requirement) else 'missing'}")
     print()
     print("Next")
     print("  agentseek doctor")
@@ -203,10 +205,10 @@ def doctor(project: LifecycleProject, *, live: bool, strict: bool) -> None:
 def dev(project: LifecycleProject, *, dry_run: bool) -> None:
     """Start local development processes declared in the lifecycle spec."""
     print("Startup plan")
-    for process in project.spec.processes.values():
-        print(f"  {process.name.title()}: {_render_command(process.command)}")
-    for service in project.spec.services.values():
-        print(f"  {service.name.title()}: {service.url}")
+    for name, process in project.spec.processes.items():
+        print(f"  {name.title()}: {_render_command(process.command)}")
+    for name, service in project.spec.services.items():
+        print(f"  {name.title()}: {service.url}")
     if dry_run:
         return
 
@@ -234,7 +236,7 @@ def _static_checks(project: LifecycleProject) -> list[CheckResult]:
             "Python project file is present.",
         ),
     ]
-    checks.extend(_tool_checks(project.spec.tools))
+    checks.extend(_tool_checks(project.spec.tool_requirements))
     checks.extend(_path_checks(project))
     checks.extend(_env_checks(project.spec.env, env))
     checks.extend(_process_cwd_checks(project))
@@ -259,7 +261,7 @@ def _tool_checks(tools: Mapping[str, bool]) -> list[CheckResult]:
 
 def _path_checks(project: LifecycleProject) -> list[CheckResult]:
     results: list[CheckResult] = []
-    for path, required in project.spec.paths.items():
+    for path, required in project.spec.path_requirements.items():
         found = (project.root / path).exists()
         status = "ok" if found else ("fail" if required else "warn")
         results.append(
@@ -282,14 +284,14 @@ def _env_checks(requirements: Mapping[str, EnvRequirement], env: Mapping[str, st
             "Run `cp .env.example .env` and fill in required values.",
         )
     ]
-    for requirement in requirements.values():
-        configured = _env_requirement_configured(env, requirement)
+    for name, requirement in requirements.items():
+        configured = _env_requirement_configured(env, name, requirement)
         status = "ok" if configured else ("fail" if requirement.required else "warn")
-        keys = " or ".join(requirement.keys)
+        keys = " or ".join(requirement.keys(name))
         results.append(
             _check(
                 status,
-                requirement.name,
+                name,
                 f"{keys} is configured." if configured else f"{keys} is missing.",
                 f"Set {keys} in .env.",
             )
@@ -299,12 +301,12 @@ def _env_checks(requirements: Mapping[str, EnvRequirement], env: Mapping[str, st
 
 def _process_cwd_checks(project: LifecycleProject) -> list[CheckResult]:
     results: list[CheckResult] = []
-    for process in project.spec.processes.values():
+    for name, process in project.spec.processes.items():
         cwd = project.root / process.cwd
         results.append(
             _check(
                 "ok" if cwd.is_dir() else "fail",
-                f"{process.name} cwd",
+                f"{name} cwd",
                 f"{process.cwd} is present." if cwd.is_dir() else f"{process.cwd} is missing.",
             )
         )
@@ -316,8 +318,8 @@ def _live_checks(project: LifecycleProject) -> list[CheckResult]:
 
 
 def _run_check(check: Check) -> CheckResult:
-    if check.wait_seconds:
-        time.sleep(check.wait_seconds)
+    if check.wait:
+        time.sleep(check.wait)
     for _attempt in range(max(check.attempts, 1)):
         ok = _check_target(check)
         if ok:
@@ -330,13 +332,15 @@ def _run_check(check: Check) -> CheckResult:
 def _check_target(check: Check) -> bool:
     parsed = urlparse(check.target)
     if check.type == "http":
-        host = parsed.hostname
-        port = parsed.port or (443 if parsed.scheme == "https" else 80)
-        return bool(host) and _tcp_connects(host, port, timeout=check.timeout_seconds)
+        try:
+            response = httpx.get(check.target, timeout=check.timeout)
+        except httpx.HTTPError:
+            return False
+        return response.status_code < 500
     if check.type == "tcp":
         host = parsed.hostname or parsed.path.partition(":")[0]
         port_text = str(parsed.port or parsed.path.partition(":")[2])
-        return bool(host and port_text.isdigit()) and _tcp_connects(host, int(port_text), timeout=check.timeout_seconds)
+        return bool(host and port_text.isdigit()) and _tcp_connects(host, int(port_text), timeout=check.timeout)
     return False
 
 
@@ -350,28 +354,20 @@ def _ensure_required_inputs(project: LifecycleProject) -> None:
 def _build_env(project: LifecycleProject) -> dict[str, str]:
     env = dict(os.environ)
     for process in project.spec.processes.values():
-        if process.env:
-            env.update(process.env)
+        env.update(process.env)
     env.setdefault("PWD", str(project.root))
     return env
 
 
 def _env_values(root: Path) -> dict[str, str]:
     env_path = root / ".env"
-    values: dict[str, str] = {}
     if not env_path.is_file():
-        return values
-    for line in env_path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "=" not in stripped:
-            continue
-        key, value = stripped.split("=", 1)
-        values[key.strip()] = value.strip().strip("\"'")
-    return values
+        return {}
+    return {key: value for key, value in dotenv_values(env_path).items() if value is not None}
 
 
-def _env_requirement_configured(env: Mapping[str, str], requirement: EnvRequirement) -> bool:
-    return any(bool(env.get(key)) for key in requirement.keys)
+def _env_requirement_configured(env: Mapping[str, str], name: str, requirement: EnvRequirement) -> bool:
+    return any(bool(env.get(key)) for key in requirement.keys(name))
 
 
 def _render_command(command: Sequence[str]) -> str:
@@ -444,9 +440,11 @@ def _terminate(process: subprocess.Popen[bytes]) -> None:
 
 
 def _tcp_connects(host: str, port: int, *, timeout: float) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.settimeout(timeout)
-        return sock.connect_ex((host, port)) == 0
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 
 def _check(status: str, name: str, detail: str, fix: str = "") -> CheckResult:
@@ -468,7 +466,7 @@ def _print_verbose_info(project: LifecycleProject) -> None:
     print()
     print("Discovery")
     print(f"  Python: {sys.executable}")
-    for name in project.spec.tools:
+    for name in project.spec.tool_requirements:
         print(f"  {name}: {shutil.which(name) or 'missing'}")
 
 

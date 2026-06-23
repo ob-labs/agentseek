@@ -49,7 +49,7 @@ cwd = "frontend"
 
 [checks.frontend]
 type = "http"
-url = "http://127.0.0.1:5173"
+target = "http://127.0.0.1:5173"
 timeout = 2
 attempts = 3
 
