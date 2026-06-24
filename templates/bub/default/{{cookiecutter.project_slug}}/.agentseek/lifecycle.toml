@@ -37,7 +37,13 @@ cwd = "frontend"
 
 [checks.gateway]
 type = "http"
-target = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
+target = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent/health"
+timeout = 2
+attempts = 3
+
+[checks.copilotkit]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/health"
 timeout = 2
 attempts = 3
 

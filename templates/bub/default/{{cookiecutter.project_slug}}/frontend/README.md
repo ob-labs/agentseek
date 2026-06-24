@@ -10,6 +10,10 @@ npm install
 npm run dev
 ```
 
+The Vite server reads frontend env files and shell environment variables. The
+project root `.env` is used by AgentSeek readiness checks and by the Bub gateway,
+not as an implicit frontend runtime injection layer.
+
 | Service | Port |
 | --- | --- |
 | Vite dev server | {{ cookiecutter.frontend_port }} |
