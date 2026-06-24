@@ -1,0 +1,37 @@
+[project]
+name = "{{ cookiecutter.project_slug }}"
+version = "0.1.0"
+description = "{{ cookiecutter.project_name }} — DeepAgents bound through agentseek-langchain."
+authors = [{ name = "{{ cookiecutter.author }}" }]
+requires-python = ">=3.12"
+dependencies = [
+    "bub==0.3.9",
+    "agentseek-ag-ui",
+    "agentseek-langchain",
+    "deepagents>=0.5.3",
+    "langchain-openai>=0.3.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[dependency-groups]
+dev = [
+]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+{% if cookiecutter._agentseek_source_path %}
+agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
+agentseek-langchain = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-langchain", editable = true }
+{% else %}
+agentseek-ag-ui = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-ag-ui" }
+agentseek-langchain = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-langchain" }
+{% endif %}
