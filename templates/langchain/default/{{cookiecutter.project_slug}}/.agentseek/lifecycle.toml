@@ -1,0 +1,79 @@
+version = 1
+template = "langchain/default"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "npm"]
+
+[paths]
+required = ["pyproject.toml", "frontend/package.json", "frontend/node_modules"]
+
+[env.AGENTSEEK_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+aliases = ["BUB_MODEL"]
+description = "Model identifier used by the generated LangChain agent."
+
+[env.AGENTSEEK_API_KEY]
+required = true
+aliases = ["BUB_API_KEY", "OPENAI_API_KEY"]
+description = "API key for the configured model provider."
+
+[env.AGENTSEEK_API_BASE]
+required = false
+aliases = ["BUB_API_BASE", "OPENAI_API_BASE", "OPENAI_BASE_URL"]
+description = "Optional OpenAI-compatible API base URL."
+
+[services.gateway]
+url = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
+
+[services.copilotkit]
+url = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit"
+
+[services.frontend]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[processes.gateway]
+command = [
+  "sh",
+  "-lc",
+  "set -a; [ -f .env ] && . ./.env; set +a; export AGENTSEEK_STREAM_OUTPUT=${AGENTSEEK_STREAM_OUTPUT:-true}; export AGENTSEEK_AG_UI_PORT=${AGENTSEEK_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}; export AGENTSEEK_LANGCHAIN_SPEC=${AGENTSEEK_LANGCHAIN_SPEC:-{{ cookiecutter.project_slug }}.demo_binding:build_spec}; uv run agentseek gateway --enable-channel ag-ui",
+]
+cwd = "."
+
+[processes.frontend]
+command = [
+  "sh",
+  "-lc",
+  "set -a; [ -f ../.env ] && . ../.env; [ -f .env ] && . ./.env; set +a; npm run dev",
+]
+cwd = "frontend"
+
+[checks.gateway]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent/health"
+timeout = 2
+attempts = 3
+
+[checks.copilotkit]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/health"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.setup]
+description = "Install Python and frontend dependencies."
+command = ["sh", "-lc", "uv sync && npm install --prefix frontend"]
+cwd = "."
+
+[tasks.frontend]
+description = "Install frontend dependencies only."
+command = ["npm", "install", "--prefix", "frontend"]
+cwd = "."
