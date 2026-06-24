@@ -14,6 +14,8 @@ The generated project includes:
   markdown rendering via `@langchain/react` `useStream`.
 - **Ingest CLI** — `uv run ingest` loads documents from files, directories,
   or URLs, chunks them, and indexes into SeekDB.
+- **AgentSeek lifecycle** — `.agentseek/lifecycle.toml` declares
+  `agentseek info`, `agentseek doctor`, `agentseek dev`, and helper tasks.
 
 ## Prerequisites
 
@@ -35,18 +37,17 @@ You also need a running SeekDB instance. The generated project includes a
 uv tool install agentseek                       # install the agentseek CLI once
 agentseek create langchain/agentic-rag          # scaffold the project
 
-# 2. Backend
+# 2. Project setup
 cd <project_slug>
 cp .env.example .env        # fill in API keys
-docker compose up -d        # start SeekDB
 uv sync
-uv run ingest https://lilianweng.github.io/posts/2023-06-23-agent/
-uv run langgraph dev
+npm install --prefix frontend
+docker compose up -d        # start SeekDB
+agentseek doctor
+agentseek dev --dry-run
 
-# 3. Frontend (separate terminal)
-cd frontend
-npm install
-npm run dev
+# 3. Run
+agentseek dev
 ```
 
 ## Cookiecutter variables
@@ -71,6 +72,7 @@ npm run dev
   pyproject.toml
   langgraph.json
   docker-compose.yml
+  .agentseek/lifecycle.toml
   .env.example
   src/{{ project_slug }}/
     __init__.py
