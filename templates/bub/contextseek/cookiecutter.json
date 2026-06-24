@@ -1,0 +1,15 @@
+{
+  "project_name": "My ContextSeek Agent",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "author": "Your Name",
+  "default_model": "openai:gpt-4o-mini",
+  "gateway_port": "8088",
+  "frontend_port": "5173",
+  "copilotkit_port": "4000",
+  "ctx_server_port": "8089",
+  "contextseek_storage_backend": "seekdb",
+  "contextseek_storage_path": ".contextseek/store",
+  "contextseek_tenant": "default",
+  "_agentseek_source_path": "",
+  "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git"
+}

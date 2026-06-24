@@ -1,0 +1,121 @@
+version = 1
+template = "bub/contextseek"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "node", "npm"]
+
+[paths]
+required = ["pyproject.toml", "frontend/package.json", "frontend/node_modules"]
+
+[env.AGENTSEEK_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model id used by the AgentSeek gateway and ContextSeek LLM bridge."
+
+[env.AGENTSEEK_API_KEY]
+required = true
+description = "Model provider API key."
+
+[env.AGENTSEEK_API_BASE]
+required = false
+description = "Optional model provider API base URL."
+
+[env.AGENTSEEK_STREAM_OUTPUT]
+required = false
+default = "true"
+description = "Enables token-by-token output in the AG-UI channel manager."
+
+[env.AGENTSEEK_AG_UI_PORT]
+required = false
+default = "{{ cookiecutter.gateway_port }}"
+description = "AG-UI gateway bind port."
+
+[env.AGENTSEEK_AG_UI_AGENT_URL]
+required = false
+default = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
+description = "URL used by the Copilot Runtime HttpAgent."
+
+[env.FRONTEND_PORT]
+required = false
+default = "{{ cookiecutter.frontend_port }}"
+description = "Vite dev server port."
+
+[env.COPILOTKIT_PORT]
+required = false
+default = "{{ cookiecutter.copilotkit_port }}"
+description = "CopilotKit Express runtime port."
+
+[env.CTX_SERVER_PORT]
+required = false
+default = "{{ cookiecutter.ctx_server_port }}"
+description = "ContextSeek HTTP API server port."
+
+[env.AGENTSEEK_CTX_STORAGE_BACKEND]
+required = false
+default = "{{ cookiecutter.contextseek_storage_backend }}"
+description = "ContextSeek storage backend."
+
+[env.AGENTSEEK_CTX_TENANT]
+required = false
+default = "{{ cookiecutter.contextseek_tenant }}"
+description = "ContextSeek tenant identifier."
+
+[services.app]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[services.gateway]
+url = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
+
+[services.copilotkit]
+url = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit"
+
+[services.ctx]
+url = "http://127.0.0.1:{{ cookiecutter.ctx_server_port }}/ctx"
+
+[processes.gateway]
+command = ["uv", "run", "agentseek", "gateway", "--enable-channel", "ag-ui"]
+
+[processes.ctx]
+command = ["uv", "run", "ctx-server"]
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+cwd = "frontend"
+
+[checks.gateway]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent/health"
+timeout = 2
+attempts = 3
+
+[checks.copilotkit]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/health"
+timeout = 2
+attempts = 3
+
+[checks.ctx]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.ctx_server_port }}/ctx/health"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.sync]
+description = "Install Python dependencies."
+command = ["uv", "sync"]
+
+[tasks.frontend]
+description = "Install frontend dependencies."
+command = ["npm", "install", "--prefix", "frontend"]
+
+[tasks.seed]
+description = "Seed example ContextSeek entries."
+command = ["uv", "run", "python", "-c", "from {{ cookiecutter.project_slug }}.seed import maybe_seed; maybe_seed()"]
