@@ -1,0 +1,66 @@
+version = 1
+template = "langchain/cli-remote"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv"]
+
+[paths]
+required = [
+  "langgraph.json",
+  "pyproject.toml",
+  "src/{{ cookiecutter.project_slug }}/gateway_binding.py",
+  "src/{{ cookiecutter.project_slug }}/remote_graph.py",
+  "src/{{ cookiecutter.project_slug }}/settings.py",
+]
+
+[env.AGENTSEEK_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model id used by the remote LangGraph agent."
+aliases = ["BUB_MODEL", "LANGCHAIN_REMOTE_MODEL"]
+
+[env.AGENTSEEK_API_KEY]
+required = true
+description = "Provider API key used by AgentSeek/Bub and bridged to OpenAI when AGENTSEEK_MODEL starts with openai:."
+aliases = ["BUB_API_KEY"]
+
+[env.AGENTSEEK_API_BASE]
+required = false
+description = "Optional OpenAI-compatible API base URL."
+aliases = ["BUB_API_BASE"]
+
+[env.AGENTSEEK_LANGCHAIN_SPEC]
+required = true
+default = "{{ cookiecutter.project_slug }}.gateway_binding:build_spec"
+description = "AgentSeek LangChain binding that connects to the remote LangGraph server."
+aliases = ["BUB_LANGCHAIN_SPEC"]
+
+[env.LANGGRAPH_URL]
+required = true
+default = "{{ cookiecutter.langgraph_url }}"
+description = "LangGraph Agent Server URL used by the AgentSeek bridge."
+aliases = ["AGENTSEEK_LANGGRAPH_URL"]
+
+[env.LANGGRAPH_ASSISTANT_ID]
+required = true
+default = "{{ cookiecutter.assistant_id }}"
+description = "Assistant id exposed by langgraph.json."
+aliases = ["AGENTSEEK_LANGGRAPH_ASSISTANT_ID"]
+
+[services.langgraph]
+url = "{{ cookiecutter.langgraph_url }}"
+
+[processes.langgraph]
+command = ["uv", "run", "langgraph", "dev"]
+
+[checks.langgraph]
+type = "http"
+target = "{{ cookiecutter.langgraph_url }}/ok"
+timeout = 2
+attempts = 3
+
+[tasks.sync]
+description = "Install project dependencies."
+command = ["uv", "sync"]
