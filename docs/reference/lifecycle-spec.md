@@ -66,14 +66,14 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 | Section | Purpose |
 | --- | --- |
-| `env_file` | Optional project-local env file used only for declared environment checks. |
+| `env_file` | Optional project-local env file used only for declared environment checks. It is not injected into child processes. |
 | `tools` | Required executables used by the project. |
 | `paths` | Required local files or directories. |
 | `env.<name>` | Environment variables AgentSeek should check. Defaults are lower priority than `env_file` and shell variables. |
 | `services.<name>` | Public local service endpoints shown by `agentseek info`. |
 | `processes.<name>` | Long-running commands started by `agentseek dev`. |
-| `checks.<name>` | Live readiness checks used by `agentseek doctor --live`. |
-| `tasks.<name>` | One-shot tasks run by `agentseek task <name>`. |
+| `checks.<name>` | Live HTTP readiness checks used by `agentseek doctor --live`. 2xx and 3xx responses are successful. |
+| `tasks.<name>` | One-shot tasks run by `agentseek task <name>`. `cwd` is project-relative and must exist. |
 
 ## Environment Checks
 
@@ -102,7 +102,7 @@ overrides, multiple env files, or env interpolation.
 | --- | --- |
 | `agentseek info [--verbose]` | Prints project facts from the lifecycle spec. |
 | `agentseek doctor [--live] [--strict]` | Checks tools, paths, env, and optional live endpoints. |
-| `agentseek dev [--dry-run] [--skip-check]` | Prints or starts declared development processes. |
+| `agentseek dev [--dry-run] [--skip-check]` | Prints or starts declared development processes. `--skip-check` skips only the preliminary strict `doctor` pass. |
 | `agentseek task --list` | Lists tasks declared under `tasks`. |
 | `agentseek task <name>` | Runs a declared one-shot task. |
 

@@ -155,7 +155,13 @@ def _task_collection(project: LifecycleProject) -> Collection:
 
 def _task_function(project: LifecycleProject, name: str, task: Task):
     def run_task(_ctx: object) -> None:
-        code = _run_command(task.command, cwd=project.root / task.cwd)
+        cwd = project.root / task.cwd
+        if not cwd.is_dir():
+            exit_project_error(
+                f"Lifecycle task {name!r} cwd is missing: {task.cwd}.",
+                f"Create {task.cwd} or update [tasks.{name}].cwd in {LIFECYCLE_SPEC_FILE}.",
+            )
+        code = _run_command(task.command, cwd=cwd)
         if code:
             raise SystemExit(code)
 
@@ -340,7 +346,7 @@ def _check_target(check: Check) -> bool:
         response = httpx.get(check.target, timeout=check.timeout)
     except httpx.HTTPError:
         return False
-    return response.status_code < 500
+    return 200 <= response.status_code < 400
 
 
 def _ensure_required_inputs(project: LifecycleProject) -> None:

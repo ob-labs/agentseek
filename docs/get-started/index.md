@@ -44,6 +44,9 @@ npm install --prefix frontend
 Set the model and provider credentials required by the selected template in
 `.env` or the environment used to run AgentSeek.
 
+`.env` is used by AgentSeek only for lifecycle environment checks declared by
+the template. It is not automatically passed to child processes.
+
 ## Check and run
 
 ```bash

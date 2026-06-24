@@ -65,7 +65,7 @@ app = typer.Typer(
     cls=_SwallowArgsGroup,
 )
 
-KNOWN_TYPES: tuple[str, ...] = ("bub",)
+KNOWN_TYPES: tuple[str, ...] = ("bub", "deepagents", "langchain")
 DEFAULT_TYPE = "bub"
 
 _TEMPLATE_LIST_SENTINEL = "__list__"
@@ -370,7 +370,8 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
         nargs="?",
         default=None,
         help=(
-            "Template spec. Can be a framework type (bub), a type/name pair (bub/default), a git URL, or a local path."
+            "Template spec. Can be a framework type (bub, deepagents, langchain), "
+            "a type/name pair (bub/default), a git URL, or a local path."
         ),
     )
     parser.add_argument(

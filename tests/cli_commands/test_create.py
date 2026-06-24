@@ -67,6 +67,8 @@ def test_unknown_type_exits_2() -> None:
     result = _runner().invoke(build_command_app(), ["create", "not-a-real-type"])
     assert result.exit_code == 2
     assert "Unknown framework type" in result.output
+    for project_type in create_module.KNOWN_TYPES:
+        assert project_type in result.output
 
 
 def test_list_templates_for_type_prints_bundled_names() -> None:
@@ -134,6 +136,8 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
         tmp_path,
         {
             "bub/default": "Default Bub template.",
+            "deepagents/default": "Default DeepAgents template.",
+            "langchain/default": "Default LangChain template.",
         },
     )
 
@@ -143,6 +147,10 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
     assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
     assert "bub/default" in result.output
     assert "Default Bub template." in result.output
+    assert "deepagents/default" in result.output
+    assert "Default DeepAgents template." in result.output
+    assert "langchain/default" in result.output
+    assert "Default LangChain template." in result.output
     assert "Usage:" in result.output
 
 
@@ -151,14 +159,14 @@ def test_template_flag_no_value_for_type_uses_remote_checkout(monkeypatch, tmp_p
     clone_calls = _mock_remote_template_repo(
         monkeypatch,
         tmp_path,
-        {"bub/remote-only": "Remote-only Bub template."},
+        {"langchain/remote-only": "Remote-only LangChain template."},
     )
 
-    result = _runner().invoke(build_command_app(), ["create", "bub", "--template", "--checkout", "release/next"])
+    result = _runner().invoke(build_command_app(), ["create", "langchain", "--template", "--checkout", "release/next"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, "release/next", str(tmp_path / "cookiecutters"), True)]
-    assert "bub/remote-only" in result.output
+    assert "langchain/remote-only" in result.output
     assert "Usage:" not in result.output
 
 

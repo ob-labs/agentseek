@@ -20,7 +20,7 @@ app = typer.Typer(
 def dev(
     skip_check: Annotated[
         bool,
-        typer.Option("--skip-check", help="Skip the strict readiness check before running dev."),
+        typer.Option("--skip-check", help="Skip the preliminary strict doctor pass before running dev."),
     ] = False,
     dry_run: Annotated[
         bool,

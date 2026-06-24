@@ -23,6 +23,10 @@ Run a project task by name.
 agentseek task frontend
 ```
 
+Tasks are declared by the generated project's lifecycle spec. If a task
+declares `cwd`, AgentSeek runs the command from that project-relative directory
+and reports a lifecycle error when it is missing.
+
 ## Next
 
 - [Understand the lifecycle spec](../reference/lifecycle-spec.md)

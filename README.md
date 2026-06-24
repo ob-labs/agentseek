@@ -36,6 +36,8 @@ npm install --prefix frontend
 ```
 
 Set the model and provider credentials required by the selected template.
+AgentSeek reads `.env` only for variables declared by the template lifecycle
+spec; it does not inject `.env` into child processes.
 
 ```bash
 agentseek doctor
@@ -58,8 +60,8 @@ agentseek dev
 - A lifecycle file defines how the app is checked and run.
 - AgentSeek gives those lifecycle tasks a stable command interface.
 
-Bub is one available template path. Future templates can expose the same
-lifecycle commands with different runtimes.
+Template types currently include `bub`, `deepagents`, and `langchain`. Each
+template can expose the same lifecycle commands with different runtimes.
 
 ## Documentation
 

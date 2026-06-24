@@ -36,7 +36,8 @@ cd my_bub_agent
 agentseek create --list-templates
 ```
 
-List only `bub` templates.
+The shared CLI currently recognizes `bub`, `deepagents`, and `langchain`
+template types. List only one type by passing it before `--list-templates`.
 
 ```bash
 agentseek create bub --list-templates

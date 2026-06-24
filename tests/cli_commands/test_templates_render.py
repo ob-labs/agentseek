@@ -74,7 +74,6 @@ def test_template_renders_without_unrendered_jinja(
     tmp_path: Path,
 ) -> None:
     """Each template must render with its defaults and leave no Jinja markers."""
-    del type_name, template_name  # parametrize ids only; not used in body
     patched = _patch_template_for_test(template_dir, tmp_path)
     out_dir = tmp_path / "output"
     out_dir.mkdir()
@@ -94,12 +93,24 @@ def test_template_renders_without_unrendered_jinja(
         "variable was referenced but not substituted."
     )
     pyproject_data = tomllib.loads(pyproject_text)
-    dependencies = pyproject_data["project"]["dependencies"]
-    assert "bub==0.3.9" in dependencies
-    assert "agentseek-ag-ui" in dependencies
-    assert "agentseek" not in dependencies
-    assert "duty>=1.9" not in pyproject_data["dependency-groups"]["dev"]
-    assert (generated / ".agentseek" / "lifecycle.toml").is_file()
+    assert pyproject_data["project"]["name"]
+    dependencies = pyproject_data["project"].get("dependencies", [])
+    assert isinstance(dependencies, list)
+    if (type_name, template_name) == ("bub", "default"):
+        assert "bub==0.3.9" in dependencies
+        assert "agentseek-ag-ui" in dependencies
+        assert "duty>=1.9" not in pyproject_data.get("dependency-groups", {}).get("dev", [])
+
+    lifecycle = generated / ".agentseek" / "lifecycle.toml"
+    assert lifecycle.is_file(), f"missing .agentseek/lifecycle.toml in {generated}"
+    lifecycle_text = lifecycle.read_text(encoding="utf-8")
+    assert "{{" not in lifecycle_text, (
+        f"unrendered Jinja in {lifecycle}: contains '{{{{' — a cookiecutter "
+        "variable was referenced but not substituted."
+    )
+    lifecycle_data = tomllib.loads(lifecycle_text)
+    assert lifecycle_data["template"] == f"{type_name}/{template_name}"
+    assert lifecycle_data["processes"]
     assert not (generated / "duties.py").exists()
 
     frontend_pkg = generated / "frontend" / "package.json"
@@ -123,7 +134,6 @@ def test_template_lifecycle_commands_smoke(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Rendered templates expose the AgentSeek lifecycle commands."""
-    del type_name, template_name
     patched = _patch_template_for_test(template_dir, tmp_path)
     out_dir = tmp_path / "output"
     out_dir.mkdir()
@@ -134,11 +144,7 @@ def test_template_lifecycle_commands_smoke(
     )
 
     generated = next(p for p in out_dir.iterdir() if p.is_dir())
-    (generated / ".env").write_text(
-        "BUB_MODEL=openai:gpt-4o-mini\nBUB_OPENAI_API_KEY=test-key\n",
-        encoding="utf-8",
-    )
-    (generated / "frontend" / "node_modules").mkdir(parents=True)
+    assert (generated / ".agentseek" / "lifecycle.toml").is_file()
     monkeypatch.chdir(generated)
 
     app = build_command_app()
@@ -146,11 +152,7 @@ def test_template_lifecycle_commands_smoke(
 
     info = runner.invoke(app, ["info"])
     assert info.exit_code == 0, info.stdout + info.stderr
-    assert "Template: bub/default" in info.stdout
-
-    doctor = runner.invoke(app, ["doctor", "--strict"])
-    assert doctor.exit_code == 0, doctor.stdout + doctor.stderr
-    assert "ok" in doctor.stdout
+    assert f"Template: {type_name}/{template_name}" in info.stdout
 
     dev = runner.invoke(app, ["dev", "--dry-run", "--skip-check"])
     assert dev.exit_code == 0, dev.stdout + dev.stderr

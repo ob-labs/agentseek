@@ -24,10 +24,10 @@ Projects may expose additional spec tasks. Run them through `agentseek task`.
 - Declare tools under `[tools]` with a `required` list.
 - Declare file and directory prerequisites under `[paths]` with a `required` list.
 - Declare only environment variables AgentSeek should check under `[env.<name>]`. Defaults are lower priority than `env_file` and shell variables.
-- Use top-level `env_file` only when AgentSeek should read a project-local env file for declared env checks.
+- Use top-level `env_file` only when AgentSeek should read a project-local env file for declared env checks. AgentSeek does not inject that file into child processes.
 - Put public service URLs under `[services.<name>]`.
 - Put long-running process commands under `[processes.<name>]`. Do not declare process-level environment overrides.
-- Put task commands under `[tasks.<name>]`.
+- Put task commands under `[tasks.<name>]`. Task `cwd` values are project-relative and must exist before the task starts.
 
 Version 1 deliberately does not support optional tool/path checks, TCP checks,
 process env overrides, multiple env files, env file injection, or env interpolation.
@@ -36,7 +36,7 @@ process env overrides, multiple env files, env file injection, or env interpolat
 
 - `agentseek create [spec]` creates a project from an AgentSeek-compatible template.
 - `agentseek doctor [--live] [--strict]` checks the current project through the lifecycle spec.
-- `agentseek dev [--dry-run] [--skip-check]` starts local development or prints the startup plan.
+- `agentseek dev [--dry-run] [--skip-check]` starts local development or prints the startup plan. `--skip-check` skips only the preliminary strict `doctor` pass; required lifecycle inputs are still enforced before processes start.
 - `agentseek info [--verbose]` prints project summary and lifecycle details.
 - `agentseek task --list` lists project-defined tasks.
 - `agentseek task <name>` runs project-defined spec tasks.

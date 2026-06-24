@@ -2,6 +2,12 @@
 
 Curated skills for agent-assisted development with AgentSeek templates.
 
+AgentSeek-compatible template projects use `.agentseek/lifecycle.toml` as the
+runtime contract. A template's `.env` file is only a source for declared
+lifecycle environment checks; it is not automatically injected into child
+processes. `agentseek dev --skip-check` skips the preliminary strict `doctor`
+pass, while core required lifecycle inputs still apply.
+
 ## Install
 
 ### Via `agentseek` CLI (recommended)

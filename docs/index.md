@@ -40,8 +40,8 @@ Install the CLI for daily use.
 uv tool install agentseek
 ```
 
-The command below uses the current Bub template. Other templates can follow the
-same lifecycle shape.
+The command below uses one Bub template. The shared registry also advertises
+DeepAgents and LangChain template paths with the same lifecycle command shape.
 
 ```bash
 agentseek create bub/default --no-input

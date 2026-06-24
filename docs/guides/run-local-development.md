@@ -23,7 +23,9 @@ Preview the startup plan without launching services.
 agentseek dev --dry-run
 ```
 
-Skip the readiness check when you already know the project state.
+Skip the preliminary strict `doctor` pass when you already know the project
+state. Core required inputs declared by the lifecycle spec are still enforced
+before processes start.
 
 ```bash
 agentseek dev --skip-check

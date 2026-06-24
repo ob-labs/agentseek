@@ -64,6 +64,10 @@ The `agent` profile currently has no public subcommands.
 | `agentseek create <type>/<name>` | Use a specific template. |
 | `agentseek create <url-or-absolute-path>` | Pass the spec directly to Cookiecutter. |
 
+The built-in template type set is currently `bub`, `deepagents`, and
+`langchain`. Use `templates/index.json` as the shared registry for advertised
+template keys and descriptions.
+
 ### Options
 
 | Option | Description |
@@ -94,7 +98,7 @@ The `agent` profile currently has no public subcommands.
 | Option | Description |
 | --- | --- |
 | `--dry-run` | Print the startup plan without launching services. |
-| `--skip-check` | Skip the strict readiness check before startup. |
+| `--skip-check` | Skip the preliminary strict `doctor` pass before startup. Core required inputs are still enforced. |
 
 ## `info`
 
