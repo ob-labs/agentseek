@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import tomllib
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 from pydantic_core import PydanticCustomError
+from pydantic_settings import BaseSettings, SettingsConfigDict, TomlConfigSettingsSource
 
 from agentseek.cli.lifecycle.errors import exit_project_error
 
@@ -19,22 +20,16 @@ REQUIRED_COMMANDS: tuple[str, ...] = ("dev", "info", "doctor")
 class SpecModel(BaseModel):
     """Base model for lifecycle spec sections."""
 
-    model_config = ConfigDict(extra="ignore", frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-class RequiredOptional(SpecModel):
+class RequiredList(SpecModel):
     required: tuple[str, ...] = ()
-    optional: tuple[str, ...] = ()
-
-    def as_requirement_map(self) -> dict[str, bool]:
-        values = dict.fromkeys(self.required, True)
-        values.update({name: False for name in self.optional if name not in values})
-        return values
 
 
 class EnvRequirement(SpecModel):
     required: bool = False
-    secret: bool = False
+    default: str | None = None
     description: str = ""
     aliases: tuple[str, ...] = ()
 
@@ -49,8 +44,6 @@ class Service(SpecModel):
 class Process(SpecModel):
     command: tuple[str, ...]
     cwd: str = "."
-    env: dict[str, str] = Field(default_factory=dict)
-    shutdown_grace_seconds: int = 10
 
     @field_validator("command")
     @classmethod
@@ -61,12 +54,10 @@ class Process(SpecModel):
 
 
 class Check(SpecModel):
-    type: Literal["http", "tcp"] = "tcp"
+    type: Literal["http"] = "http"
     target: str
-    required: bool = True
     timeout: float = 2.0
     attempts: int = 1
-    wait: float = 0.0
 
 
 class Task(SpecModel):
@@ -82,13 +73,17 @@ class Task(SpecModel):
         return value
 
 
-class LifecycleSpec(SpecModel):
+class LifecycleSpec(BaseSettings):
+    model_config = SettingsConfigDict(extra="forbid", frozen=True)
+
+    toml_file: ClassVar[Path]
     path: Path
     version: int
     template: str = ""
     name: str = ""
-    tools: RequiredOptional = Field(default_factory=RequiredOptional)
-    paths: RequiredOptional = Field(default_factory=RequiredOptional)
+    env_file: str | None = None
+    tools: RequiredList = Field(default_factory=RequiredList)
+    paths: RequiredList = Field(default_factory=RequiredList)
     env: dict[str, EnvRequirement] = Field(default_factory=dict)
     services: dict[str, Service] = Field(default_factory=dict)
     processes: dict[str, Process] = Field(default_factory=dict)
@@ -106,19 +101,41 @@ class LifecycleSpec(SpecModel):
         return self
 
     @property
-    def tool_requirements(self) -> dict[str, bool]:
-        return self.tools.as_requirement_map()
+    def required_tools(self) -> tuple[str, ...]:
+        return self.tools.required
 
     @property
-    def path_requirements(self) -> dict[str, bool]:
-        return self.paths.as_requirement_map()
+    def required_paths(self) -> tuple[str, ...]:
+        return self.paths.required
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings,
+        env_settings,
+        dotenv_settings,
+        file_secret_settings,
+    ):
+        del env_settings, dotenv_settings, file_secret_settings
+        return (init_settings, TomlConfigSettingsSource(settings_cls, toml_file=cls.toml_file))
 
 
 def load_lifecycle_spec(path: Path) -> LifecycleSpec:
     """Load and validate a lifecycle spec from TOML."""
+    spec_settings = cast(
+        Any,
+        type(
+            "LifecycleSpecSettings",
+            (LifecycleSpec,),
+            {
+                "__annotations__": {"toml_file": ClassVar[Path]},
+                "toml_file": path,
+            },
+        ),
+    )
     try:
-        data: dict[str, Any] = tomllib.loads(path.read_text(encoding="utf-8"))
-        return LifecycleSpec.model_validate({**data, "path": path})
+        return spec_settings(path=path)
     except ValidationError as exc:
         exit_project_error("Invalid AgentSeek lifecycle spec.", str(exc))
     except tomllib.TOMLDecodeError as exc:

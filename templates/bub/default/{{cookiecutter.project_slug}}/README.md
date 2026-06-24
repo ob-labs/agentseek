@@ -6,6 +6,7 @@ A lightweight Bub AG-UI agent project with an AgentSeek lifecycle spec.
 
 ```bash
 cp .env.example .env
+$EDITOR .env
 uv sync
 npm install --prefix frontend
 

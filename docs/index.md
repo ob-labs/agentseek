@@ -47,6 +47,7 @@ same lifecycle shape.
 agentseek create bub/default --no-input
 cd my_bub_agent
 cp .env.example .env
+$EDITOR .env
 uv sync
 npm install --prefix frontend
 agentseek doctor

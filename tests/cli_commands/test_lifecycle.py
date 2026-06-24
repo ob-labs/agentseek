@@ -16,21 +16,20 @@ def _write_lifecycle_spec(root: Path) -> None:
 version = 1
 template = "test/default"
 name = "Spec Project"
+env_file = ".env"
 
 [tools]
 required = ["python"]
-optional = []
 
 [paths]
 required = ["frontend/package.json", "frontend/node_modules"]
-optional = []
 
 [env.BUB_MODEL]
 required = true
+default = "openai:gpt-4o-mini"
 
 [env.BUB_API_KEY]
-required = false
-secret = true
+required = true
 aliases = ["BUB_OPENAI_API_KEY"]
 
 [services.app]
@@ -39,7 +38,6 @@ url = "http://127.0.0.1:5173"
 [processes.web]
 command = ["python", "-m", "http.server", "5173"]
 cwd = "."
-env = { TEST_PROCESS = "true" }
 
 [checks.app]
 type = "http"
@@ -86,7 +84,6 @@ def test_doctor_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
 
     assert result.exit_code == 0, result.stdout + result.stderr
     assert "ok   lifecycle.toml: Lifecycle spec is present." in result.stdout
-    assert "ok   pyproject.toml: Python project file is present." in result.stdout
     assert "ok   frontend/node_modules: frontend/node_modules is present." in result.stdout
     assert "ok   BUB_MODEL: BUB_MODEL is configured." in result.stdout
 
@@ -99,6 +96,7 @@ def test_doctor_reports_missing_required_inputs(tmp_path: Path, monkeypatch) -> 
 
     assert result.exit_code == 1
     assert "fail .env: .env is missing." in result.stdout
+    assert "fail BUB_API_KEY: BUB_API_KEY or BUB_OPENAI_API_KEY is not configured." in result.stdout
     assert "fail frontend/node_modules: frontend/node_modules is missing." in result.stdout
 
 
@@ -133,6 +131,31 @@ def test_task_runs_declared_command(tmp_path: Path, monkeypatch) -> None:
 
     assert result.exit_code == 0, result.stdout + result.stderr
     assert (tmp_path / "task.done").read_text(encoding="utf-8") == "ok"
+
+
+def test_task_does_not_pass_env_file_to_child_process(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    (tmp_path / ".env").write_text(
+        "BUB_MODEL=dotenv-model\nBUB_OPENAI_API_KEY=dotenv-key\nEXTRA_DOTENV=hidden\n",
+        encoding="utf-8",
+    )
+    captured_env_kwarg: object = None
+
+    def fake_call(command, *, cwd, **kwargs):
+        nonlocal captured_env_kwarg
+        del command, cwd
+        captured_env_kwarg = kwargs.get("env")
+        return 0
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("BUB_MODEL", "shell-model")
+    monkeypatch.setenv("BUB_OPENAI_API_KEY", "shell-key")
+    monkeypatch.setattr("agentseek.cli.lifecycle.core.subprocess.call", fake_call)
+
+    result = CliRunner().invoke(build_command_app(), ["task", "version"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert captured_env_kwarg is None
 
 
 def test_lifecycle_spec_is_inherited_from_parent(tmp_path: Path, monkeypatch) -> None:

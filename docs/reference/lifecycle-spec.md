@@ -28,17 +28,21 @@ Other project files are outside lifecycle discovery.
 version = 1
 template = "bub/default"
 name = "My Bub Agent"
+env_file = ".env"
 
 [tools]
 required = ["uv", "node", "npm"]
-optional = []
 
 [paths]
 required = ["frontend/package.json", "frontend/node_modules"]
-optional = []
 
 [env.BUB_MODEL]
 required = true
+default = "openai:gpt-4o-mini"
+
+[env.BUB_API_KEY]
+required = true
+aliases = ["BUB_OPENAI_API_KEY"]
 
 [services.app]
 url = "http://127.0.0.1:5173"
@@ -62,13 +66,35 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 | Section | Purpose |
 | --- | --- |
-| `tools` | Required and optional executables used by the project. |
-| `paths` | Required and optional local files or directories. |
-| `env.<name>` | Environment variables required or recognized by the project. |
+| `env_file` | Optional project-local env file used only for declared environment checks. |
+| `tools` | Required executables used by the project. |
+| `paths` | Required local files or directories. |
+| `env.<name>` | Environment variables AgentSeek should check. Defaults are lower priority than `env_file` and shell variables. |
 | `services.<name>` | Public local service endpoints shown by `agentseek info`. |
 | `processes.<name>` | Long-running commands started by `agentseek dev`. |
 | `checks.<name>` | Live readiness checks used by `agentseek doctor --live`. |
-| `tasks.<name>` | Optional one-shot tasks run by `agentseek task <name>`. |
+| `tasks.<name>` | One-shot tasks run by `agentseek task <name>`. |
+
+## Environment Checks
+
+AgentSeek checks environment requirements from lifecycle defaults, the optional
+`env_file`, and the current process environment:
+
+```text
+lifecycle default < env_file < shell environment
+```
+
+Only keys declared under `[env.<name>]` and their aliases are read from
+`env_file`. Templates do not need to declare every runtime variable a project
+may use. AgentSeek does not pass the env file or lifecycle defaults to child
+processes.
+
+## First Phase Scope
+
+Version 1 supports required tools, required paths, project environment
+requirements, HTTP live checks, long-running processes, and one-shot tasks.
+It does not support optional tool/path checks, TCP checks, process env
+overrides, multiple env files, or env interpolation.
 
 ## Public Commands
 

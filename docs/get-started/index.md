@@ -36,12 +36,13 @@ lifecycle commands.
 
 ```bash
 cp .env.example .env
+$EDITOR .env
 uv sync
 npm install --prefix frontend
 ```
 
 Set the model and provider credentials required by the selected template in
-`.env`.
+`.env` or the environment used to run AgentSeek.
 
 ## Check and run
 

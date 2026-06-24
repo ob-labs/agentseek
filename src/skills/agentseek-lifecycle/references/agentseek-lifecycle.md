@@ -21,12 +21,16 @@ Projects may expose additional spec tasks. Run them through `agentseek task`.
 ## Spec Rules
 
 - Keep `version = 1`.
-- Declare tools under `[tools]` with `required` and `optional` lists.
-- Declare file and directory prerequisites under `[paths]`.
-- Declare environment variables under `[env.<name>]`.
+- Declare tools under `[tools]` with a `required` list.
+- Declare file and directory prerequisites under `[paths]` with a `required` list.
+- Declare only environment variables AgentSeek should check under `[env.<name>]`. Defaults are lower priority than `env_file` and shell variables.
+- Use top-level `env_file` only when AgentSeek should read a project-local env file for declared env checks.
 - Put public service URLs under `[services.<name>]`.
-- Put long-running process commands under `[processes.<name>]`.
-- Put optional task commands under `[tasks.<name>]`.
+- Put long-running process commands under `[processes.<name>]`. Do not declare process-level environment overrides.
+- Put task commands under `[tasks.<name>]`.
+
+Version 1 deliberately does not support optional tool/path checks, TCP checks,
+process env overrides, multiple env files, env file injection, or env interpolation.
 
 ## Command Semantics
 
