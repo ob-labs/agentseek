@@ -1,0 +1,159 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: #f7f7f8;
+  color: #1f1f1f;
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1rem 6rem;
+}
+
+code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.msg {
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.msg--human {
+  background: rgba(50, 110, 220, 0.08);
+}
+
+.msg__role {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  margin-bottom: 0.25rem;
+}
+
+.msg__body > :first-child {
+  margin-top: 0;
+}
+
+.msg__body > :last-child {
+  margin-bottom: 0;
+}
+
+.hint {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.composer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: var(--bg, #f7f7f8);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.composer input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  font: inherit;
+}
+
+.composer button {
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  border: 0;
+  background: #1f6feb;
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+
+.composer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.msg__body table {
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.msg__body th,
+.msg__body td {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+}
+
+.msg__body pre {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.75rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #1c1c1e;
+    color: #f2f2f7;
+  }
+
+  code {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .msg {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .msg--human {
+    background: rgba(80, 140, 250, 0.15);
+  }
+
+  .composer {
+    background: #1c1c1e;
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .composer input {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: #2a2a2c;
+    color: inherit;
+  }
+
+  .msg__body pre {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .msg__body th,
+  .msg__body td {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
