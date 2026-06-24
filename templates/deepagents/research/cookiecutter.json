@@ -1,0 +1,13 @@
+{
+  "project_name": "Research DeepAgent",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "author": "Your Name",
+  "default_model_provider": "openai",
+  "default_model": "gpt-4.1-mini",
+  "tavily_max_results": "3",
+  "tavily_topic": "general",
+  "max_concurrent_research_units": "3",
+  "max_researcher_iterations": "3",
+  "langgraph_port": "2024",
+  "frontend_port": "5174"
+}
