@@ -26,23 +26,54 @@ The agent uses `create_agent` with tool-calling — same pattern as the
 cloud-based `agentic-rag` template. The LLM decides when and how many
 times to search the knowledge base.
 
+## Lifecycle commands
+
+This project includes `.agentseek/lifecycle.toml`, so AgentSeek can inspect,
+check, and run the local development stack:
+
+```bash
+agentseek info           # show services, environment, and lifecycle metadata
+agentseek doctor         # run static checks for tools, paths, and .env
+agentseek dev --dry-run  # print the SeekDB/backend/frontend startup plan
+agentseek task --list    # list setup and data tasks
+```
+
+`agentseek doctor` intentionally does not download or convert OpenVINO models.
+Use `agentseek task models` for that heavier step.
+
 ## Setup
 
 > **Python 3.10+ required** (not 3.12+). OpenVINO runtime and
 > `optimum[openvino]` have limited Python 3.13+ support, so this template
 > uses `requires-python = ">=3.10"`.
+>
+> **Node.js 20+ recommended** for the Vite frontend dependencies.
 
-### 1. Install dependencies
+### 1. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` if you changed model paths, want a different OpenVINO device, or
+want to enable LangSmith tracing. AgentSeek reads `.env` for lifecycle checks;
+LangGraph, the ingest CLI, and Docker Compose also read it at runtime.
+
+### 2. Install dependencies
 
 ```bash
 uv sync
-npm install --prefix frontend
+agentseek task frontend
+agentseek doctor
 ```
 
-### 2. Download and convert OpenVINO models
+`agentseek doctor` checks local prerequisites and does not run model conversion,
+ingestion, or Docker startup.
+
+### 3. Download and convert OpenVINO models
 
 ```bash
-uv run convert-models
+agentseek task models
 ```
 
 This downloads and converts via `optimum-cli export openvino`:
@@ -64,17 +95,10 @@ optimum-cli export openvino \
 
 Then update `LLM_MODEL_PATH` in `.env`.
 
-### 3. Start SeekDB
+### 4. Start SeekDB
 
 ```bash
-docker compose up -d        # wait ~60s on first run
-```
-
-### 4. Configure environment
-
-```bash
-cp .env.example .env
-# Edit .env if you changed model paths or want to enable LangSmith tracing
+agentseek task seekdb        # wait ~60s on first run
 ```
 
 Key variables:
@@ -91,7 +115,7 @@ Key variables:
 ## Ingest
 
 ```bash
-uv run ingest https://lilianweng.github.io/posts/2023-06-23-agent/
+agentseek task ingest-sample
 uv run ingest ./docs/
 ```
 
@@ -102,9 +126,13 @@ Documents are chunked (1000 chars, 200 overlap), embedded with
 ## Run
 
 ```bash
-uv run langgraph dev --no-browser    # backend :2024
-npm run --prefix frontend dev        # frontend :{{ cookiecutter.frontend_port }}
+agentseek dev --dry-run
+agentseek dev
 ```
+
+`agentseek dev` starts SeekDB, `langgraph dev`, and the Vite frontend from the
+lifecycle spec. In another terminal, use `agentseek doctor --live` to check the
+declared HTTP endpoints.
 
 ## Smoke test
 

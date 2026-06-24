@@ -47,6 +47,7 @@ graph = create_agent(model=model, tools=[retrieve], system_prompt=PROMPT)
 ## Prerequisites
 
 - **Python 3.10+** with [uv](https://docs.astral.sh/uv/)
+- **Node.js 20+** with npm (for the Vite frontend)
 - **Linux x86_64** (primary) or macOS x86_64 (via Rosetta)
 - **8+ GB RAM** (16 GB recommended for larger models)
 - **Docker** (for SeekDB)
@@ -59,12 +60,18 @@ agentseek create langchain/agentic-rag-openvino        # scaffold the project
 cd <project_slug>
 cp .env.example .env
 uv sync
-uv run convert-models        # download + convert models (~15 min)
-docker compose up -d         # start SeekDB
-uv run ingest https://lilianweng.github.io/posts/2023-06-23-agent/
-uv run langgraph dev         # backend
-cd frontend && npm install && npm run dev  # frontend
+agentseek info
+agentseek task frontend      # install frontend dependencies
+agentseek doctor             # static lifecycle checks
+agentseek task models        # download + convert models (~15 min)
+agentseek task seekdb        # start SeekDB in the background
+agentseek task ingest-sample
+agentseek dev                # SeekDB + backend + frontend
 ```
+
+Use `agentseek dev --dry-run` to inspect the startup plan, `agentseek task --list`
+to see one-shot setup tasks, and `agentseek doctor --live` after `agentseek dev`
+is running to check the declared HTTP endpoints.
 
 ## Cookiecutter variables
 
