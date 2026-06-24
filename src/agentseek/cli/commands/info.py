@@ -10,7 +10,7 @@ from agentseek.cli.lifecycle import load_lifecycle_project, run_lifecycle_task
 
 app = typer.Typer(
     name="info",
-    help="Show a project summary from duties.py.",
+    help="Show a project summary from the lifecycle spec.",
     add_completion=False,
     no_args_is_help=False,
 )
@@ -26,7 +26,7 @@ def info(
     """Print a copyable project summary."""
     project = load_lifecycle_project()
     if verbose:
-        typer.echo(f"Lifecycle file: {project.path}")
+        typer.echo(f"Lifecycle spec: {project.path}")
         typer.echo(f"Lifecycle version: {project.metadata['version']}")
         typer.echo()
     run_lifecycle_task(project, "info", verbose=verbose)

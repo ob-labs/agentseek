@@ -13,5 +13,5 @@ sources:
 | Page | Contents |
 | --- | --- |
 | [CLI](cli.md) | Command and option lookup. |
-| [Lifecycle File](lifecycle-file.md) | Generated project lifecycle contract. |
+| [Lifecycle Spec](lifecycle-spec.md) | Generated project lifecycle contract. |
 | [Templates](templates.md) | Available template paths. |

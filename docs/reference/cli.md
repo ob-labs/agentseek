@@ -38,10 +38,10 @@ sources:
 | Command | Description |
 | --- | --- |
 | `agentseek create [spec]` | Create a project from a template. |
-| `agentseek doctor` | Check local readiness through the project `duties.py`. |
-| `agentseek dev` | Start local development through the project `duties.py`. |
+| `agentseek doctor` | Check local readiness through the lifecycle spec. |
+| `agentseek dev` | Start local development through the lifecycle spec. |
 | `agentseek info` | Show project metadata and entry points. |
-| `agentseek task` | Forward to Duty and run project-defined tasks. |
+| `agentseek task` | Run project-defined lifecycle spec tasks. |
 | `agentseek version` | Show AgentSeek version information. |
 
 ## Agent profile
@@ -106,9 +106,8 @@ The `agent` profile currently has no public subcommands.
 
 | Form | Description |
 | --- | --- |
-| `agentseek task --list` | List project-defined Duty tasks. |
-| `agentseek task --help` | Show the AgentSeek forwarding boundary; inside a project, forward to Duty. |
-| `agentseek task <name>` | Run a project-defined Duty task. |
-| `agentseek task <name> key=value` | Pass parameters to a Duty task. |
+| `agentseek task --list` | List project-defined lifecycle spec tasks. |
+| `agentseek task --help` | Show the AgentSeek task boundary. |
+| `agentseek task <name>` | Run a project-defined lifecycle spec task. |
 
-`task` must run from a project directory containing `duties.py`. Duty parses `--list` and task-specific parameters.
+`task` must run from a project directory containing `.agentseek/lifecycle.toml`.

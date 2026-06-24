@@ -88,7 +88,7 @@ def test_task_help_is_available_outside_lifecycle_project() -> None:
 
     assert result.exit_code == 0
     assert "Usage: agentseek task" in result.output
-    assert "duties.py" in result.output
+    assert ".agentseek/lifecycle.toml" in result.output
 
 
 # ---------------------------------------------------------------------------

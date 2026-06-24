@@ -6,7 +6,7 @@ runs: yes
 verified_on: 2026-06-23
 sources:
   - src/agentseek/cli/commands/task.py
-  - src/agentseek/cli/lifecycle.py
+  - src/agentseek/cli/lifecycle/core.py
 ---
 
 # Run Project Tasks
@@ -20,16 +20,10 @@ agentseek task --list
 Run a project task by name.
 
 ```bash
-agentseek task info
-```
-
-Pass task arguments as `name=value` pairs.
-
-```bash
-agentseek task doctor live=false strict=false
+agentseek task frontend
 ```
 
 ## Next
 
-- [Understand the lifecycle file](../reference/lifecycle-file.md)
+- [Understand the lifecycle spec](../reference/lifecycle-spec.md)
 - [See all command options](../reference/cli.md)

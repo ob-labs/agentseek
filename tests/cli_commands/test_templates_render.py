@@ -98,7 +98,9 @@ def test_template_renders_without_unrendered_jinja(
     assert "bub==0.3.9" in dependencies
     assert "agentseek-ag-ui" in dependencies
     assert "agentseek" not in dependencies
-    assert "duty>=1.9" in pyproject_data["dependency-groups"]["dev"]
+    assert "duty>=1.9" not in pyproject_data["dependency-groups"]["dev"]
+    assert (generated / ".agentseek" / "lifecycle.toml").is_file()
+    assert not (generated / "duties.py").exists()
 
     frontend_pkg = generated / "frontend" / "package.json"
     if frontend_pkg.is_file():

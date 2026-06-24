@@ -10,7 +10,7 @@ from agentseek.cli.lifecycle import load_lifecycle_project, run_lifecycle_task
 
 app = typer.Typer(
     name="doctor",
-    help="Check local project readiness through duties.py.",
+    help="Check local project readiness through the lifecycle spec.",
     add_completion=False,
     no_args_is_help=False,
 )
