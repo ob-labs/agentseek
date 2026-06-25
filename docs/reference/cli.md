@@ -3,7 +3,7 @@ title: CLI reference
 type: reference
 audience: [A1, A2, A3, A4]
 runs: no
-verified_on: 2026-06-12
+verified_on: 2026-06-25
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
@@ -105,6 +105,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 
 | Command | Description |
 | --- | --- |
+| `agentseek plugin list` | Show the plugin project path and installed AgentSeek/Bub plugin packages. |
 | `agentseek plugin install [SPECS]...` | Install plugins, or sync the plugin environment when no spec is given. |
 | `agentseek plugin uninstall PACKAGES...` | Remove plugins from the AgentSeek environment. |
 | `agentseek plugin update [PACKAGES]...` | Update selected plugins, or all plugins when no package is given. |
