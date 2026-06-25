@@ -4,26 +4,30 @@ name = "{{ cookiecutter.project_name }}"
 env_file = ".env"
 
 [tools]
-required = ["uv", "npm"]
+required = ["docker"]
 
 [paths]
-required = ["pyproject.toml", "frontend/package.json", "frontend/node_modules"]
+required = ["docker-compose.yml", "pyproject.toml", "frontend/package.json"]
 
-[env.AGENTSEEK_MODEL]
+[env.BUB_MODEL]
 required = true
 default = "{{ cookiecutter.default_model }}"
-aliases = ["BUB_MODEL"]
 description = "Model identifier used by the generated LangChain agent."
 
-[env.AGENTSEEK_API_KEY]
+[env.BUB_API_KEY]
 required = true
-aliases = ["BUB_API_KEY", "OPENAI_API_KEY"]
+aliases = ["OPENAI_API_KEY"]
 description = "API key for the configured model provider."
 
-[env.AGENTSEEK_API_BASE]
+[env.BUB_API_BASE]
 required = false
-aliases = ["BUB_API_BASE", "OPENAI_API_BASE", "OPENAI_BASE_URL"]
+aliases = ["OPENAI_API_BASE", "OPENAI_BASE_URL"]
 description = "Optional OpenAI-compatible API base URL."
+
+[env.BUB_LANGCHAIN_SPEC]
+required = true
+default = "{{ cookiecutter.project_slug }}.demo_binding:build_spec"
+description = "Import path for the LangChain RunnableSpec loaded by Bub."
 
 [services.gateway]
 url = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
@@ -34,21 +38,19 @@ url = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit"
 [services.frontend]
 url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 
-[processes.gateway]
+[services.phoenix]
+url = "http://127.0.0.1:6006"
+
+[services.seekdb]
+url = "mysql://127.0.0.1:2884/phoenix"
+
+[processes.stack]
 command = [
   "sh",
   "-lc",
-  "set -a; [ -f .env ] && . ./.env; set +a; export AGENTSEEK_STREAM_OUTPUT=${AGENTSEEK_STREAM_OUTPUT:-true}; export AGENTSEEK_AG_UI_PORT=${AGENTSEEK_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}; export AGENTSEEK_LANGCHAIN_SPEC=${AGENTSEEK_LANGCHAIN_SPEC:-{{ cookiecutter.project_slug }}.demo_binding:build_spec}; uv run agentseek gateway --enable-channel ag-ui",
+  "mkdir -p .agentseek/tmp; TMPDIR=${TMPDIR:-$PWD/.agentseek/tmp} docker compose up --build",
 ]
 cwd = "."
-
-[processes.frontend]
-command = [
-  "sh",
-  "-lc",
-  "set -a; [ -f ../.env ] && . ../.env; [ -f .env ] && . ./.env; set +a; npm run dev",
-]
-cwd = "frontend"
 
 [checks.gateway]
 type = "http"
@@ -68,12 +70,18 @@ target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 timeout = 2
 attempts = 3
 
+[checks.phoenix]
+type = "http"
+target = "http://127.0.0.1:6006"
+timeout = 2
+attempts = 10
+
 [tasks.setup]
-description = "Install Python and frontend dependencies."
-command = ["sh", "-lc", "uv sync && npm install --prefix frontend"]
+description = "Build the full compose stack."
+command = ["docker", "compose", "build"]
 cwd = "."
 
 [tasks.frontend]
-description = "Install frontend dependencies only."
+description = "Install frontend dependencies for non-compose local runs."
 command = ["npm", "install", "--prefix", "frontend"]
 cwd = "."

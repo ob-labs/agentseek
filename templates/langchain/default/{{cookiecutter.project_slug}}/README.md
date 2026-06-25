@@ -1,43 +1,44 @@
 # {{ cookiecutter.project_name }}
 
-A LangChain `create_agent` project with CopilotKit middleware, bound to
-agentseek through `agentseek-langchain`.
+A LangChain `create_agent` project with CopilotKit middleware, bound to Bub
+through `agentseek-langchain`.
 
 ## Quickstart
 
 ### Local AG-UI
 
 ```bash
-uv sync
-npm install --prefix frontend
-
 cp .env.example .env
 cp frontend/.env.example frontend/.env
-# Fill AGENTSEEK_API_KEY, and AGENTSEEK_API_BASE if your provider needs it.
+# Fill BUB_API_KEY, and BUB_API_BASE if your provider needs it.
 
-uv run agentseek info
-uv run agentseek doctor
-uv run agentseek dev --dry-run
-uv run agentseek dev
+agentseek info
+agentseek doctor
+agentseek dev --dry-run
+agentseek dev
 ```
 
 The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`,
 the CopilotKit runtime to `http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit`,
-and the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`.
+the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`, and
+Phoenix to `http://127.0.0.1:6006`. SeekDB is exposed locally on
+`127.0.0.1:2884`.
 
-`uv run agentseek doctor --live` checks the gateway, CopilotKit runtime, and
-frontend HTTP endpoints declared in `.agentseek/lifecycle.toml`.
+`agentseek dev` starts the Docker Compose stack declared by the template:
+Bub gateway, CopilotKit/frontend, Phoenix, and SeekDB. `agentseek doctor
+--live` checks the gateway, CopilotKit runtime, frontend, and Phoenix HTTP
+endpoints declared in `.agentseek/lifecycle.toml`.
 
 Project tasks are also declared in `.agentseek/lifecycle.toml`:
 
 ```bash
-uv run agentseek task --list
-uv run agentseek task setup
-uv run agentseek task frontend
+agentseek task --list
+agentseek task setup
+agentseek task frontend
 ```
 
-AgentSeek reads `.env` only for lifecycle environment checks. The lifecycle dev
-processes explicitly load `.env` before starting the gateway and frontend.
+AgentSeek reads `.env` for lifecycle environment checks. Docker Compose reads
+the same file through its native `.env` and `env_file` mechanisms.
 
 ### Phoenix Tracing
 
@@ -45,27 +46,14 @@ The generated LangChain app can export OpenTelemetry spans directly to Phoenix.
 Bub and the gateway only forward messages; tracing is registered in the
 LangChain application process.
 
-Start the default local stack:
+The default local stack includes Phoenix tracing and SeekDB:
 
 ```bash
-uv run agentseek dev
+agentseek dev
 ```
 
-To run the same stack with local Phoenix tracing, enable the `otel` compose
-profile in `.env`:
-
-```env
-COMPOSE_PROFILES=otel
-AGENTSEEK_OTEL_ENABLED=true
-```
-
-Then use the same run command:
-
-```bash
-uv run agentseek dev
-```
-
-The compose stack exports traces to Phoenix at `http://phoenix:6006/v1/traces`.
+The compose stack exports traces to Phoenix at `http://phoenix:6006/v1/traces`
+from inside the app container.
 For non-compose runs, enable OTEL in `.env`:
 
 ```bash
@@ -129,9 +117,6 @@ For compose-based Feishu testing, use `COMPOSE_PROFILES` in `.env`, then run
 
 ```env
 COMPOSE_PROFILES=feishu
-# Or, with Phoenix tracing:
-# COMPOSE_PROFILES=feishu,otel
-# AGENTSEEK_OTEL_ENABLED=true
 ```
 
 `serve-feishu` forces direct websocket connections by setting `NO_PROXY=*`

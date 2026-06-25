@@ -1,4 +1,4 @@
-"""LangChain `create_agent` with CopilotKit middleware, driven through AgentSeek."""
+"""LangChain `create_agent` with CopilotKit middleware, driven through Bub."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ def build_agent() -> Any:
     settings = get_settings()
     model = settings.model.strip()
     if not model:
-        msg = "Set AGENTSEEK_MODEL (e.g. openai:gpt-4o-mini) for the {{ cookiecutter.project_name }} agent."
+        msg = "Set BUB_MODEL (e.g. openai:gpt-4o-mini) for the {{ cookiecutter.project_name }} agent."
         raise RuntimeError(msg)
     settings.apply_openai_env_bridge()
     configure_tracing(settings)
@@ -46,5 +46,5 @@ def build_agent() -> Any:
 
 
 def build_spec():
-    """Return a `RunnableSpec` (``AGENTSEEK_LANGCHAIN_SPEC``)."""
+    """Return a `RunnableSpec` for ``BUB_LANGCHAIN_SPEC``."""
     return messages_spec(build_agent(), include_agents_md=True)

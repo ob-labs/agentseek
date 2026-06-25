@@ -5,22 +5,29 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        UV_DEFAULT_INDEX: "${UV_DEFAULT_INDEX:-}"
+        UV_INDEX_URL: "${UV_INDEX_URL:-}"
+        UV_INSECURE_HOST: "${UV_INSECURE_HOST:-}"
 {% if cookiecutter._agentseek_source_path %}
       additional_contexts:
         agentseek_source: "{{ cookiecutter._agentseek_source_path }}"
 {% endif %}
     env_file:
       - .env
+    depends_on:
+      phoenix:
+        condition: service_started
     environment:
-      AGENTSEEK_AG_UI_HOST: "0.0.0.0"
       BUB_AG_UI_HOST: "0.0.0.0"
-      AGENTSEEK_AG_UI_PORT: "${AGENTSEEK_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}"
-      AGENTSEEK_OTEL_ENABLED: "${AGENTSEEK_OTEL_ENABLED:-false}"
+      BUB_AG_UI_PORT: "${BUB_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}"
+      BUB_LANGCHAIN_SPEC: "${BUB_LANGCHAIN_SPEC:-{{ cookiecutter.project_slug }}.demo_binding:build_spec}"
+      AGENTSEEK_OTEL_ENABLED: "${AGENTSEEK_OTEL_ENABLED:-true}"
       AGENTSEEK_OTEL_SERVICE_NAME: "${AGENTSEEK_OTEL_SERVICE_NAME:-{{ cookiecutter.project_slug }}}"
       AGENTSEEK_OTEL_PROJECT_NAME: "${AGENTSEEK_OTEL_PROJECT_NAME:-{{ cookiecutter.project_slug }}}"
       AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://phoenix:6006/v1/traces"
     ports:
-      - "${AGENTSEEK_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}:${AGENTSEEK_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}"
+      - "${BUB_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}:${BUB_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}"
 
   feishu-gateway:
     profiles:
@@ -30,6 +37,9 @@ services:
       dockerfile: Dockerfile
       args:
         INSTALL_FEISHU: "true"
+        UV_DEFAULT_INDEX: "${UV_DEFAULT_INDEX:-}"
+        UV_INDEX_URL: "${UV_INDEX_URL:-}"
+        UV_INSECURE_HOST: "${UV_INSECURE_HOST:-}"
 {% if cookiecutter._agentseek_source_path %}
       additional_contexts:
         agentseek_source: "{{ cookiecutter._agentseek_source_path }}"
@@ -38,7 +48,8 @@ services:
       - .env
     command: ["serve-feishu"]
     environment:
-      AGENTSEEK_AG_UI_PORT: "${AGENTSEEK_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}"
+      BUB_AG_UI_PORT: "${BUB_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}"
+      BUB_LANGCHAIN_SPEC: "${BUB_LANGCHAIN_SPEC:-{{ cookiecutter.project_slug }}.demo_binding:build_spec}"
       AGENTSEEK_OTEL_ENABLED: "${AGENTSEEK_OTEL_ENABLED:-false}"
       AGENTSEEK_OTEL_SERVICE_NAME: "${AGENTSEEK_OTEL_SERVICE_NAME:-{{ cookiecutter.project_slug }}-feishu}"
       AGENTSEEK_OTEL_PROJECT_NAME: "${AGENTSEEK_OTEL_PROJECT_NAME:-{{ cookiecutter.project_slug }}}"
@@ -52,11 +63,11 @@ services:
     env_file:
       - .env
     environment:
-      AGENTSEEK_AG_UI_AGENT_URL: "http://langchain-app:${AGENTSEEK_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}/agent"
+      BUB_AG_UI_AGENT_URL: "http://langchain-app:${BUB_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}/agent"
       COPILOTKIT_PORT: "${COPILOTKIT_PORT:-{{ cookiecutter.copilotkit_port }}}"
       FRONTEND_PORT: "${FRONTEND_PORT:-{{ cookiecutter.frontend_port }}}"
       VITE_COPILOTKIT_RUNTIME_PROXY: "http://127.0.0.1:${COPILOTKIT_PORT:-{{ cookiecutter.copilotkit_port }}}"
-      VITE_AGENTSEEK_AG_UI_URL: "http://langchain-app:${AGENTSEEK_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}"
+      VITE_BUB_AG_UI_URL: "http://langchain-app:${BUB_AG_UI_PORT:-{{ cookiecutter.gateway_port }}}"
     command:
       - sh
       - -lc
@@ -75,8 +86,6 @@ services:
       - frontend_node_modules:/app/frontend/node_modules
 
   phoenix:
-    profiles:
-      - otel
     image: ghcr.io/psiace/phoenix:mysql
     depends_on:
       seekdb:
@@ -88,10 +97,12 @@ services:
     environment:
       PHOENIX_SQL_DATABASE_URL: mysql://root@seekdb:2881/phoenix
       PHOENIX_ALLOW_EXTERNAL_RESOURCES: "false"
+      PHOENIX_WORKING_DIR: /phoenix-data
+    user: root
+    volumes:
+      - ./.phoenix-data:/phoenix-data
 
   seekdb:
-    profiles:
-      - otel
     image: quay.io/oceanbase/seekdb:latest
     restart: unless-stopped
     environment:
