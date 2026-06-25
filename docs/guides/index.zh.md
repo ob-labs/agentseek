@@ -19,5 +19,6 @@ sources:
 | 查看生成项目的入口 | [查看项目](inspect-project.md) |
 | 检查本地设置 | [检查项目](check-project.md) |
 | 启动本地开发 | [运行本地开发](run-local-development.md) |
+| 选择正确的本地命令 | [本地执行模式](local-execution-modes.md) |
 | 配置可观测性和追踪 | [可观测性和追踪](observability-tracing.md) |
 | 运行模板定义的任务 | [运行项目任务](run-project-tasks.md) |
