@@ -19,6 +19,11 @@ required = false
 description = "Optional OpenAI-compatible base URL. OPENAI_API_BASE is accepted by the LangChain bridge."
 aliases = ["OPENAI_API_BASE"]
 
+[env.AGENTSEEK_MODEL]
+required = true
+description = "Chat model id passed to LangChain init_chat_model. OPENAI_MODEL is accepted as an alias."
+aliases = ["OPENAI_MODEL"]
+
 [services.backend]
 url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
 

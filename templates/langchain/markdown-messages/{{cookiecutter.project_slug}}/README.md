@@ -27,6 +27,10 @@ pair in `.env`:
 - `AGENTSEEK_API_KEY` and optional `AGENTSEEK_API_BASE`
 - `OPENAI_API_KEY` and optional `OPENAI_API_BASE`
 
+Set `AGENTSEEK_MODEL` or `OPENAI_MODEL` to a chat model exposed by your
+provider. If neither is set, the agent falls back to
+`{{ cookiecutter.default_model }}`.
+
 The lifecycle spec reads `.env` only for declared environment requirements. It
 does not inject `.env` values into child processes; `langgraph.json` loads
 `.env` for the backend.
