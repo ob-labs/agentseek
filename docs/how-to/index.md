@@ -23,6 +23,7 @@ Use these pages when you already know the task.
 ## Run
 
 - [Run locally](run-locally.md)
+- [Local execution modes](local-execution-modes.md)
 - [Run the gateway](run-gateway.md)
 - [Run with Docker Compose](run-with-docker-compose.md)
 

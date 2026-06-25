@@ -23,6 +23,7 @@ sources:
 ## 运行
 
 - [本地运行](run-locally.zh.md)
+- [本地执行模式](local-execution-modes.zh.md)
 - [运行 gateway](run-gateway.zh.md)
 - [使用 Docker Compose 运行](run-with-docker-compose.zh.md)
 
