@@ -49,6 +49,8 @@ the template. It is not automatically passed to child processes.
 
 ## Check and run
 
+Run the readiness check after `.env` and local dependencies are prepared.
+
 ```bash
 agentseek doctor
 agentseek dev

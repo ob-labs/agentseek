@@ -12,6 +12,7 @@ sources:
 # Check a Project
 
 Run readiness checks from the generated project directory with the installed CLI.
+Prepare the project `.env` and dependencies first when you expect a passing check.
 
 ```bash
 agentseek doctor

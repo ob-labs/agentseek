@@ -45,6 +45,9 @@ agentseek create bub --list-templates
 
 ## Select A Template By Type
 
+Run each create form from a directory where the generated project directory
+does not already exist.
+
 ```bash
 agentseek create bub --template default --no-input
 ```

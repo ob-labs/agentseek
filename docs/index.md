@@ -8,7 +8,7 @@ sources:
   - pyproject.toml
   - README.md
   - src/agentseek/cli/runtime.py
-  - src/agentseek/cli/lifecycle.py
+  - src/agentseek/cli/lifecycle/core.py
   - templates/index.json
 ---
 
@@ -42,6 +42,8 @@ uv tool install agentseek
 
 The command below uses one Bub template. The shared registry also advertises
 DeepAgents and LangChain template paths with the same lifecycle command shape.
+Fill `.env` before running `agentseek doctor`; otherwise the readiness check
+reports the missing credentials.
 
 ```bash
 agentseek create bub/default --no-input

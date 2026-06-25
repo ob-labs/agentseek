@@ -12,6 +12,7 @@ sources:
 # Run Local Development
 
 Start the development stack from the generated project directory with the installed CLI.
+Run `agentseek doctor` first when you expect startup to proceed without setup errors.
 
 ```bash
 agentseek dev

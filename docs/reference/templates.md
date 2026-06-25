@@ -15,7 +15,17 @@ sources:
 
 | Template | Description |
 | --- | --- |
-| `bub/default` | Lightweight Bub project with AgentSeek `dev`, `info`, and `doctor` lifecycle tasks. |
+| `bub/contextseek` | Bub agent with ContextSeek semantic memory and AgentSeek lifecycle spec. |
+| `bub/default` | Lightweight Bub agent with AgentSeek lifecycle spec. |
+| `deepagents/content-builder` | DeepAgents content builder with skills, subagents, image generation, streamed UI, and AgentSeek lifecycle spec. |
+| `deepagents/default` | Local `create_deep_agent` runnable with AgentSeek lifecycle spec. |
+| `deepagents/research` | DeepAgents research agent with Tavily search, streamed tool/sub-agent UI, and AgentSeek lifecycle spec. |
+| `langchain/agentic-rag` | LangChain agentic RAG with OceanBase vector search and AgentSeek lifecycle spec. |
+| `langchain/agentic-rag-openvino` | LangChain agentic RAG with local OpenVINO models and AgentSeek lifecycle spec. |
+| `langchain/cli-remote` | Remote LangGraph CLI agent bridged through `LangGraphClientRunnable` with AgentSeek lifecycle spec. |
+| `langchain/default` | LangChain `create_agent` plus CopilotKit middleware with AgentSeek lifecycle spec. |
+| `langchain/markdown-messages` | LangChain `create_agent` and react-markdown frontend with AgentSeek lifecycle spec. |
+| `langchain/sandbox` | DeepAgents sandbox coding agent with streamed UI and AgentSeek lifecycle spec. |
 
 ## Template Specs
 
