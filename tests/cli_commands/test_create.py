@@ -54,6 +54,23 @@ def _mock_remote_template_repo(
     return clone_calls
 
 
+def _mock_local_templates_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    index: dict[str, str],
+) -> Path:
+    templates_root = tmp_path / "templates"
+    templates_root.mkdir()
+    (templates_root / "index.json").write_text(json.dumps(index), encoding="utf-8")
+    for template in index:
+        template_dir = templates_root / template
+        template_dir.mkdir(parents=True)
+        (template_dir / "cookiecutter.json").write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(create_module, "_local_templates_root", lambda: templates_root)
+    return templates_root
+
+
 # -- spec validation / error paths -----------------------------------------
 
 
@@ -84,6 +101,66 @@ def test_list_templates_without_type_lists_all_known_types() -> None:
     assert result.exit_code == 0
     for project_type in create_module.KNOWN_TYPES:
         assert project_type in result.output
+
+
+def test_list_templates_filter_matches_specs_and_descriptions(monkeypatch, tmp_path: Path) -> None:
+    _mock_local_templates_root(
+        monkeypatch,
+        tmp_path,
+        {
+            "deepagents/default": "General DeepAgents starter.",
+            "langchain/graph": "Remote LangGraph starter.",
+            "bub/default": "Lightweight Bub starter.",
+        },
+    )
+
+    result = _runner().invoke(build_command_app(), ["create", "--list-templates", "--filter", "LANGGRAPH"])
+
+    assert result.exit_code == 0, result.output
+    assert "langchain/graph" in result.output
+    assert "Remote LangGraph starter." in result.output
+    assert "deepagents/default" not in result.output
+    assert "bub/default" not in result.output
+
+
+def test_list_templates_filter_for_type_only_prints_matching_templates(monkeypatch, tmp_path: Path) -> None:
+    _mock_local_templates_root(
+        monkeypatch,
+        tmp_path,
+        {
+            "langchain/graph": "Remote LangGraph starter.",
+            "langchain/chat": "Chat-only starter.",
+            "bub/default": "Lightweight Bub starter.",
+        },
+    )
+
+    result = _runner().invoke(build_command_app(), ["create", "langchain", "--list-templates", "--filter", "graph"])
+
+    assert result.exit_code == 0, result.output
+    assert "langchain/graph" in result.output
+    assert "langchain/chat" not in result.output
+    assert "bub/default" not in result.output
+
+
+def test_list_templates_filter_no_match_prints_empty_result(monkeypatch, tmp_path: Path) -> None:
+    _mock_local_templates_root(
+        monkeypatch,
+        tmp_path,
+        {
+            "langchain/graph": "Remote LangGraph starter.",
+            "langchain/chat": "Chat-only starter.",
+        },
+    )
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "langchain", "--list-templates", "--filter", "not-present"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "No templates matched filter 'not-present' for type 'langchain'." in result.output
+    assert "langchain/graph" not in result.output
+    assert "langchain/chat" not in result.output
 
 
 def test_template_flag_no_value_lists_all_templates() -> None:

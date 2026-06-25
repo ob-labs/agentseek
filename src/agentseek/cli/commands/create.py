@@ -18,6 +18,7 @@ Spec resolution:
 * ``agentseek create deepagents``                     — ``templates/deepagents/default``.
 * ``agentseek create langchain/cli-remote``           — ``templates/langchain/cli-remote``.
 * ``agentseek create langchain --list-templates``     — list templates available for the type.
+* ``agentseek create --list-templates --filter rag``  — list templates matching a keyword.
 * ``agentseek create langchain --template cli-remote``— same as ``langchain/cli-remote``.
 * ``agentseek create langchain --template``           — list templates for the type (same as --list-templates).
 * ``agentseek create --template``                     — list all templates across all types.
@@ -226,8 +227,13 @@ def _print_templates_table(
     project_type: str,
     templates: list[str],
     descriptions: dict[str, str] | None = None,
+    *,
+    filter_keyword: str | None = None,
 ) -> None:
     if not templates:
+        if filter_keyword:
+            typer.echo(f"No templates matched filter {filter_keyword!r} for type {project_type!r}.")
+            return
         typer.echo(f"No templates found for type {project_type!r}.")
         return
     if descriptions is None:
@@ -242,13 +248,41 @@ def _print_templates_table(
             typer.echo(f"      {desc}")
 
 
-def _print_all_templates(templates_root: Path, descriptions: dict[str, str]) -> None:
+def _template_matches_filter(project_type: str, template_name: str, descriptions: dict[str, str], keyword: str) -> bool:
+    key = f"{project_type}/{template_name}"
+    haystack = f"{key}\n{descriptions.get(key, '')}".casefold()
+    return keyword.casefold() in haystack
+
+
+def _filter_templates(
+    project_type: str,
+    templates: list[str],
+    descriptions: dict[str, str],
+    filter_keyword: str | None,
+) -> list[str]:
+    if not filter_keyword:
+        return templates
+    return [name for name in templates if _template_matches_filter(project_type, name, descriptions, filter_keyword)]
+
+
+def _print_all_templates(
+    templates_root: Path,
+    descriptions: dict[str, str],
+    *,
+    filter_keyword: str | None = None,
+) -> None:
     """Print all templates across all types with usage hints."""
     total = 0
     for project_type in KNOWN_TYPES:
-        templates = _list_templates(project_type, templates_root)
+        templates = _filter_templates(
+            project_type, _list_templates(project_type, templates_root), descriptions, filter_keyword
+        )
         total += len(templates)
-        _print_templates_table(project_type, templates, descriptions)
+        if templates or filter_keyword is None:
+            _print_templates_table(project_type, templates, descriptions)
+    if filter_keyword and not total:
+        typer.echo(f"No templates matched filter {filter_keyword!r}.")
+        return
     if total:
         typer.echo("\n  Usage:")
         typer.echo("    agentseek create <type>/<name>       e.g. agentseek create langchain/cli-remote")
@@ -395,6 +429,11 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
         help="List templates available for the chosen type and exit.",
     )
     parser.add_argument(
+        "--filter",
+        default=None,
+        help="Keyword used to filter listed templates by spec or description.",
+    )
+    parser.add_argument(
         "--no-input",
         action="store_true",
         help="Skip cookiecutter prompts (use template defaults).",
@@ -427,7 +466,7 @@ def create(ctx: typer.Context) -> None:
 
     # --- --list-templates or --template (no value) ---
     if args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL:
-        _show_templates(project_type, checkout=args.checkout)
+        _show_templates(project_type, checkout=args.checkout, filter_keyword=args.filter)
         return
 
     templates_root = _prepare_templates_root(checkout=args.checkout)
@@ -495,15 +534,23 @@ def _validate_project_type(project_type: str) -> None:
         raise typer.Exit(2)
 
 
-def _show_templates(project_type: str | None, *, checkout: str | None = None) -> None:
+def _show_templates(
+    project_type: str | None,
+    *,
+    checkout: str | None = None,
+    filter_keyword: str | None = None,
+) -> None:
     if project_type is not None:
         _validate_project_type(project_type)
     templates_root = _prepare_templates_root(checkout=checkout)
     descriptions = _load_template_descriptions(templates_root)
     if project_type is None:
-        _print_all_templates(templates_root, descriptions)
+        _print_all_templates(templates_root, descriptions, filter_keyword=filter_keyword)
         return
-    _print_templates_table(project_type, _list_templates(project_type, templates_root), descriptions)
+    templates = _filter_templates(
+        project_type, _list_templates(project_type, templates_root), descriptions, filter_keyword
+    )
+    _print_templates_table(project_type, templates, descriptions, filter_keyword=filter_keyword)
     typer.echo()
 
 
