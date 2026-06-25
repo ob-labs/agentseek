@@ -9,12 +9,14 @@ from bub.channels.base import Channel
 from bub.channels.message import ChannelMessage
 from bub.framework import BubFramework
 from republic import StreamEvent
+from typer.testing import CliRunner
 
 from agentseek.cli import apply_agentseek_runtime_command_layout, resolve_enabled_channels
 from agentseek.cli.commands.chat import chat as agentseek_chat
 from agentseek.cli.commands.onboard import onboard as agentseek_onboard
 from agentseek.cli.commands.plugin import _ensure_plugin_sandbox
 from agentseek.env import DEFAULT_PLUGIN_SANDBOX
+from tests.cli_commands.helpers import build_command_app
 
 
 class _DummyChannel(Channel):
@@ -87,7 +89,12 @@ def test_runtime_command_layout_replaces_and_regroups_bub_commands() -> None:
     plugin_groups = [group.typer_instance for group in app.registered_groups if group.name == "plugin"]
     assert len(plugin_groups) == 1
     assert plugin_groups[0] is not None
-    assert {command.name for command in plugin_groups[0].registered_commands} == {"install", "uninstall", "update"}
+    assert {command.name for command in plugin_groups[0].registered_commands} == {
+        "install",
+        "list",
+        "uninstall",
+        "update",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -185,3 +192,82 @@ def test_ensure_plugin_sandbox_creates_directory_when_missing(monkeypatch, tmp_p
 
     assert sandbox.is_dir()
     assert cwds == [sandbox, sandbox]
+
+
+def test_plugin_list_reports_missing_sandbox_without_mutation(monkeypatch, tmp_path) -> None:
+    import bub.builtin.cli as bub_cli
+
+    calls: list[list[str]] = []
+
+    def fake_uv(*args: str, cwd: Path) -> None:
+        calls.append(list(args))
+
+    monkeypatch.setattr(bub_cli, "_uv", fake_uv)
+
+    sandbox = tmp_path / "missing-sandbox"
+    result = CliRunner().invoke(build_command_app(), ["plugin", "list", "--project", str(sandbox)])
+
+    assert result.exit_code == 0, result.output
+    assert f"Plugin project: {sandbox.resolve()}" in result.output
+    assert "Plugin sandbox not found." in result.output
+    assert not sandbox.exists()
+    assert calls == []
+
+
+def test_plugin_list_reports_empty_sandbox_without_uv(monkeypatch, tmp_path) -> None:
+    import bub.builtin.cli as bub_cli
+
+    calls: list[list[str]] = []
+
+    def fake_uv(*args: str, cwd: Path) -> None:
+        calls.append(list(args))
+
+    monkeypatch.setattr(bub_cli, "_uv", fake_uv)
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "agentseek-plugins"\ndependencies = ["requests>=2"]\n',
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(build_command_app(), ["plugin", "list", "--project", str(tmp_path)])
+
+    assert result.exit_code == 0, result.output
+    assert f"Plugin project: {tmp_path.resolve()}" in result.output
+    assert "No AgentSeek/Bub plugin packages found." in result.output
+    assert "requests" not in result.output
+    assert calls == []
+
+
+def test_plugin_list_prints_agentseek_and_bub_dependencies_without_uv(monkeypatch, tmp_path) -> None:
+    import bub.builtin.cli as bub_cli
+
+    calls: list[list[str]] = []
+
+    def fake_uv(*args: str, cwd: Path) -> None:
+        calls.append(list(args))
+
+    monkeypatch.setattr(bub_cli, "_uv", fake_uv)
+    (tmp_path / "pyproject.toml").write_text(
+        "\n".join([
+            "[project]",
+            'name = "agentseek-plugins"',
+            "dependencies = [",
+            '  "bub==0.3.9",',
+            '  "agentseek-langchain>=0.1",',
+            '  "bub-mcp",',
+            '  "requests>=2",',
+            "]",
+            "",
+        ]),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(build_command_app(), ["plugin", "list", "--project", str(tmp_path)])
+
+    assert result.exit_code == 0, result.output
+    assert f"Plugin project: {tmp_path.resolve()}" in result.output
+    assert "Installed plugin packages:" in result.output
+    assert "bub==0.3.9" in result.output
+    assert "agentseek-langchain>=0.1" in result.output
+    assert "bub-mcp" in result.output
+    assert "requests" not in result.output
+    assert calls == []

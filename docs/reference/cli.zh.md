@@ -3,7 +3,7 @@ title: CLI 参考
 type: reference
 audience: [A1, A2, A3, A4]
 runs: no
-verified_on: 2026-06-12
+verified_on: 2026-06-25
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
@@ -105,6 +105,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 
 | 命令 | 说明 |
 | --- | --- |
+| `agentseek plugin list` | 显示 plugin project 路径和已安装的 AgentSeek/Bub plugin packages。 |
 | `agentseek plugin install [SPECS]...` | 安装插件；未给 spec 时同步 plugin environment。 |
 | `agentseek plugin uninstall PACKAGES...` | 从 AgentSeek environment 移除插件。 |
 | `agentseek plugin update [PACKAGES]...` | 更新指定插件；未给 package 时更新全部插件。 |
