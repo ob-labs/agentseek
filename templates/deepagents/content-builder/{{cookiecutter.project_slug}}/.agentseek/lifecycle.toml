@@ -7,7 +7,7 @@ env_file = ".env"
 required = ["uv", "node", "npm"]
 
 [paths]
-required = ["langgraph.json", "frontend/package.json", "frontend/node_modules"]
+required = ["pyproject.toml", "langgraph.json", "frontend/package.json", "frontend/node_modules"]
 
 [env.AGENTSEEK_MODEL_PROVIDER]
 required = true
@@ -22,8 +22,8 @@ aliases = ["DEEPAGENTS_MODEL", "BUB_MODEL"]
 
 [env.OPENAI_API_KEY]
 required = true
-description = "OpenAI or OpenAI-compatible key for the default provider."
-aliases = ["BUB_OPENAI_API_KEY"]
+description = "Credential for the selected model provider."
+aliases = ["ANTHROPIC_API_KEY", "GOOGLE_API_KEY", "BUB_OPENAI_API_KEY"]
 
 [env.TAVILY_API_KEY]
 required = false
@@ -61,3 +61,7 @@ attempts = 3
 [tasks.frontend]
 description = "Install frontend dependencies."
 command = ["npm", "install", "--prefix", "frontend"]
+
+[tasks.backend]
+description = "Install Python dependencies with uv."
+command = ["uv", "sync"]

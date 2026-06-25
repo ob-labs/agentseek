@@ -15,39 +15,34 @@ required = [
   "src/{{ cookiecutter.project_slug }}/settings.py",
 ]
 
-[env.AGENTSEEK_MODEL]
+[env.BUB_MODEL]
 required = true
 default = "{{ cookiecutter.default_model }}"
 description = "Model id used by the remote LangGraph agent."
-aliases = ["BUB_MODEL", "LANGCHAIN_REMOTE_MODEL"]
+aliases = ["LANGCHAIN_REMOTE_MODEL"]
 
-[env.AGENTSEEK_API_KEY]
+[env.BUB_API_KEY]
 required = true
-description = "Provider API key used by AgentSeek/Bub and bridged to OpenAI when AGENTSEEK_MODEL starts with openai:."
-aliases = ["BUB_API_KEY"]
+description = "Provider API key used by Bub and bridged to OpenAI when BUB_MODEL starts with openai:."
 
-[env.AGENTSEEK_API_BASE]
+[env.BUB_API_BASE]
 required = false
 description = "Optional OpenAI-compatible API base URL."
-aliases = ["BUB_API_BASE"]
 
-[env.AGENTSEEK_LANGCHAIN_SPEC]
+[env.BUB_LANGCHAIN_SPEC]
 required = true
 default = "{{ cookiecutter.project_slug }}.gateway_binding:build_spec"
-description = "AgentSeek LangChain binding that connects to the remote LangGraph server."
-aliases = ["BUB_LANGCHAIN_SPEC"]
+description = "Bub LangChain binding that connects to the remote LangGraph server."
 
 [env.LANGGRAPH_URL]
 required = true
 default = "{{ cookiecutter.langgraph_url }}"
-description = "LangGraph Agent Server URL used by the AgentSeek bridge."
-aliases = ["AGENTSEEK_LANGGRAPH_URL"]
+description = "LangGraph Agent Server URL used by the Bub bridge."
 
 [env.LANGGRAPH_ASSISTANT_ID]
 required = true
 default = "{{ cookiecutter.assistant_id }}"
 description = "Assistant id exposed by langgraph.json."
-aliases = ["AGENTSEEK_LANGGRAPH_ASSISTANT_ID"]
 
 [services.langgraph]
 url = "{{ cookiecutter.langgraph_url }}"

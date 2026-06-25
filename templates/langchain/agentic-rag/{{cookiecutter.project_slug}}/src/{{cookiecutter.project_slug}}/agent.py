@@ -68,6 +68,11 @@ DEFAULT_MODEL_PROVIDER_DEFAULT = "{{ cookiecutter.default_model_provider }}"
 prefixed_model_provider, DEFAULT_MODEL = _split_prefixed_model(DEFAULT_MODEL_RAW)
 if DEFAULT_MODEL_PROVIDER_RAW:
     MODEL_PROVIDER = _normalize_provider(DEFAULT_MODEL_PROVIDER_RAW)
+    if prefixed_model_provider and prefixed_model_provider != MODEL_PROVIDER:
+        raise ValueError(
+            "AGENTSEEK_MODEL provider prefix does not match AGENTSEEK_MODEL_PROVIDER: "
+            f"{DEFAULT_MODEL_RAW!r} vs {DEFAULT_MODEL_PROVIDER_RAW!r}."
+        )
 else:
     MODEL_PROVIDER = prefixed_model_provider or _normalize_provider(DEFAULT_MODEL_PROVIDER_DEFAULT)
 
@@ -87,7 +92,7 @@ if _stream_chunk_timeout_env not in (None, ""):
 # --- Vector store ---
 SEEKDB_HOST = os.getenv("SEEKDB_HOST", "127.0.0.1")
 SEEKDB_PORT = os.getenv("SEEKDB_PORT", "2881")
-SEEKDB_USER = os.getenv("SEEKDB_USER", "root@test")
+SEEKDB_USER = os.getenv("SEEKDB_USER", "root")
 SEEKDB_PASSWORD = os.getenv("SEEKDB_PASSWORD", "")
 SEEKDB_DB_NAME = os.getenv("SEEKDB_DB_NAME", "test")
 VECTOR_TABLE_NAME = os.getenv("VECTOR_TABLE_NAME", "{{ cookiecutter.vector_table_name }}")

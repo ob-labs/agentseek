@@ -47,7 +47,7 @@ description = "SeekDB SQL port used by the vector store."
 
 [env.SEEKDB_USER]
 required = true
-default = "root@test"
+default = "root"
 description = "SeekDB user used by the vector store."
 
 [env.SEEKDB_DB_NAME]
@@ -83,7 +83,7 @@ url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 command = ["docker", "compose", "up", "seekdb"]
 
 [processes.backend]
-command = ["uv", "run", "langgraph", "dev", "--no-browser", "--port", "{{ cookiecutter.langgraph_port }}"]
+command = ["sh", "-lc", "i=0; until docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'; do i=$((i + 1)); if [ \"$i\" -ge 60 ]; then exit 1; fi; sleep 2; done && uv run langgraph dev --no-browser --port {{ cookiecutter.langgraph_port }}"]
 
 [processes.frontend]
 command = ["npm", "run", "dev", "--", "--host", "127.0.0.1"]
@@ -100,6 +100,10 @@ type = "http"
 target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 timeout = 2
 attempts = 3
+
+[tasks.sync]
+description = "Install Python dependencies."
+command = ["uv", "sync"]
 
 [tasks.frontend]
 description = "Install frontend dependencies."

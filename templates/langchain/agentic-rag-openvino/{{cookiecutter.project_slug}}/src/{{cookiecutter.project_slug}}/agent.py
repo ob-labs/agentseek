@@ -21,7 +21,7 @@ MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "512"))
 
 SEEKDB_HOST = os.getenv("SEEKDB_HOST", "127.0.0.1")
 SEEKDB_PORT = os.getenv("SEEKDB_PORT", "2881")
-SEEKDB_USER = os.getenv("SEEKDB_USER", "root@test")
+SEEKDB_USER = os.getenv("SEEKDB_USER", "root")
 SEEKDB_PASSWORD = os.getenv("SEEKDB_PASSWORD", "")
 SEEKDB_DB_NAME = os.getenv("SEEKDB_DB_NAME", "{{ cookiecutter.seekdb_db_name }}")
 VECTOR_TABLE_NAME = os.getenv("VECTOR_TABLE_NAME", "{{ cookiecutter.vector_table_name }}")

@@ -61,7 +61,7 @@ curl -s -X POST http://127.0.0.1:{{ cookiecutter.ctx_server_port }}/ctx/retrieve
   -d '{"query": "France capital", "scope": "facts"}'
 
 # Inspect all stored entries
-curl -s "http://127.0.0.1:{{ cookiecutter.ctx_server_port }}/ctx/overview"
+curl -s "http://127.0.0.1:{{ cookiecutter.ctx_server_port }}/ctx/overview?scope=facts"
 ```
 
 ## ContextSeek dependency

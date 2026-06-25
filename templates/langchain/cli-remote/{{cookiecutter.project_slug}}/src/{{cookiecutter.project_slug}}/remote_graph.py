@@ -6,10 +6,7 @@ from typing import Any
 
 from langchain.agents import create_agent
 
-try:
-    from .settings import get_settings
-except ImportError:
-    from settings import get_settings  # type: ignore[no-redef]
+from {{ cookiecutter.project_slug }}.settings import get_settings
 
 
 def rollout_steps(task: str) -> str:

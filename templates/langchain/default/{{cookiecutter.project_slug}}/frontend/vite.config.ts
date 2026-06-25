@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      host: "127.0.0.1",
       port: frontendPort,
       proxy: {
         "/api/copilotkit": {

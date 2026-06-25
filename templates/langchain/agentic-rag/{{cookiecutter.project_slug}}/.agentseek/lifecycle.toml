@@ -4,10 +4,16 @@ name = "{{ cookiecutter.project_name }}"
 env_file = ".env"
 
 [tools]
-required = ["uv", "node", "npm"]
+required = ["uv", "node", "npm", "docker"]
 
 [paths]
-required = ["pyproject.toml", "langgraph.json", "frontend/package.json", "frontend/node_modules"]
+required = [
+  "pyproject.toml",
+  "langgraph.json",
+  "docker-compose.yml",
+  "frontend/package.json",
+  "frontend/node_modules",
+]
 
 [env.AGENTSEEK_MODEL_PROVIDER]
 required = true
@@ -32,7 +38,7 @@ description = "SeekDB MySQL-compatible port."
 
 [env.SEEKDB_USER]
 required = true
-default = "root@test"
+default = "root"
 description = "SeekDB user."
 
 [env.SEEKDB_DB_NAME]
@@ -51,8 +57,11 @@ url = "http://127.0.0.1:2024"
 [services.frontend]
 url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 
+[processes.seekdb]
+command = ["docker", "compose", "up", "seekdb"]
+
 [processes.backend]
-command = ["uv", "run", "langgraph", "dev", "--no-browser"]
+command = ["sh", "-lc", "i=0; until docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'; do i=$((i + 1)); if [ \"$i\" -ge 60 ]; then exit 1; fi; sleep 2; done && uv run langgraph dev --no-browser"]
 
 [processes.frontend]
 command = ["npm", "run", "dev"]

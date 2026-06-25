@@ -23,7 +23,7 @@ aliases = ["DEEPAGENTS_MODEL", "BUB_MODEL"]
 [env.OPENAI_API_KEY]
 required = true
 description = "Credential for the selected model provider."
-aliases = ["ANTHROPIC_API_KEY", "GOOGLE_API_KEY"]
+aliases = ["ANTHROPIC_API_KEY", "GOOGLE_API_KEY", "BUB_OPENAI_API_KEY"]
 
 [env.TAVILY_API_KEY]
 required = true

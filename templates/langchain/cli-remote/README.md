@@ -1,7 +1,7 @@
 # LangChain — cli-remote template
 
 生成一个通过 `langgraph dev` 运行 remote graph，并用
-`LangGraphClientRunnable` 接入 AgentSeek 的项目。
+`LangGraphClientRunnable` 接入 Bub 的项目。
 
 ## Architecture
 
@@ -11,8 +11,8 @@ uvx agentseek dev
     -> uv run langgraph dev
       -> create_agent(...)
 
-AgentSeek runtime
-  -> AGENTSEEK_LANGCHAIN_SPEC
+Bub runtime
+  -> BUB_LANGCHAIN_SPEC
     -> agentseek-langchain
     -> LangGraphClientRunnable
       -> langgraph_sdk client
@@ -35,7 +35,7 @@ remote `create_agent(...)` 期望的输入形状。
 | `project_name` | Human-readable project name. |
 | `project_slug` | Python package / directory name. |
 | `author` | Project author. |
-| `default_model` | Default `AGENTSEEK_MODEL`. |
+| `default_model` | Default `BUB_MODEL`. |
 | `langgraph_url` | Default LangGraph Agent Server URL. |
 | `assistant_id` | Graph / assistant id (matches `langgraph.json`). |
 
