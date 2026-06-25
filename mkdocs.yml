@@ -19,6 +19,7 @@ nav:
           - Configure model: how-to/configure-model.md
           - Configure MCP: how-to/configure-mcp.md
           - Run locally: how-to/run-locally.md
+          - Local execution modes: how-to/local-execution-modes.md
           - Run gateway: how-to/run-gateway.md
           - Docker Compose: how-to/run-with-docker-compose.md
           - Build and deploy: how-to/build-and-deploy.md
@@ -68,6 +69,7 @@ plugins:
             Configure model: Configure model
             Configure MCP: Configure MCP
             Run locally: Run locally
+            Local execution modes: Local execution modes
             Run gateway: Run gateway
             Docker Compose: Docker Compose
             Build and deploy: Build and deploy
@@ -105,6 +107,7 @@ plugins:
             Configure model: 配置模型
             Configure MCP: 配置 MCP
             Run locally: 本地运行
+            Local execution modes: 本地执行模式
             Run gateway: 运行 Gateway
             Docker Compose: Docker Compose
             Build and deploy: 构建与部署
