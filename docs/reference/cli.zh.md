@@ -3,7 +3,7 @@ title: CLI 参考
 type: reference
 audience: [A1, A2, A3, A4]
 runs: no
-verified_on: 2026-06-12
+verified_on: 2026-06-25
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
@@ -37,6 +37,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 | `spec` | text | - | Framework type、`type/name`、git URL 或本地路径。 |
 | `--template` | text | - | 所选 type 下的模板名；不带值时列出模板。 |
 | `--checkout` | text | - | 远程模板的 branch、tag 或 commit。 |
+| `--output-dir` | path | 当前工作目录 | 生成项目写入的目录。 |
 | `--list-templates` | flag | off | 列出模板并退出。 |
 | `--no-input` | flag | off | 不显示 prompt，使用模板默认值。 |
 
