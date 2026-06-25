@@ -3,7 +3,7 @@ title: Templates reference
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-06-16
+verified_on: 2026-06-25
 sources:
   - templates/index.json
   - templates/bub/default/README.md
@@ -57,6 +57,7 @@ sources:
 | `agentseek create <type>` | Use the default template for a type. |
 | `agentseek create <type/name>` | Use a specific template. |
 | `agentseek create <type> --template <name>` | Use a named template under a type. |
+| `agentseek create <spec> --output-dir <path>` | Write the generated project under a selected directory. |
 | `agentseek create <git-url>` | Use a remote cookiecutter template. |
 | `agentseek create <local-path>` | Use a local cookiecutter template. |
 

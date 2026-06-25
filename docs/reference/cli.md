@@ -3,7 +3,7 @@ title: CLI reference
 type: reference
 audience: [A1, A2, A3, A4]
 runs: no
-verified_on: 2026-06-12
+verified_on: 2026-06-25
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
@@ -37,6 +37,7 @@ agentseek [OPTIONS] COMMAND [ARGS]...
 | `spec` | text | - | Framework type, `type/name`, git URL, or local path. |
 | `--template` | text | - | Named template under the selected type; no value lists templates. |
 | `--checkout` | text | - | Branch, tag, or commit for a remote template. |
+| `--output-dir` | path | current working directory | Directory where the generated project is written. |
 | `--list-templates` | flag | off | List templates and exit. |
 | `--no-input` | flag | off | Use template defaults without prompts. |
 

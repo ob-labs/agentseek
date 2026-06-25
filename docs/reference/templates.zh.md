@@ -3,7 +3,7 @@ title: 模板参考
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-06-16
+verified_on: 2026-06-25
 sources:
   - templates/index.json
   - templates/bub/default/README.md
@@ -57,6 +57,7 @@ sources:
 | `agentseek create <type>` | 使用某个 type 的默认模板。 |
 | `agentseek create <type/name>` | 使用指定模板。 |
 | `agentseek create <type> --template <name>` | 使用某个 type 下的命名模板。 |
+| `agentseek create <spec> --output-dir <path>` | 将生成项目写入指定目录。 |
 | `agentseek create <git-url>` | 使用远程 cookiecutter 模板。 |
 | `agentseek create <local-path>` | 使用本地 cookiecutter 模板。 |
 
