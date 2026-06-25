@@ -9,30 +9,31 @@ required = ["uv", "node", "npm"]
 [paths]
 required = ["pyproject.toml", "frontend/package.json", "frontend/node_modules"]
 
-[env.AGENTSEEK_MODEL]
+[env.BUB_MODEL]
 required = true
 default = "{{ cookiecutter.default_model }}"
-description = "Model id used by the AgentSeek gateway and ContextSeek LLM bridge."
+description = "Model id used by Bub and the ContextSeek LLM bridge."
 
-[env.AGENTSEEK_API_KEY]
+[env.BUB_API_KEY]
 required = true
-description = "Model provider API key."
+description = "Generic model provider API key."
+aliases = ["BUB_OPENAI_API_KEY"]
 
-[env.AGENTSEEK_API_BASE]
+[env.BUB_OPENAI_API_BASE]
 required = false
-description = "Optional model provider API base URL."
+description = "Optional OpenAI-compatible API base URL."
 
-[env.AGENTSEEK_STREAM_OUTPUT]
+[env.BUB_STREAM_OUTPUT]
 required = false
 default = "true"
 description = "Enables token-by-token output in the AG-UI channel manager."
 
-[env.AGENTSEEK_AG_UI_PORT]
+[env.BUB_AG_UI_PORT]
 required = false
 default = "{{ cookiecutter.gateway_port }}"
-description = "AG-UI gateway bind port."
+description = "Bub AG-UI gateway bind port."
 
-[env.AGENTSEEK_AG_UI_AGENT_URL]
+[env.BUB_AG_UI_AGENT_URL]
 required = false
 default = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
 description = "URL used by the Copilot Runtime HttpAgent."
@@ -75,7 +76,7 @@ url = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit"
 url = "http://127.0.0.1:{{ cookiecutter.ctx_server_port }}/ctx"
 
 [processes.gateway]
-command = ["uv", "run", "agentseek", "gateway", "--enable-channel", "ag-ui"]
+command = ["uv", "run", "bub", "gateway", "--enable-channel", "ag-ui"]
 
 [processes.ctx]
 command = ["uv", "run", "ctx-server"]
