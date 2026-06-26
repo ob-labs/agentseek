@@ -9,7 +9,6 @@ sources:
   - src/agentseek/__main__.py
   - src/agentseek/cli/runtime.py
   - src/agentseek/cli/commands/create.py
-  - src/agentseek/cli/commands/chat.py
   - src/agentseek/cli/commands/dev.py
   - src/agentseek/cli/commands/doctor.py
   - src/agentseek/cli/commands/info.py
@@ -30,7 +29,7 @@ sources:
 
 | Option | Description |
 | --- | --- |
-| `--mode [cli\|agent]` | Select the CLI profile. Defaults to `cli`. |
+| `--mode [cli\|agent]` | Select the CLI profile. The documented lifecycle workflow uses `cli`. |
 | `--help` | Show help for the selected profile. |
 
 ## Default Commands
@@ -44,15 +43,6 @@ sources:
 | `agentseek task` | Run project-defined lifecycle spec tasks. |
 | `agentseek version` | Show AgentSeek version information. |
 
-## Agent profile
-
-| Form | Description |
-| --- | --- |
-| `agentseek --mode agent` | Enter the experimental agent profile. Explicit confirmation is required. |
-| `agentseek --mode agent --help` | Show agent profile help. |
-
-The `agent` profile currently has no public subcommands.
-
 ## `create`
 
 ### Forms
@@ -65,8 +55,7 @@ The `agent` profile currently has no public subcommands.
 | `agentseek create <url-or-absolute-path>` | Pass the spec directly to Cookiecutter. |
 
 The built-in template type set is currently `bub`, `deepagents`, and
-`langchain`. Use `templates/index.json` as the shared registry for advertised
-template keys and descriptions.
+`langchain`.
 
 ### Options
 

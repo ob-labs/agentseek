@@ -17,15 +17,15 @@ sources:
 | --- | --- |
 | `bub/contextseek` | Bub agent with ContextSeek semantic memory and AgentSeek lifecycle spec. |
 | `bub/default` | Lightweight Bub agent with AgentSeek lifecycle spec. |
-| `deepagents/content-builder` | DeepAgents content builder with skills, subagents, image generation, streamed UI, and AgentSeek lifecycle spec. |
-| `deepagents/default` | Local `create_deep_agent` runnable with AgentSeek lifecycle spec. |
-| `deepagents/research` | DeepAgents research agent with Tavily search, streamed tool/sub-agent UI, and AgentSeek lifecycle spec. |
+| `deepagents/content-builder` | DeepAgents content builder with writing workflows, image generation, local UI, and AgentSeek lifecycle spec. |
+| `deepagents/default` | Minimal DeepAgents app with AgentSeek lifecycle spec. |
+| `deepagents/research` | DeepAgents research app with search workflow, local UI, and AgentSeek lifecycle spec. |
 | `langchain/agentic-rag` | LangChain agentic RAG with OceanBase vector search and AgentSeek lifecycle spec. |
 | `langchain/agentic-rag-openvino` | LangChain agentic RAG with local OpenVINO models and AgentSeek lifecycle spec. |
-| `langchain/cli-remote` | Remote LangGraph CLI agent bridged through `LangGraphClientRunnable` with AgentSeek lifecycle spec. |
-| `langchain/default` | LangChain `create_agent` plus CopilotKit middleware with AgentSeek lifecycle spec. |
-| `langchain/markdown-messages` | LangChain `create_agent` and react-markdown frontend with AgentSeek lifecycle spec. |
-| `langchain/sandbox` | DeepAgents sandbox coding agent with streamed UI and AgentSeek lifecycle spec. |
+| `langchain/cli-remote` | LangChain template for connecting the local lifecycle workflow to a remote LangGraph service. |
+| `langchain/default` | LangChain agent app with local web UI and AgentSeek lifecycle spec. |
+| `langchain/markdown-messages` | LangChain chat app with markdown message rendering and AgentSeek lifecycle spec. |
+| `langchain/sandbox` | Sandbox-backed coding agent with local UI and AgentSeek lifecycle spec. |
 
 ## Template Specs
 

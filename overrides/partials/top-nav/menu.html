@@ -1,0 +1,50 @@
+{% set current_locale = i18n_page_locale|default('en') %}
+{% set is_zh = current_locale == 'zh' %}
+{% set raw_page_url = page.url if page and page.url else '' %}
+{% if is_zh %}
+    {% set switch_url = base_url ~ '/' ~ (raw_page_url|replace('zh/', '', 1)) %}
+    {% set switch_label = 'English' %}
+    {% set search_label = '搜索' %}
+{% else %}
+    {% set switch_url = base_url ~ '/zh/' ~ raw_page_url %}
+    {% set switch_label = '中文' %}
+    {% set search_label = 'Search' %}
+{% endif %}
+{% set top_nav_ns = namespace(item_count=0) %}
+        <nav class="terminal-menu">
+            {% if nav|length > 1 %}
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                {% for nav_item in nav %}
+                {% set link_url = none %}
+                {% if nav_item.is_section and nav_item.children %}
+                    {% set first_child = nav_item.children[0] %}
+                    {% if not first_child.is_section %}
+                        {% set link_url = first_child.url|url %}
+                    {% endif %}
+                {% elif not nav_item.is_section %}
+                    {% set link_url = nav_item.url|url %}
+                {% endif %}
+                {% if link_url %}
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="{{ link_url }}" class="menu-item {% if nav_item.active %}active{% endif %}" property="item" typeof="WebPage">
+                        <span property="name">{{ nav_item.title }}</span>
+                    </a>
+                    <meta property="position" content="{{ top_nav_ns.item_count }}">
+                </li>
+                {%- set top_nav_ns.item_count = top_nav_ns.item_count + 1 -%}
+                {% endif %}
+                {% endfor %}
+                <li>
+                    <a href="{{ switch_url }}" class="menu-item language-toggle" lang="{{ 'en' if is_zh else 'zh' }}">
+                        <span>{{ switch_label }}</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">{{ search_label }}</span>
+                    </a>
+                    <meta property="position" content="{{ top_nav_ns.item_count }}">
+                </li>
+            </ul>
+            {% endif %}
+        </nav>

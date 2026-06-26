@@ -3,11 +3,12 @@ title: Create a Project
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-06-23
+verified_on: 2026-06-26
 sources:
   - pyproject.toml
   - src/agentseek/cli/commands/create.py
   - templates/index.json
+  - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
 ---
 
 # Create a Project
@@ -22,6 +23,23 @@ uv tool install agentseek
 
 ```bash
 agentseek create bub/default --no-input
+```
+
+The prompt-free form is quiet when it succeeds. The generated project contains
+the lifecycle spec that later commands read.
+
+```text title="generated files excerpt"
+my_bub_agent/
+  .agentseek/lifecycle.toml
+  .env.example
+  frontend/package.json
+```
+
+```toml title=".agentseek/lifecycle.toml excerpt"
+version = 1
+template = "bub/default"
+name = "My Bub Agent"
+env_file = ".env"
 ```
 
 Change into the generated directory.
@@ -52,12 +70,6 @@ does not already exist.
 agentseek create bub --template default --no-input
 ```
 
-Specify the template source branch when the template is not on the default branch.
-
-```bash
-agentseek create bub/default --checkout dev --no-input
-```
-
 ## Compatibility Entry Point
 
 ```bash
@@ -68,5 +80,6 @@ agentseek create --template
 
 ## Next
 
+- [Inspect the project](inspect-project.md)
 - [Check the project](check-project.md)
 - [Run local development](run-local-development.md)

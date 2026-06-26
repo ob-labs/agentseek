@@ -12,6 +12,7 @@ nav:
   - Guides:
       - Overview: guides/index.md
       - Create a Project: guides/create-project.md
+      - Inspect a Project: guides/inspect-project.md
       - Check a Project: guides/check-project.md
       - Run Local Development: guides/run-local-development.md
       - Run Project Tasks: guides/run-project-tasks.md
@@ -26,9 +27,40 @@ nav:
 
 theme:
   name: terminal
+  custom_dir: overrides
 
 plugins:
   - search
+  - i18n:
+      docs_structure: suffix
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
+          site_description: 面向 AI 生态应用的开发生命周期工具包。
+          nav:
+            - 首页: index.md
+            - 快速开始:
+                - 概览: get-started/index.md
+            - 指南:
+                - 概览: guides/index.md
+                - 创建项目: guides/create-project.md
+                - 查看项目: guides/inspect-project.md
+                - 检查项目: guides/check-project.md
+                - 运行本地开发: guides/run-local-development.md
+                - 运行项目任务: guides/run-project-tasks.md
+            - 参考:
+                - 概览: reference/index.md
+                - CLI: reference/cli.md
+                - 生命周期规范: reference/lifecycle-spec.md
+                - 模板: reference/templates.md
+            - 概念:
+                - 概览: concepts/index.md
+                - 生命周期工具包: concepts/lifecycle-toolkit.md
 
 markdown_extensions:
   - toc:

@@ -1,5 +1,5 @@
 ---
-title: Check a Project
+title: 检查项目
 type: how-to
 audience: [A1, A2]
 runs: yes
@@ -9,17 +9,16 @@ sources:
   - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
 ---
 
-# Check a Project
+# 检查项目
 
-Run readiness checks from the generated project directory with the installed CLI.
-Prepare `.env` and run `agentseek task frontend` first when you expect a
-passing check.
+在生成项目目录里，用已安装的 CLI 运行就绪检查。
+如果期望检查通过，先准备 `.env` 并运行 `agentseek task frontend`。
 
 ```bash
 agentseek doctor
 ```
 
-```text title="output excerpt"
+```text title="输出片段"
 ok   lifecycle.toml: Lifecycle spec is present.
 ok   uv: uv is available.
 ok   node: node is available.
@@ -33,9 +32,9 @@ ok   gateway cwd: . is present.
 ok   frontend cwd: frontend is present.
 ```
 
-Those checks come from required tools, paths, and environment entries.
+这些检查来自必需工具、路径和环境变量声明。
 
-```toml title=".agentseek/lifecycle.toml excerpt"
+```toml title=".agentseek/lifecycle.toml 片段"
 [tools]
 required = ["uv", "node", "npm"]
 
@@ -47,28 +46,27 @@ required = true
 aliases = ["BUB_OPENAI_API_KEY"]
 ```
 
-Use strict mode in automation when warnings should also fail the check.
+在自动化里使用 strict 模式，让警告也导致检查失败。
 
 ```bash
 agentseek doctor --strict
 ```
 
-Use live mode after starting the app. It checks whether local services are
-listening.
+应用启动后使用 live 模式。它检查本地服务是否正在监听。
 
 ```bash
 agentseek doctor --live
 ```
 
-```text title="output excerpt"
+```text title="输出片段"
 ok   gateway: http://127.0.0.1:8088/agent/health is reachable.
 ok   copilotkit: http://127.0.0.1:4000/health is reachable.
 ok   frontend: http://127.0.0.1:5173 is reachable.
 ```
 
-Live checks use the service health targets declared by the project.
+Live 检查使用项目声明的服务健康检查目标。
 
-```toml title=".agentseek/lifecycle.toml excerpt"
+```toml title=".agentseek/lifecycle.toml 片段"
 [checks.gateway]
 type = "http"
 target = "http://127.0.0.1:8088/agent/health"
@@ -76,8 +74,8 @@ timeout = 2
 attempts = 3
 ```
 
-## Next
+## 下一步
 
-- [Start the app](run-local-development.md)
-- [Run project tasks](run-project-tasks.md)
-- [See all command options](../reference/cli.md)
+- [启动应用](run-local-development.md)
+- [运行项目任务](run-project-tasks.md)
+- [查看所有命令选项](../reference/cli.md)

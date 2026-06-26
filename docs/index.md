@@ -40,8 +40,8 @@ Install the CLI for daily use.
 uv tool install agentseek
 ```
 
-The command below uses one Bub template. The shared registry also advertises
-DeepAgents and LangChain template paths with the same lifecycle command shape.
+The command below uses one Bub template. DeepAgents and LangChain templates use
+the same lifecycle command shape.
 Fill `.env` before running `agentseek doctor`; otherwise the readiness check
 reports the missing credentials.
 
@@ -86,5 +86,6 @@ project.
 
 ## Next Reads
 
-- Repository README:
-  https://github.com/ob-labs/agentseek/blob/dev/README.md
+- [Get started](get-started/index.md)
+- [Create a project](guides/create-project.md)
+- [Review the CLI](reference/cli.md)
