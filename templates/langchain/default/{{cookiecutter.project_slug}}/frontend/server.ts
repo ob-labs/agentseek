@@ -42,7 +42,9 @@ app.get("/health", (_request, response) => {
   });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`CopilotKit runtime listening at http://127.0.0.1:${port}${basePath}`);
   console.log(`Forwarding default agent runs to ${bubAgentUrl}`);
 });
+
+void server;
