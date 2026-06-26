@@ -325,3 +325,62 @@ def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> Non
     source = captured["source"]
     assert isinstance(source, TemplateSource)
     assert source.template == "https://github.com/foo/bar.git"
+
+
+# -- --describe mode -------------------------------------------------------
+
+
+def test_describe_prints_template_info(monkeypatch, tmp_path: Path) -> None:
+    """``--describe`` should print template description and cookiecutter variables."""
+    captured: dict[str, object] = {}
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+        captured["called"] = True
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/default", "--describe"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "bub/default" in result.output
+    assert "Description:" in result.output
+    assert "Cookiecutter variables" in result.output
+    assert "project_name" in result.output
+    assert "project_slug" in result.output
+    # cookiecutter must not have been called
+    assert "called" not in captured
+
+
+def test_describe_does_not_create_files(monkeypatch, tmp_path: Path) -> None:
+    """``--describe`` must not run cookiecutter or create any files."""
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+        pytest.fail("cookiecutter should not be called in --describe mode")
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/default", "--describe"],
+    )
+
+    assert result.exit_code == 0, result.output
+    # No files should have been created in the working directory.
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_describe_unknown_template_exits_2() -> None:
+    """``--describe`` on an unknown template should exit 2 and list available templates."""
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/missing-template", "--describe"],
+    )
+
+    assert result.exit_code == 2
+    assert "Template bub/missing-template was not found" in result.output
+    assert "bub/default" in result.output
