@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/concepts/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/concepts/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/concepts/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/concepts/lifecycle-toolkit/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/concepts/lifecycle-toolkit/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/concepts/lifecycle-toolkit/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/get-started/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/get-started/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/get-started/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/guides/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/guides/check-project/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/check-project/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/check-project/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/guides/create-project/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/create-project/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/create-project/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/guides/inspect-project/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/inspect-project/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/inspect-project/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/guides/run-local-development/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/run-local-development/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/run-local-development/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/guides/run-project-tasks/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/run-project-tasks/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/run-project-tasks/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/reference/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/reference/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/reference/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/reference/cli/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/reference/cli/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/reference/cli/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/reference/lifecycle-spec/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/reference/lifecycle-spec/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/reference/lifecycle-spec/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/reference/templates/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/reference/templates/"/>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/reference/templates/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/concepts/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/concepts/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/concepts/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/concepts/lifecycle-toolkit/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/concepts/lifecycle-toolkit/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/concepts/lifecycle-toolkit/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/get-started/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/get-started/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/get-started/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/guides/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/guides/check-project/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/check-project/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/check-project/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/guides/create-project/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/create-project/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/create-project/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/guides/inspect-project/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/inspect-project/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/inspect-project/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/guides/run-local-development/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/run-local-development/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/run-local-development/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/guides/run-project-tasks/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/guides/run-project-tasks/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/guides/run-project-tasks/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/reference/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/reference/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/reference/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/reference/cli/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/reference/cli/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/reference/cli/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/reference/lifecycle-spec/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/reference/lifecycle-spec/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/reference/lifecycle-spec/"/>
+    </url>
+    <url>
+        <loc>https://ob-labs.github.io/agentseek/zh/reference/templates/</loc>
+        <lastmod>2026-06-26</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="zh" href="https://ob-labs.github.io/agentseek/zh/reference/templates/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ob-labs.github.io/agentseek/reference/templates/"/>
+    </url>
+</urlset>
