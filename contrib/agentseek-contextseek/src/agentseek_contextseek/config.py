@@ -18,7 +18,7 @@ import os
 from collections.abc import Iterator, MutableMapping
 from functools import lru_cache
 
-from pydantic import AliasChoices, Field, create_model
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AGENTSEEK_CTX_PREFIX = "AGENTSEEK_CTX_"
@@ -57,9 +57,7 @@ def apply_contextseek_env_aliases(
     ``AGENTSEEK_*`` credentials are still accepted as lower-priority fallbacks.
     """
     target = os.environ if environ is None else environ
-    for env_var, value in _contextseek_alias_settings(target).model_dump(exclude_none=True).items():
-        target.setdefault(env_var, value)
-
+    _apply_contextseek_prefixed_aliases(target)
     _maybe_bridge_llm_credentials(target)
 
 
@@ -166,7 +164,7 @@ def _maybe_bridge_llm_credentials(target: MutableMapping[str, str]) -> None:
     - ``LLM_CLASS_PATH``         (e.g. ``langchain_openai.ChatOpenAI``)
     - ``LLM_MODEL``              (model name stripped of provider prefix)
     """
-    settings = RuntimeBridgeSettings(_env_file=None, **target)
+    settings = RuntimeBridgeSettings.model_validate(dict(target))
     if not settings.llm_enabled:
         return
 
@@ -191,25 +189,12 @@ def _maybe_bridge_llm_credentials(target: MutableMapping[str, str]) -> None:
         target[ctx_model_key] = settings.unprefixed_model
 
 
-def _contextseek_alias_settings(environ: MutableMapping[str, str]) -> BaseSettings:
-    """Load contextseek aliases through pydantic-settings."""
-    fields = {
-        env_var: (
-            str | None,
-            Field(
-                default=None,
-                validation_alias=AliasChoices(env_var, f"{AGENTSEEK_CTX_PREFIX}{env_var}"),
-            ),
-        )
-        for env_var in _upstream_env_vars()
-    }
-    settings_cls = create_model(
-        "ContextSeekAliasSettings",
-        __base__=BaseSettings,
-        __config__=SettingsConfigDict(extra="ignore", case_sensitive=True),
-        **fields,
-    )
-    return settings_cls(_env_file=None, **dict(environ))
+def _apply_contextseek_prefixed_aliases(target: MutableMapping[str, str]) -> None:
+    """Apply ``AGENTSEEK_CTX_*`` fallbacks for upstream contextseek env vars."""
+    for env_var in _upstream_env_vars():
+        alias = f"{AGENTSEEK_CTX_PREFIX}{env_var}"
+        if alias in target:
+            target.setdefault(env_var, target[alias])
 
 
 @lru_cache(maxsize=1)
