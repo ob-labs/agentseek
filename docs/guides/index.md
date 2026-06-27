@@ -14,6 +14,7 @@ Use these pages when you already know what you want to do.
 
 | Goal | Guide |
 | --- | --- |
+| Choose a starting template | [Choose a Template](choose-template.md) |
 | Create an editable app | [Create a Project](create-project.md) |
 | Inspect generated entry points | [Inspect a Project](inspect-project.md) |
 | Check local setup | [Check a Project](check-project.md) |

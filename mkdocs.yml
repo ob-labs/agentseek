@@ -11,6 +11,7 @@ nav:
       - Overview: get-started/index.md
   - Guides:
       - Overview: guides/index.md
+      - Choose a Template: guides/choose-template.md
       - Create a Project: guides/create-project.md
       - Inspect a Project: guides/inspect-project.md
       - Check a Project: guides/check-project.md
@@ -48,6 +49,7 @@ plugins:
                 - 概览: get-started/index.md
             - 指南:
                 - 概览: guides/index.md
+                - 选择模板: guides/choose-template.md
                 - 创建项目: guides/create-project.md
                 - 查看项目: guides/inspect-project.md
                 - 检查项目: guides/check-project.md
