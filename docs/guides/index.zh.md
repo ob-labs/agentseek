@@ -14,6 +14,7 @@ sources:
 
 | 目标 | 指南 |
 | --- | --- |
+| 选择起始模板 | [选择模板](choose-template.md) |
 | 创建可编辑应用 | [创建项目](create-project.md) |
 | 查看生成项目的入口 | [查看项目](inspect-project.md) |
 | 检查本地设置 | [检查项目](check-project.md) |
