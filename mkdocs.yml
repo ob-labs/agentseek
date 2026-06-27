@@ -15,6 +15,7 @@ nav:
       - Inspect a Project: guides/inspect-project.md
       - Check a Project: guides/check-project.md
       - Run Local Development: guides/run-local-development.md
+      - Observability and Tracing: guides/observability-tracing.md
       - Run Project Tasks: guides/run-project-tasks.md
   - Reference:
       - Overview: reference/index.md
@@ -52,6 +53,7 @@ plugins:
                 - 查看项目: guides/inspect-project.md
                 - 检查项目: guides/check-project.md
                 - 运行本地开发: guides/run-local-development.md
+                - 可观测性和追踪: guides/observability-tracing.md
                 - 运行项目任务: guides/run-project-tasks.md
             - 参考:
                 - 概览: reference/index.md
