@@ -471,6 +471,23 @@ def _describe_template(
     typer.echo()
 
 
+def _handle_external_spec(args: argparse.Namespace) -> None:
+    """Run cookiecutter for external specs unless describe mode is requested."""
+    if args.describe:
+        typer.echo(
+            "--describe only supports bundled templates such as 'bub/default'.",
+            err=True,
+        )
+        raise typer.Exit(2)
+
+    source = TemplateSource(
+        template=args.spec,
+        directory=args.template,  # --template doubles as directory for external
+        checkout=args.checkout,
+    )
+    _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
+
+
 # ---------------------------------------------------------------------------
 # Main callback
 # ---------------------------------------------------------------------------
@@ -483,12 +500,7 @@ def create(ctx: typer.Context) -> None:
 
     # --- External spec (URL or absolute path) → passthrough to cookiecutter ---
     if args.spec and _is_external_spec(args.spec):
-        source = TemplateSource(
-            template=args.spec,
-            directory=args.template,  # --template doubles as directory for external
-            checkout=args.checkout,
-        )
-        _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
+        _handle_external_spec(args)
         return
 
     # --- Parse spec into (type, name) ---

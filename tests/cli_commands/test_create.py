@@ -374,6 +374,36 @@ def test_describe_does_not_create_files(monkeypatch, tmp_path: Path) -> None:
     assert list(tmp_path.iterdir()) == []
 
 
+@pytest.mark.parametrize(
+    "spec",
+    [
+        "https://github.com/foo/bar.git",
+        "/abs/template",
+    ],
+)
+def test_describe_external_specs_do_not_call_cookiecutter(
+    monkeypatch,
+    tmp_path: Path,
+    spec: str,
+) -> None:
+    """``--describe`` is limited to bundled templates before external passthrough."""
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+        pytest.fail("cookiecutter should not be called in --describe mode")
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", spec, "--describe"],
+    )
+
+    assert result.exit_code == 2
+    assert "--describe only supports bundled templates" in result.output
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_describe_unknown_template_exits_2() -> None:
     """``--describe`` on an unknown template should exit 2 and list available templates."""
     result = _runner().invoke(
