@@ -399,7 +399,93 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Skip cookiecutter prompts (use template defaults).",
     )
+    parser.add_argument(
+        "--describe",
+        action="store_true",
+        help=(
+            "Print template description and configuration without generating a project. "
+            "Use with a spec like ``agentseek create bub/default --describe``."
+        ),
+    )
     return parser.parse_args(argv)
+
+
+def _load_cookiecutter_context(template_dir: Path) -> dict[str, object] | None:
+    """Load ``cookiecutter.json`` from *template_dir* if it exists."""
+    cookiecutter_json = template_dir / "cookiecutter.json"
+    if not cookiecutter_json.is_file():
+        return None
+    try:
+        data = json.loads(cookiecutter_json.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def _describe_template(
+    source: TemplateSource,
+    *,
+    templates_root: Path,
+) -> None:
+    """Print template spec, description, and cookiecutter variables.
+
+    Does **not** run cookiecutter or create any files.
+    """
+    template_dir = Path(source.template)
+
+    # Build a clean key (e.g. "bub/default") from the templates root.
+    try:
+        rel = template_dir.relative_to(templates_root)
+        parts = rel.parts
+        spec_key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else str(rel)
+    except ValueError:
+        spec_key = f"{template_dir.parent.name}/{template_dir.name}"
+
+    descriptions = _load_template_descriptions(templates_root)
+    description = descriptions.get(spec_key, "")
+
+    typer.echo(f"\n  Template: {spec_key}")
+    typer.echo(f"  {'─' * 60}")
+    if description:
+        typer.echo(f"  Description: {description}")
+    else:
+        typer.echo("  Description: (none)")
+
+    typer.echo(f"  Path: {template_dir}")
+
+    context = _load_cookiecutter_context(template_dir)
+    if context is None:
+        typer.echo("  Cookiecutter variables: (none)")
+        typer.echo()
+        return
+
+    typer.echo(f"  Cookiecutter variables ({len(context)}):")
+    for key, value in context.items():
+        display = value if isinstance(value, str) else json.dumps(value)
+        # Truncate long values for readability.
+        if len(display) > 80:
+            display = display[:77] + "..."
+        typer.echo(f"    {key}: {display}")
+    typer.echo()
+
+
+def _handle_external_spec(args: argparse.Namespace) -> None:
+    """Run cookiecutter for external specs unless describe mode is requested."""
+    if args.describe:
+        typer.echo(
+            "--describe only supports bundled templates such as 'bub/default'.",
+            err=True,
+        )
+        raise typer.Exit(2)
+
+    source = TemplateSource(
+        template=args.spec,
+        directory=args.template,  # --template doubles as directory for external
+        checkout=args.checkout,
+    )
+    _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
 
 
 # ---------------------------------------------------------------------------
@@ -414,12 +500,7 @@ def create(ctx: typer.Context) -> None:
 
     # --- External spec (URL or absolute path) → passthrough to cookiecutter ---
     if args.spec and _is_external_spec(args.spec):
-        source = TemplateSource(
-            template=args.spec,
-            directory=args.template,  # --template doubles as directory for external
-            checkout=args.checkout,
-        )
-        _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
+        _handle_external_spec(args)
         return
 
     # --- Parse spec into (type, name) ---
@@ -459,6 +540,12 @@ def create(ctx: typer.Context) -> None:
         template_name,
         templates_root=templates_root,
     )
+
+    # --- --describe: print template info without generating ---
+    if args.describe:
+        _describe_template(source, templates_root=templates_root)
+        return
+
     _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
 
 
