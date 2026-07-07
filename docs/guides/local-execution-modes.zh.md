@@ -19,10 +19,10 @@ sources:
 
 | 目标 | 命令 | 运行位置 |
 | --- | --- | --- |
-| 检查项目文件、环境、依赖和可选 live service | `agentseek doctor` | 生成项目根目录 |
+| 检查项目文件、环境、依赖和可选的运行中服务 | `agentseek doctor` | 生成项目根目录 |
 | 预览开发启动计划 | `agentseek dev --dry-run` | 生成项目根目录 |
 | 启动本地开发栈 | `agentseek dev` | 生成项目根目录 |
-| 启动前跳过预先 strict doctor 检查 | `agentseek dev --skip-check` | 生成项目根目录 |
+| 启动前跳过严格的 `doctor` 检查 | `agentseek dev --skip-check` | 生成项目根目录 |
 | 列出模板定义的任务 | `agentseek task --list` | 生成项目根目录 |
 | 运行一个模板定义的任务 | `agentseek task <name>` | 生成项目根目录 |
 
@@ -34,7 +34,7 @@ sources:
 agentseek doctor
 ```
 
-需要更强验证时，使用 strict 或 live 检查。
+需要更强验证时，使用 `--strict` / `--live` 检查。
 
 ```bash
 agentseek doctor --strict
