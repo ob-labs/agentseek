@@ -66,6 +66,7 @@ sources:
 | `--template` | 列出模板的兼容入口。新脚本优先使用 `--list-templates`。 |
 | `--checkout ref` | 拉取远程模板源时使用分支、tag 或 commit。 |
 | `--no-input` | 跳过 Cookiecutter 变量提示，使用模板默认值。 |
+| `--describe` | 打印模板描述和 Cookiecutter 变量，不生成项目。 |
 
 ### 缺失模板
 

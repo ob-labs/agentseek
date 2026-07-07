@@ -67,6 +67,7 @@ The built-in template type set is currently `bub`, `deepagents`, and
 | `--template` | Compatibility entry point that lists templates. Prefer `--list-templates` in new scripts. |
 | `--checkout ref` | Use a branch, tag, or commit when fetching the remote template source. |
 | `--no-input` | Skip Cookiecutter variable prompts and use template defaults. |
+| `--describe` | Print template description and Cookiecutter variables without generating a project. |
 
 ### Missing Templates
 
