@@ -84,6 +84,11 @@ OceanBase seekdb (`quay.io/oceanbase/seekdb:latest`) through
 Override the images with `AGENTSEEK_PHOENIX_IMAGE` and
 `OCEANBASE_SEEKDB_IMAGE` in `.env`.
 
+AgentSeek's upstream `agentseek-phoenix-compose` CI job validates this
+generated path by starting Phoenix with OceanBase seekdb, sending three
+independent OpenTelemetry root spans, and confirming that each trace marker is
+persisted in the Phoenix schema inside OceanBase seekdb.
+
 ### Feishu Channel
 
 This template also ships a first-class Feishu gateway path for group-chat use

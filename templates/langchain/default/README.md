@@ -124,3 +124,8 @@ in one `agentseek dev` run. Phoenix uses
 `AGENTSEEK_PHOENIX_IMAGE`. Its optional `feishu` profile starts the Feishu
 gateway with the same LangChain spec and environment surface; enable it with
 `COMPOSE_PROFILES=feishu` in `.env`.
+
+The repository CI job `agentseek-phoenix-compose` protects this contract. It
+renders this template, starts Phoenix with OceanBase seekdb, emits three
+independent OpenTelemetry root spans, and confirms that each trace marker is
+persisted in the Phoenix schema inside OceanBase seekdb.
