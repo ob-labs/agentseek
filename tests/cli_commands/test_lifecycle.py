@@ -76,6 +76,18 @@ def test_info_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
     assert "tasks: version" in result.stdout
 
 
+def test_info_lists_lifecycle_tasks_and_task_discovery_hint(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["info"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "Lifecycle Tasks" in result.stdout
+    assert "version: Write a task marker." in result.stdout
+    assert "agentseek task --list" in result.stdout
+
+
 def test_doctor_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
     _write_project_inputs(tmp_path)

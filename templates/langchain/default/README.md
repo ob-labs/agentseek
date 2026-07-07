@@ -3,7 +3,7 @@
 Scaffolds a `create_agent` project with CopilotKit middleware bound to
 agentseek via `agentseek-langchain`, for local AG-UI development, and also
 includes a first-class Feishu gateway path plus optional OpenTelemetry export
-to Phoenix backed by SeekDB.
+to Phoenix backed by seekdb.
 
 The generated project uses the AgentSeek dev lifecycle v1 contract:
 
@@ -29,7 +29,7 @@ Browser (CopilotKit v2)
         -> bub gateway :{{ gateway_port }}  /agent  (AG-UI channel)
           -> agentseek-langchain messages_spec(...)
             -> create_agent(...) + CopilotKitMiddleware
-              -> OpenTelemetry spans -> Phoenix :6006/v1/traces -> SeekDB
+              -> OpenTelemetry spans -> Phoenix :6006/v1/traces -> seekdb
 ```
 
 | LangChain guide | Generated project | Conversion point |
@@ -116,7 +116,7 @@ def build_agent():
 ```
 
 The generated `docker-compose.yml` is the default lifecycle stack: it starts
-Bub gateway, the CopilotKit frontend, Phoenix, and a SeekDB backend in one
+Bub gateway, the CopilotKit frontend, Phoenix, and a seekdb backend in one
 `agentseek dev` run. Phoenix uses
 `PHOENIX_SQL_DATABASE_URL=mysql://root@seekdb:2881/phoenix` and persists data in
 `quay.io/oceanbase/seekdb:latest`. Its optional `feishu` profile starts the

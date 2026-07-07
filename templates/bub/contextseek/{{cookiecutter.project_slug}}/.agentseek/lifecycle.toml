@@ -120,3 +120,7 @@ command = ["npm", "install", "--prefix", "frontend"]
 [tasks.seed]
 description = "Seed example ContextSeek entries."
 command = ["uv", "run", "python", "-c", "from {{ cookiecutter.project_slug }}.seed import maybe_seed; maybe_seed()"]
+
+[tasks.seekdb-skills]
+description = "Install recommended seekdb agent skills."
+command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]

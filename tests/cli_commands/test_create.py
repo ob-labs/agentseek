@@ -254,10 +254,20 @@ def test_is_external_spec_local_type() -> None:
 # -- integration with cookiecutter via monkeypatch -------------------------
 
 
+def _assert_next_steps(output: str, *, project_path: str, cd_path: str | None = None) -> None:
+    cd_path = cd_path or project_path
+    assert f"Created {project_path}" in output
+    assert "Next:" in output
+    assert f"cd {cd_path}" in output
+    assert "agentseek info" in output
+    assert "agentseek task --list" in output
+    assert "agentseek doctor" in output
+
+
 def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
     captured: dict[str, object] = {}
 
-    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
         captured["source"] = source
         captured["output_dir"] = output_dir
         captured["no_input"] = no_input
@@ -265,6 +275,7 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
         target = output_dir / "fake-project"
         target.mkdir(parents=True, exist_ok=True)
         (target / "README.md").write_text("ok", encoding="utf-8")
+        return target
 
     monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
     monkeypatch.chdir(tmp_path)
@@ -282,14 +293,18 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
     assert captured["no_input"] is True
     assert Path(str(captured["output_dir"])) == tmp_path
     assert (tmp_path / "fake-project" / "README.md").read_text(encoding="utf-8") == "ok"
+    _assert_next_steps(result.output, project_path="fake-project")
 
 
 def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
     """``agentseek create bub/default --no-input`` should resolve correctly."""
     captured: dict[str, object] = {}
 
-    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
         captured["source"] = source
+        target = output_dir / "fake-project"
+        target.mkdir(parents=True, exist_ok=True)
+        return target
 
     monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
     monkeypatch.chdir(tmp_path)
@@ -304,14 +319,18 @@ def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path
     assert isinstance(source, TemplateSource)
     assert source.directory is None
     assert "bub" in source.template and "default" in source.template
+    _assert_next_steps(result.output, project_path="fake-project")
 
 
 def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> None:
     """External URL spec should be passed directly to cookiecutter."""
     captured: dict[str, object] = {}
 
-    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
         captured["source"] = source
+        target = output_dir / "external project"
+        target.mkdir(parents=True, exist_ok=True)
+        return target
 
     monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
     monkeypatch.chdir(tmp_path)
@@ -325,3 +344,4 @@ def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> Non
     source = captured["source"]
     assert isinstance(source, TemplateSource)
     assert source.template == "https://github.com/foo/bar.git"
+    _assert_next_steps(result.output, project_path="external project", cd_path="'external project'")

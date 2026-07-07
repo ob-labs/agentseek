@@ -95,6 +95,9 @@ The built-in template type set is currently `bub`, `deepagents`, and
 | --- | --- |
 | `--verbose` | Show lifecycle loader discovery details. |
 
+`info` prints services, environment status, lifecycle task names and
+descriptions, and next-step commands for the current project.
+
 ## `task`
 
 | Form | Description |
