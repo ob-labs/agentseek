@@ -7,9 +7,6 @@ verified_on: 2026-07-07
 sources:
   - src/agentseek/env.py
   - src/agentseek/__main__.py
-  - .github/workflows/main.yml
-  - tests/test_github_workflows.py
-  - tests/test_docs_observability.py
   - templates/langchain/default/{{cookiecutter.project_slug}}/.env.example
   - templates/langchain/default/{{cookiecutter.project_slug}}/README.md
   - templates/langchain/default/{{cookiecutter.project_slug}}/docker-compose.yml
@@ -115,12 +112,6 @@ The template compose stack uses `ghcr.io/agentseek-ai/agentseek-phoenix:main`
 for Phoenix and persists Phoenix data through OceanBase seekdb
 (`quay.io/oceanbase/seekdb:latest`). Override the images with
 `AGENTSEEK_PHOENIX_IMAGE` and `OCEANBASE_SEEKDB_IMAGE`.
-
-The `agentseek-phoenix-compose` CI job verifies this path end to end. It renders
-`langchain/default`, starts Phoenix with OceanBase seekdb, emits three
-independent OpenTelemetry root spans to `/v1/traces`, and searches the Phoenix
-schema in OceanBase seekdb for each trace marker. The job fails if any marker is
-missing, if the markers share a trace ID, or if Phoenix cannot flush the spans.
 
 ## Related
 

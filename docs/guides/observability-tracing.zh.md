@@ -7,9 +7,6 @@ verified_on: 2026-07-07
 sources:
   - src/agentseek/env.py
   - src/agentseek/__main__.py
-  - .github/workflows/main.yml
-  - tests/test_github_workflows.py
-  - tests/test_docs_observability.py
   - templates/langchain/default/{{cookiecutter.project_slug}}/.env.example
   - templates/langchain/default/{{cookiecutter.project_slug}}/README.md
   - templates/langchain/default/{{cookiecutter.project_slug}}/docker-compose.yml
@@ -111,12 +108,6 @@ AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
 运行 Phoenix，并通过 OceanBase seekdb（`quay.io/oceanbase/seekdb:latest`）
 持久化 Phoenix 数据。可以用 `.env` 中的 `AGENTSEEK_PHOENIX_IMAGE` 和
 `OCEANBASE_SEEKDB_IMAGE` 覆盖默认镜像。
-
-`agentseek-phoenix-compose` CI job 会端到端验证这条路径：渲染
-`langchain/default`，用 OceanBase seekdb 启动 Phoenix，向 `/v1/traces`
-发送 3 个独立 OpenTelemetry root spans，并在 OceanBase seekdb 的 Phoenix
-schema 中逐一查找每个 trace marker。只要任一 marker 缺失、多个 marker
-复用了同一个 trace ID，或 Phoenix 没有完成 span flush，这个 job 就会失败。
 
 ## 相关内容
 
