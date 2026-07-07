@@ -102,9 +102,7 @@ def test_hybrid_template_sample_pack_zip_matches_manifest() -> None:
     with zipfile.ZipFile(project_dir / "examples" / "sample_pack" / "sample_pack.zip") as archive:
         names = set(archive.namelist())
         zipped_images = {
-            name.removeprefix("images/"): archive.read(name)
-            for name in names
-            if name.startswith("images/")
+            name.removeprefix("images/"): archive.read(name) for name in names if name.startswith("images/")
         }
 
     assert "manifest.yml" in names
