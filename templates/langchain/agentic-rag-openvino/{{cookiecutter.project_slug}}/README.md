@@ -3,7 +3,7 @@
 LangChain agentic RAG running **fully local** with
 [OpenVINO](https://docs.openvino.ai/) via the official
 [langchain-huggingface](https://python.langchain.com/docs/integrations/llms/openvino)
-integration and [OceanBase/SeekDB](https://github.com/oceanbase/seekdb)
+integration and [OceanBase seekdb](https://github.com/oceanbase/seekdb)
 as the vector store. No cloud API keys required.
 
 Scaffolded with `agentseek create langchain/agentic-rag-openvino`.
@@ -17,7 +17,7 @@ Scaffolded with `agentseek create langchain/agentic-rag-openvino`.
 │  LLM:        HuggingFacePipeline(backend="openvino")     │
 │              → ChatHuggingFace → create_agent             │
 │  Embedding:  HuggingFaceEmbeddings(backend="openvino")   │
-│  Vector DB:  OceanBase/SeekDB                            │
+│  Vector DB:  OceanBase seekdb                            │
 │  Serving:    langgraph dev → React frontend              │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -34,12 +34,21 @@ check, and run the local development stack:
 ```bash
 agentseek info           # show services, environment, and lifecycle metadata
 agentseek doctor         # run static checks for tools, paths, and .env
-agentseek dev --dry-run  # print the SeekDB/backend/frontend startup plan
+agentseek dev --dry-run  # print the OceanBase seekdb/backend/frontend startup plan
 agentseek task --list    # list setup and data tasks
+agentseek task seekdb-skills  # optionally install OceanBase seekdb agent skills
 ```
 
 `agentseek doctor` intentionally does not download or convert OpenVINO models.
 Use `agentseek task models` for that heavier step.
+
+## Agent Skills
+
+`agentseek task seekdb-skills` runs
+`npx skills add oceanbase/seekdb-ecology-plugins --all` to install recommended
+OceanBase seekdb skills for supported coding agents. This uses the external `skills`
+tooling; `agentseek task --list` remains the canonical way to discover
+template tasks.
 
 ## Setup
 
@@ -95,7 +104,7 @@ optimum-cli export openvino \
 
 Then update `LLM_MODEL_PATH` in `.env`.
 
-### 4. Start SeekDB
+### 4. Start OceanBase seekdb
 
 ```bash
 agentseek task seekdb        # wait ~60s on first run
@@ -109,8 +118,8 @@ Key variables:
 | `EMBEDDING_MODEL_PATH` | ./models/bge-small-en-v1.5 | OpenVINO embedding model directory |
 | `OPENVINO_DEVICE` | CPU | Inference device: CPU, GPU, or NPU |
 | `MAX_NEW_TOKENS` | 512 | Max tokens for LLM generation |
-| `SEEKDB_HOST` | 127.0.0.1 | SeekDB host |
-| `SEEKDB_PORT` | 2881 | SeekDB port |
+| `SEEKDB_HOST` | 127.0.0.1 | OceanBase seekdb host |
+| `SEEKDB_PORT` | 2881 | OceanBase seekdb port |
 
 ## Ingest
 
@@ -121,7 +130,7 @@ uv run ingest ./docs/
 
 Documents are chunked (1000 chars, 200 overlap), embedded with
 `HuggingFaceEmbeddings(backend="openvino")` using bge-small-en-v1.5
-(384-dim), and indexed into SeekDB.
+(384-dim), and indexed into OceanBase seekdb.
 
 ## Run
 
@@ -130,7 +139,7 @@ agentseek dev --dry-run
 agentseek dev
 ```
 
-`agentseek dev` starts SeekDB, `langgraph dev`, and the Vite frontend from the
+`agentseek dev` starts OceanBase seekdb, `langgraph dev`, and the Vite frontend from the
 lifecycle spec. In another terminal, use `agentseek doctor --live` to check the
 declared HTTP endpoints.
 

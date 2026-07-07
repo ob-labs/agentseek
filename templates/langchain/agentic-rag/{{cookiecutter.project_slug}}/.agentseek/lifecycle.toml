@@ -29,22 +29,22 @@ aliases = ["BUB_MODEL"]
 [env.SEEKDB_HOST]
 required = true
 default = "127.0.0.1"
-description = "SeekDB host used by the vector store."
+description = "seekdb host used by the vector store."
 
 [env.SEEKDB_PORT]
 required = true
 default = "2881"
-description = "SeekDB MySQL-compatible port."
+description = "seekdb MySQL-compatible port."
 
 [env.SEEKDB_USER]
 required = true
 default = "root"
-description = "SeekDB user."
+description = "seekdb user."
 
 [env.SEEKDB_DB_NAME]
 required = true
 default = "{{ cookiecutter.seekdb_db_name }}"
-description = "SeekDB database name."
+description = "seekdb database name."
 
 [env.VECTOR_TABLE_NAME]
 required = true
@@ -88,5 +88,9 @@ description = "Install frontend dependencies."
 command = ["npm", "install", "--prefix", "frontend"]
 
 [tasks.seekdb]
-description = "Start the bundled SeekDB container."
+description = "Start the bundled seekdb container."
 command = ["docker", "compose", "up", "-d"]
+
+[tasks.seekdb-skills]
+description = "Install recommended OceanBase seekdb agent skills."
+command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]

@@ -38,6 +38,20 @@ ContextSeek entries, run:
 uvx agentseek task seed
 ```
 
+## Agent Skills
+
+For optional coding-agent assistance around seekdb, run:
+
+```bash
+uvx agentseek task seekdb-skills
+```
+
+This task runs
+`npx skills add oceanbase/seekdb-ecology-plugins --all` to install recommended
+OceanBase seekdb skills for supported coding agents. This uses the external `skills`
+tooling; `uvx agentseek task --list` remains the canonical way to discover
+template tasks.
+
 ## Runtime environment ownership
 
 `.env` is the readiness and env source for `agentseek info` and

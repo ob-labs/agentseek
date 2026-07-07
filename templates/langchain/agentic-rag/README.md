@@ -2,7 +2,7 @@
 
 Cookiecutter template for an **agentic RAG** application using
 [LangChain](https://docs.langchain.com/oss/langchain) with an
-[OceanBase/SeekDB](https://github.com/oceanbase/seekdb) vector store and
+[OceanBase seekdb](https://github.com/oceanbase/seekdb) vector store and
 seekdb embed (384-dim, no API key required).
 
 The generated project includes:
@@ -13,7 +13,7 @@ The generated project includes:
 - **Frontend** — React + Vite chat UI with streaming tool-call cards and
   markdown rendering via `@langchain/react` `useStream`.
 - **Ingest CLI** — `uv run ingest` loads documents from files, directories,
-  or URLs, chunks them, and indexes into SeekDB.
+  or URLs, chunks them, and indexes into OceanBase seekdb.
 - **AgentSeek lifecycle** — `.agentseek/lifecycle.toml` declares
   `agentseek info`, `agentseek doctor`, `agentseek dev`, and helper tasks.
 
@@ -26,7 +26,7 @@ for dependency management. Install uv first:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-You also need a running SeekDB instance. The generated project includes a
+You also need a running OceanBase seekdb instance. The generated project includes a
 `docker-compose.yml` that starts one, or you can use the embedded
 `pylibseekdb` launcher on Linux.
 
@@ -42,7 +42,7 @@ cd <project_slug>
 cp .env.example .env        # fill in API keys
 uv sync
 npm install --prefix frontend
-docker compose up -d        # start SeekDB
+docker compose up -d        # start OceanBase seekdb
 agentseek doctor
 agentseek dev --dry-run
 
@@ -60,7 +60,7 @@ agentseek dev
 | `default_model_provider` | openai | openai / anthropic / google_genai |
 | `default_model` | openai:Pro/zai-org/GLM-5.1 | Model ID for the chosen provider |
 | `seekdb_path` | ./.seekdb-data | Local data path (Docker volume mount) |
-| `seekdb_db_name` | test | SeekDB database name |
+| `seekdb_db_name` | test | OceanBase seekdb database name |
 | `vector_table_name` | rag_documents | Vector store table name |
 | `frontend_port` | 5174 | Frontend Vite dev server port |
 

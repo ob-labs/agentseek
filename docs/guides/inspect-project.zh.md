@@ -3,7 +3,7 @@ title: 查看项目
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-06-26
+verified_on: 2026-07-07
 sources:
   - src/agentseek/cli/commands/info.py
   - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
@@ -34,9 +34,17 @@ Environment
   Env file: .env (present)
   BUB_MODEL: set (.env)
   BUB_API_KEY: set (.env)
+
+Lifecycle Tasks
+  frontend: Install frontend dependencies.
+
+Next
+  agentseek task --list
+  agentseek doctor
+  agentseek dev
 ```
 
-这些入口来自生命周期规范。
+这些入口和项目任务来自生命周期规范。
 
 ```toml title=".agentseek/lifecycle.toml 片段"
 [services.app]

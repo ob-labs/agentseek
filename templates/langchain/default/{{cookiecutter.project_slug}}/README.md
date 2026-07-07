@@ -21,11 +21,11 @@ agentseek dev
 The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`,
 the CopilotKit runtime to `http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit`,
 the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`, and
-Phoenix to `http://127.0.0.1:6006`. SeekDB is exposed locally on
+Phoenix to `http://127.0.0.1:6006`. OceanBase seekdb is exposed locally on
 `127.0.0.1:2884`.
 
 `agentseek dev` starts the Docker Compose stack declared by the template:
-Bub gateway, CopilotKit/frontend, Phoenix, and SeekDB. `agentseek doctor
+Bub gateway, CopilotKit/frontend, Phoenix, and OceanBase seekdb. `agentseek doctor
 --live` checks the gateway, CopilotKit runtime, frontend, and Phoenix HTTP
 endpoints declared in `.agentseek/lifecycle.toml`.
 
@@ -35,10 +35,24 @@ Project tasks are also declared in `.agentseek/lifecycle.toml`:
 agentseek task --list
 agentseek task setup
 agentseek task frontend
+agentseek task seekdb-skills
 ```
 
 AgentSeek reads `.env` for lifecycle environment checks. Docker Compose reads
 the same file through its native `.env` and `env_file` mechanisms.
+
+## Agent Skills
+
+For coding agents that support external skill packs, this template exposes an
+optional setup task:
+
+```bash
+agentseek task seekdb-skills
+```
+
+The task runs `npx skills add oceanbase/seekdb-ecology-plugins --all` to
+install recommended OceanBase seekdb skills for your coding agent. Use
+`agentseek task --list` as the canonical way to discover template tasks.
 
 ### Phoenix Tracing
 
@@ -46,7 +60,7 @@ The generated LangChain app can export OpenTelemetry spans directly to Phoenix.
 Bub and the gateway only forward messages; tracing is registered in the
 LangChain application process.
 
-The default local stack includes Phoenix tracing and SeekDB:
+The default local stack includes Phoenix tracing and OceanBase seekdb:
 
 ```bash
 agentseek dev
@@ -64,9 +78,16 @@ AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
 ```
 
 Phoenix is available at `http://127.0.0.1:6006`. The compose stack uses
-`ghcr.io/psiace/phoenix:mysql` and persists Phoenix data in
-`quay.io/oceanbase/seekdb:latest` through
+`ghcr.io/agentseek-ai/agentseek-phoenix:main` and persists Phoenix data in
+OceanBase seekdb (`quay.io/oceanbase/seekdb:latest`) through
 `PHOENIX_SQL_DATABASE_URL=mysql://root@seekdb:2881/phoenix`.
+Override the images with `AGENTSEEK_PHOENIX_IMAGE` and
+`OCEANBASE_SEEKDB_IMAGE` in `.env`.
+
+AgentSeek's upstream `agentseek-phoenix-compose` CI job validates this
+generated path by starting Phoenix with OceanBase seekdb, sending three
+independent OpenTelemetry root spans, and confirming that each trace marker is
+persisted in the Phoenix schema inside OceanBase seekdb.
 
 ### Feishu Channel
 

@@ -26,6 +26,20 @@ agentseek dev
 Use `agentseek task --list` to see lifecycle helper tasks. The generated
 project declares the development stack in `.agentseek/lifecycle.toml`.
 
+For optional coding-agent assistance around OceanBase seekdb, run:
+
+```bash
+agentseek task seekdb-skills
+```
+
+## Agent Skills
+
+`agentseek task seekdb-skills` runs
+`npx skills add oceanbase/seekdb-ecology-plugins --all` to install recommended
+OceanBase seekdb skills for supported coding agents. This uses the external `skills`
+tooling; `agentseek task --list` remains the canonical way to discover
+template tasks.
+
 ## Environment
 
 Set `AGENTSEEK_MODEL_PROVIDER` to `openai`, `anthropic`, or `google_genai`,
@@ -53,8 +67,8 @@ model served by that provider. The scaffold defaults to `openai` with
 `{{ cookiecutter.default_model }}`, so pointing `OPENAI_API_BASE` at a
 compatible gateway (e.g. SiliconFlow) works out of the box.
 
-The lifecycle spec checks `.env`, frontend dependencies, and the stable SeekDB
-connection variables. Provider API keys are documented in `.env.example` but
+The lifecycle spec checks `.env`, frontend dependencies, and the stable
+OceanBase seekdb connection variables. Provider API keys are documented in `.env.example` but
 are not lifecycle-required because lifecycle v1 does not support conditional
 requirements by selected provider.
 
@@ -75,8 +89,8 @@ uv run ingest ./notes/ https://example.com/article
 
 Documents are split into 1000-character chunks with 200-character overlap,
 embedded via `DefaultEmbeddingFunctionAdapter` from `langchain-oceanbase`
-(384-dim, runs locally, no API key), and indexed into the configured SeekDB
-table.
+(384-dim, runs locally, no API key), and indexed into the configured
+OceanBase seekdb table.
 
 ## Run
 

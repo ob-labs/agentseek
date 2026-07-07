@@ -36,6 +36,9 @@ aliases = ["BUB_OPENAI_API_KEY"]
 [services.app]
 url = "http://127.0.0.1:5173"
 
+[services.seekdb]
+url = "mysql://127.0.0.1:2884/phoenix"
+
 [processes.web]
 command = ["python", "-m", "http.server", "5173"]
 cwd = "."
@@ -72,8 +75,22 @@ def test_info_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
     assert ".agentseek/lifecycle.toml" in result.stdout
     assert "Template: test/default" in result.stdout
     assert "Name: Spec Project" in result.stdout
+    assert "seekdb: mysql://127.0.0.1:2884/phoenix" in result.stdout
+    assert "Seekdb:" not in result.stdout
     assert "commands: dev, info, doctor" in result.stdout
     assert "tasks: version" in result.stdout
+
+
+def test_info_lists_lifecycle_tasks_and_task_discovery_hint(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["info"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "Lifecycle Tasks" in result.stdout
+    assert "version: Write a task marker." in result.stdout
+    assert "agentseek task --list" in result.stdout
 
 
 def test_doctor_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
@@ -151,6 +168,8 @@ def test_dev_dry_run_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> N
     assert "Startup plan" in result.stdout
     assert "Web: python -m http.server 5173" in result.stdout
     assert "App: http://127.0.0.1:5173" in result.stdout
+    assert "seekdb: mysql://127.0.0.1:2884/phoenix" in result.stdout
+    assert "Seekdb:" not in result.stdout
 
 
 def test_dev_skip_check_still_enforces_required_inputs(tmp_path: Path, monkeypatch) -> None:

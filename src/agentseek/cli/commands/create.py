@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -323,13 +324,13 @@ def _run_cookiecutter(
     *,
     output_dir: Path,
     no_input: bool,
-) -> None:
+) -> Path | None:
     """Invoke cookiecutter; isolated so tests can monkeypatch."""
     from cookiecutter.exceptions import OutputDirExistsException
     from cookiecutter.main import cookiecutter
 
     try:
-        cookiecutter(
+        generated = cookiecutter(
             template=source.template,
             output_dir=str(output_dir),
             no_input=no_input,
@@ -340,6 +341,7 @@ def _run_cookiecutter(
                 "_agentseek_source_url": source.install_source_url or REPO_GIT_URL,
             },
         )
+        return Path(generated) if generated else None
     except OutputDirExistsException:
         typer.echo(
             "Target directory already exists. Remove it first or choose a different location.",
@@ -485,7 +487,8 @@ def _handle_external_spec(args: argparse.Namespace) -> None:
         directory=args.template,  # --template doubles as directory for external
         checkout=args.checkout,
     )
-    _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
+    generated = _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
+    _print_created_next_steps(generated, output_dir=Path.cwd())
 
 
 # ---------------------------------------------------------------------------
@@ -546,7 +549,8 @@ def create(ctx: typer.Context) -> None:
         _describe_template(source, templates_root=templates_root)
         return
 
-    _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
+    generated = _run_cookiecutter(source, output_dir=Path.cwd(), no_input=args.no_input)
+    _print_created_next_steps(generated, output_dir=Path.cwd())
 
 
 def _parse_new_args(ctx: typer.Context) -> argparse.Namespace:
@@ -598,6 +602,26 @@ def _show_templates(project_type: str | None, *, checkout: str | None = None) ->
         return
     _print_templates_table(project_type, _list_templates(project_type, templates_root), descriptions)
     typer.echo()
+
+
+def _print_created_next_steps(generated: Path | None, *, output_dir: Path) -> None:
+    if generated is None:
+        return
+    display_path = _display_generated_path(generated, output_dir=output_dir)
+    typer.echo(f"Created {display_path}")
+    typer.echo()
+    typer.echo("Next:")
+    typer.echo(f"  cd {shlex.quote(display_path)}")
+    typer.echo("  agentseek info")
+    typer.echo("  agentseek task --list")
+    typer.echo("  agentseek doctor")
+
+
+def _display_generated_path(generated: Path, *, output_dir: Path) -> str:
+    try:
+        return str(generated.resolve().relative_to(output_dir.resolve()))
+    except ValueError:
+        return str(generated)
 
 
 __all__ = ["DEFAULT_TYPE", "KNOWN_TYPES", "REPO_URL", "TemplateSource", "app"]

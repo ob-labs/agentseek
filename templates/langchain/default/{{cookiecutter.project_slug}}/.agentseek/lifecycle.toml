@@ -85,3 +85,8 @@ cwd = "."
 description = "Install frontend dependencies for non-compose local runs."
 command = ["npm", "install", "--prefix", "frontend"]
 cwd = "."
+
+[tasks.seekdb-skills]
+description = "Install recommended OceanBase seekdb agent skills."
+command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]
+cwd = "."

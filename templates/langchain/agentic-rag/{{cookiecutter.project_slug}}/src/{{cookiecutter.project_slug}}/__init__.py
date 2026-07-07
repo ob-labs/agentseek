@@ -1,1 +1,1 @@
-"""{{ cookiecutter.project_name }} — LangChain agentic RAG with SeekDB vector store."""
+"""{{ cookiecutter.project_name }} — LangChain agentic RAG with OceanBase seekdb vector store."""

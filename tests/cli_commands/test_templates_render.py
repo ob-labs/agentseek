@@ -52,6 +52,13 @@ def _discover_templates() -> list[tuple[str, str, Path]]:
 
 
 TEMPLATES = _discover_templates()
+seekdb_skill_templates = {
+    ("bub", "contextseek"),
+    ("langchain", "agentic-rag"),
+    ("langchain", "agentic-rag-openvino"),
+    ("langchain", "default"),
+}
+seekdb_skill_command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]
 
 
 def test_at_least_one_template_discovered() -> None:
@@ -112,6 +119,22 @@ def test_template_renders_without_unrendered_jinja(
     assert lifecycle_data["template"] == f"{type_name}/{template_name}"
     assert lifecycle_data["processes"]
     assert not (generated / "duties.py").exists()
+    if (type_name, template_name) in seekdb_skill_templates:
+        task = lifecycle_data["tasks"]["seekdb-skills"]
+        assert task["description"] == "Install recommended OceanBase seekdb agent skills."
+        assert task["command"] == seekdb_skill_command
+        readme = generated / "README.md"
+        readme_text = readme.read_text(encoding="utf-8")
+        assert "agentseek task seekdb-skills" in readme_text
+        assert "## Agent Skills" in readme_text
+
+    if (type_name, template_name) == ("langchain", "default"):
+        env_text = (generated / ".env.example").read_text(encoding="utf-8")
+        compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+        assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
+        assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
+        assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
+        assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
 
     frontend_pkg = generated / "frontend" / "package.json"
     if frontend_pkg.is_file():
