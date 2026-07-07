@@ -9,9 +9,18 @@
   "http": {
     "app": "{{ cookiecutter.project_slug }}.routes:app",
     "cors": {
-      "allow_origins": ["http://127.0.0.1:{{ cookiecutter.frontend_port }}"],
-      "allow_methods": ["GET", "POST", "OPTIONS"],
-      "allow_headers": ["Content-Type", "Authorization"]
+      "allow_origins": [
+        "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+      ],
+      "allow_methods": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "allow_headers": [
+        "Content-Type",
+        "Authorization"
+      ]
     },
     "enable_custom_route_auth": false,
     "middleware_order": "middleware_first"
