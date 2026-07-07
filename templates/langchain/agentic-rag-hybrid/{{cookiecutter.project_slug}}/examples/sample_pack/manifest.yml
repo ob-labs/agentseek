@@ -1,0 +1,29 @@
+pack:
+  id: hybrid-search-starter
+  title: "Hybrid Search Starter Pack"
+  description: "Tiny generated PNG images with known captions for testing hybrid search modes."
+images:
+  - id: golden_dog_park
+    file_name: golden-dog-park.png
+    caption: "A golden retriever with brown fur running outdoors in a grassy park."
+    tags: ["animal", "dog", "golden retriever", "brown fur", "outdoor"]
+  - id: brown_horse_field
+    file_name: brown-horse-field.png
+    caption: "A brown horse standing outside in an open green field."
+    tags: ["animal", "horse", "brown fur", "outdoor"]
+  - id: red_tea_label
+    file_name: red-tea-label.png
+    caption: "A product package with a red tea label and white text."
+    tags: ["product", "red label", "tea", "package"]
+  - id: green_tea_label
+    file_name: green-tea-label.png
+    caption: "A product package with a green tea label and white text."
+    tags: ["product", "green label", "tea", "package"]
+  - id: blue_logo_sneaker
+    file_name: blue-logo-sneaker.png
+    caption: "A running shoe with a visible blue logo on the side."
+    tags: ["shoe", "sneaker", "blue logo", "running"]
+  - id: plain_blue_sneaker
+    file_name: plain-blue-sneaker.png
+    caption: "A plain blue running shoe with no visible logo."
+    tags: ["shoe", "sneaker", "blue", "running"]

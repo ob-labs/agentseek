@@ -15,6 +15,7 @@ EXPECTED_TEMPLATE_KEYS = {
     "deepagents/default",
     "deepagents/research",
     "langchain/agentic-rag",
+    "langchain/agentic-rag-hybrid",
     "langchain/agentic-rag-openvino",
     "langchain/cli-remote",
     "langchain/default",

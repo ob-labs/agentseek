@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.seekdb-data/
+data/uploads/
+data/extracted/
+data/tmp/
+frontend/node_modules/
+frontend/dist/

@@ -15,6 +15,7 @@ sources:
   - templates/langchain/default/README.md
   - templates/langchain/markdown-messages/README.md
   - templates/langchain/agentic-rag/README.md
+  - templates/langchain/agentic-rag-hybrid/README.md
   - templates/langchain/cli-remote/README.md
   - templates/langchain/sandbox/README.md
 ---
@@ -47,6 +48,7 @@ generated app code is Bub, DeepAgents, LangChain, or LangGraph shaped.
 | Build a LangChain AG-UI app | `langchain/default` | It keeps the LangChain `create_agent(...)` shape and binds it through AgentSeek. |
 | Start with a pure LangGraph-style chat UI | `langchain/markdown-messages` | It uses `langgraph dev`, `@langchain/react`, and markdown message rendering. |
 | Build RAG over OceanBase / SeekDB | `langchain/agentic-rag` | It includes an agentic retrieval tool, ingest command, frontend, and SeekDB setup. |
+| Learn and inspect hybrid retrieval behavior | `langchain/agentic-rag-hybrid` | It includes image ingestion, vector/sparse/full-text modes, a guided starter pack, and visual compare UI. |
 | Connect to a remote LangGraph service | `langchain/cli-remote` | It bridges a remote LangGraph agent through `LangGraphClientRunnable`. |
 | Build a sandbox-backed coding agent | `langchain/sandbox` | It combines DeepAgents with a LangSmith sandbox backend and local UI. |
 
@@ -57,9 +59,12 @@ Use `bub/default`, `bub/contextseek`, `deepagents/default`, or
 AgentSeek/Bub gateway path.
 
 Use `deepagents/research`, `deepagents/content-builder`,
-`langchain/markdown-messages`, `langchain/agentic-rag`, or `langchain/sandbox`
+`langchain/markdown-messages`, `langchain/agentic-rag`,
+`langchain/agentic-rag-hybrid`, or `langchain/sandbox`
 when you want a framework-native backend such as `langgraph dev`, still managed
 by AgentSeek lifecycle commands.
+
+Choose `langchain/agentic-rag-hybrid` when you need developers to learn and inspect hybrid retrieval behavior, especially for image-backed knowledge bases where visual similarity, captions, labels, and metadata all affect recall.
 
 Use `langchain/cli-remote` when the generated project should talk to an
 already running LangGraph service instead of owning the graph process.

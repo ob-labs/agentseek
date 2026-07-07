@@ -1,0 +1,22 @@
+name: {{ cookiecutter.project_slug }}
+
+services:
+  seekdb:
+    image: quay.io/oceanbase/seekdb:latest
+    restart: unless-stopped
+    environment:
+      DATAFILE_SIZE: 2G
+      DATAFILE_NEXT: 2G
+      DATAFILE_MAXSIZE: 50G
+      LOG_DISK_SIZE: 2G
+      SEEKDB_DATABASE: "${SEEKDB_DB_NAME:-test}"
+    ports:
+      - "127.0.0.1:2881:2881"
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 60s
+    volumes:
+      - {{ cookiecutter.seekdb_path }}:/var/lib/oceanbase

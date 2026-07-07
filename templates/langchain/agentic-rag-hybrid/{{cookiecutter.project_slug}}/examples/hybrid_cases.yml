@@ -1,0 +1,21 @@
+cases:
+  - id: semantic_visual
+    query: "outdoor animal with brown fur"
+    recommended_mode: semantic
+    expected_effect: "Vector search should help when the wording does not exactly match the caption."
+    what_to_notice: "The retriever and horse images should stay visible even when exact words differ."
+  - id: exact_label
+    query: "golden retriever"
+    recommended_mode: exact
+    expected_effect: "Full-text should help when the exact category appears in generated captions."
+    what_to_notice: "The exact mode should promote the image whose caption contains golden retriever."
+  - id: keyword_catalog
+    query: "red product label"
+    recommended_mode: keyword
+    expected_effect: "Keyword mode should promote captions and metadata with the same visible terms."
+    what_to_notice: "The red tea label should outrank visually similar packaging with different label words."
+  - id: mixed_intent
+    query: "similar shoes with visible blue logo"
+    recommended_mode: balanced
+    expected_effect: "Balanced mode should combine visual similarity with caption terms."
+    what_to_notice: "Balanced mode should keep sneaker visuals while rewarding the blue logo keyword."
