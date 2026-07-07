@@ -9,4 +9,3 @@ uv run hybrid-demo
 ```
 
 If you add `manifest.yml` next to your images, the ingest step uses those captions and tags before falling back to VLM captioning.
-

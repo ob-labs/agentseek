@@ -10,9 +10,10 @@ from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain.tools import tool
 
-from .hybrid import normalize_search_mode
+from .hybrid import clamp_top_k, normalize_query, normalize_search_mode
 from .middleware import hybrid_mode_guidance
 from .models import SearchTrace
+from .settings import Settings, get_settings
 from .store import HybridImageStore
 
 load_dotenv()
@@ -90,6 +91,10 @@ def _serialize_trace(trace: SearchTrace) -> tuple[str, dict[str, Any]]:
     return "\n".join(lines), asdict(trace)
 
 
+def _prepare_search_request(query: str, top_k: int, settings: Settings) -> tuple[str, int]:
+    return normalize_query(query), clamp_top_k(top_k, settings.hybrid_max_top_k)
+
+
 @tool(response_format="content_and_artifact")
 def hybrid_search_knowledge_base(
     query: str,
@@ -101,8 +106,10 @@ def hybrid_search_knowledge_base(
     Use semantic for visual/conceptual similarity, keyword for term-heavy queries,
     exact for filenames/labels/exact categories, and balanced for mixed intent.
     """
+    settings = get_settings()
+    query, top_k = _prepare_search_request(query, top_k, settings)
     mode = normalize_search_mode(search_mode)
-    trace = HybridImageStore().search_text(query=query, mode=mode, top_k=top_k)
+    trace = HybridImageStore(settings=settings).search_text(query=query, mode=mode, top_k=top_k)
     return _serialize_trace(trace)
 
 

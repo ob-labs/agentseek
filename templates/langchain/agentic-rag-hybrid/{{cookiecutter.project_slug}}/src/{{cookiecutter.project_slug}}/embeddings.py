@@ -53,7 +53,6 @@ def caption_image(image_path: Path, settings: Settings | None = None) -> str:
         return "[VLM_API_KEY not set; caption unavailable]"
     import openai
 
-    encoded = base64.b64encode(image_path.read_bytes()).decode("utf-8")
     client = openai.OpenAI(api_key=current.vlm_api_key, base_url=current.vlm_base_url)
     response = client.chat.completions.create(
         model=current.vlm_model,
@@ -67,7 +66,7 @@ def caption_image(image_path: Path, settings: Settings | None = None) -> str:
                     },
                     {
                         "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{encoded}"},
+                        "image_url": {"url": EmbeddingEngine._data_uri(image_path)},
                     },
                 ],
             }

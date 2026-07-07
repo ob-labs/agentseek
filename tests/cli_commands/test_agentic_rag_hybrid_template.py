@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -14,12 +16,23 @@ TEMPLATE_DIR = REPO_ROOT / "templates" / "langchain" / "agentic-rag-hybrid"
 
 def test_hybrid_template_contains_expected_custom_runtime_files() -> None:
     project_dir = TEMPLATE_DIR / "{{cookiecutter.project_slug}}"
+    lifecycle = project_dir / ".agentseek" / "lifecycle.toml"
 
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "routes.py").is_file()
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "middleware.py").is_file()
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "sample_pack.py").is_file()
     assert (project_dir / "frontend" / "src" / "SampleLab.tsx").is_file()
     assert (project_dir / "examples" / "sample_pack" / "sample_pack.zip").is_file()
+    assert lifecycle.is_file()
+    git = shutil.which("git")
+    assert git is not None
+    subprocess.run(  # noqa: S603
+        [git, "ls-files", "--error-unmatch", str(lifecycle.relative_to(REPO_ROOT))],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
 
 def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:

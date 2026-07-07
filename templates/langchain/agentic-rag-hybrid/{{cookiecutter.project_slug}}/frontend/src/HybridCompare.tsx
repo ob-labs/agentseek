@@ -3,6 +3,10 @@ import { compareHybridModes, resolveCustomUrl, uploadArchive } from "./api";
 
 const modes = ["semantic", "keyword", "exact", "balanced"];
 
+function formatWeights(weights: any) {
+  return `V ${Math.round(weights.vector * 100)} / S ${Math.round(weights.sparse * 100)} / F ${Math.round(weights.fulltext * 100)} / M ${Math.round(weights.metadata * 100)}`;
+}
+
 export default function HybridCompare() {
   const [query, setQuery] = useState("similar shoes with visible blue logo");
   const [data, setData] = useState<any>(null);
@@ -55,9 +59,7 @@ export default function HybridCompare() {
               <article className="mode" key={mode}>
                 <header>
                   <strong>{mode}</strong>
-                  <span>
-                    V {Math.round(trace.weights.vector * 100)} / S {Math.round(trace.weights.sparse * 100)} / F {Math.round(trace.weights.fulltext * 100)}
-                  </span>
+                  <span>{formatWeights(trace.weights)}</span>
                 </header>
                 {(trace.hits ?? []).map((hit: any) => (
                   <div className="result" key={hit.image_id}>

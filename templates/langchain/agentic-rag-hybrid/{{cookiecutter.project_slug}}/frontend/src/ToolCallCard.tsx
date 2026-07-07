@@ -20,6 +20,10 @@ function formatArgs(args: unknown): string {
   }
 }
 
+function formatWeights(weights: any): string {
+  return `V ${Math.round(weights.vector * 100)} / S ${Math.round(weights.sparse * 100)} / F ${Math.round(weights.fulltext * 100)} / M ${Math.round(weights.metadata * 100)}`;
+}
+
 export default function ToolCallCard({ card }: { card: ToolCard }): ReactNode {
   const [open, setOpen] = useState(card.status === "pending");
   const previousStatus = useRef<Status>(card.status);
@@ -52,11 +56,7 @@ export default function ToolCallCard({ card }: { card: ToolCard }): ReactNode {
         {card.artifact?.weights && (
           <div className="tool-card__section">
             <div className="tool-card__label">hybrid trace</div>
-            <div className="weights">
-              V {Math.round(card.artifact.weights.vector * 100)} /
-              S {Math.round(card.artifact.weights.sparse * 100)} /
-              F {Math.round(card.artifact.weights.fulltext * 100)}
-            </div>
+            <div className="weights">{formatWeights(card.artifact.weights)}</div>
             <pre className="tool-card__code">{formatArgs(card.artifact.route_counts)}</pre>
           </div>
         )}

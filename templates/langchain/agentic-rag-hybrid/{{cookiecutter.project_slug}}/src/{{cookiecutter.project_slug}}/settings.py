@@ -32,6 +32,7 @@ class Settings:
     hybrid_recall_multiplier: int
     hybrid_max_top_k: int
     media_data_dir: Path
+    media_max_upload_bytes: int
 
 
 @lru_cache(maxsize=1)
@@ -54,4 +55,5 @@ def get_settings() -> Settings:
         hybrid_recall_multiplier=_int_env("HYBRID_RECALL_MULTIPLIER", 5),
         hybrid_max_top_k=_int_env("HYBRID_MAX_TOP_K", 20),
         media_data_dir=Path(os.getenv("MEDIA_DATA_DIR", "./data")).resolve(),
+        media_max_upload_bytes=_int_env("MEDIA_MAX_UPLOAD_MB", 50) * 1024 * 1024,
     )

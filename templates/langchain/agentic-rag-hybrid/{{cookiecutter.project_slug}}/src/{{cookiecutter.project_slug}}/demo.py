@@ -6,7 +6,13 @@ from .store import HybridImageStore
 
 def _print_trace(case_id: str, mode: str, trace) -> None:
     print(f"\n[{case_id}] {mode} mode")
-    print(f"  weights: V={trace.weights.vector:.0%} S={trace.weights.sparse:.0%} F={trace.weights.fulltext:.0%}")
+    print(
+        "  weights: "
+        f"V={trace.weights.vector:.0%} "
+        f"S={trace.weights.sparse:.0%} "
+        f"F={trace.weights.fulltext:.0%} "
+        f"M={trace.weights.metadata:.0%}"
+    )
     print(f"  route counts: {trace.route_counts}")
     for hit in trace.hits[:5]:
         score = "" if hit.fused_score is None else f" score={hit.fused_score:.3f}"

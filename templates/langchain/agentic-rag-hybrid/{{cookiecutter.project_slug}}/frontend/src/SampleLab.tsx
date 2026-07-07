@@ -3,6 +3,10 @@ import { compareHybridModes, getSamplePack, ingestSamplePack, resolveCustomUrl, 
 
 const modes = ["semantic", "keyword", "exact", "balanced"];
 
+function formatWeights(weights: any) {
+  return `V ${Math.round(weights.vector * 100)} / S ${Math.round(weights.sparse * 100)} / F ${Math.round(weights.fulltext * 100)} / M ${Math.round(weights.metadata * 100)}`;
+}
+
 export default function SampleLab() {
   const [pack, setPack] = useState<any>(null);
   const [selectedCase, setSelectedCase] = useState<any>(null);
@@ -93,7 +97,7 @@ export default function SampleLab() {
                   <article className={mode === selectedCase?.recommended_mode ? "mode-card recommended" : "mode-card"} key={mode}>
                     <header>
                       <strong>{mode}</strong>
-                      <span>V {Math.round(trace.weights.vector * 100)} / S {Math.round(trace.weights.sparse * 100)} / F {Math.round(trace.weights.fulltext * 100)}</span>
+                      <span>{formatWeights(trace.weights)}</span>
                     </header>
                     {topHit && (
                       <div className="top-hit">

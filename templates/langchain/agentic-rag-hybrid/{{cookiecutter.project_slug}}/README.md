@@ -14,13 +14,14 @@ uv run hybrid-demo
 agentseek dev
 ```
 
-Open the frontend and try the Lab tab before using the chat. The Lab tab indexes a starter image pack and shows vector, sparse, full-text, and fused results side by side so you can see when each route helps.
+Open the frontend and try the Lab tab before using the chat. The Lab tab indexes a starter image pack and shows vector, sparse-token, exact full-text, metadata, and fused results side by side so you can see when each route helps.
 
 ## What This Template Teaches
 
 - Vector search finds visually or semantically similar records.
-- Sparse/keyword search rewards important words in captions and metadata.
+- Sparse/keyword search rewards important words in captions.
 - Full-text search is best for exact labels and names.
+- Metadata search rewards file names, tags, and source metadata.
 - Hybrid search fuses the routes so mixed queries do not depend on one retrieval strategy.
 - Agent middleware teaches the model when to choose `semantic`, `keyword`, `exact`, or `balanced`.
 - LangGraph custom routes expose upload, image serving, and compare-mode diagnostics on the same dev server as the graph.
@@ -52,4 +53,4 @@ The default ingest command loads `examples/sample_pack/images`. The demo runs th
 
 ## Design Notes
 
-The first implementation uses captions for sparse/keyword recall so the demo works on the same pyseekdb surface as image vector search. If your installed `langchain-oceanbase` version supports `include_sparse=True` and `advanced_hybrid_search` for your document schema, you can replace the fallback sparse route with native sparse vectors.
+The first implementation uses caption token recall for sparse/keyword behavior and a bounded metadata candidate scan for filenames/tags so the demo works on the same pyseekdb surface as image vector search. If your installed `langchain-oceanbase` version supports `include_sparse=True` and `advanced_hybrid_search` for your document schema, you can replace the fallback sparse route with native sparse vectors.

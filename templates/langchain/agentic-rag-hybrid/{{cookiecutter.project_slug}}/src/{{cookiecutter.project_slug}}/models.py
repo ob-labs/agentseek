@@ -12,6 +12,7 @@ class SearchWeights:
     vector: float
     sparse: float
     fulltext: float
+    metadata: float
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,7 @@ class SearchHit:
     vector_score: float | None = None
     sparse_score: float | None = None
     fulltext_score: float | None = None
+    metadata_score: float | None = None
     distance: float | None = None
     matched_terms: list[str] = field(default_factory=list)
     metadata: dict[str, str] = field(default_factory=dict)
