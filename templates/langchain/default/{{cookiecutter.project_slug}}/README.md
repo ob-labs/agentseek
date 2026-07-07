@@ -21,11 +21,11 @@ agentseek dev
 The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`,
 the CopilotKit runtime to `http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit`,
 the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`, and
-Phoenix to `http://127.0.0.1:6006`. seekdb is exposed locally on
+Phoenix to `http://127.0.0.1:6006`. OceanBase seekdb is exposed locally on
 `127.0.0.1:2884`.
 
 `agentseek dev` starts the Docker Compose stack declared by the template:
-Bub gateway, CopilotKit/frontend, Phoenix, and seekdb. `agentseek doctor
+Bub gateway, CopilotKit/frontend, Phoenix, and OceanBase seekdb. `agentseek doctor
 --live` checks the gateway, CopilotKit runtime, frontend, and Phoenix HTTP
 endpoints declared in `.agentseek/lifecycle.toml`.
 
@@ -60,7 +60,7 @@ The generated LangChain app can export OpenTelemetry spans directly to Phoenix.
 Bub and the gateway only forward messages; tracing is registered in the
 LangChain application process.
 
-The default local stack includes Phoenix tracing and seekdb:
+The default local stack includes Phoenix tracing and OceanBase seekdb:
 
 ```bash
 agentseek dev
@@ -78,9 +78,11 @@ AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
 ```
 
 Phoenix is available at `http://127.0.0.1:6006`. The compose stack uses
-`ghcr.io/psiace/phoenix:mysql` and persists Phoenix data in
-`quay.io/oceanbase/seekdb:latest` through
+`ghcr.io/agentseek-ai/agentseek-phoenix:main` and persists Phoenix data in
+OceanBase seekdb (`quay.io/oceanbase/seekdb:latest`) through
 `PHOENIX_SQL_DATABASE_URL=mysql://root@seekdb:2881/phoenix`.
+Override the images with `AGENTSEEK_PHOENIX_IMAGE` and
+`OCEANBASE_SEEKDB_IMAGE` in `.env`.
 
 ### Feishu Channel
 

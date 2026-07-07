@@ -86,7 +86,7 @@ services:
       - frontend_node_modules:/app/frontend/node_modules
 
   phoenix:
-    image: ghcr.io/psiace/phoenix:mysql
+    image: "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}"
     depends_on:
       seekdb:
         condition: service_healthy
@@ -103,7 +103,7 @@ services:
       - ./.phoenix-data:/phoenix-data
 
   seekdb:
-    image: quay.io/oceanbase/seekdb:latest
+    image: "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}"
     restart: unless-stopped
     environment:
       DATAFILE_SIZE: 2G

@@ -108,8 +108,10 @@ For non-compose runs, point the endpoint at localhost instead.
 AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
 ```
 
-The template compose stack uses `ghcr.io/psiace/phoenix:mysql` for Phoenix and
-persists Phoenix data through `quay.io/oceanbase/seekdb:latest`.
+The template compose stack uses `ghcr.io/agentseek-ai/agentseek-phoenix:main`
+for Phoenix and persists Phoenix data through OceanBase seekdb
+(`quay.io/oceanbase/seekdb:latest`). Override the images with
+`AGENTSEEK_PHOENIX_IMAGE` and `OCEANBASE_SEEKDB_IMAGE`.
 
 ## Related
 

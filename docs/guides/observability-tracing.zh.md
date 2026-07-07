@@ -104,8 +104,10 @@ AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://phoenix:6006/v1/traces
 AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
 ```
 
-模板 compose stack 使用 `ghcr.io/psiace/phoenix:mysql` 运行 Phoenix，并通过
-`quay.io/oceanbase/seekdb:latest` 持久化 Phoenix 数据。
+模板 compose stack 使用 `ghcr.io/agentseek-ai/agentseek-phoenix:main`
+运行 Phoenix，并通过 OceanBase seekdb（`quay.io/oceanbase/seekdb:latest`）
+持久化 Phoenix 数据。可以用 `.env` 中的 `AGENTSEEK_PHOENIX_IMAGE` 和
+`OCEANBASE_SEEKDB_IMAGE` 覆盖默认镜像。
 
 ## 相关内容
 
