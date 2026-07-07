@@ -169,6 +169,12 @@ def _task_function(project: LifecycleProject, name: str, task: Task):
     return run_task
 
 
+def _display_name(name: str) -> str:
+    if name == "seekdb":
+        return name
+    return name.title()
+
+
 def print_info(project: LifecycleProject, *, verbose: bool) -> None:
     """Print a project summary derived from the lifecycle spec."""
     spec = project.spec
@@ -181,7 +187,7 @@ def print_info(project: LifecycleProject, *, verbose: bool) -> None:
     print("Entrypoints")
     print("  Dev: agentseek dev")
     for name, service in spec.services.items():
-        print(f"  {name.title()}: {service.url}")
+        print(f"  {_display_name(name)}: {service.url}")
     print()
     print("Environment")
     if spec.env_file:
@@ -221,9 +227,9 @@ def dev(project: LifecycleProject, *, dry_run: bool) -> None:
     """Start local development processes declared in the lifecycle spec."""
     print("Startup plan")
     for name, process in project.spec.processes.items():
-        print(f"  {name.title()}: {_render_command(process.command)}")
+        print(f"  {_display_name(name)}: {_render_command(process.command)}")
     for name, service in project.spec.services.items():
-        print(f"  {name.title()}: {service.url}")
+        print(f"  {_display_name(name)}: {service.url}")
     if dry_run:
         return
 
