@@ -119,6 +119,87 @@ jobs:
           cd "${AGENTSEEK_PHOENIX_SMOKE_PROJECT}"
           docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -e "SELECT 1"
 
+      - name: Verify Phoenix trace persistence in OceanBase seekdb
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_PHOENIX_SMOKE_PROJECT}"
+          export TRACE_NAME="agentseek-ci-trace-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
+          uv run \
+            --with opentelemetry-sdk \
+            --with opentelemetry-exporter-otlp-proto-http \
+            python - <<'PY'
+          import os
+
+          from opentelemetry import trace
+          from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+          from opentelemetry.sdk.resources import Resource
+          from opentelemetry.sdk.trace import TracerProvider
+          from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+          trace_name = os.environ["TRACE_NAME"]
+          provider = TracerProvider(
+              resource=Resource.create(
+                  {
+                      "service.name": "agentseek-phoenix-ci",
+                      "agentseek.trace.backend": "OceanBase seekdb",
+                  }
+              )
+          )
+          provider.add_span_processor(
+              SimpleSpanProcessor(
+                  OTLPSpanExporter(endpoint="http://127.0.0.1:6006/v1/traces")
+              )
+          )
+          trace.set_tracer_provider(provider)
+
+          tracer = trace.get_tracer("agentseek.phoenix.ci")
+          with tracer.start_as_current_span(trace_name) as span:
+              span.set_attribute("agentseek.trace.proof", trace_name)
+              span.set_attribute("agentseek.trace.backend", "OceanBase seekdb")
+
+          provider.force_flush(timeout_millis=10000)
+          provider.shutdown()
+          print(f"Emitted trace span: {trace_name}")
+          PY
+
+          cat > /tmp/find-agentseek-trace.sql <<SQL
+          SET SESSION group_concat_max_len = 1000000;
+          SET @needle = '${TRACE_NAME}';
+          SELECT GROUP_CONCAT(
+            CONCAT(
+              'SELECT COUNT(*) AS matches FROM \`', TABLE_SCHEMA, '\`.\`', TABLE_NAME,
+              '\` WHERE CAST(\`', COLUMN_NAME, '\` AS CHAR) LIKE ''%', @needle, '%'''
+            )
+            SEPARATOR ' UNION ALL '
+          ) INTO @sql
+          FROM information_schema.columns
+          WHERE table_schema = 'phoenix'
+            AND data_type IN ('char', 'varchar', 'tinytext', 'text', 'mediumtext', 'longtext', 'json');
+          SET @sql = CONCAT('SELECT COALESCE(SUM(matches), 0) FROM (', @sql, ') AS trace_matches');
+          PREPARE stmt FROM @sql;
+          EXECUTE stmt;
+          DEALLOCATE PREPARE stmt;
+          SQL
+
+          for attempt in $(seq 1 30); do
+            matches="$(
+              docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -N -B < /tmp/find-agentseek-trace.sql \
+                | tail -n 1 \
+                | tr -d '\r'
+            )"
+            if [ "${matches:-0}" -gt 0 ]; then
+              echo "Found ${matches} persisted Phoenix trace marker(s) for ${TRACE_NAME} in OceanBase seekdb."
+              exit 0
+            fi
+            echo "Waiting for Phoenix trace persistence (${attempt}/30)..."
+            sleep 2
+          done
+
+          docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot phoenix -e "SHOW TABLES"
+          docker compose logs --no-color --tail=200 phoenix
+          exit 1
+
       - name: Clean up smoke stack
         if: always()
         run: |
