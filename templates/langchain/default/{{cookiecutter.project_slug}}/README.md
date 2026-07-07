@@ -51,7 +51,7 @@ agentseek task seekdb-skills
 ```
 
 The task runs `npx skills add oceanbase/seekdb-ecology-plugins --all` to
-install recommended seekdb skills for your coding agent. Use
+install recommended OceanBase seekdb skills for your coding agent. Use
 `agentseek task --list` as the canonical way to discover template tasks.
 
 ### Phoenix Tracing

@@ -60,7 +60,7 @@ try:
     )
 except Exception as exc:
     raise ConnectionError(
-        f"Cannot connect to seekdb at {SEEKDB_HOST}:{SEEKDB_PORT}. "
+        f"Cannot connect to OceanBase seekdb at {SEEKDB_HOST}:{SEEKDB_PORT}. "
         "Did you run `docker compose up -d`?  "
         f"Original error: {exc}"
     ) from exc
