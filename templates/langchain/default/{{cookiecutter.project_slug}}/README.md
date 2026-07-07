@@ -21,11 +21,11 @@ agentseek dev
 The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`,
 the CopilotKit runtime to `http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit`,
 the gateway to `http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent`, and
-Phoenix to `http://127.0.0.1:6006`. SeekDB is exposed locally on
+Phoenix to `http://127.0.0.1:6006`. seekdb is exposed locally on
 `127.0.0.1:2884`.
 
 `agentseek dev` starts the Docker Compose stack declared by the template:
-Bub gateway, CopilotKit/frontend, Phoenix, and SeekDB. `agentseek doctor
+Bub gateway, CopilotKit/frontend, Phoenix, and seekdb. `agentseek doctor
 --live` checks the gateway, CopilotKit runtime, frontend, and Phoenix HTTP
 endpoints declared in `.agentseek/lifecycle.toml`.
 
@@ -35,10 +35,24 @@ Project tasks are also declared in `.agentseek/lifecycle.toml`:
 agentseek task --list
 agentseek task setup
 agentseek task frontend
+agentseek task seekdb-skills
 ```
 
 AgentSeek reads `.env` for lifecycle environment checks. Docker Compose reads
 the same file through its native `.env` and `env_file` mechanisms.
+
+## Agent Skills
+
+For coding agents that support external skill packs, this template exposes an
+optional setup task:
+
+```bash
+agentseek task seekdb-skills
+```
+
+The task runs `npx skills add oceanbase/seekdb-ecology-plugins --all` to
+install recommended seekdb skills for your coding agent. Use
+`agentseek task --list` as the canonical way to discover template tasks.
 
 ### Phoenix Tracing
 
@@ -46,7 +60,7 @@ The generated LangChain app can export OpenTelemetry spans directly to Phoenix.
 Bub and the gateway only forward messages; tracing is registered in the
 LangChain application process.
 
-The default local stack includes Phoenix tracing and SeekDB:
+The default local stack includes Phoenix tracing and seekdb:
 
 ```bash
 agentseek dev

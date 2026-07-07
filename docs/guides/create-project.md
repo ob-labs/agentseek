@@ -3,7 +3,7 @@ title: Create a Project
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-06-26
+verified_on: 2026-07-07
 sources:
   - pyproject.toml
   - src/agentseek/cli/commands/create.py
@@ -25,8 +25,20 @@ uv tool install agentseek
 agentseek create bub/default --no-input
 ```
 
-The prompt-free form is quiet when it succeeds. The generated project contains
-the lifecycle spec that later commands read.
+The prompt-free form prints the generated directory and the next lifecycle
+commands to run.
+
+```text
+Created my_bub_agent
+
+Next:
+  cd my_bub_agent
+  agentseek info
+  agentseek task --list
+  agentseek doctor
+```
+
+The generated project contains the lifecycle spec that later commands read.
 
 ```text title="generated files excerpt"
 my_bub_agent/
@@ -42,7 +54,7 @@ name = "My Bub Agent"
 env_file = ".env"
 ```
 
-Change into the generated directory.
+Change into the generated directory when you are ready to inspect or run it.
 
 ```bash
 cd my_bub_agent

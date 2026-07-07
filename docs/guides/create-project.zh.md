@@ -3,7 +3,7 @@ title: 创建项目
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-06-26
+verified_on: 2026-07-07
 sources:
   - pyproject.toml
   - src/agentseek/cli/commands/create.py
@@ -25,8 +25,19 @@ uv tool install agentseek
 agentseek create bub/default --no-input
 ```
 
-这个非交互形式成功时不会打印输出。生成项目中会包含后续命令读取的
-生命周期规范。
+这个非交互形式成功时会打印生成目录，以及下一步可运行的生命周期命令。
+
+```text
+Created my_bub_agent
+
+Next:
+  cd my_bub_agent
+  agentseek info
+  agentseek task --list
+  agentseek doctor
+```
+
+生成项目中会包含后续命令读取的生命周期规范。
 
 ```text title="生成文件片段"
 my_bub_agent/
@@ -42,7 +53,7 @@ name = "My Bub Agent"
 env_file = ".env"
 ```
 
-进入生成目录。
+准备查看或运行项目时，进入生成目录。
 
 ```bash
 cd my_bub_agent

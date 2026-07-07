@@ -191,7 +191,14 @@ def print_info(project: LifecycleProject, *, verbose: bool) -> None:
         source = _env_requirement_source(project, name, requirement)
         print(f"  {name}: {f'set ({source})' if source else 'missing'}")
     print()
+    if spec.tasks:
+        print("Lifecycle Tasks")
+        for name, task in spec.tasks.items():
+            print(f"  {name}: {task.description}")
+        print()
     print("Next")
+    if spec.tasks:
+        print("  agentseek task --list")
     print("  agentseek doctor")
     print("  agentseek dev")
     if verbose:
