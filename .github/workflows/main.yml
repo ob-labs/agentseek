@@ -123,7 +123,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "${AGENTSEEK_PHOENIX_SMOKE_PROJECT}"
-          export TRACE_NAME="agentseek-ci-trace-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          export TRACE_COUNT=3
 
           uv run \
             --with opentelemetry-sdk \
@@ -137,7 +137,9 @@ jobs:
           from opentelemetry.sdk.trace import TracerProvider
           from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
-          trace_name = os.environ["TRACE_NAME"]
+          trace_count = int(os.environ["TRACE_COUNT"])
+          run_id = os.environ["GITHUB_RUN_ID"]
+          run_attempt = os.environ["GITHUB_RUN_ATTEMPT"]
           provider = TracerProvider(
               resource=Resource.create(
                   {
@@ -154,18 +156,34 @@ jobs:
           trace.set_tracer_provider(provider)
 
           tracer = trace.get_tracer("agentseek.phoenix.ci")
-          with tracer.start_as_current_span(trace_name) as span:
-              span.set_attribute("agentseek.trace.proof", trace_name)
-              span.set_attribute("agentseek.trace.backend", "OceanBase seekdb")
+          trace_markers = []
+          trace_ids = set()
+          for index in range(1, trace_count + 1):
+              trace_name = f"agentseek-ci-trace-{run_id}-{run_attempt}-{index}"
+              trace_markers.append(trace_name)
+              with tracer.start_as_current_span(trace_name) as span:
+                  span_context = span.get_span_context()
+                  trace_ids.add(span_context.trace_id)
+                  span.set_attribute("agentseek.trace.proof", trace_name)
+                  span.set_attribute("agentseek.trace.index", index)
+                  span.set_attribute("agentseek.trace.backend", "OceanBase seekdb")
+              print(f"Emitted trace span: {trace_name} trace_id={span_context.trace_id:032x}")
 
-          provider.force_flush(timeout_millis=10000)
+          if len(trace_ids) != trace_count:
+              raise RuntimeError(
+                  f"Expected {trace_count} independent trace IDs, got {len(trace_ids)}"
+              )
+
+          with open("/tmp/agentseek-trace-markers.txt", "w", encoding="utf-8") as marker_file:
+              marker_file.write("\n".join(trace_markers) + "\n")
+
+          if not provider.force_flush(timeout_millis=10000):
+              raise RuntimeError("Timed out flushing OpenTelemetry spans to Phoenix")
           provider.shutdown()
-          print(f"Emitted trace span: {trace_name}")
           PY
 
           cat > /tmp/find-agentseek-trace.sql <<SQL
           SET SESSION group_concat_max_len = 1000000;
-          SET @needle = '${TRACE_NAME}';
           SELECT GROUP_CONCAT(
             CONCAT(
               'SELECT COUNT(*) AS matches FROM \`', TABLE_SCHEMA, '\`.\`', TABLE_NAME,
@@ -182,23 +200,44 @@ jobs:
           DEALLOCATE PREPARE stmt;
           SQL
 
-          for attempt in $(seq 1 30); do
-            matches="$(
-              docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -N -B < /tmp/find-agentseek-trace.sql \
-                | tail -n 1 \
-                | tr -d '\r'
-            )"
-            if [ "${matches:-0}" -gt 0 ]; then
-              echo "Found ${matches} persisted Phoenix trace marker(s) for ${TRACE_NAME} in OceanBase seekdb."
-              exit 0
+          verified_count=0
+          for marker in $(cat /tmp/agentseek-trace-markers.txt); do
+            marker_found=0
+            for attempt in $(seq 1 30); do
+              {
+                printf "SET @needle = '%s';\n" "${marker}"
+                cat /tmp/find-agentseek-trace.sql
+              } > /tmp/find-agentseek-trace-marker.sql
+
+              matches="$(
+                docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -N -B < /tmp/find-agentseek-trace-marker.sql \
+                  | tail -n 1 \
+                  | tr -d '\r'
+              )"
+              if [ "${matches:-0}" -gt 0 ]; then
+                echo "Found ${matches} persisted Phoenix trace marker(s) for ${marker} in OceanBase seekdb."
+                marker_found=1
+                verified_count=$((verified_count + 1))
+                break
+              fi
+              echo "Waiting for Phoenix trace persistence for ${marker} (${attempt}/30)..."
+              sleep 2
+            done
+
+            if [ "${marker_found}" -ne 1 ]; then
+              echo "Missing persisted Phoenix trace marker ${marker} in OceanBase seekdb."
+              docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot phoenix -e "SHOW TABLES"
+              docker compose logs --no-color --tail=200 phoenix
+              exit 1
             fi
-            echo "Waiting for Phoenix trace persistence (${attempt}/30)..."
-            sleep 2
           done
 
-          docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot phoenix -e "SHOW TABLES"
-          docker compose logs --no-color --tail=200 phoenix
-          exit 1
+          expected_count="$(wc -l < /tmp/agentseek-trace-markers.txt | tr -d ' ')"
+          if [ "${verified_count}" -ne "${expected_count}" ]; then
+            echo "Expected ${expected_count} trace markers, verified ${verified_count}."
+            exit 1
+          fi
+          echo "Verified ${verified_count} Phoenix trace markers persisted in OceanBase seekdb."
 
       - name: Clean up smoke stack
         if: always()
