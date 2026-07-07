@@ -221,6 +221,8 @@ __marimo__/
 
 # Agentseek
 .agentseek/
+!templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/
+!templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml
 agentseek-tapes.db
 
 # References

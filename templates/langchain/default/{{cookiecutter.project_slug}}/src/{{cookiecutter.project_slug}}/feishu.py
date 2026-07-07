@@ -16,7 +16,7 @@ def main() -> None:
     env.setdefault("NO_PROXY", "*")
     env.setdefault("no_proxy", "*")
 
-    gateway = _spawn(["agentseek", "gateway", "--enable-channel", "feishu"], cwd=root, env=env)
+    gateway = _spawn(["bub", "gateway", "--enable-channel", "feishu"], cwd=root, env=env)
     try:
         try:
             raise SystemExit(gateway.wait())

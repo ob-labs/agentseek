@@ -22,13 +22,13 @@ class ProjectSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    model: str = Field(default="", validation_alias=AliasChoices("AGENTSEEK_MODEL", "BUB_MODEL"))
-    api_key: str = Field(default="", validation_alias=AliasChoices("AGENTSEEK_API_KEY", "BUB_API_KEY"))
-    api_base: str = Field(default="", validation_alias=AliasChoices("AGENTSEEK_API_BASE", "BUB_API_BASE"))
-    openai_api_key: str = Field(default="", validation_alias=AliasChoices("OPENAI_API_KEY"))
-    openai_api_base: str = Field(default="", validation_alias=AliasChoices("OPENAI_API_BASE"))
-    openai_base_url: str = Field(default="", validation_alias=AliasChoices("OPENAI_BASE_URL"))
-    otel_enabled: bool = Field(default=False, validation_alias=AliasChoices("AGENTSEEK_OTEL_ENABLED"))
+    model: str = Field(default="", validation_alias="BUB_MODEL")
+    api_key: str = Field(default="", validation_alias="BUB_API_KEY")
+    api_base: str = Field(default="", validation_alias="BUB_API_BASE")
+    openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
+    openai_api_base: str = Field(default="", validation_alias="OPENAI_API_BASE")
+    openai_base_url: str = Field(default="", validation_alias="OPENAI_BASE_URL")
+    otel_enabled: bool = Field(default=False, validation_alias="AGENTSEEK_OTEL_ENABLED")
     otel_service_name: str = Field(
         default="{{ cookiecutter.project_slug }}",
         validation_alias=AliasChoices("AGENTSEEK_OTEL_SERVICE_NAME", "OTEL_SERVICE_NAME"),

@@ -1,137 +1,109 @@
 ---
 title: CLI 参考
 type: reference
-audience: [A1, A2, A3, A4]
+audience: [A2]
 runs: no
-verified_on: 2026-06-25
+verified_on: 2026-07-07
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
   - src/agentseek/cli/runtime.py
-  - src/agentseek/cli/__init__.py
-  - src/agentseek/cli/commands/
+  - src/agentseek/cli/commands/create.py
+  - src/agentseek/cli/commands/dev.py
+  - src/agentseek/cli/commands/doctor.py
+  - src/agentseek/cli/commands/info.py
+  - src/agentseek/cli/commands/task.py
 ---
 
 # CLI 参考
 
-```text
-agentseek [OPTIONS] COMMAND [ARGS]...
-```
-
-## 命令组
-
-| 区域 | 命令 |
-| --- | --- |
-| Project | `create`, `run`, `build`, `deploy` |
-| Runtime | `chat`, `turn`, `gateway` |
-| Environment | `plugin`, `onboard`, `login`, 可选 `mcp` |
-| Services | `api`, `ctx`, `skills` |
-| Utility | `version` |
-
-## 项目命令
-
-### `agentseek create [SPEC]`
-
-| 参数 / 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `spec` | text | - | Framework type、`type/name`、git URL 或本地路径。 |
-| `--template` | text | - | 所选 type 下的模板名；不带值时列出模板。 |
-| `--checkout` | text | - | 远程模板的 branch、tag 或 commit。 |
-| `--output-dir` | path | 当前工作目录 | 生成项目写入的目录。 |
-| `--list-templates` | flag | off | 列出模板并退出。 |
-| `--no-input` | flag | off | 不显示 prompt，使用模板默认值。 |
-
-### `agentseek run`
-
-| 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `--port` | integer | `$PORT` 或 `3000` | 前端端口。 |
-| `--host` | text | `127.0.0.1` | Readiness probe host。 |
-| `--no-browser` | flag | off | 不打开默认浏览器。 |
-| `--wait-timeout` | integer | `30` | 等待前端 ready 的秒数。 |
-| `--mode` | `auto`, `compose`, `python` | `auto` | 启动模式。 |
-
-### `agentseek build`
-
-| 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `--tag`, `-t` | text | `<cwd-slug>:latest` | 镜像 tag。 |
-| `--file`, `-f` | path | `Dockerfile` | Dockerfile 路径。 |
-| `--context` | path | `.` | 构建上下文。 |
-| `--platform` | text | - | 逗号分隔的目标平台。 |
-| `--push` | flag | off | 构建成功后推送。 |
-| `--no-cache` | flag | off | 禁用构建缓存。 |
-| `--build-arg` | text | repeatable | 构建期 `KEY=VALUE` 变量。 |
-| `--dry-run` | flag | off | 打印解析后的 Docker 命令，不执行。 |
-
-### `agentseek deploy`
-
-| 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `--dry-run` | flag | required | 生成 manifest 文件，不执行 apply。 |
-| `--mode` | `docker-compose`, `k8s`, `both` | `both` | Manifest 目标。 |
-| `--output` | directory | `deploy` | 输出目录。 |
-| `--image` | text | `<project-slug>:latest` | 容器镜像引用。 |
-| `--slug` | text | 从 cwd 推导 | Service 或 deployment 名称前缀。 |
-| `--port` | integer | `8000` | 服务端口。 |
-| `--replicas` | integer | `1` | Kubernetes replica 数量。 |
-| `--namespace` | text | `default` | Kubernetes namespace。 |
-
-## 运行时命令
-
-### `agentseek chat`
-
-| 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `--chat-id` | text | `local` | Chat id。 |
-| `--session-id` | text | - | 可选 session id。 |
-
-### `agentseek turn MESSAGE`
-
-| 参数 / 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `MESSAGE` | text | required | 输入消息内容。 |
-| `--channel` | text | `cli` | Message channel。 |
-| `--chat-id` | text | `local` | Chat id。 |
-| `--sender-id` | text | `human` | Sender id。 |
-| `--session-id` | text | - | 可选 session id。 |
-
-### `agentseek gateway`
-
-| 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `--enable-channel` | text | all | 要启用的 channel；可重复。 |
-
-## 环境命令
+## 安装和调用
 
 | 命令 | 说明 |
 | --- | --- |
-| `agentseek plugin install [SPECS]...` | 安装插件；未给 spec 时同步 plugin environment。 |
-| `agentseek plugin uninstall PACKAGES...` | 从 AgentSeek environment 移除插件。 |
-| `agentseek plugin update [PACKAGES]...` | 更新指定插件；未给 package 时更新全部插件。 |
-| `agentseek onboard` | 运行交互式 runtime 配置。 |
-| `agentseek login` | 运行基础 Bub authentication flow。 |
-| `agentseek mcp` | 当 MCP plugin 已安装并加载时，管理 MCP 配置。 |
+| `uv tool install agentseek` | 安装日常使用的 CLI。 |
+| `agentseek ...` | 安装后运行生命周期命令。 |
+| `uvx agentseek ...` | 不安装工具，只运行一次 AgentSeek 命令。 |
 
-## 服务命令
+## 根选项
+
+| 选项 | 说明 |
+| --- | --- |
+| `--mode [cli\|agent]` | 选择 CLI profile。当前文档化的生命周期工作流使用 `cli`。 |
+| `--help` | 显示所选 profile 的帮助。 |
+
+## 默认命令
 
 | 命令 | 说明 |
 | --- | --- |
-| `agentseek api` | 在已安装 `agentseek-api` 时转发命令。 |
-| `agentseek ctx` | 在已安装 ContextSeek 时转发命令。 |
-| `agentseek skills` | 通过 `npx-skills` 管理 skills。 |
+| `agentseek create [spec]` | 从模板创建项目。 |
+| `agentseek doctor` | 通过生命周期规范检查本地就绪状态。 |
+| `agentseek dev` | 通过生命周期规范启动本地开发。 |
+| `agentseek info` | 显示项目元数据和入口。 |
+| `agentseek task` | 运行项目定义的生命周期规范任务。 |
+| `agentseek version` | 显示 AgentSeek 版本信息。 |
 
-### `agentseek skills`
+## `create`
 
-| 选项 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `--dir` | path | 当前工作目录 | Workspace 目录。 |
+### 形式
 
-| 子命令 | 说明 |
+| 形式 | 说明 |
 | --- | --- |
-| `add` | 默认安装 AgentSeek skills，或使用显式 source。 |
-| `list` | 列出内置 AgentSeek catalogue，或透传参数。 |
-| `find` | 转发到 `npx-skills`。 |
-| `update` | 转发到 `npx-skills`。 |
-| `remove` | 转发到 `npx-skills`。 |
-| `init` | 转发到 `npx-skills`。 |
+| `agentseek create` | 交互式选择类型和模板。 |
+| `agentseek create <type>` | 使用该类型的默认模板。 |
+| `agentseek create <type>/<name>` | 使用指定模板。 |
+| `agentseek create <url-or-absolute-path>` | 把 spec 直接传给 Cookiecutter。 |
+
+内置模板类型集合当前是 `bub`、`deepagents` 和 `langchain`。
+
+### 选项
+
+| 选项 | 说明 |
+| --- | --- |
+| `spec` | 模板类型、`type/name`、Git URL 或绝对本地路径。 |
+| `--list-templates` | 列出模板。带 `type` 时只列出该类型。 |
+| `--template name` | 选择所选类型下的命名模板，例如 `bub --template default`。 |
+| `--template` | 列出模板的兼容入口。新脚本优先使用 `--list-templates`。 |
+| `--checkout ref` | 拉取远程模板源时使用分支、tag 或 commit。 |
+| `--output-dir path` | 将生成项目写入所选目录下。默认使用当前工作目录。 |
+| `--no-input` | 跳过 Cookiecutter 变量提示，使用模板默认值。 |
+| `--describe` | 打印模板描述和 Cookiecutter 变量，不生成项目。 |
+
+### 缺失模板
+
+| 形式 | 行为 |
+| --- | --- |
+| `agentseek create bub --template missing` | 以代码 `2` 退出，并显示缺失模板和支持的 `bub` 模板。 |
+| `agentseek create bub/missing` | 以代码 `2` 退出，并显示缺失模板和支持的 `bub` 模板。 |
+
+## `doctor`
+
+| 选项 | 说明 |
+| --- | --- |
+| `--live` | 检查已经运行的本地服务。 |
+| `--strict` | 把警告视为失败。 |
+
+## `dev`
+
+| 选项 | 说明 |
+| --- | --- |
+| `--dry-run` | 打印启动计划，不启动服务。 |
+| `--skip-check` | 启动前跳过预先的 strict `doctor` 检查。核心必需输入仍会检查。 |
+
+## `info`
+
+| 选项 | 说明 |
+| --- | --- |
+| `--verbose` | 显示生命周期 loader 发现细节。 |
+
+`info` 会打印当前项目的服务、环境状态、生命周期任务名称和说明，以及下一步命令。
+
+## `task`
+
+| 形式 | 说明 |
+| --- | --- |
+| `agentseek task --list` | 列出项目定义的生命周期规范任务。 |
+| `agentseek task --help` | 显示 AgentSeek task 边界。 |
+| `agentseek task <name>` | 运行项目定义的生命周期规范任务。 |
+
+`task` 必须从包含 `.agentseek/lifecycle.toml` 的项目目录运行。

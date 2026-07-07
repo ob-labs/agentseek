@@ -1,159 +1,75 @@
 site_name: agentseek
 site_url: https://ob-labs.github.io/agentseek/
 repo_url: https://github.com/ob-labs/agentseek
-site_description: A database-native Agent Harness for runtime data workflows, powered by Bub
-edit_uri: edit/main/docs/
 repo_name: ob-labs/agentseek
+site_description: Application development lifecycle toolkit for AI ecosystem apps.
+edit_uri: edit/dev/docs/
 
 nav:
   - Home: index.md
-  - Docs:
-      - Overview: docs.md
-      - Tutorials:
-          - Overview: tutorials/index.md
-          - Quickstart: tutorials/01-quick-demo-cli.md
-          - First app: tutorials/02-first-harness-app.md
-          - Skills and MCP: tutorials/03-add-a-skill-and-mcp.md
-      - How-to:
-          - Overview: how-to/index.md
-          - Configure model: how-to/configure-model.md
-          - Configure MCP: how-to/configure-mcp.md
-          - Run locally: how-to/run-locally.md
-          - Run gateway: how-to/run-gateway.md
-          - Docker Compose: how-to/run-with-docker-compose.md
-          - Build and deploy: how-to/build-and-deploy.md
-          - Install plugin: how-to/install-a-plugin.md
-          - Add skills: how-to/add-skills.md
-          - Use ContextSeek: how-to/use-contextseek.md
-          - Author contrib plugin: how-to/author-a-contrib-plugin.md
-      - Concepts:
-          - Overview: explanation/index.md
-          - What AgentSeek is: explanation/what-agentseek-is.md
-          - Bub relationship: explanation/bub-relationship.md
-          - LangChain relationship: explanation/langchain-relationship.md
-          - Runtime data model: explanation/runtime-data-model.md
-          - Extension model: explanation/extension-model.md
-      - Reference:
-          - Overview: reference/index.md
-          - CLI: reference/cli.md
-          - Templates: reference/templates.md
-          - Environment variables: reference/environment.md
-          - Packages: reference/packages.md
-          - File layout: reference/file-layout.md
-  - Blog:
-      - Overview: blog/index.md
-      - Introducing AgentSeek: blog/introducing-agentseek.md
-  - Hub: hub.md
+  - Get Started:
+      - Overview: get-started/index.md
+  - Guides:
+      - Overview: guides/index.md
+      - Choose a Template: guides/choose-template.md
+      - Create a Project: guides/create-project.md
+      - Inspect a Project: guides/inspect-project.md
+      - Check a Project: guides/check-project.md
+      - Run Local Development: guides/run-local-development.md
+      - Local Execution Modes: guides/local-execution-modes.md
+      - Observability and Tracing: guides/observability-tracing.md
+      - Run Project Tasks: guides/run-project-tasks.md
+  - Reference:
+      - Overview: reference/index.md
+      - CLI: reference/cli.md
+      - Lifecycle Spec: reference/lifecycle-spec.md
+      - Templates: reference/templates.md
+  - Concepts:
+      - Overview: concepts/index.md
+      - Lifecycle Toolkit: concepts/lifecycle-toolkit.md
 
-hooks:
-  - docs/hooks.py
+theme:
+  name: terminal
+  custom_dir: overrides
+
 plugins:
+  - search
   - i18n:
       docs_structure: suffix
-      fallback_to_default: false
       languages:
         - locale: en
-          default: true
           name: English
+          default: true
           build: true
-          nav_translations:
-            Home: Home
-            Docs: Docs
-            Tutorials: Tutorials
-            Overview: Overview
-            Quickstart: Quickstart
-            First app: First app
-            Skills and MCP: Skills and MCP
-            How-to: How-to
-            Configure model: Configure model
-            Configure MCP: Configure MCP
-            Run locally: Run locally
-            Run gateway: Run gateway
-            Docker Compose: Docker Compose
-            Build and deploy: Build and deploy
-            Install plugin: Install plugin
-            Add skills: Add skills
-            Use ContextSeek: Use ContextSeek
-            Author contrib plugin: Author contrib plugin
-            Concepts: Concepts
-            What AgentSeek is: What AgentSeek is
-            Bub relationship: Bub relationship
-            LangChain relationship: LangChain relationship
-            Runtime data model: Runtime data model
-            Extension model: Extension model
-            Reference: Reference
-            Blog: Blog
-            Introducing AgentSeek: Introducing AgentSeek
-            CLI: CLI
-            Templates: Templates
-            Environment variables: Environment variables
-            Packages: Packages
-            File layout: File layout
-            Hub: Hub
         - locale: zh
           name: 中文
           build: true
-          nav_translations:
-            Home: 首页
-            Docs: 文档
-            Tutorials: 教程
-            Overview: 总览
-            Quickstart: 快速开始
-            First app: 第一个应用
-            Skills and MCP: Skills 和 MCP
-            How-to: 指南
-            Configure model: 配置模型
-            Configure MCP: 配置 MCP
-            Run locally: 本地运行
-            Run gateway: 运行 Gateway
-            Docker Compose: Docker Compose
-            Build and deploy: 构建与部署
-            Install plugin: 安装插件
-            Add skills: 添加 Skill
-            Use ContextSeek: 使用 ContextSeek
-            Author contrib plugin: 编写 contrib 插件
-            Concepts: 概念
-            What AgentSeek is: AgentSeek 是什么
-            Bub relationship: AgentSeek 与 Bub
-            LangChain relationship: AgentSeek 与 LangChain
-            Runtime data model: 运行时数据模型
-            Extension model: 扩展模型
-            Reference: 参考
-            Blog: 博客
-            Introducing AgentSeek: 认识 AgentSeek
-            CLI: CLI
-            Templates: 模板
-            Environment variables: 环境变量
-            Packages: 包
-            File layout: 文件布局
-            Hub: Hub
-  - search
-  - mkdocstrings:
-      handlers:
-        python:
-          paths: ["src/agentseek"]
-theme:
-  name: terminal
-  custom_dir: docs/overrides
-
-extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/ob-labs/agentseek
-    - icon: fontawesome/brands/python
-      link: https://pypi.org/project/agentseek
+          site_description: 面向 AI 生态应用的开发生命周期工具包。
+          nav:
+            - 首页: index.md
+            - 快速开始:
+                - 概览: get-started/index.md
+            - 指南:
+                - 概览: guides/index.md
+                - 选择模板: guides/choose-template.md
+                - 创建项目: guides/create-project.md
+                - 查看项目: guides/inspect-project.md
+                - 检查项目: guides/check-project.md
+                - 运行本地开发: guides/run-local-development.md
+                - 本地执行模式: guides/local-execution-modes.md
+                - 可观测性和追踪: guides/observability-tracing.md
+                - 运行项目任务: guides/run-project-tasks.md
+            - 参考:
+                - 概览: reference/index.md
+                - CLI: reference/cli.md
+                - 生命周期规范: reference/lifecycle-spec.md
+                - 模板: reference/templates.md
+            - 概念:
+                - 概览: concepts/index.md
+                - 生命周期工具包: concepts/lifecycle-toolkit.md
 
 markdown_extensions:
   - toc:
       permalink: true
-  - pymdownx.arithmatex:
-      generic: true
   - pymdownx.highlight
   - pymdownx.superfences
-
-extra_css:
-  - stylesheets/extra.css
-
-extra_javascript:
-  - javascripts/hub.js
-  - javascripts/theme.js

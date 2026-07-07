@@ -1,0 +1,67 @@
+version = 1
+template = "deepagents/content-builder"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "node", "npm"]
+
+[paths]
+required = ["pyproject.toml", "langgraph.json", "frontend/package.json", "frontend/node_modules"]
+
+[env.AGENTSEEK_MODEL_PROVIDER]
+required = true
+default = "{{ cookiecutter.default_model_provider }}"
+description = "LangChain model provider used by the DeepAgents graph."
+
+[env.AGENTSEEK_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model id used by the main DeepAgents graph."
+aliases = ["DEEPAGENTS_MODEL", "BUB_MODEL"]
+
+[env.OPENAI_API_KEY]
+required = true
+description = "Credential for the selected model provider."
+aliases = ["ANTHROPIC_API_KEY", "GOOGLE_API_KEY", "BUB_OPENAI_API_KEY"]
+
+[env.TAVILY_API_KEY]
+required = false
+description = "Tavily key used by the researcher subagent."
+
+[env.GOOGLE_API_KEY]
+required = false
+description = "Gemini key used by image generation and google_genai models."
+
+[services.frontend]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[services.langgraph]
+url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+
+[processes.langgraph]
+command = ["uv", "run", "langgraph", "dev", "--port", "{{ cookiecutter.langgraph_port }}", "--no-browser"]
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+cwd = "frontend"
+
+[checks.langgraph]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.frontend]
+description = "Install frontend dependencies."
+command = ["npm", "install", "--prefix", "frontend"]
+
+[tasks.backend]
+description = "Install Python dependencies with uv."
+command = ["uv", "sync"]

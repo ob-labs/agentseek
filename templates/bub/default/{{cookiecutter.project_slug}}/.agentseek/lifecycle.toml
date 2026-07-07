@@ -1,0 +1,58 @@
+version = 1
+template = "bub/default"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "node", "npm"]
+
+[paths]
+required = ["frontend/package.json", "frontend/node_modules"]
+
+[env.BUB_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model id used by Bub."
+
+[env.BUB_API_KEY]
+required = true
+description = "Generic model provider key."
+aliases = ["BUB_OPENAI_API_KEY"]
+
+[services.app]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[services.gateway]
+url = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
+
+[services.copilotkit]
+url = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit"
+
+[processes.gateway]
+command = ["uv", "run", "bub", "gateway", "--enable-channel", "ag-ui"]
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+cwd = "frontend"
+
+[checks.gateway]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent/health"
+timeout = 2
+attempts = 3
+
+[checks.copilotkit]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/health"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.frontend]
+description = "Install frontend dependencies."
+command = ["npm", "install", "--prefix", "frontend"]

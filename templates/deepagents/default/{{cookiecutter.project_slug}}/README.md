@@ -11,23 +11,36 @@ The binding export is:
 ## Quickstart
 
 ```bash
-uv sync
-uv pip install -r requirements.txt
-
 cp .env.example .env
-# fill in AGENTSEEK_MODEL / AGENTSEEK_API_KEY / AGENTSEEK_API_BASE
+$EDITOR .env
 
-export PYTHONPATH=src
-export AGENTSEEK_LANGCHAIN_SPEC={{ cookiecutter.project_slug }}.demo_binding:build_spec
-export AGENTSEEK_AG_UI_PORT=18088
+uvx agentseek info
+uvx agentseek doctor
+uvx agentseek task --list
+uvx agentseek task sync
 
-uv run agentseek gateway --enable-channel ag-ui
+uvx agentseek dev
 ```
+
+The gateway is declared in `.agentseek/lifecycle.toml` and defaults to
+`http://127.0.0.1:{{ cookiecutter._gateway_port }}/agent`. AgentSeek is used as
+the external lifecycle tool; the generated runtime is the project dependency
+set in `pyproject.toml`.
+
+## Environment
+
+Copy `.env.example` to `.env` before running lifecycle checks. The generated
+settings read `BUB_MODEL`, `BUB_API_KEY`, and optional `BUB_API_BASE`, with
+`AGENTSEEK_*` and OpenAI-compatible aliases accepted where noted in the file.
+`BUB_LANGCHAIN_SPEC` points the gateway at this package's `build_spec()`, and
+`BUB_AG_UI_PORT` must match the service URLs declared in the lifecycle spec.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
+| `.agentseek/lifecycle.toml` | Declares AgentSeek `info`, `doctor`, `dev`, and `task` behavior. |
+| `.env.example` | Documents runtime model, provider, LangChain binding, and AG-UI port variables. |
 | `src/{{ cookiecutter.project_slug }}/demo_binding.py` | Builds the DeepAgents runnable and exports `build_spec()`. |
 | `src/{{ cookiecutter.project_slug }}/settings.py` | Reads env vars; bridges `AGENTSEEK_*` into `OPENAI_*` when needed. |
 | `requirements.txt` | Extra Python dependencies. |

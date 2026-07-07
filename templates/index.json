@@ -1,13 +1,13 @@
 {
-  "deepagents/default": "Local create_deep_agent runnable bound to agentseek-langchain.",
-  "deepagents/research": "Pure DeepAgents research agent with Tavily search and streamed tool/sub-agent UI.",
-  "deepagents/content-builder": "DeepAgents content builder with brand memory, skills, subagents, image generation, and streamed UI.",
-  "langchain/default": "LangChain create_agent + CopilotKit middleware over agentseek-langchain.",
-  "langchain/agentic-rag": "LangChain agentic RAG with langchain-oceanbase vector store and seekdb embed.",
-  "langchain/agentic-rag-openvino": "LangChain agentic RAG running fully local with OpenVINO via langchain-huggingface, no cloud API keys.",
-  "langchain/cli-remote": "Remote LangGraph CLI agent bridged via LangGraphClientRunnable.",
-  "langchain/sandbox": "DeepAgents sandbox coding agent with LangSmith sandbox backend, tool-call cards, and join/rejoin streaming UI.",
-  "langchain/markdown-messages": "Pure LangChain create_agent + langgraph dev backend, useStream + react-markdown frontend. No agentseek runtime.",
-  "bub/default": "Lightweight Bub agent: agentseek gateway + CopilotKit frontend, no LangChain.",
-  "bub/contextseek": "Bub agent with ContextSeek semantic memory layer and ctx HTTP API for feeding and inspecting context."
+  "bub/contextseek": "Bub agent with ContextSeek semantic memory and AgentSeek lifecycle spec.",
+  "bub/default": "Lightweight Bub agent with AgentSeek lifecycle spec.",
+  "deepagents/content-builder": "DeepAgents content builder with skills, subagents, image generation, streamed UI, and AgentSeek lifecycle spec.",
+  "deepagents/default": "Local create_deep_agent runnable with AgentSeek lifecycle spec.",
+  "deepagents/research": "DeepAgents research agent with Tavily search, streamed tool/sub-agent UI, and AgentSeek lifecycle spec.",
+  "langchain/agentic-rag": "LangChain agentic RAG with OceanBase vector search and AgentSeek lifecycle spec.",
+  "langchain/agentic-rag-openvino": "LangChain agentic RAG with local OpenVINO models and AgentSeek lifecycle spec.",
+  "langchain/cli-remote": "Remote LangGraph CLI agent bridged through LangGraphClientRunnable with AgentSeek lifecycle spec.",
+  "langchain/default": "LangChain create_agent plus CopilotKit middleware with AgentSeek lifecycle spec.",
+  "langchain/markdown-messages": "LangChain create_agent and react-markdown frontend with AgentSeek lifecycle spec.",
+  "langchain/sandbox": "DeepAgents sandbox coding agent with streamed UI and AgentSeek lifecycle spec."
 }

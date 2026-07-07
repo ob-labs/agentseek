@@ -86,8 +86,8 @@ If `runs: yes`, satisfy **all** of the following before submitting the page:
    describes.
 2. Commands that need real credentials use **clearly fake placeholders** (e.g.
    `sk-or-v1-…`) and the page says so on the same line.
-3. Destructive or environment-mutating commands (`agentseek install`,
-   `make compose-up`, `agentseek deploy`) include a **rollback / cleanup** note.
+3. Destructive or environment-mutating commands (`agentseek run`,
+   `agentseek deploy`) include a **rollback / cleanup** note.
 4. Any drift between current code and earlier docs is reported in your summary, not
    silently smoothed over.
 

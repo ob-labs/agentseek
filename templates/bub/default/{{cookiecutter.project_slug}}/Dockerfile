@@ -6,6 +6,8 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 RUN pip install --no-cache-dir .
 
+ENV BUB_AG_UI_HOST=0.0.0.0
+
 EXPOSE {{ cookiecutter.gateway_port }}
 
-CMD ["agentseek", "gateway", "--enable-channel", "ag-ui"]
+CMD ["bub", "gateway", "--enable-channel", "ag-ui"]

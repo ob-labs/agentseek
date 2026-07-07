@@ -1,10 +1,28 @@
 # DeepAgents — content-builder template
 
 Scaffolds a `deepagents.create_deep_agent(...)` content writing agent with
-brand memory, skills, subagents, and image generation. Includes a LangGraph
-backend and a Vite + React frontend that streams tool calls, sub-agent
-delegation, a live DeepAgents todo panel, generated images, and the final
-markdown output.
+brand memory, skills, subagents, image generation, and an AgentSeek lifecycle
+spec. The generated project runs through `agentseek info`, `agentseek doctor`,
+`agentseek dev`, and `agentseek task`.
+
+## Lifecycle
+
+```text
+agentseek dev
+  -> .agentseek/lifecycle.toml
+    -> uv run langgraph dev --port {{ langgraph_port }} --no-browser
+    -> npm run dev (frontend/)
+```
+
+Two long-running processes start in development:
+
+| Process | Default port | Role |
+| --- | --- | --- |
+| `uv run langgraph dev --port {{ langgraph_port }} --no-browser` | `{{ langgraph_port }}` | Serves the DeepAgents graph and image routes. |
+| `npm run dev` | `{{ frontend_port }}` | Serves the Vite + React frontend. |
+
+Project setup tasks are declared in `.agentseek/lifecycle.toml` and exposed
+through `agentseek task --list`.
 
 ## Inputs
 
@@ -27,6 +45,7 @@ markdown output.
 {{ project_slug }}/
   README.md
   pyproject.toml
+  .agentseek/lifecycle.toml
   langgraph.json
   .env.example
   .gitignore
@@ -83,3 +102,5 @@ markdown output.
   component; upstream ships only the backend example.
 - Surfaces DeepAgents `todos` state as a first-class progress panel instead of
   leaving planning updates buried in generic tool-call JSON.
+- Declares local development processes and project tasks in
+  `.agentseek/lifecycle.toml`.

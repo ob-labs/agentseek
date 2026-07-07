@@ -1,0 +1,51 @@
+version = 1
+template = "deepagents/default"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv"]
+
+[paths]
+required = ["pyproject.toml", "src/{{ cookiecutter.project_slug }}/demo_binding.py"]
+
+[env.BUB_MODEL]
+required = true
+description = "Model id used by the DeepAgents binding."
+aliases = ["AGENTSEEK_MODEL", "DEEPAGENTS_MODEL"]
+
+[env.BUB_API_KEY]
+required = true
+description = "Provider API key used by the selected model."
+aliases = ["AGENTSEEK_API_KEY", "OPENAI_API_KEY"]
+
+[env.BUB_API_BASE]
+required = false
+description = "Optional OpenAI-compatible provider base URL."
+aliases = ["AGENTSEEK_API_BASE", "OPENAI_API_BASE", "OPENAI_BASE_URL"]
+
+[env.BUB_LANGCHAIN_SPEC]
+required = true
+description = "Import path for the AgentSeek LangChain RunnableSpec."
+aliases = ["AGENTSEEK_LANGCHAIN_SPEC"]
+
+[env.BUB_AG_UI_PORT]
+required = true
+description = "AG-UI gateway port."
+aliases = ["AGENTSEEK_AG_UI_PORT"]
+
+[services.gateway]
+url = "http://127.0.0.1:{{ cookiecutter._gateway_port }}/agent"
+
+[processes.gateway]
+command = ["uv", "run", "bub", "gateway", "--enable-channel", "ag-ui"]
+
+[checks.gateway]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter._gateway_port }}/agent/health"
+timeout = 2
+attempts = 3
+
+[tasks.sync]
+description = "Install Python dependencies."
+command = ["uv", "sync"]

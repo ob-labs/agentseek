@@ -1,66 +1,88 @@
 ---
-title: AgentSeek 文档
+title: AgentSeek 生命周期工具包
 type: explanation
-audience: [A1, A2, A3, A4, A5]
-runs: no
-verified_on: 2026-06-12
-hide_sidebar: true
+audience: [A1, A2, A5]
+runs: yes
+verified_on: 2026-06-26
 sources:
-  - README.zh.md
-  - mkdocs.yml
   - pyproject.toml
+  - README.md
   - src/agentseek/cli/runtime.py
+  - src/agentseek/cli/lifecycle/core.py
+  - templates/index.json
 ---
 
-# AgentSeek 文档
+# AgentSeek 生命周期工具包
 
-AgentSeek 帮团队把 agent 运行时数据变成数据库工作负载：turn、context、
-工具调用、任务、反馈、checkpoint、memory 和观测数据都保持可查询，而不是散落在
-日志和外围系统里。
+> **简而言之：** AgentSeek 帮你从应用模板走到可运行的本地 AI 应用。
+> 它提供一组很小的生命周期命令。
 
-## 最小命令组合
+## 先读这里
 
-```bash
-uvx agentseek create deepagents/default --no-input
-cd my_deepagent
-cp .env.example .env
-uv sync
-uv pip install -r requirements.txt
-export PYTHONPATH=src
-export AGENTSEEK_LANGCHAIN_SPEC=my_deepagent.demo_binding:build_spec
-export AGENTSEEK_AG_UI_PORT=18088
-uv run agentseek gateway --enable-channel ag-ui
+AgentSeek 为生成出来的应用提供一致的本地开发流程。
+
+它创建应用，检查应用是否就绪，并启动本地开发需要的服务。
+
+```text
+AgentSeek CLI
+  -> app template
+    -> editable generated app
+      -> lifecycle tasks
+      -> local development stack
 ```
 
-如果你想先体验 harness，再创建项目，看[运行 CLI 快速演示](tutorials/01-quick-demo-cli.zh.md)。
+## 试一个模板路径
 
-## 项目生命周期
+安装日常使用的 CLI。
 
-<div class="terminal-grid terminal-grid-2">
-  <div class="terminal-card">
-    <h3><a href="tutorials/02-first-harness-app/">创建</a></h3>
-    <p>需要可编辑的 harness app 时，从模板开始。</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="how-to/run-locally/">运行</a></h3>
-    <p>配置模型凭证后，在本地运行生成项目。</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="tutorials/03-add-a-skill-and-mcp/">扩展</a></h3>
-    <p>在应用需要时加入 project-local skills、MCP tools、plugins 或 ContextSeek。</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="how-to/build-and-deploy/">交付</a></h3>
-    <p>在项目根目录构建镜像，并生成部署 manifests。</p>
-  </div>
-</div>
+```bash
+uv tool install agentseek
+```
 
-## 首次跑通之后
+下面的命令使用一个 Bub 模板。DeepAgents 和 LangChain 模板也使用同一套
+生命周期命令形状。运行 `agentseek doctor`
+之前先填写 `.env`，否则就绪检查会报告凭证缺失。
 
-- 想要推荐的 AgentSeek harness app，从 `deepagents/default` 开始。
-- 想要不带 LangChain 的最轻 harness app，从 `bub/default` 开始。
-- 想让 LangChain app 进入 AgentSeek runtime，从 `langchain/default` 开始。
-- 做 DeepAgents 形态的产品时，看 `deepagents/research` 或 `deepagents/content-builder`。
-- memory 应该成为一等 runtime 能力时，接入 [ContextSeek](how-to/use-contextseek.zh.md)。
-- 选择持久存储后端前，先读[运行时数据模型](explanation/runtime-data-model.zh.md)。
-- 用 [Hub](hub.zh.md) 浏览 bundled 与 contrib integrations。
+```bash
+agentseek create bub/default --no-input
+cd my_bub_agent
+cp .env.example .env
+$EDITOR .env
+uv sync
+npm install --prefix frontend
+agentseek doctor
+agentseek dev
+```
+
+## 生命周期命令
+
+| 命令 | 适用场景 |
+| --- | --- |
+| `agentseek create` | 从模板创建项目。 |
+| `agentseek doctor` | 检查文件、环境、依赖和端口。 |
+| `agentseek dev` | 启动生成项目的本地开发栈。 |
+| `agentseek info` | 查看项目元数据和本地入口。 |
+| `agentseek task` | 直接运行项目定义的任务。 |
+
+## 理解流程
+
+生成出来的项目携带自己的生命周期任务。
+
+AgentSeek 把通用任务暴露为一等命令，也允许你通过 `agentseek task`
+运行项目专属任务。
+
+这样工作流保持稳定，而应用行为仍留在生成项目里。
+
+## 当前重点
+
+- 从模板创建可编辑应用。
+- 开发前检查本地就绪状态。
+- 运行本地开发栈。
+- 查看项目元数据和入口。
+- 用项目任务扩展应用工作流。
+
+## 继续阅读
+
+- [快速开始](get-started/index.md)
+- [创建项目](guides/create-project.md)
+- [查看 CLI](reference/cli.md)

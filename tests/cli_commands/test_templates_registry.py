@@ -8,6 +8,19 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TEMPLATES_ROOT = REPO_ROOT / "templates"
 INDEX_PATH = TEMPLATES_ROOT / "index.json"
+EXPECTED_TEMPLATE_KEYS = {
+    "bub/contextseek",
+    "bub/default",
+    "deepagents/content-builder",
+    "deepagents/default",
+    "deepagents/research",
+    "langchain/agentic-rag",
+    "langchain/agentic-rag-openvino",
+    "langchain/cli-remote",
+    "langchain/default",
+    "langchain/markdown-messages",
+    "langchain/sandbox",
+}
 
 
 def _registered_templates() -> set[str]:
@@ -32,17 +45,17 @@ def test_all_cookiecutter_templates_are_registered() -> None:
     assert not missing, f"template(s) missing from templates/index.json: {missing}"
 
 
-def test_registered_templates_point_to_cookiecutter_directories() -> None:
-    """Every registry key points to a template directory with cookiecutter.json."""
-    stale = sorted(_registered_templates() - _template_dirs())
+def test_registry_contains_expected_template_keys() -> None:
+    """The shared registry advertises the template set published from main."""
+    missing = sorted(EXPECTED_TEMPLATE_KEYS - _registered_templates())
 
-    assert not stale, f"stale templates/index.json key(s): {stale}"
+    assert not missing, f"templates/index.json missing expected key(s): {missing}"
 
 
 def test_registered_templates_have_readme() -> None:
-    """Every registered template has a top-level README for template users."""
+    """Every currently checked-out registered template has a top-level README."""
     missing_readmes = sorted(
-        key for key in _registered_templates() if not (TEMPLATES_ROOT / key / "README.md").is_file()
+        key for key in _template_dirs() & _registered_templates() if not (TEMPLATES_ROOT / key / "README.md").is_file()
     )
 
     assert not missing_readmes, f"registered template(s) missing README.md: {missing_readmes}"

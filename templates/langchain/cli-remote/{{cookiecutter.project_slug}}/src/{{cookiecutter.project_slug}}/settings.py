@@ -13,7 +13,7 @@ _BASE = Path(__file__).resolve().parent
 
 
 class ProjectSettings(BaseSettings):
-    """Settings for both the remote graph and the agentseek bridge."""
+    """Settings for both the remote graph and the Bub bridge."""
 
     model_config = SettingsConfigDict(
         env_file=(Path(".env"), _BASE / ".env"),
@@ -22,33 +22,30 @@ class ProjectSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    model: str = Field(
-        default="",
-        validation_alias=AliasChoices("AGENTSEEK_MODEL", "BUB_MODEL", "LANGCHAIN_REMOTE_MODEL"),
-    )
-    api_key: str = Field(default="", validation_alias=AliasChoices("AGENTSEEK_API_KEY", "BUB_API_KEY"))
-    api_base: str = Field(default="", validation_alias=AliasChoices("AGENTSEEK_API_BASE", "BUB_API_BASE"))
+    model: str = Field(default="", validation_alias=AliasChoices("BUB_MODEL", "LANGCHAIN_REMOTE_MODEL"))
+    api_key: str = Field(default="", validation_alias="BUB_API_KEY")
+    api_base: str = Field(default="", validation_alias="BUB_API_BASE")
     openai_api_key: str = Field(default="", validation_alias=AliasChoices("OPENAI_API_KEY"))
     openai_api_base: str = Field(default="", validation_alias=AliasChoices("OPENAI_API_BASE"))
     openai_base_url: str = Field(default="", validation_alias=AliasChoices("OPENAI_BASE_URL"))
     langgraph_url: str = Field(
         default="{{ cookiecutter.langgraph_url }}",
-        validation_alias=AliasChoices("LANGGRAPH_URL", "AGENTSEEK_LANGGRAPH_URL"),
+        validation_alias="LANGGRAPH_URL",
     )
     assistant_id: str = Field(
         default="{{ cookiecutter.assistant_id }}",
-        validation_alias=AliasChoices("LANGGRAPH_ASSISTANT_ID", "AGENTSEEK_LANGGRAPH_ASSISTANT_ID"),
+        validation_alias="LANGGRAPH_ASSISTANT_ID",
     )
     thread_on_session: bool = Field(
         default=False,
-        validation_alias=AliasChoices("LANGGRAPH_THREAD_ON_SESSION", "AGENTSEEK_LANGGRAPH_THREAD_ON_SESSION"),
+        validation_alias="LANGGRAPH_THREAD_ON_SESSION",
     )
 
     def require_model(self) -> str:
         model = self.model.strip()
         if model:
             return model
-        msg = "Set AGENTSEEK_MODEL (or BUB_MODEL / LANGCHAIN_REMOTE_MODEL) for the remote agent process."
+        msg = "Set BUB_MODEL (or LANGCHAIN_REMOTE_MODEL) for the remote agent process."
         raise RuntimeError(msg)
 
     def apply_openai_env_bridge(self) -> None:

@@ -6,6 +6,6 @@ export default defineConfig(({ mode }) => {
   const port = Number(env.FRONTEND_PORT ?? "{{ cookiecutter.frontend_port }}");
   return {
     plugins: [react()],
-    server: { port, strictPort: true },
+    server: { host: "127.0.0.1", port, strictPort: true },
   };
 });

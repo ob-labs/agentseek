@@ -39,12 +39,12 @@ def _frontend_dir(root: Path) -> Path:
 
 def _build_env(root: Path) -> dict[str, str]:
     env = dict(os.environ)
-    env.setdefault("AGENTSEEK_STREAM_OUTPUT", "true")
-    env.setdefault("AGENTSEEK_AG_UI_PORT", "{{ cookiecutter.gateway_port }}")
+    env.setdefault("BUB_STREAM_OUTPUT", "true")
+    env.setdefault("BUB_AG_UI_PORT", "{{ cookiecutter.gateway_port }}")
     env.setdefault("FRONTEND_PORT", DEFAULT_FRONTEND_PORT)
     env.setdefault("COPILOTKIT_PORT", DEFAULT_COPILOTKIT_PORT)
-    env.setdefault("AGENTSEEK_AG_UI_AGENT_URL", DEFAULT_AGENT_URL)
-    env.setdefault("AGENTSEEK_LANGCHAIN_SPEC", DEFAULT_LANGCHAIN_SPEC)
+    env.setdefault("BUB_AG_UI_AGENT_URL", DEFAULT_AGENT_URL)
+    env.setdefault("BUB_LANGCHAIN_SPEC", DEFAULT_LANGCHAIN_SPEC)
     env.setdefault("PWD", str(root))
     return env
 
@@ -95,7 +95,7 @@ def main() -> None:
     env = _build_env(root)
     npm = _require_binary("npm")
 
-    gateway = _spawn(["agentseek", "gateway", "--enable-channel", "ag-ui"], cwd=root, env=env)
+    gateway = _spawn(["bub", "gateway", "--enable-channel", "ag-ui"], cwd=root, env=env)
     frontend = _spawn([npm, "run", "dev"], cwd=frontend_dir, env=env)
 
     def _shutdown(*_args: object) -> None:

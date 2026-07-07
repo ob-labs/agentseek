@@ -2,7 +2,7 @@
 
 This frontend mirrors the repository's LangChain + AG-UI example: CopilotKit,
 Hashbrown, a small Copilot Runtime, and a Vite app that talks to
-`agentseek gateway --enable-channel ag-ui`.
+`bub gateway --enable-channel ag-ui`.
 
 ## Run
 

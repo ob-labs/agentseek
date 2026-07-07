@@ -5,16 +5,16 @@ description = "{{ cookiecutter.project_name }} — Bub-flavored AG-UI agent with
 authors = [{ name = "{{ cookiecutter.author }}" }]
 requires-python = ">=3.12"
 dependencies = [
-    "agentseek",
+    "bub==0.3.9",
     "agentseek-ag-ui",
     "agentseek-contextseek",
     "contextseek",
     "fastapi>=0.110.0",
+    "pyseekdb",
     "uvicorn>=0.30.0",
 ]
 
 [project.scripts]
-serve = "{{ cookiecutter.project_slug }}.dev:main"
 ctx-server = "{{ cookiecutter.project_slug }}.server:main"
 
 [build-system]
@@ -29,11 +29,9 @@ where = ["src"]
 
 [tool.uv.sources]
 {% if cookiecutter._agentseek_source_path %}
-agentseek = { path = "{{ cookiecutter._agentseek_source_path }}", editable = true }
 agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
 agentseek-contextseek = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-contextseek", editable = true }
 {% else %}
-agentseek = { git = "{{ cookiecutter._agentseek_source_url }}" }
 agentseek-ag-ui = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-ag-ui" }
 agentseek-contextseek = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-contextseek" }
 {% endif %}

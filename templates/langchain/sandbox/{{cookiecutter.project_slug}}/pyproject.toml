@@ -10,6 +10,7 @@ dependencies = [
     "langchain-anthropic>=1.0",
     "langchain-google-genai>=4.0",
     "langchain-openai>=0.3",
+    "httpx[socks]>=0.28",
     "langsmith[sandbox]",
     "python-dotenv>=1.0",
     "langgraph-cli[inmem]>=0.4",

@@ -4,6 +4,7 @@
   "author": "Your Name",
   "system_prompt": "You are a pragmatic engineering assistant.",
   "default_model": "openai:gpt-4o-mini",
+  "_gateway_port": "18088",
   "_agentseek_source_path": "",
   "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git"
 }

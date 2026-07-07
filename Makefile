@@ -1,7 +1,7 @@
 .PHONY: \
 	lock install check check-lock lint typecheck test \
 	check-contrib check-all build clean-build publish build-and-publish \
-	docs-test docs compose-up compose-down compose-logs docker-build help
+	docs-test docs help
 
 CORE_TY_PATHS = src tests
 CONTRIB_DIRS = $(sort $(dir $(wildcard contrib/agentseek-*/pyproject.toml)))
@@ -100,22 +100,6 @@ docs-test: ## Test if documentation can be built without warnings or errors
 .PHONY: docs
 docs: ## Build and serve the documentation
 	@uv run mkdocs serve
-
-.PHONY: compose-up
-compose-up: ## Build and start the SQLite-based app container with docker compose
-	@docker compose up --build
-
-.PHONY: compose-down
-compose-down: ## Stop docker compose
-	@docker compose down
-
-.PHONY: compose-logs
-compose-logs: ## Tail docker compose logs
-	@docker compose logs -f
-
-.PHONY: docker-build
-docker-build: ## Build the container image
-	@docker build -t agentseek:latest .
 
 .PHONY: help
 help:

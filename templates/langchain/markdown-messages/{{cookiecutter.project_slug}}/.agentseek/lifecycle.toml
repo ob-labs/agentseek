@@ -1,0 +1,58 @@
+version = 1
+template = "langchain/markdown-messages"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "node", "npm"]
+
+[paths]
+required = ["frontend/package.json", "frontend/node_modules"]
+
+[env.AGENTSEEK_API_KEY]
+required = true
+description = "Model provider API key. OPENAI_API_KEY is accepted by the LangChain bridge."
+aliases = ["OPENAI_API_KEY"]
+
+[env.AGENTSEEK_API_BASE]
+required = false
+description = "Optional OpenAI-compatible base URL. OPENAI_API_BASE is accepted by the LangChain bridge."
+aliases = ["OPENAI_API_BASE"]
+
+[env.AGENTSEEK_MODEL]
+required = true
+description = "Chat model id passed to LangChain init_chat_model. OPENAI_MODEL is accepted as an alias."
+aliases = ["OPENAI_MODEL"]
+
+[services.backend]
+url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+
+[services.frontend]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[processes.backend]
+command = ["uv", "run", "langgraph", "dev", "--port", "{{ cookiecutter.langgraph_port }}", "--no-browser"]
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+cwd = "frontend"
+
+[checks.backend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.sync]
+description = "Install Python dependencies."
+command = ["uv", "sync"]
+
+[tasks.frontend]
+description = "Install frontend dependencies."
+command = ["npm", "install", "--prefix", "frontend"]

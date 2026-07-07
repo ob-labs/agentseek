@@ -7,26 +7,22 @@ The backend serves a `create_deep_agent(...)` graph through `langgraph dev`
 with brand-voice memory, content skills (blog-post, social-media), a
 researcher subagent, and image generation tools. The frontend streams user
 messages, tool calls, sub-agent delegation, generated images, and the final
-markdown output.
+markdown output. AgentSeek is used as the external lifecycle tool for local
+inspection, readiness checks, development, and project tasks.
 
 ## Setup
 
 ```bash
 uv sync
-npm install --prefix frontend
 
 cp .env.example .env
 cp frontend/.env.example frontend/.env
-# Fill in backend secrets in .env:
-# - Set AGENTSEEK_MODEL_PROVIDER and AGENTSEEK_MODEL
-# - Fill only the matching provider block
-# - If you switch providers, switch AGENTSEEK_MODEL to that provider's model id
-# - Leave that provider's base URL empty to use the official endpoint
-# - Set GOOGLE_API_KEY (required for image generation)
-# - Set TAVILY_API_KEY (required for researcher subagent)
-# - Optionally set AGENTSEEK_SUBAGENT_MODEL to override the researcher model
-# - Optionally set GOOGLE_IMAGE_MODEL to use a different Gemini image model
-# frontend/.env only needs changes if you want a non-default LangGraph URL.
+$EDITOR .env
+
+agentseek task frontend
+agentseek info
+agentseek doctor
+agentseek dev
 ```
 
 `agent.py` uses `AGENTSEEK_MODEL_PROVIDER` to choose a native LangChain
@@ -41,27 +37,41 @@ model. To use a smaller/cheaper model for research, set
 `AGENTSEEK_SUBAGENT_MODEL` to just the model name (e.g. `gpt-4.1-mini`) —
 no provider prefix needed.
 
-## Run
+## Environment
 
-Start the backend:
+The root `.env` is referenced by both `langgraph.json` and
+`.agentseek/lifecycle.toml`. LangGraph loads it for the backend process;
+AgentSeek reads it for `doctor` readiness checks. Shell environment variables
+still take precedence when present.
+
+The frontend has its own `frontend/.env`. It only needs changes when the
+LangGraph URL or frontend port differs from the scaffold defaults.
+
+For the default OpenAI provider, set `AGENTSEEK_MODEL` and `OPENAI_API_KEY`.
+`DEEPAGENTS_MODEL` or `BUB_MODEL` can be used as model aliases, and
+`BUB_OPENAI_API_KEY` can be used as an OpenAI key alias. If you switch
+providers, update `AGENTSEEK_MODEL_PROVIDER`, use a model id for that provider,
+and fill the matching provider key. Leave provider base URLs empty to use the
+official endpoints.
+
+`TAVILY_API_KEY` enables the researcher subagent. `GOOGLE_API_KEY` is required
+for image generation and also for `google_genai` chat models.
+
+## Lifecycle
 
 ```bash
-uv run langgraph dev --port {{ cookiecutter.langgraph_port }} --no-browser
-```
-
-Start the frontend in a second terminal:
-
-```bash
-npm run --prefix frontend dev
+agentseek info
+agentseek doctor
+agentseek dev
+agentseek task --list
 ```
 
 By default the backend listens on
 `http://127.0.0.1:{{ cookiecutter.langgraph_port }}` and the frontend on
-`http://127.0.0.1:{{ cookiecutter.frontend_port }}`.
+`http://127.0.0.1:{{ cookiecutter.frontend_port }}`. Runtime processes and
+project tasks are declared in `.agentseek/lifecycle.toml`.
 
-## Smoke test
-
-Open `http://127.0.0.1:{{ cookiecutter.frontend_port }}` and ask:
+After `agentseek dev` starts, open the frontend and ask:
 
 ```text
 Write a blog post about how AI agents are transforming software development

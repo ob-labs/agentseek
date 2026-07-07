@@ -1,61 +1,56 @@
 # {{ cookiecutter.project_name }}
 
-Pure DeepAgents research agent scaffolded with
-`agentseek create deepagents/research`.
+Pure DeepAgents research agent scaffolded with `agentseek create deepagents/research`.
 
 The backend serves a `create_deep_agent(...)` graph through `langgraph dev`.
 The frontend streams user messages, tool calls, optional sub-agent delegation,
-and the final markdown answer.
+DeepAgents todos, and the final markdown answer. AgentSeek is only used as an
+external template and lifecycle tool; this project declares local behavior in
+`.agentseek/lifecycle.toml`.
 
-## Setup
+## Quickstart
 
 ```bash
-uv sync
-npm install --prefix frontend
-
 cp .env.example .env
 cp frontend/.env.example frontend/.env
-# Fill in backend secrets in .env:
-# - Set AGENTSEEK_MODEL_PROVIDER and AGENTSEEK_MODEL
-# - Fill only the matching provider block
-# - If you switch providers, switch AGENTSEEK_MODEL to that provider's model id
-# - Leave that provider's base URL empty to use the official endpoint
-# - Set TAVILY_API_KEY
-# frontend/.env only needs changes if you want a non-default LangGraph URL.
+$EDITOR .env
+
+uvx agentseek task backend
+uvx agentseek task frontend
+
+uvx agentseek info
+uvx agentseek doctor
+uvx agentseek dev --dry-run
+uvx agentseek dev
 ```
 
-`agent.py` uses `AGENTSEEK_MODEL_PROVIDER` to choose a native LangChain
-provider integration for OpenAI, Anthropic, or Gemini. Fill only that
-provider's env block in `.env`; if its base URL is blank, the generated app
-uses the provider's official default endpoint. You can also override the
-scaffolded model name via `AGENTSEEK_MODEL` (or the compatibility aliases
-`DEEPAGENTS_MODEL` / `BUB_MODEL`) without editing code. The template still
-defaults `LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S=300` for the `openai`
-provider so slow OpenAI-compatible tool-call streams do not die after
-LangChain OpenAI's default gap timeout.
+Use `uvx agentseek task --list` to see the one-shot setup tasks exposed by the
+lifecycle spec. After `uvx agentseek dev` starts both processes, run
+`uvx agentseek doctor --live` from another terminal to check the declared local
+service endpoints.
+
+The LangGraph backend defaults to `http://127.0.0.1:{{ cookiecutter.langgraph_port }}`.
+The frontend defaults to `http://127.0.0.1:{{ cookiecutter.frontend_port }}`.
+
+## Environment
+
+`agent.py` uses `AGENTSEEK_MODEL_PROVIDER` to choose a native LangChain provider
+integration for OpenAI, Anthropic, or Gemini. Fill only the credential block for
+the selected provider in `.env`. If that provider's base URL is blank, LangChain
+uses the official endpoint.
 
 If you change `AGENTSEEK_MODEL_PROVIDER`, also change `AGENTSEEK_MODEL` to a
-model served by that provider. The scaffold defaults to `openai` with
-`gpt-4.1-mini`, so leaving `OPENAI_API_BASE` blank targets the official OpenAI
-endpoint out of the box.
+model served by that provider. The generated app defaults to provider `openai`
+and model `gpt-4.1-mini`, so leaving `OPENAI_API_BASE` blank targets the
+official OpenAI endpoint. `AGENTSEEK_MODEL` can also be supplied through the
+compatibility aliases `DEEPAGENTS_MODEL` or `BUB_MODEL`.
 
-## Run
+`TAVILY_API_KEY` is required for the `tavily_search` tool. The lifecycle spec
+checks that one provider API key exists through `OPENAI_API_KEY` plus the
+`ANTHROPIC_API_KEY` and `GOOGLE_API_KEY` aliases; it does not validate that the
+key matches the selected provider.
 
-Start the backend:
-
-```bash
-uv run langgraph dev --port {{ cookiecutter.langgraph_port }} --no-browser
-```
-
-Start the frontend in a second terminal:
-
-```bash
-npm run --prefix frontend dev
-```
-
-By default the backend listens on
-`http://127.0.0.1:{{ cookiecutter.langgraph_port }}` and the frontend on
-`http://127.0.0.1:{{ cookiecutter.frontend_port }}`.
+`frontend/.env` only controls the browser app's LangGraph URL and Vite port.
 
 ## Smoke test
 

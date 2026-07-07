@@ -5,12 +5,13 @@ description = "{{ cookiecutter.project_name }} — Bub-flavored AG-UI agent."
 authors = [{ name = "{{ cookiecutter.author }}" }]
 requires-python = ">=3.12"
 dependencies = [
-    "agentseek",
+    "bub==0.3.9",
     "agentseek-ag-ui",
 ]
 
-[project.scripts]
-serve = "{{ cookiecutter.project_slug }}.dev:main"
+[dependency-groups]
+dev = [
+]
 
 [build-system]
 requires = ["setuptools>=69"]
@@ -24,9 +25,7 @@ where = ["src"]
 
 [tool.uv.sources]
 {% if cookiecutter._agentseek_source_path %}
-agentseek = { path = "{{ cookiecutter._agentseek_source_path }}", editable = true }
 agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
 {% else %}
-agentseek = { git = "{{ cookiecutter._agentseek_source_url }}" }
 agentseek-ag-ui = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-ag-ui" }
 {% endif %}

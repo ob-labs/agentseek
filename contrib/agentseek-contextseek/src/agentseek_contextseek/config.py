@@ -18,6 +18,7 @@ import os
 from collections.abc import Iterator, MutableMapping
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AGENTSEEK_CTX_PREFIX = "AGENTSEEK_CTX_"
@@ -45,21 +46,18 @@ def apply_contextseek_env_aliases(
     agentseek without the optional dependency does not raise.
 
     When contextseek's LLM is enabled (``AGENTSEEK_CTX_LLM_PROVIDER`` is not
-    ``none``, or ``AGENTSEEK_CTX_LLM_MODEL`` is set), the agentseek gateway
+    ``none``, or ``AGENTSEEK_CTX_LLM_MODEL`` is set), the Bub runtime
     credentials are bridged to the LangChain env vars used by contextseek:
 
-    - ``AGENTSEEK_API_KEY``  → ``OPENAI_API_KEY``  (fallback only)
-    - ``AGENTSEEK_API_BASE`` → ``OPENAI_BASE_URL``  (fallback only)
+    - ``BUB_API_KEY`` / ``BUB_OPENAI_API_KEY``   → provider key (fallback only)
+    - ``BUB_API_BASE`` / ``BUB_OPENAI_API_BASE`` → provider base URL (fallback only)
 
     This lets contextseek's internal LLM reuse the same API endpoint as the
-    agent without duplicating credentials in ``.env``.
+    Bub agent without duplicating credentials in ``.env``. Legacy
+    ``AGENTSEEK_*`` credentials are still accepted as lower-priority fallbacks.
     """
     target = os.environ if environ is None else environ
-    for env_var in _upstream_env_vars():
-        aliased = target.get(f"{AGENTSEEK_CTX_PREFIX}{env_var}")
-        if aliased is not None:
-            target.setdefault(env_var, aliased)
-
+    _apply_contextseek_prefixed_aliases(target)
     _maybe_bridge_llm_credentials(target)
 
 
@@ -102,35 +100,81 @@ _CLASS_PATH_PROVIDER: dict[str, str] = {
 }
 
 
+class RuntimeBridgeSettings(BaseSettings):
+    """Runtime model credentials shared with ContextSeek's LangChain bridge."""
+
+    model_config = SettingsConfigDict(extra="ignore", case_sensitive=True)
+
+    model: str = Field(
+        default="",
+        validation_alias=AliasChoices("BUB_MODEL", "AGENTSEEK_MODEL"),
+    )
+    api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("BUB_API_KEY", "BUB_OPENAI_API_KEY", "AGENTSEEK_API_KEY"),
+    )
+    api_base: str = Field(
+        default="",
+        validation_alias=AliasChoices("BUB_API_BASE", "BUB_OPENAI_API_BASE", "AGENTSEEK_API_BASE"),
+    )
+    ctx_llm_provider: str = Field(default="none", validation_alias=AliasChoices(f"{AGENTSEEK_CTX_PREFIX}LLM_PROVIDER"))
+    ctx_llm_model: str = Field(default="", validation_alias=AliasChoices(f"{AGENTSEEK_CTX_PREFIX}LLM_MODEL"))
+    ctx_llm_class_path: str = Field(
+        default="",
+        validation_alias=AliasChoices(f"{AGENTSEEK_CTX_PREFIX}LLM_CLASS_PATH"),
+    )
+
+    @property
+    def llm_enabled(self) -> bool:
+        return self.ctx_llm_provider.lower() != "none" or bool(self.ctx_llm_model)
+
+    @property
+    def provider(self) -> str:
+        class_path = self.ctx_llm_class_path.lower()
+        if class_path:
+            for fragment, provider in _CLASS_PATH_PROVIDER.items():
+                if fragment in class_path:
+                    return provider
+
+        if ":" in self.model:
+            prefix = self.model.split(":", 1)[0].lower()
+            if prefix in _PROVIDER_CREDS:
+                return prefix
+
+        return "openai"
+
+    @property
+    def unprefixed_model(self) -> str:
+        if ":" not in self.model:
+            return ""
+        return self.model.split(":", 1)[1]
+
+
 def _maybe_bridge_llm_credentials(target: MutableMapping[str, str]) -> None:
-    """Bridge AGENTSEEK_* → provider-specific LangChain vars when ctx LLM is enabled.
+    """Bridge Bub credentials to provider-specific LangChain vars when ctx LLM is enabled.
 
     Only runs when contextseek LLM is enabled (``AGENTSEEK_CTX_LLM_PROVIDER``
     != ``none`` or ``AGENTSEEK_CTX_LLM_MODEL`` is set).
 
-    Derives the following from ``AGENTSEEK_MODEL`` / ``AGENTSEEK_API_KEY`` /
-    ``AGENTSEEK_API_BASE`` (all as ``setdefault`` — explicit values always win):
+    Derives the following from ``BUB_MODEL`` / ``BUB_API_KEY`` /
+    ``BUB_API_BASE`` (all as ``setdefault`` — explicit values always win):
 
     - Provider-specific API key  (e.g. ``OPENAI_API_KEY``)
     - Provider-specific base URL (e.g. ``OPENAI_BASE_URL``)
     - ``LLM_CLASS_PATH``         (e.g. ``langchain_openai.ChatOpenAI``)
     - ``LLM_MODEL``              (model name stripped of provider prefix)
     """
-    llm_provider = target.get(f"{AGENTSEEK_CTX_PREFIX}LLM_PROVIDER", "none")
-    llm_model = target.get(f"{AGENTSEEK_CTX_PREFIX}LLM_MODEL", "")
-    if llm_provider.lower() == "none" and not llm_model:
+    settings = RuntimeBridgeSettings.model_validate(dict(target))
+    if not settings.llm_enabled:
         return
 
-    provider = _detect_llm_provider(target)
+    provider = settings.provider
 
-    # --- API key + base URL ---
-    agentseek_key = target.get("AGENTSEEK_API_KEY", "")
-    agentseek_base = target.get("AGENTSEEK_API_BASE", "")
     key_var, base_var = _PROVIDER_CREDS.get(provider, ("OPENAI_API_KEY", "OPENAI_BASE_URL"))
-    if agentseek_key and not target.get(key_var):
-        target[key_var] = agentseek_key
-    if agentseek_base and base_var and not target.get(base_var):
-        target[base_var] = agentseek_base
+    if settings.api_key:
+        target.setdefault(key_var, settings.api_key)
+    if settings.api_base and base_var:
+        target.setdefault(base_var, settings.api_base)
 
     # --- LLM_CLASS_PATH: auto-set from provider if not explicitly configured ---
     ctx_class_path_key = f"{AGENTSEEK_CTX_PREFIX}LLM_CLASS_PATH"
@@ -139,29 +183,18 @@ def _maybe_bridge_llm_credentials(target: MutableMapping[str, str]) -> None:
         if class_path:
             target[ctx_class_path_key] = class_path
 
-    # --- LLM_MODEL: strip provider prefix from AGENTSEEK_MODEL if not set ---
+    # --- LLM_MODEL: strip provider prefix from BUB_MODEL if not set ---
     ctx_model_key = f"{AGENTSEEK_CTX_PREFIX}LLM_MODEL"
-    if not target.get(ctx_model_key):
-        agentseek_model = target.get("AGENTSEEK_MODEL", "")
-        if ":" in agentseek_model:
-            target[ctx_model_key] = agentseek_model.split(":", 1)[1]
+    if not target.get(ctx_model_key) and settings.unprefixed_model:
+        target[ctx_model_key] = settings.unprefixed_model
 
 
-def _detect_llm_provider(target: MutableMapping[str, str]) -> str:
-    """Return a lowercase provider name from class path or model prefix."""
-    class_path = target.get(f"{AGENTSEEK_CTX_PREFIX}LLM_CLASS_PATH", "").lower()
-    if class_path:
-        for fragment, provider in _CLASS_PATH_PROVIDER.items():
-            if fragment in class_path:
-                return provider
-
-    agentseek_model = target.get("AGENTSEEK_MODEL", "")
-    if ":" in agentseek_model:
-        prefix = agentseek_model.split(":", 1)[0].lower()
-        if prefix in _PROVIDER_CREDS:
-            return prefix
-
-    return "openai"
+def _apply_contextseek_prefixed_aliases(target: MutableMapping[str, str]) -> None:
+    """Apply ``AGENTSEEK_CTX_*`` fallbacks for upstream contextseek env vars."""
+    for env_var in _upstream_env_vars():
+        alias = f"{AGENTSEEK_CTX_PREFIX}{env_var}"
+        if alias in target:
+            target.setdefault(env_var, target[alias])
 
 
 @lru_cache(maxsize=1)

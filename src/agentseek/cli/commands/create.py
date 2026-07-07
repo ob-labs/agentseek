@@ -15,11 +15,11 @@ to ``contrib/``).  At runtime the command resolves them in two ways:
 Spec resolution:
 
 * ``agentseek create``                                — interactive type + template selection.
-* ``agentseek create deepagents``                     — ``templates/deepagents/default``.
-* ``agentseek create langchain/cli-remote``           — ``templates/langchain/cli-remote``.
-* ``agentseek create langchain --list-templates``     — list templates available for the type.
-* ``agentseek create langchain --template cli-remote``— same as ``langchain/cli-remote``.
-* ``agentseek create langchain --template``           — list templates for the type (same as --list-templates).
+* ``agentseek create bub``                            — ``templates/bub/default``.
+* ``agentseek create bub/default``                    — ``templates/bub/default``.
+* ``agentseek create bub --list-templates``           — list templates available for the type.
+* ``agentseek create bub --template default``         — same as ``bub/default``.
+* ``agentseek create bub --template``                 — list templates for the type (same as --list-templates).
 * ``agentseek create --template``                     — list all templates across all types.
 * ``agentseek create deepagents --output-dir /tmp``   — write the generated project under /tmp.
 * ``agentseek create https://github.com/x/y.git``    — passthrough to cookiecutter.
@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -66,8 +67,8 @@ app = typer.Typer(
     cls=_SwallowArgsGroup,
 )
 
-KNOWN_TYPES: tuple[str, ...] = ("deepagents", "langchain", "bub")
-DEFAULT_TYPE = "deepagents"
+KNOWN_TYPES: tuple[str, ...] = ("bub", "deepagents", "langchain")
+DEFAULT_TYPE = "bub"
 
 _TEMPLATE_LIST_SENTINEL = "__list__"
 
@@ -153,7 +154,7 @@ def _resolve_type_template(
             install_source_path=install_source_path,
             install_source_url=None if install_source_path else REPO_GIT_URL,
         )
-    typer.echo(f"Template {project_type}/{template_name!s} was not found.", err=True)
+    _print_unknown_template(project_type, template_name, templates_root=templates_root)
     raise typer.Exit(2)
 
 
@@ -252,7 +253,7 @@ def _print_all_templates(templates_root: Path, descriptions: dict[str, str]) -> 
         _print_templates_table(project_type, templates, descriptions)
     if total:
         typer.echo("\n  Usage:")
-        typer.echo("    agentseek create <type>/<name>       e.g. agentseek create langchain/cli-remote")
+        typer.echo("    agentseek create <type>/<name>       e.g. agentseek create bub/default")
         typer.echo("    agentseek create <type>              use default template for the type")
         typer.echo("    agentseek create                     interactive selection")
         typer.echo()
@@ -324,13 +325,13 @@ def _run_cookiecutter(
     *,
     output_dir: Path,
     no_input: bool,
-) -> None:
+) -> Path | None:
     """Invoke cookiecutter; isolated so tests can monkeypatch."""
     from cookiecutter.exceptions import OutputDirExistsException
     from cookiecutter.main import cookiecutter
 
     try:
-        cookiecutter(
+        generated = cookiecutter(
             template=source.template,
             output_dir=str(output_dir),
             no_input=no_input,
@@ -341,6 +342,7 @@ def _run_cookiecutter(
                 "_agentseek_source_url": source.install_source_url or REPO_GIT_URL,
             },
         )
+        return Path(generated) if generated else None
     except OutputDirExistsException:
         typer.echo(
             "Target directory already exists. Remove it first or choose a different location.",
@@ -371,8 +373,8 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
         nargs="?",
         default=None,
         help=(
-            "Template spec. Can be a framework type (deepagents, langchain, bub), "
-            "a type/name pair (langchain/cli-remote), a git URL, or a local path."
+            "Template spec. Can be a framework type (bub, deepagents, langchain), "
+            "a type/name pair (bub/default), a git URL, or a local path."
         ),
     )
     parser.add_argument(
@@ -381,7 +383,7 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
         default=None,
         const=_TEMPLATE_LIST_SENTINEL,
         help=(
-            "Named template under the chosen type (e.g. --template cli-remote). "
+            "Named template under the chosen type (e.g. --template default). "
             "Pass --template with no value to list available templates."
         ),
     )
@@ -406,7 +408,95 @@ def _parse_argv(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Skip cookiecutter prompts (use template defaults).",
     )
+    parser.add_argument(
+        "--describe",
+        action="store_true",
+        help=(
+            "Print template description and configuration without generating a project. "
+            "Use with a spec like ``agentseek create bub/default --describe``."
+        ),
+    )
     return parser.parse_args(argv)
+
+
+def _load_cookiecutter_context(template_dir: Path) -> dict[str, object] | None:
+    """Load ``cookiecutter.json`` from *template_dir* if it exists."""
+    cookiecutter_json = template_dir / "cookiecutter.json"
+    if not cookiecutter_json.is_file():
+        return None
+    try:
+        data = json.loads(cookiecutter_json.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def _describe_template(
+    source: TemplateSource,
+    *,
+    templates_root: Path,
+) -> None:
+    """Print template spec, description, and cookiecutter variables.
+
+    Does **not** run cookiecutter or create any files.
+    """
+    template_dir = Path(source.template)
+
+    # Build a clean key (e.g. "bub/default") from the templates root.
+    try:
+        rel = template_dir.relative_to(templates_root)
+        parts = rel.parts
+        spec_key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else str(rel)
+    except ValueError:
+        spec_key = f"{template_dir.parent.name}/{template_dir.name}"
+
+    descriptions = _load_template_descriptions(templates_root)
+    description = descriptions.get(spec_key, "")
+
+    typer.echo(f"\n  Template: {spec_key}")
+    typer.echo(f"  {'─' * 60}")
+    if description:
+        typer.echo(f"  Description: {description}")
+    else:
+        typer.echo("  Description: (none)")
+
+    typer.echo(f"  Path: {template_dir}")
+
+    context = _load_cookiecutter_context(template_dir)
+    if context is None:
+        typer.echo("  Cookiecutter variables: (none)")
+        typer.echo()
+        return
+
+    typer.echo(f"  Cookiecutter variables ({len(context)}):")
+    for key, value in context.items():
+        display = value if isinstance(value, str) else json.dumps(value)
+        # Truncate long values for readability.
+        if len(display) > 80:
+            display = display[:77] + "..."
+        typer.echo(f"    {key}: {display}")
+    typer.echo()
+
+
+def _handle_external_spec(args: argparse.Namespace) -> None:
+    """Run cookiecutter for external specs unless describe mode is requested."""
+    if args.describe:
+        typer.echo(
+            "--describe only supports bundled templates such as 'bub/default'.",
+            err=True,
+        )
+        raise typer.Exit(2)
+
+    source = TemplateSource(
+        template=args.spec,
+        directory=args.template,  # --template doubles as directory for external
+        checkout=args.checkout,
+    )
+    output_dir = args.output_dir if args.output_dir is not None else Path.cwd()
+    generated = _run_cookiecutter(source, output_dir=output_dir, no_input=args.no_input)
+    _print_created_next_steps(generated, output_dir=output_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -422,12 +512,7 @@ def create(ctx: typer.Context) -> None:
 
     # --- External spec (URL or absolute path) → passthrough to cookiecutter ---
     if args.spec and _is_external_spec(args.spec):
-        source = TemplateSource(
-            template=args.spec,
-            directory=args.template,  # --template doubles as directory for external
-            checkout=args.checkout,
-        )
-        _run_cookiecutter(source, output_dir=output_dir, no_input=args.no_input)
+        _handle_external_spec(args)
         return
 
     # --- Parse spec into (type, name) ---
@@ -467,7 +552,14 @@ def create(ctx: typer.Context) -> None:
         template_name,
         templates_root=templates_root,
     )
-    _run_cookiecutter(source, output_dir=output_dir, no_input=args.no_input)
+
+    # --- --describe: print template info without generating ---
+    if args.describe:
+        _describe_template(source, templates_root=templates_root)
+        return
+
+    generated = _run_cookiecutter(source, output_dir=output_dir, no_input=args.no_input)
+    _print_created_next_steps(generated, output_dir=output_dir)
 
 
 def _parse_new_args(ctx: typer.Context) -> argparse.Namespace:
@@ -486,11 +578,11 @@ def _split_spec(args: argparse.Namespace) -> tuple[str | None, str | None]:
     spec = args.spec
     if spec is None:
         return None, None
-    # "langchain/cli-remote" → ("langchain", "cli-remote")
+    # "bub/default" → ("bub", "default")
     if "/" in spec and not _is_external_spec(spec):
         parts = spec.split("/", 1)
         return parts[0], parts[1]
-    # "deepagents" → ("deepagents", None) — name resolved later
+    # "bub" → ("bub", None) — name resolved later
     return spec, None
 
 
@@ -503,6 +595,12 @@ def _validate_project_type(project_type: str) -> None:
         raise typer.Exit(2)
 
 
+def _print_unknown_template(project_type: str, template_name: str, *, templates_root: Path) -> None:
+    available = _list_templates(project_type, templates_root)
+    typer.echo(f"Template {project_type}/{template_name} was not found. Supported templates:", err=True)
+    _print_templates_table(project_type, available, _load_template_descriptions(templates_root))
+
+
 def _show_templates(project_type: str | None, *, checkout: str | None = None) -> None:
     if project_type is not None:
         _validate_project_type(project_type)
@@ -513,6 +611,26 @@ def _show_templates(project_type: str | None, *, checkout: str | None = None) ->
         return
     _print_templates_table(project_type, _list_templates(project_type, templates_root), descriptions)
     typer.echo()
+
+
+def _print_created_next_steps(generated: Path | None, *, output_dir: Path) -> None:
+    if generated is None:
+        return
+    display_path = _display_generated_path(generated, output_dir=output_dir)
+    typer.echo(f"Created {display_path}")
+    typer.echo()
+    typer.echo("Next:")
+    typer.echo(f"  cd {shlex.quote(display_path)}")
+    typer.echo("  agentseek info")
+    typer.echo("  agentseek task --list")
+    typer.echo("  agentseek doctor")
+
+
+def _display_generated_path(generated: Path, *, output_dir: Path) -> str:
+    try:
+        return str(generated.resolve().relative_to(output_dir.resolve()))
+    except ValueError:
+        return str(generated)
 
 
 __all__ = ["DEFAULT_TYPE", "KNOWN_TYPES", "REPO_URL", "TemplateSource", "app"]

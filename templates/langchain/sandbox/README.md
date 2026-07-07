@@ -12,6 +12,8 @@ The generated project includes:
   files, and interact with the filesystem inside an isolated sandbox.
 - **Frontend** — React + Vite chat UI with streaming tool-call cards, join &
   rejoin support for long-running sandbox tasks, and markdown rendering.
+- **Lifecycle** — an AgentSeek lifecycle v1 spec for `info`, `doctor`, `dev`,
+  and project setup tasks.
 
 ## Prerequisites
 
@@ -28,18 +30,25 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # 1. Scaffold
 uvx cookiecutter templates/langchain/sandbox
 
-# 2. Backend
+# 2. Configure
 cd <project_slug>
-cp .env.example .env        # fill in API keys
-uv venv --python 3.12 && source .venv/bin/activate
-uv pip install -e .
-langgraph dev --no-browser
+cp .env.example .env
+$EDITOR .env
 
-# 3. Frontend (separate terminal)
-cd frontend
-npm install
-npm run dev
+# 3. Install project dependencies
+uvx agentseek task backend
+uvx agentseek task frontend
+
+# 4. Inspect, check, and run the lifecycle
+uvx agentseek info
+uvx agentseek doctor
+uvx agentseek dev --dry-run
+uvx agentseek dev
 ```
+
+Run `uvx agentseek task --list` from the generated project to see setup tasks.
+Live HTTP checks are declared only in `.agentseek/lifecycle.toml` and run with
+`uvx agentseek doctor --live` after `uvx agentseek dev` is running.
 
 ## Cookiecutter variables
 

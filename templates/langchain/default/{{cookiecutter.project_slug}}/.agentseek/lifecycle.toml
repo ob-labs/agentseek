@@ -1,0 +1,92 @@
+version = 1
+template = "langchain/default"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["docker"]
+
+[paths]
+required = ["docker-compose.yml", "pyproject.toml", "frontend/package.json"]
+
+[env.BUB_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model identifier used by the generated LangChain agent."
+
+[env.BUB_API_KEY]
+required = true
+aliases = ["OPENAI_API_KEY"]
+description = "API key for the configured model provider."
+
+[env.BUB_API_BASE]
+required = false
+aliases = ["OPENAI_API_BASE", "OPENAI_BASE_URL"]
+description = "Optional OpenAI-compatible API base URL."
+
+[env.BUB_LANGCHAIN_SPEC]
+required = true
+default = "{{ cookiecutter.project_slug }}.demo_binding:build_spec"
+description = "Import path for the LangChain RunnableSpec loaded by Bub."
+
+[services.gateway]
+url = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
+
+[services.copilotkit]
+url = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/api/copilotkit"
+
+[services.frontend]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[services.phoenix]
+url = "http://127.0.0.1:6006"
+
+[services.seekdb]
+url = "mysql://127.0.0.1:2884/phoenix"
+
+[processes.stack]
+command = [
+  "sh",
+  "-lc",
+  "mkdir -p .agentseek/tmp; TMPDIR=${TMPDIR:-$PWD/.agentseek/tmp} docker compose up --build",
+]
+cwd = "."
+
+[checks.gateway]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent/health"
+timeout = 2
+attempts = 3
+
+[checks.copilotkit]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.copilotkit_port }}/health"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[checks.phoenix]
+type = "http"
+target = "http://127.0.0.1:6006"
+timeout = 2
+attempts = 10
+
+[tasks.setup]
+description = "Build the full compose stack."
+command = ["docker", "compose", "build"]
+cwd = "."
+
+[tasks.frontend]
+description = "Install frontend dependencies for non-compose local runs."
+command = ["npm", "install", "--prefix", "frontend"]
+cwd = "."
+
+[tasks.seekdb-skills]
+description = "Install recommended seekdb agent skills."
+command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]
+cwd = "."

@@ -3,7 +3,7 @@
 Cookiecutter template for an **agentic RAG** application running fully local
 with [OpenVINO](https://docs.openvino.ai/) via LangChain's official
 [langchain-huggingface](https://python.langchain.com/docs/integrations/llms/openvino)
-integration and [OceanBase/SeekDB](https://github.com/oceanbase/seekdb) as the
+integration and [OceanBase/seekdb](https://github.com/oceanbase/seekdb) as the
 vector store. No cloud API keys required.
 
 Uses the same `create_agent` + tool-calling pattern as `langchain/agentic-rag`,
@@ -40,16 +40,17 @@ graph = create_agent(model=model, tools=[retrieve], system_prompt=PROMPT)
 - **Frontend** — React + Vite chat UI with streaming tool-call cards and
   markdown rendering via `@langchain/react` `useStream`.
 - **Ingest CLI** — `uv run ingest` loads documents, embeds with OpenVINO, and
-  indexes into SeekDB.
+  indexes into seekdb.
 - **Model converter** — `uv run convert-models` downloads HuggingFace models
   and exports them to OpenVINO IR with INT4/INT8 weight compression.
 
 ## Prerequisites
 
 - **Python 3.10+** with [uv](https://docs.astral.sh/uv/)
+- **Node.js 20+** with npm (for the Vite frontend)
 - **Linux x86_64** (primary) or macOS x86_64 (via Rosetta)
 - **8+ GB RAM** (16 GB recommended for larger models)
-- **Docker** (for SeekDB)
+- **Docker** (for seekdb)
 
 ## Quick start
 
@@ -59,12 +60,18 @@ agentseek create langchain/agentic-rag-openvino        # scaffold the project
 cd <project_slug>
 cp .env.example .env
 uv sync
-uv run convert-models        # download + convert models (~15 min)
-docker compose up -d         # start SeekDB
-uv run ingest https://lilianweng.github.io/posts/2023-06-23-agent/
-uv run langgraph dev         # backend
-cd frontend && npm install && npm run dev  # frontend
+agentseek info
+agentseek task frontend      # install frontend dependencies
+agentseek doctor             # static lifecycle checks
+agentseek task models        # download + convert models (~15 min)
+agentseek task seekdb        # start seekdb in the background
+agentseek task ingest-sample
+agentseek dev                # seekdb + backend + frontend
 ```
+
+Use `agentseek dev --dry-run` to inspect the startup plan, `agentseek task --list`
+to see one-shot setup tasks, and `agentseek doctor --live` after `agentseek dev`
+is running to check the declared HTTP endpoints.
 
 ## Cookiecutter variables
 
@@ -75,7 +82,7 @@ cd frontend && npm install && npm run dev  # frontend
 | `llm_model_path` | ./models/tiny-llama-1b-chat/INT4_compressed_weights | Path to OpenVINO LLM |
 | `embedding_model_path` | ./models/bge-small-en-v1.5 | Path to OpenVINO embedding model |
 | `device` | CPU | OpenVINO device: CPU, GPU, or NPU |
-| `seekdb_db_name` | test | SeekDB database name |
+| `seekdb_db_name` | test | seekdb database name |
 | `vector_table_name` | rag_documents | Vector store table name |
 | `frontend_port` | 5174 | Frontend Vite dev server port |
 
@@ -89,7 +96,7 @@ cd frontend && npm install && npm run dev  # frontend
   decide when to search (same as cloud template).
 - **`optimum-cli export openvino`** for model conversion: standard HuggingFace
   tooling, supports INT4/INT8/FP16 weight compression.
-- **OceanBase/SeekDB** for vector storage: same production-grade DB as the
+- **OceanBase/seekdb** for vector storage: same production-grade DB as the
   cloud template.
 - **INT4 for LLM, FP32 for embeddings**: LLM benefits most from compression;
   embedding quality degrades with quantization.

@@ -8,6 +8,24 @@ dependencies = [
     "agentseek-langchain",
     "langchain>=1.0.0",
     "langchain-openai>=0.3.0",
+    "httpx[socks]>=0.28",
     "langgraph-cli[inmem]",
     "pydantic-settings>=2.0.0",
 ]
+
+[tool.uv.sources]
+{% if cookiecutter._agentseek_source_path %}
+agentseek-langchain = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-langchain", editable = true }
+{% else %}
+agentseek-langchain = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-langchain" }
+{% endif %}
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

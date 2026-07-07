@@ -1,4 +1,4 @@
-"""Connect agentseek to a remote LangGraph CLI agent."""
+"""Connect Bub to a remote LangGraph CLI agent."""
 
 from __future__ import annotations
 
