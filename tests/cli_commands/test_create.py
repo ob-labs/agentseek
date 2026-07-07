@@ -264,6 +264,14 @@ def _assert_next_steps(output: str, *, project_path: str, cd_path: str | None = 
     assert "agentseek doctor" in output
 
 
+def _assert_no_next_steps(output: str) -> None:
+    assert "Created " not in output
+    assert "Next:" not in output
+    assert "agentseek info" not in output
+    assert "agentseek task --list" not in output
+    assert "agentseek doctor" not in output
+
+
 def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
     captured: dict[str, object] = {}
 
@@ -371,6 +379,7 @@ def test_describe_prints_template_info(monkeypatch, tmp_path: Path) -> None:
     assert "Cookiecutter variables" in result.output
     assert "project_name" in result.output
     assert "project_slug" in result.output
+    _assert_no_next_steps(result.output)
     # cookiecutter must not have been called
     assert "called" not in captured
 
@@ -390,6 +399,7 @@ def test_describe_does_not_create_files(monkeypatch, tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.output
+    _assert_no_next_steps(result.output)
     # No files should have been created in the working directory.
     assert list(tmp_path.iterdir()) == []
 
@@ -421,6 +431,7 @@ def test_describe_external_specs_do_not_call_cookiecutter(
 
     assert result.exit_code == 2
     assert "--describe only supports bundled templates" in result.output
+    _assert_no_next_steps(result.output)
     assert list(tmp_path.iterdir()) == []
 
 
