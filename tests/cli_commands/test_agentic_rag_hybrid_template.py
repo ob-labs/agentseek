@@ -42,8 +42,8 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
     generated = out_dir / "my_hybrid_rag_agent"
 
     langgraph = json.loads((generated / "langgraph.json").read_text(encoding="utf-8"))
-    assert langgraph["graphs"]["hybrid-rag"] == "./src/my_hybrid_rag_agent/agent.py:graph"
-    assert langgraph["http"]["app"] == "./src/my_hybrid_rag_agent/routes.py:app"
+    assert langgraph["graphs"]["hybrid-rag"] == "my_hybrid_rag_agent.agent:graph"
+    assert langgraph["http"]["app"] == "my_hybrid_rag_agent.routes:app"
     assert langgraph["http"]["middleware_order"] == "middleware_first"
 
     lifecycle = tomllib.loads((generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
