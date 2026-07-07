@@ -128,6 +128,14 @@ def test_template_renders_without_unrendered_jinja(
         assert "agentseek task seekdb-skills" in readme_text
         assert "## Agent Skills" in readme_text
 
+    if (type_name, template_name) == ("langchain", "default"):
+        env_text = (generated / ".env.example").read_text(encoding="utf-8")
+        compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+        assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
+        assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
+        assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
+        assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
+
     frontend_pkg = generated / "frontend" / "package.json"
     if frontend_pkg.is_file():
         try:

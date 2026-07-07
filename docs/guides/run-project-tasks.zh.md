@@ -52,7 +52,7 @@ added 945 packages, and audited 946 packages in 1m
 有些模板会暴露可选任务，用来为编码 Agent 安装外部技能包。这仍然是
 项目任务，不是新的 AgentSeek 根命令。
 
-seekdb 相关模板会暴露：
+OceanBase seekdb 相关模板会暴露：
 
 ```bash
 agentseek task seekdb-skills
@@ -64,8 +64,8 @@ agentseek task seekdb-skills
 npx skills add oceanbase/seekdb-ecology-plugins --all
 ```
 
-用途：为支持的编码 Agent 安装推荐的 seekdb 技能，帮助处理 seekdb
-搭建、使用和排障。
+用途：为支持的编码 Agent 安装推荐的 OceanBase seekdb 技能，帮助处理
+OceanBase seekdb 搭建、使用和排障。
 
 前置条件：Node.js 与 `npx`、访问 npm registry 和技能包仓库的网络、
 以及外部 `skills` CLI 支持的编码 Agent。命令语法已在 2026-07-07
