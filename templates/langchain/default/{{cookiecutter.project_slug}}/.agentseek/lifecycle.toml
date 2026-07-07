@@ -87,6 +87,6 @@ command = ["npm", "install", "--prefix", "frontend"]
 cwd = "."
 
 [tasks.seekdb-skills]
-description = "Install recommended seekdb agent skills."
+description = "Install recommended OceanBase seekdb agent skills."
 command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]
 cwd = "."

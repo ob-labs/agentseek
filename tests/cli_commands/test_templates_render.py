@@ -121,7 +121,7 @@ def test_template_renders_without_unrendered_jinja(
     assert not (generated / "duties.py").exists()
     if (type_name, template_name) in seekdb_skill_templates:
         task = lifecycle_data["tasks"]["seekdb-skills"]
-        assert task["description"] == "Install recommended seekdb agent skills."
+        assert task["description"] == "Install recommended OceanBase seekdb agent skills."
         assert task["command"] == seekdb_skill_command
         readme = generated / "README.md"
         readme_text = readme.read_text(encoding="utf-8")
