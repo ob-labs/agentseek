@@ -122,5 +122,5 @@ description = "Ingest the default sample article after models and seekdb are rea
 command = ["uv", "run", "ingest", "https://lilianweng.github.io/posts/2023-06-23-agent/"]
 
 [tasks.seekdb-skills]
-description = "Install recommended seekdb agent skills."
+description = "Install recommended OceanBase seekdb agent skills."
 command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]

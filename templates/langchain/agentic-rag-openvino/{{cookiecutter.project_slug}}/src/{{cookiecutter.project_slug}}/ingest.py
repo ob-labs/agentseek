@@ -1,4 +1,4 @@
-"""Document ingestion CLI — indexes into OceanBase/seekdb with OpenVINO embeddings.
+"""Document ingestion CLI — indexes into OceanBase seekdb with OpenVINO embeddings.
 
 Usage:
     uv run ingest path/to/docs/

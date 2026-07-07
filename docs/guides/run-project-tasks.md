@@ -65,8 +65,9 @@ That task runs:
 npx skills add oceanbase/seekdb-ecology-plugins --all
 ```
 
-Purpose: install recommended seekdb skills for supported coding agents so the
-agent can help with seekdb setup, usage, and troubleshooting.
+Purpose: install recommended OceanBase seekdb skills for supported coding
+agents so the agent can help with OceanBase seekdb setup, usage, and
+troubleshooting.
 
 Prerequisites: Node.js with `npx`, network access to the npm registry and the
 skill pack repository, and a coding agent supported by the external `skills`

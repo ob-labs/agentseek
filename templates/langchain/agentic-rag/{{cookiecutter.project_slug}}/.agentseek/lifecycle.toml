@@ -92,5 +92,5 @@ description = "Start the bundled seekdb container."
 command = ["docker", "compose", "up", "-d"]
 
 [tasks.seekdb-skills]
-description = "Install recommended seekdb agent skills."
+description = "Install recommended OceanBase seekdb agent skills."
 command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]
