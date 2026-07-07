@@ -4,13 +4,12 @@ name = "{{ cookiecutter.project_name }}"
 env_file = ".env"
 
 [tools]
-required = ["uv", "node", "npm", "docker"]
+required = ["uv", "node", "npm"]
 
 [paths]
 required = [
   "pyproject.toml",
   "langgraph.json",
-  "docker-compose.yml",
   "frontend/package.json",
   "frontend/node_modules",
 ]
@@ -26,20 +25,10 @@ default = "{{ cookiecutter.default_model }}"
 description = "Model id passed to LangChain chat model initialization."
 aliases = ["BUB_MODEL"]
 
-[env.SEEKDB_HOST]
+[env.SEEKDB_PATH]
 required = true
-default = "127.0.0.1"
-description = "SeekDB host used by the hybrid image store."
-
-[env.SEEKDB_PORT]
-required = true
-default = "2881"
-description = "SeekDB MySQL-compatible port."
-
-[env.SEEKDB_USER]
-required = true
-default = "root"
-description = "SeekDB user."
+default = "{{ cookiecutter.seekdb_path }}"
+description = "Embedded SeekDB data directory used through langchain-oceanbase. Defaults outside the project tree to avoid LangGraph dev reloads while indexing."
 
 [env.SEEKDB_DB_NAME]
 required = true
@@ -57,11 +46,8 @@ url = "http://127.0.0.1:2024"
 [services.frontend]
 url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 
-[processes.seekdb]
-command = ["docker", "compose", "up", "seekdb"]
-
 [processes.backend]
-command = ["sh", "-lc", "i=0; until docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'; do i=$((i + 1)); if [ \"$i\" -ge 60 ]; then exit 1; fi; sleep 2; done && uv run langgraph dev --no-browser"]
+command = ["uv", "run", "langgraph", "dev", "--no-browser"]
 
 [processes.frontend]
 command = ["npm", "run", "dev"]
@@ -94,8 +80,8 @@ description = "Install frontend dependencies."
 command = ["npm", "install", "--prefix", "frontend"]
 
 [tasks.seekdb]
-description = "Start the bundled SeekDB container."
-command = ["docker", "compose", "up", "-d"]
+description = "Prepare the embedded SeekDB data directory."
+command = ["uv", "run", "python", "-c", "from {{ cookiecutter.project_slug }}.settings import get_settings; s=get_settings(); s.seekdb_path.mkdir(parents=True, exist_ok=True); print(f'Embedded SeekDB data dir ready: {s.seekdb_path}')"]
 
 [tasks.ingest-sample]
 description = "Index the built-in hybrid-search starter image pack."

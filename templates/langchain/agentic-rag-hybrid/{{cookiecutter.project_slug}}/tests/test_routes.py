@@ -14,14 +14,12 @@ from {{ cookiecutter.project_slug }}.settings import Settings
 
 def settings_for(tmp_path: Path, *, max_top_k: int = 3) -> Settings:
     return Settings(
-        seekdb_host="127.0.0.1",
-        seekdb_port="2881",
-        seekdb_user="root",
-        seekdb_password="",
+        seekdb_path=tmp_path / "seekdb",
         seekdb_db_name="test",
         image_table_name="images",
-        embedding_type="dashscope",
+        embedding_type="siliconflow",
         embedding_api_key="test",
+        embedding_base_url="https://example.test/v1",
         embedding_model="test",
         embedding_dimension=4,
         vlm_api_key="",
@@ -133,12 +131,14 @@ def test_media_route_rejects_paths_outside_allowed_roots(
     outside = tmp_path / "outside.png"
     outside.write_bytes(b"fake image")
 
-    class FakeCollection:
-        def get(self, **kwargs):
-            return {"metadatas": [{"file_path": str(outside), "file_name": "outside.png"}]}
+    class FakeVectorStore:
+        def get_by_ids(self, ids):
+            from langchain_core.documents import Document
+
+            return [Document(id="escape", page_content="", metadata={"file_path": str(outside), "file_name": "outside.png"})]
 
     class FakeStore:
-        collection = FakeCollection()
+        vector_store = FakeVectorStore()
 
         def __init__(self, **kwargs) -> None:
             pass

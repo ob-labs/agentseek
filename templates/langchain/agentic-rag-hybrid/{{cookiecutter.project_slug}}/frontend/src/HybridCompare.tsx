@@ -2,13 +2,43 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import { compareHybridModes, resolveCustomUrl, uploadArchive } from "./api";
 
 const modes = ["semantic", "keyword", "exact", "balanced"];
+const modeLabels: Record<string, string> = {
+  semantic: "Visual meaning",
+  keyword: "Tags and captions",
+  exact: "Literal match",
+  balanced: "Fused ranking",
+};
 
 function formatWeights(weights: any) {
   return `V ${Math.round(weights.vector * 100)} / S ${Math.round(weights.sparse * 100)} / F ${Math.round(weights.fulltext * 100)} / M ${Math.round(weights.metadata * 100)}`;
 }
 
+function formatError(error: string) {
+  if (error.includes("Compare failed: 400")) {
+    return "Enter a non-empty query before comparing.";
+  }
+  if (error.includes("Compare failed") || error.includes("Upload failed")) {
+    return "Search failed. Check SeekDB and embedding credentials, then try again.";
+  }
+  return error;
+}
+
+function EvidenceTerms({ terms }: { terms?: string[] }) {
+  const visibleTerms = (terms ?? []).filter(Boolean).slice(0, 6);
+  if (!visibleTerms.length) {
+    return <div className="evidence-terms evidence-terms--empty">No lexical evidence</div>;
+  }
+  return (
+    <div className="evidence-terms" aria-label="Matched evidence terms">
+      {visibleTerms.map((term) => (
+        <span key={term}>{term}</span>
+      ))}
+    </div>
+  );
+}
+
 export default function HybridCompare() {
-  const [query, setQuery] = useState("similar shoes with visible blue logo");
+  const [query, setQuery] = useState("blue shoe with visible logo");
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
@@ -16,8 +46,13 @@ export default function HybridCompare() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
+    const text = query.trim();
+    if (!text) {
+      setError("Enter a query before comparing.");
+      return;
+    }
     try {
-      setData(await compareHybridModes(query, 5));
+      setData(await compareHybridModes(text, 5));
     } catch (err) {
       setError(String(err));
     }
@@ -39,9 +74,21 @@ export default function HybridCompare() {
 
   return (
     <section className="compare">
+      <header className="workspace-panel workspace-panel--compare">
+        <div>
+          <p className="section-kicker">Compare modes</p>
+          <h2>One query, four ranking strategies.</h2>
+          <p>Use this view when you want to see which signal changed the order.</p>
+        </div>
+      </header>
+
       <div className="compare__toolbar">
         <form className="compare__form" onSubmit={onSubmit}>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} />
+          <input
+            aria-label="Search query"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
           <button type="submit">Compare</button>
         </form>
         <label className="upload-control">
@@ -50,32 +97,41 @@ export default function HybridCompare() {
         </label>
       </div>
       {uploadStatus && <p className="status">{uploadStatus}</p>}
-      {error && <p className="error">{error}</p>}
-      {data && (
-        <div className="compare__grid">
-          {modes.map((mode) => {
-            const trace = data[mode];
-            return (
-              <article className="mode" key={mode}>
-                <header>
-                  <strong>{mode}</strong>
-                  <span>{formatWeights(trace.weights)}</span>
-                </header>
-                {(trace.hits ?? []).map((hit: any) => (
-                  <div className="result" key={hit.image_id}>
-                    <img src={resolveCustomUrl(hit.image_url)} alt="" />
-                    <div>
-                      <strong>{hit.file_name}</strong>
-                      <p>{hit.caption}</p>
-                      <small>fused {hit.fused_score?.toFixed?.(3) ?? "n/a"}</small>
-                    </div>
-                  </div>
-                ))}
-              </article>
-            );
-          })}
+      {error && (
+        <div className="error-panel" role="alert">
+          <strong>{formatError(error)}</strong>
+          <span>{error}</span>
         </div>
       )}
+      <div className="compare__grid">
+        {modes.map((mode) => {
+          const trace = data?.[mode];
+          return (
+            <article className="mode" key={mode}>
+              <header>
+                <span>{modeLabels[mode]}</span>
+                <strong>{mode}</strong>
+              </header>
+              <div className="weight-rail">
+                <span className={`weight-rail__bar weight-rail__bar--${mode}`} />
+              </div>
+              <small>{trace?.weights ? formatWeights(trace.weights) : "Run Compare to populate"}</small>
+              {(trace?.hits ?? []).map((hit: any) => (
+                <div className="result" key={hit.image_id}>
+                  <img src={resolveCustomUrl(hit.image_url)} alt="" />
+                  <div>
+                    <strong>{hit.file_name}</strong>
+                    <p>{hit.caption}</p>
+                    <EvidenceTerms terms={hit.matched_terms} />
+                    <small>fused {hit.fused_score?.toFixed?.(3) ?? "n/a"}</small>
+                  </div>
+                </div>
+              ))}
+              {!trace && <p className="empty-lane">Results will appear here after a DB-backed search.</p>}
+            </article>
+          );
+        })}
+      </div>
     </section>
   );
 }

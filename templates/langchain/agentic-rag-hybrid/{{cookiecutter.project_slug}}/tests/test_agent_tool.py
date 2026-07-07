@@ -41,14 +41,12 @@ def test_serialize_trace_includes_developer_diagnostics() -> None:
 
 def test_prepare_search_request_clamps_top_k_and_rejects_empty_query(tmp_path) -> None:
     settings = Settings(
-        seekdb_host="127.0.0.1",
-        seekdb_port="2881",
-        seekdb_user="root",
-        seekdb_password="",
+        seekdb_path=tmp_path / "seekdb",
         seekdb_db_name="test",
         image_table_name="images",
-        embedding_type="dashscope",
+        embedding_type="siliconflow",
         embedding_api_key="test",
+        embedding_base_url="https://example.test/v1",
         embedding_model="test",
         embedding_dimension=4,
         vlm_api_key="",

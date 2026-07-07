@@ -50,6 +50,7 @@ def weighted_fuse(
 ) -> list[SearchHit]:
     by_id: dict[str, SearchHit] = {}
     scores: dict[str, dict[str, float]] = {}
+    matched_terms: dict[str, list[str]] = {}
 
     for route, route_hits, weight in (
         ("vector", vector_hits, weights.vector),
@@ -60,6 +61,10 @@ def weighted_fuse(
         for rank, hit in enumerate(route_hits, start=1):
             by_id.setdefault(hit.image_id, hit)
             scores.setdefault(hit.image_id, {})[route] = _route_score(rank) * weight
+            terms = matched_terms.setdefault(hit.image_id, [])
+            for term in hit.matched_terms:
+                if term not in terms:
+                    terms.append(term)
 
     ranked: list[SearchHit] = []
     for image_id, route_scores in scores.items():
@@ -73,6 +78,7 @@ def weighted_fuse(
                 sparse_score=route_scores.get("sparse"),
                 fulltext_score=route_scores.get("fulltext"),
                 metadata_score=route_scores.get("metadata"),
+                matched_terms=matched_terms.get(image_id, hit.matched_terms),
             )
         )
 

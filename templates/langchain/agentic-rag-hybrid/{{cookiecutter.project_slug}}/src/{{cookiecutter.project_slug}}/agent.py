@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import warnings
 from dataclasses import asdict
 from typing import Any, Literal
 
@@ -68,17 +67,6 @@ if DEFAULT_MODEL_PROVIDER_RAW:
 else:
     MODEL_PROVIDER = prefixed_model_provider or _normalize_provider(DEFAULT_MODEL_PROVIDER_DEFAULT)
 
-_stream_chunk_timeout_env = os.getenv("LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S")
-STREAM_CHUNK_TIMEOUT_S: float | None = 300.0
-if _stream_chunk_timeout_env not in (None, ""):
-    try:
-        _parsed_timeout = float(_stream_chunk_timeout_env)
-    except ValueError:
-        warnings.warn("Ignoring invalid LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S value.", stacklevel=2)
-    else:
-        STREAM_CHUNK_TIMEOUT_S = None if _parsed_timeout <= 0 else _parsed_timeout
-
-
 def _serialize_trace(trace: SearchTrace) -> tuple[str, dict[str, Any]]:
     lines = [
         f"Hybrid search mode: {trace.mode}",
@@ -118,11 +106,9 @@ MODEL_INIT_KWARGS: dict[str, object] = {
     "model_provider": MODEL_PROVIDER,
 }
 if MODEL_PROVIDER == "openai":
-    if _nonempty_env("OPENAI_API_KEY"):
-        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("OPENAI_API_KEY")
-    if _nonempty_env("OPENAI_API_BASE"):
-        MODEL_INIT_KWARGS["base_url"] = _nonempty_env("OPENAI_API_BASE")
-    MODEL_INIT_KWARGS["stream_chunk_timeout"] = STREAM_CHUNK_TIMEOUT_S
+    if _nonempty_env("OPENAI_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY"):
+        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("OPENAI_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY")
+    MODEL_INIT_KWARGS["base_url"] = _nonempty_env("OPENAI_API_BASE") or "https://api.siliconflow.cn/v1"
 elif MODEL_PROVIDER == "anthropic":
     if _nonempty_env("ANTHROPIC_API_KEY"):
         MODEL_INIT_KWARGS["api_key"] = _nonempty_env("ANTHROPIC_API_KEY")

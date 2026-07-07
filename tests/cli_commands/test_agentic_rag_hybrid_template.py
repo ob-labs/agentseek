@@ -6,8 +6,10 @@ import json
 import shutil
 import subprocess
 import tomllib
+import zipfile
 from pathlib import Path
 
+import yaml
 from cookiecutter.main import cookiecutter
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -48,7 +50,7 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
 
     lifecycle = tomllib.loads((generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
     assert lifecycle["template"] == "langchain/agentic-rag-hybrid"
-    assert set(lifecycle["processes"]) == {"seekdb", "backend", "frontend"}
+    assert set(lifecycle["processes"]) == {"backend", "frontend"}
     assert lifecycle["checks"]["custom_routes"]["target"] == "http://127.0.0.1:2024/custom/health"
 
 
@@ -59,6 +61,9 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     lab = (project_dir / "frontend" / "src" / "SampleLab.tsx").read_text(encoding="utf-8")
     middleware = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "middleware.py").read_text(encoding="utf-8")
     routes = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "routes.py").read_text(encoding="utf-8")
+    store = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "store.py").read_text(encoding="utf-8")
+    env_example = (project_dir / ".env.example").read_text(encoding="utf-8")
+    template_config = json.loads((TEMPLATE_DIR / "cookiecutter.json").read_text(encoding="utf-8"))
 
     for mode in ("semantic", "keyword", "exact", "balanced"):
         assert mode in guide
@@ -66,3 +71,45 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     assert "Index starter pack" in lab
     assert "/custom/sample-pack/ingest" in routes
     assert "/custom/compare" in routes
+    assert "OceanbaseVectorStore" in store
+    assert "import pyseekdb" not in store
+    assert "SILICONFLOW_API_KEY" in env_example
+    assert "SEEKDB_PATH={{ cookiecutter.seekdb_path }}" in env_example
+    assert "EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1" in env_example
+    assert template_config["default_model"] == "openai:zai-org/GLM-5.2"
+    assert template_config["embedding_model"] == "Qwen/Qwen3-VL-Embedding-8B"
+    assert template_config["vlm_model"] == "zai-org/GLM-4.5V"
+
+
+def test_hybrid_template_sample_cases_explain_mode_specific_winners() -> None:
+    project_dir = TEMPLATE_DIR / "{{cookiecutter.project_slug}}"
+    manifest = yaml.safe_load((project_dir / "examples" / "sample_pack" / "manifest.yml").read_text(encoding="utf-8"))
+    case_data = yaml.safe_load((project_dir / "examples" / "hybrid_cases.yml").read_text(encoding="utf-8"))
+    image_ids = {item["id"] for item in manifest["images"]}
+    modes = {"semantic", "keyword", "exact", "balanced"}
+
+    for case in case_data["cases"]:
+        winners = case["expected_top_by_mode"]
+        assert set(winners) == modes
+        assert set(winners.values()).issubset(image_ids)
+        assert len(set(winners.values())) >= 2
+
+
+def test_hybrid_template_sample_pack_zip_matches_manifest() -> None:
+    project_dir = TEMPLATE_DIR / "{{cookiecutter.project_slug}}"
+    manifest = yaml.safe_load((project_dir / "examples" / "sample_pack" / "manifest.yml").read_text(encoding="utf-8"))
+    image_dir = project_dir / "examples" / "sample_pack" / "images"
+    with zipfile.ZipFile(project_dir / "examples" / "sample_pack" / "sample_pack.zip") as archive:
+        names = set(archive.namelist())
+        zipped_images = {
+            name.removeprefix("images/"): archive.read(name)
+            for name in names
+            if name.startswith("images/")
+        }
+
+    assert "manifest.yml" in names
+    for item in manifest["images"]:
+        assert f"images/{item['file_name']}" in names
+        image_bytes = (image_dir / item["file_name"]).read_bytes()
+        assert image_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+        assert zipped_images[item["file_name"]] == image_bytes

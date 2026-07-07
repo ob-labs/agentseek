@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import base64
-from http import HTTPStatus
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from .settings import Settings, get_settings
 
@@ -13,31 +12,43 @@ class EmbeddingEngine:
         self.settings = settings or get_settings()
 
     def embed_image(self, image_path: Path) -> list[float]:
-        if self.settings.embedding_type != "dashscope":
+        if self.settings.embedding_type != "siliconflow":
             raise ValueError(f"Unsupported EMBEDDING_TYPE: {self.settings.embedding_type}")
-        return self._embed_dashscope({"image": self._data_uri(image_path)})
+        return self._embed_siliconflow({"image": self._data_uri(image_path)})
 
     def embed_text(self, text: str) -> list[float]:
-        if self.settings.embedding_type != "dashscope":
+        if self.settings.embedding_type != "siliconflow":
             raise ValueError(f"Unsupported EMBEDDING_TYPE: {self.settings.embedding_type}")
-        return self._embed_dashscope({"text": text})
+        return self._embed_siliconflow(text)
 
-    def _embed_dashscope(self, payload: dict[str, str]) -> list[float]:
-        import dashscope
-        from dashscope import MultiModalEmbedding
-
+    def _embed_siliconflow(self, input_payload: str | list[dict[str, Any]]) -> list[float]:
         if not self.settings.embedding_api_key:
-            raise RuntimeError("EMBEDDING_API_KEY is required for DashScope embeddings.")
-        dashscope.api_key = self.settings.embedding_api_key
-        response = MultiModalEmbedding.call(
-            model=self.settings.embedding_model,
-            input=cast(Any, [payload]),
-            dimension=self.settings.embedding_dimension,
+            raise RuntimeError("SILICONFLOW_API_KEY or EMBEDDING_API_KEY is required for SiliconFlow embeddings.")
+
+        import httpx
+
+        payload: dict[str, Any] = {
+            "model": self.settings.embedding_model,
+            "input": input_payload,
+            "encoding_format": "float",
+        }
+        if self.settings.embedding_dimension > 0:
+            payload["dimensions"] = self.settings.embedding_dimension
+        response = httpx.post(
+            f"{self.settings.embedding_base_url.rstrip('/')}/embeddings",
+            headers={
+                "Authorization": f"Bearer {self.settings.embedding_api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=60,
         )
-        if response.status_code != HTTPStatus.OK:
-            message = getattr(response, "message", str(response))
-            raise RuntimeError(f"DashScope embedding failed: {message}")
-        return list(response.output["embeddings"][0]["embedding"])
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise RuntimeError(f"SiliconFlow embedding failed: {response.text}") from exc
+        data = response.json()
+        return list(data["data"][0]["embedding"])
 
     @staticmethod
     def _data_uri(path: Path) -> str:

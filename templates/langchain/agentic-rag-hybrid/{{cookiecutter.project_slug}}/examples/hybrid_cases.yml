@@ -1,21 +1,81 @@
 cases:
-  - id: semantic_visual
-    query: "outdoor animal with brown fur"
-    recommended_mode: semantic
-    expected_effect: "Vector search should help when the wording does not exactly match the caption."
-    what_to_notice: "The retriever and horse images should stay visible even when exact words differ."
-  - id: exact_label
-    query: "golden retriever"
-    recommended_mode: exact
-    expected_effect: "Full-text should help when the exact category appears in generated captions."
-    what_to_notice: "The exact mode should promote the image whose caption contains golden retriever."
-  - id: keyword_catalog
-    query: "red product label"
-    recommended_mode: keyword
-    expected_effect: "Keyword mode should promote captions and metadata with the same visible terms."
-    what_to_notice: "The red tea label should outrank visually similar packaging with different label words."
-  - id: mixed_intent
-    query: "similar shoes with visible blue logo"
+  - id: animal_keyword_rescue
+    query: "animal outdoors brown fur"
     recommended_mode: balanced
-    expected_effect: "Balanced mode should combine visual similarity with caption terms."
-    what_to_notice: "Balanced mode should keep sneaker visuals while rewarding the blue logo keyword."
+    expected_effect: "Balanced mode can recover the animal scene when the visual embedding over-focuses on brown fur texture."
+    what_to_notice: "The coat is a texture trap; the horse has the animal and outdoor context."
+    expected_top_by_mode:
+      semantic: brown_fur_coat
+      keyword: brown_horse_field
+      exact: brown_horse_field
+      balanced: brown_horse_field
+  - id: exact_label
+    query: "golden dog park"
+    recommended_mode: exact
+    expected_effect: "Exact mode should pin the image whose caption and metadata contain the literal dog and park terms."
+    what_to_notice: "The visual route can drift on simple generated images; exact text pulls the intended dog scene back to the top."
+    expected_top_by_mode:
+      semantic: construction_helmet
+      keyword: golden_dog_park
+      exact: golden_dog_park
+      balanced: golden_dog_park
+  - id: keyword_catalog
+    query: "red product tea label"
+    recommended_mode: keyword
+    expected_effect: "Keyword mode should reward product and label metadata, while semantic mode can prefer packaging that looks similar but has different label words."
+    what_to_notice: "The red fragile sticker is visually red, but the tea package has the catalog terms."
+    expected_top_by_mode:
+      semantic: red_fragile_sticker
+      keyword: red_tea_label
+      exact: red_tea_label
+      balanced: red_tea_label
+  - id: logo_metadata
+    query: "blue logo"
+    recommended_mode: keyword
+    expected_effect: "Keyword mode should prefer the catalog item whose metadata and visible text both contain the logo phrase."
+    what_to_notice: "The mug is the strongest literal blue-logo item; this case is useful for checking metadata and text evidence pills."
+    expected_top_by_mode:
+      semantic: glass_water_bottle_table
+      keyword: blue_logo_mug
+      exact: blue_logo_mug
+      balanced: blue_logo_mug
+  - id: shipping_label
+    query: "fragile shipping label A17"
+    recommended_mode: balanced
+    expected_effect: "Balanced mode should combine the cardboard-box visual, the barcode-label cue, and the exact FRAGILE A17 text."
+    what_to_notice: "The plain box has the right object, the shelf has A17, and the sticker has FRAGILE; only one image has all three."
+    expected_top_by_mode:
+      semantic: glass_water_bottle_table
+      keyword: fragile_shipping_a17
+      exact: fragile_shipping_a17
+      balanced: fragile_shipping_a17
+  - id: overdue_invoice
+    query: "paper invoice with red overdue stamp"
+    recommended_mode: exact
+    expected_effect: "Exact mode should promote the invoice document that contains the business terms instead of the visually strong stamp-only near miss."
+    what_to_notice: "The stamp-only card is visually close, but the invoice has the full document context."
+    expected_top_by_mode:
+      semantic: red_overdue_stamp
+      keyword: invoice_overdue_q4
+      exact: invoice_overdue_q4
+      balanced: red_overdue_stamp
+  - id: visual_bottle
+    query: "recycle glass bottle"
+    recommended_mode: semantic
+    expected_effect: "Semantic mode should favor the real bottle object, while keyword-heavy modes are intentionally attracted to the poster text."
+    what_to_notice: "The poster contains the words RECYCLE GLASS BOTTLE; the real bottle is the intended visual object."
+    expected_top_by_mode:
+      semantic: glass_water_bottle_table
+      keyword: recycling_bottle_poster
+      exact: recycling_bottle_poster
+      balanced: glass_water_bottle_table
+  - id: warning_sign
+    query: "yellow warning triangle"
+    recommended_mode: balanced
+    expected_effect: "Balanced mode should combine the yellow visual cue, triangle geometry, and exact CAUTION/sign wording."
+    what_to_notice: "The tea box and helmet are yellow, and the safety manual has related safety words, but the warning triangle has the full intent."
+    expected_top_by_mode:
+      semantic: construction_helmet
+      keyword: yellow_warning_triangle
+      exact: yellow_warning_triangle
+      balanced: yellow_warning_triangle

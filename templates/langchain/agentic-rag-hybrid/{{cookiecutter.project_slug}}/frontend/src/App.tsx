@@ -110,10 +110,18 @@ function ChatExperience() {
 
   return (
     <section className="chat-shell">
+      <header className="workspace-panel workspace-panel--chat">
+        <div>
+          <p className="section-kicker">Ask agent</p>
+          <h2>Let LangGraph choose the retrieval path.</h2>
+          <p>Tool cards expose the hybrid trace when the agent searches indexed images.</p>
+        </div>
+      </header>
+
       <section className="chat" aria-label="Conversation">
         {rows.length === 0 && (
           <p className="hint">
-            Ask about indexed images, visible objects, labels, captions, or metadata.
+            Try: Which image has a blue logo, and why did the agent choose it?
           </p>
         )}
         {rows.map((row) =>
@@ -149,7 +157,7 @@ function ChatExperience() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about an indexed image or label"
+          placeholder="Ask about an indexed image, label, or visual detail"
           disabled={stream.isLoading}
         />
         <button type="submit" disabled={stream.isLoading || !input.trim()}>
@@ -162,13 +170,38 @@ function ChatExperience() {
 
 export default function App() {
   const [tab, setTab] = useState<"lab" | "compare" | "chat">("lab");
+  const tabs = [
+    { id: "lab", label: "Guided lab" },
+    { id: "compare", label: "Compare modes" },
+    { id: "chat", label: "Ask agent" },
+  ] as const;
 
   return (
-    <main>
-      <nav className="tabs">
-        <button className={tab === "lab" ? "active" : ""} onClick={() => setTab("lab")}>Lab</button>
-        <button className={tab === "compare" ? "active" : ""} onClick={() => setTab("compare")}>Compare</button>
-        <button className={tab === "chat" ? "active" : ""} onClick={() => setTab("chat")}>Chat</button>
+    <main className="app-shell">
+      <header className="app-header">
+        <div className="app-title">
+          <p className="eyebrow">Agentic hybrid RAG</p>
+          <h1>Hybrid image search lab</h1>
+        </div>
+        <div className="signal-strip" aria-label="Retrieval signals">
+          <span className="signal-chip signal-chip--vector">vector</span>
+          <span className="signal-chip signal-chip--text">keyword</span>
+          <span className="signal-chip signal-chip--exact">exact</span>
+          <span className="signal-chip signal-chip--meta">metadata</span>
+        </div>
+      </header>
+
+      <nav className="tabs" aria-label="Hybrid RAG workspace">
+        {tabs.map((item) => (
+          <button
+            className={tab === item.id ? "active" : ""}
+            key={item.id}
+            onClick={() => setTab(item.id)}
+            type="button"
+          >
+            {item.label}
+          </button>
+        ))}
       </nav>
 
       {tab === "lab" && <SampleLab />}

@@ -130,9 +130,8 @@ def compare(query: str, top_k: int = 5) -> dict[str, object]:
 def image(image_id: str) -> FileResponse:
     settings = get_settings()
     store = HybridImageStore(settings=settings)
-    result = store.collection.get(ids=[image_id], include=["metadatas"])
-    metadatas = result.get("metadatas", [])
-    if not metadatas:
+    docs = store.vector_store.get_by_ids([image_id])
+    if not docs:
         raise HTTPException(status_code=404, detail="Image not found")
-    file_path = _servable_image_path(metadatas[0].get("file_path", ""), settings)
+    file_path = _servable_image_path(docs[0].metadata.get("file_path", ""), settings)
     return FileResponse(file_path)

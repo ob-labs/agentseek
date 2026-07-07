@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
+from collections import defaultdict, deque
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 import yaml
 
 from .embeddings import EmbeddingEngine, caption_image
@@ -22,6 +26,69 @@ def _image_id(path: Path) -> str:
 
 def _query_terms(query: str) -> list[str]:
     return list(dict.fromkeys(re.findall(r"\w+", query.lower())))
+
+
+def _positive_tags(tags: Any) -> list[str]:
+    if isinstance(tags, str):
+        raw_tags = tags.split(",")
+    elif isinstance(tags, list):
+        raw_tags = [str(tag) for tag in tags]
+    else:
+        raw_tags = []
+
+    return [
+        tag.strip()
+        for tag in raw_tags
+        if tag.strip() and not tag.strip().lower().startswith(("not ", "no "))
+    ]
+
+
+def _metadata_search_text(metadata: dict[str, Any]) -> str:
+    fields: list[str] = []
+    for key, value in metadata.items():
+        if key not in {"file_name", "tags", "manifest_id"}:
+            continue
+        if key == "tags":
+            fields.extend(_positive_tags(value))
+        else:
+            fields.append(str(value))
+    return " ".join(fields)
+
+
+def _document_search_text(document: Document) -> str:
+    metadata = dict(document.metadata)
+    return " ".join(
+        [
+            document.page_content,
+            str(metadata.get("caption", "")),
+            " ".join(_positive_tags(metadata.get("tags", ""))),
+            str(metadata.get("manifest_id", "")),
+        ]
+    ).lower()
+
+
+def _term_score(text: str, terms: list[str], query: str) -> tuple[float, list[str]]:
+    matched: list[str] = []
+    score = 0.0
+    for term in terms:
+        occurrences = len(re.findall(rf"\b{re.escape(term)}\b", text))
+        if occurrences:
+            matched.append(term)
+            score += min(occurrences, 3)
+    if query.lower() in text:
+        score += len(terms)
+    if terms:
+        score += len(matched) / len(terms)
+    return score, matched
+
+
+def _sparse_vector(text: str) -> dict[int, float]:
+    vector: dict[int, float] = {}
+    for term in _query_terms(text):
+        digest = hashlib.sha1(term.encode("utf-8")).hexdigest()
+        index = (int(digest[:8], 16) % 50_000) + 1
+        vector[index] = vector.get(index, 0.0) + 1.0
+    return vector
 
 
 def _caption_manifest(directory: Path) -> dict[str, dict[str, Any]]:
@@ -67,73 +134,100 @@ def _format_trace(
     )
 
 
+class HybridImageEmbeddings(Embeddings):
+    """LangChain embedding adapter that lets image ingest store captions as text."""
+
+    def __init__(self, engine: EmbeddingEngine) -> None:
+        self.engine = engine
+        self._staged_image_paths: dict[str, deque[Path]] = defaultdict(deque)
+
+    def stage_image_document(self, page_content: str, image_path: Path) -> None:
+        self._staged_image_paths[page_content].append(image_path)
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        vectors: list[list[float]] = []
+        for text in texts:
+            staged = self._staged_image_paths.get(text)
+            if staged:
+                vectors.append(self.engine.embed_image(staged.popleft()))
+            else:
+                vectors.append(self.engine.embed_text(text))
+        return vectors
+
+    def embed_query(self, text: str) -> list[float]:
+        return self.engine.embed_text(text)
+
+
 class HybridImageStore:
     def __init__(
         self,
         settings: Settings | None = None,
         embedding_engine: EmbeddingEngine | None = None,
     ) -> None:
-        import pyseekdb
-        from pyseekdb import Configuration, HNSWConfiguration
+        from langchain_oceanbase.vectorstores import OceanbaseVectorStore
 
         self.settings = settings or get_settings()
         self.embedding_engine = embedding_engine or EmbeddingEngine(self.settings)
-        self.client = pyseekdb.Client(
-            host=self.settings.seekdb_host,
-            port=int(self.settings.seekdb_port),
-            database=self.settings.seekdb_db_name,
-            user=self.settings.seekdb_user,
-            password=self.settings.seekdb_password,
-        )
-        self.collection = self.client.get_or_create_collection(
-            name=self.settings.image_table_name,
-            configuration=Configuration(
-                hnsw=HNSWConfiguration(
-                    dimension=self.settings.embedding_dimension,
-                    distance="l2",
-                )
-            ),
-            embedding_function=None,
+        self.embedding_adapter = HybridImageEmbeddings(self.embedding_engine)
+        self.vector_store = OceanbaseVectorStore(
+            embedding_function=self.embedding_adapter,
+            table_name=self.settings.image_table_name,
+            connection_args={"db_name": self.settings.seekdb_db_name},
+            path=str(self.settings.seekdb_path),
+            embedding_dim=self.settings.embedding_dimension,
+            vidx_metric_type="l2",
+            include_sparse=True,
+            include_fulltext=True,
         )
 
     def ingest_directory(self, directory: Path) -> list[ImageRecord]:
         manifest = _caption_manifest(directory)
         records: list[ImageRecord] = []
         ids: list[str] = []
-        embeddings: list[list[float]] = []
-        metadatas: list[dict[str, str]] = []
-        documents: list[str] = []
+        documents: list[Document] = []
+        extras: list[dict[str, Any]] = []
         for image_path in scan_images(directory):
             manifest_item = manifest.get(image_path.name, {})
             caption = str(manifest_item.get("caption") or caption_image(image_path, self.settings))
-            tags = ", ".join(manifest_item.get("tags", []))
+            manifest_tags = manifest_item.get("tags", [])
+            tags = ", ".join(manifest_tags)
+            positive_tags = " ".join(_positive_tags(manifest_tags))
             image_id = _image_id(image_path)
+            manifest_id = str(manifest_item.get("id") or image_path.stem)
+            metadata = {
+                "image_id": image_id,
+                "file_name": image_path.name,
+                "file_path": str(image_path),
+                "source_dir": str(directory),
+                "tags": tags,
+                "manifest_id": manifest_id,
+                "caption": caption,
+            }
             record = ImageRecord(
                 image_id=image_id,
                 file_name=image_path.name,
                 file_path=image_path,
                 caption=caption,
-                metadata={"source_dir": str(directory), "tags": tags},
+                metadata=metadata,
             )
             ids.append(image_id)
-            embeddings.append(self.embedding_engine.embed_image(image_path))
-            metadatas.append(
+            self.embedding_adapter.stage_image_document(caption, image_path)
+            documents.append(Document(id=image_id, page_content=caption, metadata=metadata))
+            search_text = " ".join([caption, positive_tags, image_path.name, manifest_id])
+            extras.append(
                 {
-                    "file_name": record.file_name,
-                    "file_path": str(record.file_path),
-                    "source_dir": str(directory),
-                    "tags": tags,
+                    "sparse_embedding": _sparse_vector(search_text),
+                    "fulltext_content": search_text,
                 }
             )
-            documents.append(caption)
             records.append(record)
         if ids:
-            self.collection.upsert(
+            self.vector_store.add_documents(
+                documents,
                 ids=ids,
-                embeddings=embeddings,
-                metadatas=metadatas,
-                documents=documents,
+                extras=extras,
             )
+            self._save_index_ids(ids)
         return records
 
     def search_text(self, query: str, mode: SearchMode, top_k: int) -> SearchTrace:
@@ -163,107 +257,124 @@ class HybridImageStore:
     ) -> SearchTrace:
         recall = max(top_k * self.settings.hybrid_recall_multiplier, top_k)
         terms = _query_terms(query)
-        vector_results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=recall,
-            include=["metadatas", "documents"],
-        )
-        fulltext_results = self.collection.get(
-            where_document={"$contains": query},
-            limit=recall,
-            include=["metadatas", "documents"],
-        )
-        sparse_hits = self._sparse_hits(terms, recall)
-        metadata_results = self.collection.get(
-            limit=recall * 2,
-            include=["metadatas", "documents"],
-        )
+        vector_results = self.vector_store.similarity_search_with_score_by_vector(query_embedding, k=recall)
+        fulltext_hits = self._fulltext_hits(query, recall)
+        sparse_hits = self._sparse_hits(query, recall)
+        metadata_docs = self.vector_store.get_by_ids(self._load_index_ids())
         return _format_trace(
             query=query,
             mode=mode,
-            vector_hits=self._query_hits(vector_results),
+            vector_hits=self._scored_document_hits(vector_results),
             sparse_hits=sparse_hits,
-            fulltext_hits=self._get_hits(fulltext_results),
-            metadata_hits=self._metadata_hits(metadata_results, terms, recall),
+            fulltext_hits=fulltext_hits,
+            metadata_hits=self._metadata_hits(metadata_docs, terms, recall),
             top_k=top_k,
         )
 
-    def _sparse_hits(self, terms: list[str], recall: int) -> list[SearchHit]:
-        hits_by_id: dict[str, SearchHit] = {}
-        score_by_id: dict[str, float] = {}
-        terms_by_id: dict[str, set[str]] = {}
-        for term in terms:
-            raw = self.collection.get(
-                where_document={"$contains": term},
-                limit=recall,
-                include=["metadatas", "documents"],
-            )
-            for rank, hit in enumerate(self._get_hits(raw), start=1):
-                hits_by_id.setdefault(hit.image_id, hit)
-                score_by_id[hit.image_id] = score_by_id.get(hit.image_id, 0.0) + (1.0 / rank)
-                terms_by_id.setdefault(hit.image_id, set()).add(term)
-        ranked_ids = sorted(score_by_id, key=lambda image_id: (-score_by_id[image_id], hits_by_id[image_id].file_name))
-        return [
-            replace(hits_by_id[image_id], rank=index + 1, matched_terms=sorted(terms_by_id[image_id]))
-            for index, image_id in enumerate(ranked_ids[:recall])
-        ]
+    def _fulltext_hits(self, query: str, recall: int) -> list[SearchHit]:
+        docs = self.vector_store.advanced_hybrid_search(
+            fulltext_query=query,
+            k=recall,
+            modality_weights={"vector": 0.0, "sparse": 0.0, "fulltext": 1.0},
+        )
+        return self._document_hits_with_terms(docs, query)
 
-    def _metadata_hits(self, raw: dict[str, Any], terms: list[str], recall: int) -> list[SearchHit]:
+    def _sparse_hits(self, query: str, recall: int) -> list[SearchHit]:
+        sparse_query = _sparse_vector(query)
+        if not sparse_query:
+            return []
+        docs = self.vector_store.similarity_search_with_sparse_vector(sparse_query, k=recall)
+        indexed_docs = self.vector_store.get_by_ids(self._load_index_ids())
+        doc_pool = self._dedupe_documents([*docs, *indexed_docs])
+        ranked_hits = self._rank_term_document_hits(doc_pool, query, recall)
+        if ranked_hits:
+            return ranked_hits
+        return self._document_hits_with_terms(docs, query)
+
+    def _metadata_hits(self, docs: list[Document], terms: list[str], recall: int) -> list[SearchHit]:
         ranked: list[tuple[int, SearchHit]] = []
-        for hit in self._get_hits(raw):
-            metadata_text = " ".join([hit.file_name, *[str(value) for value in hit.metadata.values()]]).lower()
-            matched = [term for term in terms if term in metadata_text]
+        for hit, document in zip(self._document_hits(docs), docs, strict=False):
+            metadata_text = _metadata_search_text(dict(document.metadata)).lower()
+            matched = [term for term in terms if re.search(rf"\b{re.escape(term)}\b", metadata_text)]
             if matched:
                 ranked.append((len(matched), replace(hit, matched_terms=matched)))
         ranked.sort(key=lambda item: (-item[0], item[1].file_name))
         return [replace(hit, rank=index + 1) for index, (_, hit) in enumerate(ranked[:recall])]
 
-    def _query_hits(self, raw: dict[str, Any]) -> list[SearchHit]:
-        ids = raw.get("ids", [[]])[0]
-        metadatas = raw.get("metadatas", [[]])[0]
-        documents = raw.get("documents", [[]])[0]
-        distances = raw.get("distances", [[]])[0] if raw.get("distances") else []
+    def _scored_document_hits(self, results: list[tuple[Document, float]]) -> list[SearchHit]:
         return [
-            self._hit(
-                image_id=image_id,
-                metadata=metadatas[index] if index < len(metadatas) else {},
-                caption=documents[index] if index < len(documents) else "",
+            self._hit_from_document(
+                document=document,
                 rank=index + 1,
-                distance=distances[index] if index < len(distances) else None,
+                distance=score,
             )
-            for index, image_id in enumerate(ids)
+            for index, (document, score) in enumerate(results)
         ]
 
-    def _get_hits(self, raw: dict[str, Any]) -> list[SearchHit]:
-        ids = raw.get("ids", [])
-        metadatas = raw.get("metadatas", [])
-        documents = raw.get("documents", [])
+    def _document_hits(self, docs: list[Document]) -> list[SearchHit]:
         return [
-            self._hit(
-                image_id=image_id,
-                metadata=metadatas[index] if index < len(metadatas) else {},
-                caption=documents[index] if index < len(documents) else "",
-                rank=index + 1,
-                distance=None,
-            )
-            for index, image_id in enumerate(ids)
+            self._hit_from_document(document=document, rank=index + 1, distance=None)
+            for index, document in enumerate(docs)
         ]
 
-    def _hit(
+    def _document_hits_with_terms(self, docs: list[Document], query: str) -> list[SearchHit]:
+        terms = _query_terms(query)
+        hits: list[SearchHit] = []
+        for hit, document in zip(self._document_hits(docs), docs, strict=False):
+            _, matched = _term_score(_document_search_text(document), terms, query)
+            hits.append(replace(hit, matched_terms=matched))
+        return hits
+
+    def _rank_term_document_hits(self, docs: list[Document], query: str, recall: int) -> list[SearchHit]:
+        terms = _query_terms(query)
+        ranked: list[tuple[float, SearchHit]] = []
+        for hit, document in zip(self._document_hits(docs), docs, strict=False):
+            score, matched = _term_score(_document_search_text(document), terms, query)
+            if matched:
+                ranked.append((score, replace(hit, matched_terms=matched, distance=1.0 / score if score else None)))
+        ranked.sort(key=lambda item: (-item[0], item[1].file_name))
+        return [replace(hit, rank=index + 1) for index, (_, hit) in enumerate(ranked[:recall])]
+
+    def _dedupe_documents(self, docs: list[Document]) -> list[Document]:
+        deduped: dict[str, Document] = {}
+        for index, document in enumerate(docs):
+            metadata = dict(document.metadata)
+            key = str(metadata.get("image_id") or document.id or metadata.get("manifest_id") or metadata.get("file_name") or index)
+            deduped.setdefault(key, document)
+        return list(deduped.values())
+
+    def _hit_from_document(
         self,
-        image_id: str,
-        metadata: dict[str, str],
-        caption: str,
+        document: Document,
         rank: int,
         distance: float | None,
     ) -> SearchHit:
+        metadata = {str(key): str(value) for key, value in document.metadata.items()}
+        image_id = str(metadata.get("image_id") or document.id or metadata.get("manifest_id") or rank)
         file_name = metadata.get("file_name", image_id)
         return SearchHit(
             image_id=image_id,
             file_name=file_name,
             image_url=f"/custom/media/images/{image_id}",
-            caption=caption,
+            caption=metadata.get("caption") or document.page_content,
             rank=rank,
             distance=distance,
             metadata=metadata,
         )
+
+    def _index_ids_path(self) -> Path:
+        return self.settings.media_data_dir / "indexes" / f"{self.settings.image_table_name}.json"
+
+    def _save_index_ids(self, ids: list[str]) -> None:
+        path = self._index_ids_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        existing = self._load_index_ids()
+        merged = list(dict.fromkeys([*existing, *ids]))
+        path.write_text(json.dumps(merged, indent=2), encoding="utf-8")
+
+    def _load_index_ids(self) -> list[str]:
+        path = self._index_ids_path()
+        if not path.is_file():
+            return []
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return [str(item) for item in data if item]
