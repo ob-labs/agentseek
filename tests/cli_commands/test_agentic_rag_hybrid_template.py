@@ -23,6 +23,7 @@ def test_hybrid_template_contains_expected_custom_runtime_files() -> None:
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "routes.py").is_file()
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "middleware.py").is_file()
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "observability.py").is_file()
+    assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "retrieval_runnables.py").is_file()
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "sample_pack.py").is_file()
     assert (project_dir / "frontend" / "src" / "SampleLab.tsx").is_file()
     assert (project_dir / "examples" / "sample_pack" / "sample_pack.zip").is_file()
@@ -75,6 +76,9 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     lab = (project_dir / "frontend" / "src" / "SampleLab.tsx").read_text(encoding="utf-8")
     middleware = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "middleware.py").read_text(encoding="utf-8")
     routes = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "routes.py").read_text(encoding="utf-8")
+    retrieval_runnables = (
+        project_dir / "src" / "{{cookiecutter.project_slug}}" / "retrieval_runnables.py"
+    ).read_text(encoding="utf-8")
     store = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "store.py").read_text(encoding="utf-8")
     agent = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "agent.py").read_text(encoding="utf-8")
     observability = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "observability.py").read_text(
@@ -97,6 +101,10 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     assert "/custom/sample-pack/ingest" in routes
     assert "/custom/compare" in routes
     assert "/custom/observability" in routes
+    assert "compare_modes_runnable" in routes
+    assert "RunnableLambda" in retrieval_runnables
+    assert "trace_custom_route" not in routes
+    assert "trace_custom_route" not in observability
     assert "OceanbaseVectorStore" in store
     assert "import pyseekdb" not in store
     assert "configure_tracing(get_settings())" in agent

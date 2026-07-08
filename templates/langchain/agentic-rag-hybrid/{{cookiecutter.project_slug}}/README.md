@@ -46,10 +46,11 @@ Open Phoenix at `http://127.0.0.1:6006`. The custom route
 `http://127.0.0.1:2024/custom/observability` shows the active OTEL endpoint,
 service name, Phoenix URL, and OceanBase seekdb URL.
 
-With OTEL enabled, the Lab and Compare tabs emit custom FastAPI spans for
-sample-pack ingest, archive upload, and compare-mode retrieval. The Ask tab
-emits the LangGraph agent run, model calls, and `hybrid_search_knowledge_base`
-tool span.
+With OTEL enabled, the Lab and Compare tabs invoke LangChain runnable wrappers
+for sample-pack ingest, archive upload, and compare-mode retrieval, so Phoenix
+records those flows through the same LangChain instrumentation used by the Ask
+tab. The Ask tab emits the LangGraph agent run, model calls, and
+`hybrid_search_knowledge_base` tool span.
 
 ## SiliconFlow Models
 
@@ -78,7 +79,7 @@ template tasks.
 - Hybrid search fuses the routes so mixed queries do not depend on one retrieval strategy.
 - Agent middleware teaches the model when to choose `semantic`, `keyword`, `exact`, or `balanced`.
 - LangGraph custom routes expose upload, image serving, and compare-mode diagnostics on the same dev server as the graph.
-- Phoenix observability can show custom-route spans, the agent run, model calls, and hybrid-search tool span while storing traces in OceanBase seekdb.
+- Phoenix observability can show LangChain-instrumented Lab and Compare retrieval runs, the agent run, model calls, and hybrid-search tool span while storing traces in OceanBase seekdb.
 - The frontend Lab tab ships with photo-style fixtures, visible in-image text, guided cases, and visual rank comparisons so developers can test hybrid behavior immediately.
 
 ## First 10 Minutes

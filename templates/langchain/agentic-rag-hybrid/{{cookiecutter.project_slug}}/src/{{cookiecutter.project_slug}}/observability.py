@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
-from contextlib import contextmanager
-from typing import Any
-
 from .settings import Settings
 
 _TRACE_BOOTSTRAPPED = False
@@ -48,46 +44,3 @@ def configure_tracing(settings: Settings) -> None:
     trace.set_tracer_provider(provider)
     LangChainInstrumentor().instrument(tracer_provider=provider)
     _TRACE_BOOTSTRAPPED = True
-
-
-class _NoopSpan:
-    def set_attribute(self, key: str, value: object) -> None:
-        return None
-
-
-def _set_span_attribute(span: Any, key: str, value: object) -> None:
-    if value is None:
-        return
-    if isinstance(value, str | bool | int | float):
-        span.set_attribute(key, value)
-        return
-    span.set_attribute(key, str(value))
-
-
-@contextmanager
-def trace_custom_route(
-    settings: Settings,
-    name: str,
-    attributes: dict[str, object] | None = None,
-) -> Iterator[Any]:
-    """Create a Phoenix span for custom FastAPI routes when tracing is enabled."""
-
-    if not settings.otel_enabled:
-        yield _NoopSpan()
-        return
-
-    configure_tracing(settings)
-
-    from opentelemetry import trace
-    from opentelemetry.trace import Status, StatusCode
-
-    tracer = trace.get_tracer("{{ cookiecutter.project_slug }}.custom_routes")
-    with tracer.start_as_current_span(name) as span:
-        for key, value in (attributes or {}).items():
-            _set_span_attribute(span, key, value)
-        try:
-            yield span
-        except Exception as exc:
-            span.record_exception(exc)
-            span.set_status(Status(StatusCode.ERROR, str(exc)))
-            raise

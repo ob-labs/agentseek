@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 import zipfile
-from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -103,91 +102,77 @@ def test_compare_rejects_empty_query(monkeypatch: pytest.MonkeyPatch, tmp_path: 
 
 
 def test_compare_clamps_top_k(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    class FakeStore:
-        seen_top_k: int | None = None
+    class FakeRunnable:
+        seen_payload: dict[str, object] | None = None
 
-        def __init__(self, **kwargs) -> None:
-            pass
-
-        def compare_modes(self, query: str, top_k: int):
-            self.__class__.seen_top_k = top_k
-            return {"balanced": {"query": query, "top_k": top_k}}
+        def invoke(self, payload: dict[str, object]):
+            self.seen_payload = payload
+            return {"balanced": {"query": payload["query"], "top_k": payload["top_k"]}}
 
     monkeypatch.setattr(routes, "get_settings", lambda: settings_for(tmp_path, max_top_k=3))
-    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
+    monkeypatch.setattr(routes, "configure_tracing", lambda settings: None)
+    fake_runnable = FakeRunnable()
+    monkeypatch.setattr(routes, "compare_modes_runnable", fake_runnable)
 
     response = TestClient(app).get("/custom/compare", params={"query": "red product label", "top_k": 999})
 
     assert response.status_code == 200
-    assert FakeStore.seen_top_k == 3
+    assert fake_runnable.seen_payload == {"query": "red product label", "top_k": 3}
 
 
-def test_compare_route_emits_phoenix_span(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    spans: list[tuple[str, dict[str, object]]] = []
+def test_compare_route_invokes_langchain_runnable_for_phoenix_trace(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path, max_top_k=3)
+    configured: list[Settings] = []
 
-    @contextmanager
-    def fake_trace(settings: Settings, name: str, attributes: dict[str, object]):
-        spans.append((name, attributes))
-        yield
+    class FakeRunnable:
+        seen_payload: dict[str, object] | None = None
 
-    class FakeStore:
-        def __init__(self, **kwargs) -> None:
-            pass
+        def invoke(self, payload: dict[str, object]):
+            self.seen_payload = payload
+            return {"keyword": {"query": payload["query"], "top_k": payload["top_k"]}}
 
-        def compare_modes(self, query: str, top_k: int):
-            return {"keyword": {"query": query, "top_k": top_k}}
+    fake_runnable = FakeRunnable()
 
-    monkeypatch.setattr(routes, "get_settings", lambda: settings_for(tmp_path, max_top_k=3))
-    monkeypatch.setattr(routes, "trace_custom_route", fake_trace)
-    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+    monkeypatch.setattr(routes, "configure_tracing", configured.append)
+    monkeypatch.setattr(routes, "compare_modes_runnable", fake_runnable)
 
     response = TestClient(app).get("/custom/compare", params={"query": "red tea label", "top_k": 999})
 
     assert response.status_code == 200
-    assert spans == [
-        (
-            "custom.compare",
-            {
-                "agentseek.route": "/custom/compare",
-                "agentseek.query": "red tea label",
-                "agentseek.top_k": 3,
-                "agentseek.modes": "balanced,semantic,keyword,exact",
-            },
-        )
-    ]
+    assert configured == [settings]
+    assert fake_runnable.seen_payload == {"query": "red tea label", "top_k": 3}
 
 
-def test_ingest_sample_pack_route_emits_phoenix_span(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    spans: list[tuple[str, dict[str, object]]] = []
+def test_ingest_sample_pack_route_invokes_langchain_runnable_for_phoenix_trace(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    configured: list[Settings] = []
 
-    @contextmanager
-    def fake_trace(settings: Settings, name: str, attributes: dict[str, object]):
-        spans.append((name, attributes))
-        yield
+    class FakeRunnable:
+        seen_payload: dict[str, object] | None = None
 
-    class FakeStore:
-        def __init__(self, **kwargs) -> None:
-            pass
+        def invoke(self, payload: dict[str, object]):
+            self.seen_payload = payload
+            return {"indexed": 2, "source": "sample-pack"}
 
-        def ingest_directory(self, directory: Path):
-            return [object(), object()]
+    fake_runnable = FakeRunnable()
 
-    monkeypatch.setattr(routes, "get_settings", lambda: settings_for(tmp_path))
-    monkeypatch.setattr(routes, "trace_custom_route", fake_trace)
-    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+    monkeypatch.setattr(routes, "configure_tracing", configured.append)
+    monkeypatch.setattr(routes, "sample_pack_ingest_runnable", fake_runnable)
 
     response = TestClient(app).post("/custom/sample-pack/ingest")
 
     assert response.status_code == 200
-    assert spans == [
-        (
-            "custom.sample_pack.ingest",
-            {
-                "agentseek.route": "/custom/sample-pack/ingest",
-                "agentseek.source": "sample_pack",
-            },
-        )
-    ]
+    assert response.json() == {"indexed": 2, "source": "sample-pack"}
+    assert configured == [settings]
+    assert fake_runnable.seen_payload == {}
 
 
 def test_upload_archive_rejects_path_traversal_filename(
@@ -236,14 +221,12 @@ def test_upload_archive_cleans_partial_extraction_on_failure(
     assert not list((settings.media_data_dir / "extracted").glob("**/*"))
 
 
-def test_upload_archive_route_emits_phoenix_span(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    spans: list[tuple[str, dict[str, object]]] = []
-
-    @contextmanager
-    def fake_trace(settings: Settings, name: str, attributes: dict[str, object]):
-        spans.append((name, attributes))
-        yield
-
+def test_upload_archive_route_invokes_langchain_runnable_for_phoenix_trace(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    configured: list[Settings] = []
     archive = io.BytesIO()
     with zipfile.ZipFile(archive, "w") as zf:
         zf.writestr("ok.png", b"fake image")
@@ -253,17 +236,19 @@ def test_upload_archive_route_emits_phoenix_span(monkeypatch: pytest.MonkeyPatch
         (target / "ok.png").write_bytes(b"fake image")
         return [target / "ok.png"]
 
-    class FakeStore:
-        def __init__(self, **kwargs) -> None:
-            pass
+    class FakeRunnable:
+        seen_payload: dict[str, object] | None = None
 
-        def ingest_directory(self, directory: Path):
-            return [object()]
+        def invoke(self, payload: dict[str, object]):
+            self.seen_payload = payload
+            return {"indexed": 1, "source": payload["directory"]}
 
-    monkeypatch.setattr(routes, "get_settings", lambda: settings_for(tmp_path))
+    fake_runnable = FakeRunnable()
+
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+    monkeypatch.setattr(routes, "configure_tracing", configured.append)
     monkeypatch.setattr(routes, "extract_archive_safely", extract_archive)
-    monkeypatch.setattr(routes, "trace_custom_route", fake_trace)
-    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
+    monkeypatch.setattr(routes, "archive_ingest_runnable", fake_runnable)
 
     response = TestClient(app).post(
         "/custom/upload-archive",
@@ -271,15 +256,10 @@ def test_upload_archive_route_emits_phoenix_span(monkeypatch: pytest.MonkeyPatch
     )
 
     assert response.status_code == 200
-    assert spans == [
-        (
-            "custom.upload_archive",
-            {
-                "agentseek.route": "/custom/upload-archive",
-                "agentseek.archive_suffix": ".zip",
-            },
-        )
-    ]
+    assert response.json()["indexed"] == 1
+    assert configured == [settings]
+    assert fake_runnable.seen_payload is not None
+    assert Path(str(fake_runnable.seen_payload["directory"])).parent == settings.media_data_dir / "extracted"
 
 
 def test_media_route_rejects_paths_outside_allowed_roots(
