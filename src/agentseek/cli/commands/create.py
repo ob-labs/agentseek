@@ -496,7 +496,7 @@ def _handle_external_spec(args: argparse.Namespace) -> None:
     )
     output_dir = args.output_dir if args.output_dir is not None else Path.cwd()
     generated = _run_cookiecutter(source, output_dir=output_dir, no_input=args.no_input)
-    _print_created_next_steps(generated, output_dir=output_dir)
+    _print_created_next_steps(generated, base_dir=Path.cwd())
 
 
 # ---------------------------------------------------------------------------
@@ -559,7 +559,7 @@ def create(ctx: typer.Context) -> None:
         return
 
     generated = _run_cookiecutter(source, output_dir=output_dir, no_input=args.no_input)
-    _print_created_next_steps(generated, output_dir=output_dir)
+    _print_created_next_steps(generated, base_dir=Path.cwd())
 
 
 def _parse_new_args(ctx: typer.Context) -> argparse.Namespace:
@@ -613,10 +613,10 @@ def _show_templates(project_type: str | None, *, checkout: str | None = None) ->
     typer.echo()
 
 
-def _print_created_next_steps(generated: Path | None, *, output_dir: Path) -> None:
+def _print_created_next_steps(generated: Path | None, *, base_dir: Path) -> None:
     if generated is None:
         return
-    display_path = _display_generated_path(generated, output_dir=output_dir)
+    display_path = _display_generated_path(generated, base_dir=base_dir)
     typer.echo(f"Created {display_path}")
     typer.echo()
     typer.echo("Next:")
@@ -626,9 +626,9 @@ def _print_created_next_steps(generated: Path | None, *, output_dir: Path) -> No
     typer.echo("  agentseek doctor")
 
 
-def _display_generated_path(generated: Path, *, output_dir: Path) -> str:
+def _display_generated_path(generated: Path, *, base_dir: Path) -> str:
     try:
-        return str(generated.resolve().relative_to(output_dir.resolve()))
+        return str(generated.resolve().relative_to(base_dir.resolve()))
     except ValueError:
         return str(generated)
 
