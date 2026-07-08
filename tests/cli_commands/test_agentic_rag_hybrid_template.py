@@ -69,9 +69,9 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     routes = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "routes.py").read_text(encoding="utf-8")
     store = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "store.py").read_text(encoding="utf-8")
     agent = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "agent.py").read_text(encoding="utf-8")
-    observability = (
-        project_dir / "src" / "{{cookiecutter.project_slug}}" / "observability.py"
-    ).read_text(encoding="utf-8")
+    observability = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "observability.py").read_text(
+        encoding="utf-8"
+    )
     env_example = (project_dir / ".env.example").read_text(encoding="utf-8")
     compose = (project_dir / "docker-compose.yml").read_text(encoding="utf-8")
     template_config = json.loads((TEMPLATE_DIR / "cookiecutter.json").read_text(encoding="utf-8"))

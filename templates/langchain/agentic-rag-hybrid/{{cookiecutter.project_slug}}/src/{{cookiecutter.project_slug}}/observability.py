@@ -35,12 +35,10 @@ def configure_tracing(settings: Settings) -> None:
     service_name = settings.otel_service_name.strip() or "{{ cookiecutter.project_slug }}"
     project_name = settings.otel_project_name.strip() or service_name
     provider = TracerProvider(
-        resource=Resource.create(
-            {
-                "service.name": service_name,
-                ResourceAttributes.PROJECT_NAME: project_name,
-            }
-        )
+        resource=Resource.create({
+            "service.name": service_name,
+            ResourceAttributes.PROJECT_NAME: project_name,
+        })
     )
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
     trace.set_tracer_provider(provider)
