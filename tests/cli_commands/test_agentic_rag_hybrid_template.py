@@ -76,9 +76,9 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     lab = (project_dir / "frontend" / "src" / "SampleLab.tsx").read_text(encoding="utf-8")
     middleware = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "middleware.py").read_text(encoding="utf-8")
     routes = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "routes.py").read_text(encoding="utf-8")
-    retrieval_runnables = (
-        project_dir / "src" / "{{cookiecutter.project_slug}}" / "retrieval_runnables.py"
-    ).read_text(encoding="utf-8")
+    retrieval_runnables = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "retrieval_runnables.py").read_text(
+        encoding="utf-8"
+    )
     store = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "store.py").read_text(encoding="utf-8")
     agent = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "agent.py").read_text(encoding="utf-8")
     observability = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "observability.py").read_text(
