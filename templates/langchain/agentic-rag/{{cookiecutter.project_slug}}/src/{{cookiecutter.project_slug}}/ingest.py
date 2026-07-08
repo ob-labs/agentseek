@@ -35,7 +35,7 @@ def _get_vector_store() -> OceanbaseVectorStore:
         connection_args={
             "host": os.getenv("SEEKDB_HOST", "127.0.0.1"),
             "port": os.getenv("SEEKDB_PORT", "2881"),
-            "user": os.getenv("SEEKDB_USER", "root@test"),
+            "user": os.getenv("SEEKDB_USER", "root"),
             "password": os.getenv("SEEKDB_PASSWORD", ""),
             "db_name": os.getenv("SEEKDB_DB_NAME", "test"),
         },

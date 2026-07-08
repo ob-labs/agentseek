@@ -25,6 +25,8 @@ report.
 
 ```text
 {{ project_slug }}/
+  .agentseek/
+    lifecycle.toml
   README.md
   pyproject.toml
   langgraph.json
@@ -59,6 +61,8 @@ report.
 - Uses provider-first runtime config: generated apps select `openai`,
   `anthropic`, or `google_genai` in `.env`, then fill only the matching
   credential block.
+- Declares AgentSeek dev lifecycle v1 in `.agentseek/lifecycle.toml`, including
+  `info`, `doctor`, `dev`, and `task` entry points for local development.
 - Treats blank provider base URLs as "use the official endpoint", while still
   allowing custom compatible gateways per provider.
 - Lets generated apps override the scaffold-time model via `AGENTSEEK_MODEL`

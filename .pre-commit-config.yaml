@@ -5,7 +5,7 @@ repos:
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-toml
-        exclude: '^templates/(bub/default/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml|bub/contextseek/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml|deepagents/default/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml|langchain/default/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml)$'
+        exclude: '^templates/(bub/default/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml|bub/contextseek/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml|deepagents/default/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml|langchain/default/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml|langchain/cli-remote/\{\{cookiecutter\.project_slug\}\}/pyproject\.toml)$'
       - id: check-yaml
         exclude: ^templates/
       - id: check-json

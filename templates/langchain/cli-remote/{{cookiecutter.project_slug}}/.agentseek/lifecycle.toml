@@ -1,0 +1,61 @@
+version = 1
+template = "langchain/cli-remote"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv"]
+
+[paths]
+required = [
+  "langgraph.json",
+  "pyproject.toml",
+  "src/{{ cookiecutter.project_slug }}/gateway_binding.py",
+  "src/{{ cookiecutter.project_slug }}/remote_graph.py",
+  "src/{{ cookiecutter.project_slug }}/settings.py",
+]
+
+[env.BUB_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model id used by the remote LangGraph agent."
+aliases = ["LANGCHAIN_REMOTE_MODEL"]
+
+[env.BUB_API_KEY]
+required = true
+description = "Provider API key used by Bub and bridged to OpenAI when BUB_MODEL starts with openai:."
+
+[env.BUB_API_BASE]
+required = false
+description = "Optional OpenAI-compatible API base URL."
+
+[env.BUB_LANGCHAIN_SPEC]
+required = true
+default = "{{ cookiecutter.project_slug }}.gateway_binding:build_spec"
+description = "Bub LangChain binding that connects to the remote LangGraph server."
+
+[env.LANGGRAPH_URL]
+required = true
+default = "{{ cookiecutter.langgraph_url }}"
+description = "LangGraph Agent Server URL used by the Bub bridge."
+
+[env.LANGGRAPH_ASSISTANT_ID]
+required = true
+default = "{{ cookiecutter.assistant_id }}"
+description = "Assistant id exposed by langgraph.json."
+
+[services.langgraph]
+url = "{{ cookiecutter.langgraph_url }}"
+
+[processes.langgraph]
+command = ["uv", "run", "langgraph", "dev"]
+
+[checks.langgraph]
+type = "http"
+target = "{{ cookiecutter.langgraph_url }}/ok"
+timeout = 2
+attempts = 3
+
+[tasks.sync]
+description = "Install project dependencies."
+command = ["uv", "sync"]

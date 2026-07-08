@@ -7,19 +7,49 @@ The backend serves a `create_agent(...)` graph through `langgraph dev`.
 The frontend streams user messages, tool calls (retrieval), and the final
 markdown answer.
 
-## Setup
+## Quickstart
 
 ```bash
-docker compose up -d        # start SeekDB (wait ~60s on first run)
+cp .env.example .env
+$EDITOR .env
+
 uv sync
 npm install --prefix frontend
+docker compose up -d
 
-cp .env.example .env
-# Fill in backend secrets in .env:
-# - Set AGENTSEEK_MODEL_PROVIDER and AGENTSEEK_MODEL
-# - Fill only the matching provider block
-# - If you switch providers, switch AGENTSEEK_MODEL to that provider's model id
-# - Leave that provider's base URL empty to use the official endpoint
+agentseek info
+agentseek doctor
+agentseek dev --dry-run
+agentseek dev
+```
+
+Use `agentseek task --list` to see lifecycle helper tasks. The generated
+project declares the development stack in `.agentseek/lifecycle.toml`.
+
+For optional coding-agent assistance around seekdb, run:
+
+```bash
+agentseek task seekdb-skills
+```
+
+## Agent Skills
+
+`agentseek task seekdb-skills` runs
+`npx skills add oceanbase/seekdb-ecology-plugins --all` to install recommended
+seekdb skills for supported coding agents. This uses the external `skills`
+tooling; `agentseek task --list` remains the canonical way to discover
+template tasks.
+
+## Environment
+
+Set `AGENTSEEK_MODEL_PROVIDER` to `openai`, `anthropic`, or `google_genai`,
+then set `AGENTSEEK_MODEL` to a model served by that provider. Fill only the
+matching provider credential block:
+
+```text
+openai       -> OPENAI_API_KEY, optional OPENAI_API_BASE
+anthropic    -> ANTHROPIC_API_KEY, optional ANTHROPIC_API_URL
+google_genai -> GOOGLE_API_KEY, optional GOOGLE_API_BASE
 ```
 
 `agent.py` uses `AGENTSEEK_MODEL_PROVIDER` to choose a native LangChain
@@ -36,6 +66,11 @@ If you change `AGENTSEEK_MODEL_PROVIDER`, also change `AGENTSEEK_MODEL` to a
 model served by that provider. The scaffold defaults to `openai` with
 `{{ cookiecutter.default_model }}`, so pointing `OPENAI_API_BASE` at a
 compatible gateway (e.g. SiliconFlow) works out of the box.
+
+The lifecycle spec checks `.env`, frontend dependencies, and the stable seekdb
+connection variables. Provider API keys are documented in `.env.example` but
+are not lifecycle-required because lifecycle v1 does not support conditional
+requirements by selected provider.
 
 ## Ingest
 
@@ -54,25 +89,20 @@ uv run ingest ./notes/ https://example.com/article
 
 Documents are split into 1000-character chunks with 200-character overlap,
 embedded via `DefaultEmbeddingFunctionAdapter` from `langchain-oceanbase`
-(384-dim, runs locally, no API key), and indexed into the configured SeekDB
+(384-dim, runs locally, no API key), and indexed into the configured seekdb
 table.
 
 ## Run
 
-Start the backend:
-
 ```bash
-uv run langgraph dev --no-browser
-```
-
-Start the frontend in a second terminal:
-
-```bash
-npm run --prefix frontend dev
+agentseek dev
 ```
 
 By default the backend listens on `http://127.0.0.1:2024` and the frontend on
 `http://127.0.0.1:{{ cookiecutter.frontend_port }}`.
+
+Run `agentseek doctor --live` after `agentseek dev` starts to check the
+backend and frontend HTTP endpoints declared in the lifecycle spec.
 
 ## Smoke test
 

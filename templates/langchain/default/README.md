@@ -3,7 +3,21 @@
 Scaffolds a `create_agent` project with CopilotKit middleware bound to
 agentseek via `agentseek-langchain`, for local AG-UI development, and also
 includes a first-class Feishu gateway path plus optional OpenTelemetry export
-to Phoenix backed by SeekDB.
+to Phoenix backed by seekdb.
+
+The generated project uses the AgentSeek dev lifecycle v1 contract:
+
+```bash
+agentseek info
+agentseek doctor
+agentseek dev --dry-run
+agentseek dev
+agentseek task --list
+```
+
+Lifecycle metadata lives in `.agentseek/lifecycle.toml`. Gateway,
+CopilotKit, and frontend service URLs plus HTTP live checks are declared there;
+the template does not require CLI/core changes for those checks.
 
 ## Architecture
 
@@ -12,17 +26,17 @@ Browser (CopilotKit v2)
   -> Vite dev server :{{ frontend_port }}  (/api/copilotkit/* proxied)
     -> Copilot Runtime (Express) :{{ copilotkit_port }}  /api/copilotkit
       -> HttpAgent (AG-UI client)
-        -> agentseek gateway :{{ gateway_port }}  /agent  (AG-UI channel)
+        -> bub gateway :{{ gateway_port }}  /agent  (AG-UI channel)
           -> agentseek-langchain messages_spec(...)
             -> create_agent(...) + CopilotKitMiddleware
-              -> OpenTelemetry spans -> Phoenix :6006/v1/traces -> SeekDB
+              -> OpenTelemetry spans -> Phoenix :6006/v1/traces -> seekdb
 ```
 
 | LangChain guide | Generated project | Conversion point |
 | --- | --- | --- |
 | `create_agent(...)` + `CopilotKitState` + `CopilotKitMiddleware` | `demo_binding.py` | None |
 | `normalize_context` + `apply_structured_output_schema` | `middleware.py` | None |
-| `langgraph.json` + `http.app` custom endpoint | `agentseek gateway --enable-channel ag-ui` + `build_spec()` | FastAPI endpoint replaced by `messages_spec(...)` |
+| `langgraph.json` + `http.app` custom endpoint | `bub gateway --enable-channel ag-ui` + `build_spec()` | FastAPI endpoint replaced by `messages_spec(...)` |
 
 ## Inputs
 
@@ -32,7 +46,7 @@ Browser (CopilotKit v2)
 | `project_slug` | Python package / directory name. |
 | `author` | Project author. |
 | `system_prompt` | System prompt baked into the agent. |
-| `default_model` | Default `AGENTSEEK_MODEL`. |
+| `default_model` | Default `BUB_MODEL`. |
 | `gateway_port` | Default gateway port for AG-UI. |
 | `frontend_port` | Vite dev server port for the frontend. |
 | `copilotkit_port` | CopilotKit Express runtime port. |
@@ -41,6 +55,8 @@ Browser (CopilotKit v2)
 
 ```
 {{ project_slug }}/
+  .agentseek/
+    lifecycle.toml
   README.md
   pyproject.toml
   requirements.txt
@@ -99,10 +115,10 @@ def build_agent():
     return create_agent(...)
 ```
 
-The generated `docker-compose.yml` starts the LangChain app and CopilotKit
-frontend by default. Its `otel` profile adds `ghcr.io/psiace/phoenix:mysql`
-with `PHOENIX_SQL_DATABASE_URL=mysql://root@seekdb:2881/phoenix` and a
-`quay.io/oceanbase/seekdb:latest` backend. Its `feishu` profile starts the
-Feishu gateway with the same LangChain spec and environment surface. Users can
-turn profiles on with `COMPOSE_PROFILES=otel`, `COMPOSE_PROFILES=feishu`, or
-`COMPOSE_PROFILES=otel,feishu` in `.env`.
+The generated `docker-compose.yml` is the default lifecycle stack: it starts
+Bub gateway, the CopilotKit frontend, Phoenix, and a seekdb backend in one
+`agentseek dev` run. Phoenix uses
+`PHOENIX_SQL_DATABASE_URL=mysql://root@seekdb:2881/phoenix` and persists data in
+`quay.io/oceanbase/seekdb:latest`. Its optional `feishu` profile starts the
+Feishu gateway with the same LangChain spec and environment surface; enable it
+with `COMPOSE_PROFILES=feishu` in `.env`.

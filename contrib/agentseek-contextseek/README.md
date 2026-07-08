@@ -86,8 +86,10 @@ entry to your MCP config file. With agentseek defaults that file is
 ```
 
 The server reads `AGENTSEEK_CTX_*` from the project `.env` via
-`agentseek_contextseek.config`, so no environment values need to be inlined
-into `mcp.json`.
+`agentseek_contextseek.config`. When ContextSeek's LLM support is enabled, the
+same bridge reuses `BUB_MODEL` / `BUB_API_KEY` / provider-specific Bub
+credentials for LangChain env vars, so no environment values need to be
+inlined into `mcp.json`.
 
 ### HTTP server
 

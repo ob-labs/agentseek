@@ -1,136 +1,110 @@
 ---
-title: CLI reference
+title: CLI Reference
 type: reference
-audience: [A1, A2, A3, A4]
+audience: [A2]
 runs: no
-verified_on: 2026-06-12
+verified_on: 2026-06-23
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
   - src/agentseek/cli/runtime.py
-  - src/agentseek/cli/__init__.py
-  - src/agentseek/cli/commands/
+  - src/agentseek/cli/commands/create.py
+  - src/agentseek/cli/commands/dev.py
+  - src/agentseek/cli/commands/doctor.py
+  - src/agentseek/cli/commands/info.py
+  - src/agentseek/cli/commands/task.py
 ---
 
-# CLI reference
+# CLI Reference
 
-```text
-agentseek [OPTIONS] COMMAND [ARGS]...
-```
-
-## Command groups
-
-| Area | Commands |
-| --- | --- |
-| Project | `create`, `run`, `build`, `deploy` |
-| Runtime | `chat`, `turn`, `gateway` |
-| Environment | `plugin`, `onboard`, `login`, optional `mcp` |
-| Services | `api`, `ctx`, `skills` |
-| Utility | `version` |
-
-## Project commands
-
-### `agentseek create [SPEC]`
-
-| Argument / flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `spec` | text | - | Framework type, `type/name`, git URL, or local path. |
-| `--template` | text | - | Named template under the selected type; no value lists templates. |
-| `--checkout` | text | - | Branch, tag, or commit for a remote template. |
-| `--list-templates` | flag | off | List templates and exit. |
-| `--no-input` | flag | off | Use template defaults without prompts. |
-
-### `agentseek run`
-
-| Flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--port` | integer | `$PORT` or `3000` | Frontend port. |
-| `--host` | text | `127.0.0.1` | Readiness probe host. |
-| `--no-browser` | flag | off | Skip opening the default browser. |
-| `--wait-timeout` | integer | `30` | Seconds to wait for frontend readiness. |
-| `--mode` | `auto`, `compose`, `python` | `auto` | Launch mode. |
-
-### `agentseek build`
-
-| Flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--tag`, `-t` | text | `<cwd-slug>:latest` | Image tag. |
-| `--file`, `-f` | path | `Dockerfile` | Dockerfile path. |
-| `--context` | path | `.` | Build context. |
-| `--platform` | text | - | Comma-separated target platforms. |
-| `--push` | flag | off | Push after a successful build. |
-| `--no-cache` | flag | off | Disable build cache. |
-| `--build-arg` | text | repeatable | Build-time `KEY=VALUE` variable. |
-| `--dry-run` | flag | off | Print resolved Docker command without executing it. |
-
-### `agentseek deploy`
-
-| Flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--dry-run` | flag | required | Generate manifest files without applying them. |
-| `--mode` | `docker-compose`, `k8s`, `both` | `both` | Manifest target. |
-| `--output` | directory | `deploy` | Output directory. |
-| `--image` | text | `<project-slug>:latest` | Container image reference. |
-| `--slug` | text | inferred from cwd | Service or deployment name stem. |
-| `--port` | integer | `8000` | Service port. |
-| `--replicas` | integer | `1` | Kubernetes replica count. |
-| `--namespace` | text | `default` | Kubernetes namespace. |
-
-## Runtime commands
-
-### `agentseek chat`
-
-| Flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--chat-id` | text | `local` | Chat id. |
-| `--session-id` | text | - | Optional session id. |
-
-### `agentseek turn MESSAGE`
-
-| Argument / flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `MESSAGE` | text | required | Inbound message content. |
-| `--channel` | text | `cli` | Message channel. |
-| `--chat-id` | text | `local` | Chat id. |
-| `--sender-id` | text | `human` | Sender id. |
-| `--session-id` | text | - | Optional session id. |
-
-### `agentseek gateway`
-
-| Flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--enable-channel` | text | all | Channel to enable; repeatable. |
-
-## Environment commands
+## Installation And Invocation
 
 | Command | Description |
 | --- | --- |
-| `agentseek plugin install [SPECS]...` | Install plugins, or sync the plugin environment when no spec is given. |
-| `agentseek plugin uninstall PACKAGES...` | Remove plugins from the AgentSeek environment. |
-| `agentseek plugin update [PACKAGES]...` | Update selected plugins, or all plugins when no package is given. |
-| `agentseek onboard` | Run interactive runtime configuration. |
-| `agentseek login` | Run the base Bub authentication flow. |
-| `agentseek mcp` | Manage MCP configuration when the MCP plugin is installed and loaded. |
+| `uv tool install agentseek` | Install the CLI for daily use. |
+| `agentseek ...` | Run lifecycle commands after installation. |
+| `uvx agentseek ...` | Run one AgentSeek command without installing the tool. |
 
-## Service commands
+## Root Options
+
+| Option | Description |
+| --- | --- |
+| `--mode [cli\|agent]` | Select the CLI profile. The documented lifecycle workflow uses `cli`. |
+| `--help` | Show help for the selected profile. |
+
+## Default Commands
 
 | Command | Description |
 | --- | --- |
-| `agentseek api` | Forward commands to `agentseek-api` when installed. |
-| `agentseek ctx` | Forward commands to ContextSeek when installed. |
-| `agentseek skills` | Manage skills through `npx-skills`. |
+| `agentseek create [spec]` | Create a project from a template. |
+| `agentseek doctor` | Check local readiness through the lifecycle spec. |
+| `agentseek dev` | Start local development through the lifecycle spec. |
+| `agentseek info` | Show project metadata and entry points. |
+| `agentseek task` | Run project-defined lifecycle spec tasks. |
+| `agentseek version` | Show AgentSeek version information. |
 
-### `agentseek skills`
+## `create`
 
-| Flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--dir` | path | current working directory | Workspace directory. |
+### Forms
 
-| Subcommand | Description |
+| Form | Description |
 | --- | --- |
-| `add` | Install AgentSeek skills by default, or use an explicit source. |
-| `list` | List the embedded AgentSeek catalogue, or pass arguments through. |
-| `find` | Forward to `npx-skills`. |
-| `update` | Forward to `npx-skills`. |
-| `remove` | Forward to `npx-skills`. |
-| `init` | Forward to `npx-skills`. |
+| `agentseek create` | Select the type and template interactively. |
+| `agentseek create <type>` | Use the default template for the type. |
+| `agentseek create <type>/<name>` | Use a specific template. |
+| `agentseek create <url-or-absolute-path>` | Pass the spec directly to Cookiecutter. |
+
+The built-in template type set is currently `bub`, `deepagents`, and
+`langchain`.
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `spec` | Template type, `type/name`, Git URL, or absolute local path. |
+| `--list-templates` | List templates. With a `type`, list only that type. |
+| `--template name` | Select a template under the chosen type, for example `bub --template default`. |
+| `--template` | Compatibility entry point that lists templates. Prefer `--list-templates` in new scripts. |
+| `--checkout ref` | Use a branch, tag, or commit when fetching the remote template source. |
+| `--no-input` | Skip Cookiecutter variable prompts and use template defaults. |
+| `--describe` | Print template description and Cookiecutter variables without generating a project. |
+
+### Missing Templates
+
+| Form | Behavior |
+| --- | --- |
+| `agentseek create bub --template missing` | Exits with code `2` and shows the missing template plus supported `bub` templates. |
+| `agentseek create bub/missing` | Exits with code `2` and shows the missing template plus supported `bub` templates. |
+
+## `doctor`
+
+| Option | Description |
+| --- | --- |
+| `--live` | Check already-running local services. |
+| `--strict` | Treat warnings as failures. |
+
+## `dev`
+
+| Option | Description |
+| --- | --- |
+| `--dry-run` | Print the startup plan without launching services. |
+| `--skip-check` | Skip the preliminary strict `doctor` pass before startup. Core required inputs are still enforced. |
+
+## `info`
+
+| Option | Description |
+| --- | --- |
+| `--verbose` | Show lifecycle loader discovery details. |
+
+`info` prints services, environment status, lifecycle task names and
+descriptions, and next-step commands for the current project.
+
+## `task`
+
+| Form | Description |
+| --- | --- |
+| `agentseek task --list` | List project-defined lifecycle spec tasks. |
+| `agentseek task --help` | Show the AgentSeek task boundary. |
+| `agentseek task <name>` | Run a project-defined lifecycle spec task. |
+
+`task` must run from a project directory containing `.agentseek/lifecycle.toml`.

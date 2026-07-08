@@ -6,7 +6,8 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 RUN pip install --no-cache-dir .
 
-EXPOSE {{ cookiecutter.gateway_port }}
-EXPOSE {{ cookiecutter.ctx_server_port }}
+ENV BUB_AG_UI_HOST=0.0.0.0
 
-CMD ["serve"]
+EXPOSE {{ cookiecutter.gateway_port }}
+
+CMD ["bub", "gateway", "--enable-channel", "ag-ui"]

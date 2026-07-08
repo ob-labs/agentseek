@@ -1,27 +1,32 @@
 # LangChain — cli-remote template
 
-Scaffolds a project that runs a graph via `langgraph dev` and bridges it
-into agentseek through `LangGraphClientRunnable`.
+生成一个通过 `langgraph dev` 运行 remote graph，并用
+`LangGraphClientRunnable` 接入 Bub 的项目。
 
 ## Architecture
 
 ```text
-uv run agentseek run / agentseek gateway
-  -> agentseek-langchain
+uvx agentseek dev
+  -> .agentseek/lifecycle.toml
+    -> uv run langgraph dev
+      -> create_agent(...)
+
+Bub runtime
+  -> BUB_LANGCHAIN_SPEC
+    -> agentseek-langchain
     -> LangGraphClientRunnable
       -> langgraph_sdk client
-        -> uv run langgraph dev
-          -> create_agent(...)
+        -> LangGraph Agent Server
 ```
 
-The bridge sends a messages-only state dict to the remote graph:
+bridge 会向 remote graph 发送只包含 messages 的 state dict：
 
 ```python
 {"messages": [...]}
 ```
 
-This keeps local Bub runtime objects such as `mcp` out of the JSON request
-while still matching the input shape expected by the remote `create_agent(...)`.
+这样可以避免把本地 Bub runtime 对象写入 JSON request，同时保持
+remote `create_agent(...)` 期望的输入形状。
 
 ## Inputs
 
@@ -30,14 +35,16 @@ while still matching the input shape expected by the remote `create_agent(...)`.
 | `project_name` | Human-readable project name. |
 | `project_slug` | Python package / directory name. |
 | `author` | Project author. |
-| `default_model` | Default `AGENTSEEK_MODEL`. |
+| `default_model` | Default `BUB_MODEL`. |
 | `langgraph_url` | Default LangGraph Agent Server URL. |
 | `assistant_id` | Graph / assistant id (matches `langgraph.json`). |
 
 ## Generated layout
 
-```
+```text
 {{ project_slug }}/
+  .agentseek/
+    lifecycle.toml
   README.md
   pyproject.toml
   requirements.txt
@@ -53,8 +60,8 @@ while still matching the input shape expected by the remote `create_agent(...)`.
 
 ## Key code patterns
 
-The binding builds a `RunnableSpec` with a custom input adapter that
-extracts only messages from the Bub state:
+binding 会构造一个 `RunnableSpec`，并用自定义 input adapter 从 Bub state
+里只提取 messages：
 
 ```python
 from agentseek_langchain import LangGraphClientRunnable, RunnableSpec

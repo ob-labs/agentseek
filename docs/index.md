@@ -1,67 +1,91 @@
 ---
-title: AgentSeek documentation
+title: AgentSeek Lifecycle Toolkit
 type: explanation
-audience: [A1, A2, A3, A4, A5]
-runs: no
-verified_on: 2026-06-12
-hide_sidebar: true
+audience: [A1, A2, A5]
+runs: yes
+verified_on: 2026-06-23
 sources:
-  - README.md
-  - mkdocs.yml
   - pyproject.toml
+  - README.md
   - src/agentseek/cli/runtime.py
+  - src/agentseek/cli/lifecycle/core.py
+  - templates/index.json
 ---
 
-# AgentSeek documentation
+# AgentSeek Lifecycle Toolkit
 
-AgentSeek turns agent runtime data into a database workload: turns, context,
-tool calls, tasks, feedback, checkpoints, memory, and observability data stay
-queryable instead of being scattered across logs and side systems.
+> **In short:** AgentSeek helps you move from an app template to a running local
+> AI application through a small lifecycle command set.
 
-## Minimal Commands
+## Read This First
 
-```bash
-uvx agentseek create deepagents/default --no-input
-cd my_deepagent
-cp .env.example .env
-uv sync
-uv pip install -r requirements.txt
-export PYTHONPATH=src
-export AGENTSEEK_LANGCHAIN_SPEC=my_deepagent.demo_binding:build_spec
-export AGENTSEEK_AG_UI_PORT=18088
-uv run agentseek gateway --enable-channel ag-ui
+AgentSeek gives generated apps a consistent local development workflow.
+
+It creates the app, checks whether it is ready, and starts the services needed
+for local development.
+
+```text
+AgentSeek CLI
+  -> app template
+    -> editable generated app
+      -> lifecycle tasks
+      -> local development stack
 ```
 
-Use [Quick demo via the CLI](tutorials/01-quick-demo-cli.md) when you want to
-try the harness before creating a project.
+## Try One Template Path
 
-## Project Lifecycle
+Install the CLI for daily use.
 
-<div class="terminal-grid terminal-grid-2">
-  <div class="terminal-card">
-    <h3><a href="tutorials/02-first-harness-app/">Create</a></h3>
-    <p>Start from a template when you need an editable harness app.</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="how-to/run-locally/">Run</a></h3>
-    <p>Run the generated project locally after model credentials are set.</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="tutorials/03-add-a-skill-and-mcp/">Extend</a></h3>
-    <p>Add project-local skills, MCP tools, plugins, or ContextSeek when the app needs them.</p>
-  </div>
-  <div class="terminal-card">
-    <h3><a href="how-to/build-and-deploy/">Ship</a></h3>
-    <p>Build the image and generate deployment manifests from the project root.</p>
-  </div>
-</div>
+```bash
+uv tool install agentseek
+```
 
-## After the first run
+The command below uses one Bub template. DeepAgents and LangChain templates use
+the same lifecycle command shape.
+Fill `.env` before running `agentseek doctor`; otherwise the readiness check
+reports the missing credentials.
 
-- Use `deepagents/default` when you want the recommended AgentSeek harness app.
-- Use `bub/default` when you want the lightest harness app without LangChain.
-- Use `langchain/default` when a LangChain app should enter the AgentSeek runtime.
-- Use `deepagents/research` or `deepagents/content-builder` for DeepAgents-shaped products.
-- Add [ContextSeek](how-to/use-contextseek.md) when memory should become a first-class runtime capability.
-- Read [Runtime data model](explanation/runtime-data-model.md) before choosing a durable storage backend.
-- Browse [Hub](hub.md) for bundled and contrib integrations.
+```bash
+agentseek create bub/default --no-input
+cd my_bub_agent
+cp .env.example .env
+$EDITOR .env
+uv sync
+npm install --prefix frontend
+agentseek doctor
+agentseek dev
+```
+
+## Lifecycle Commands
+
+| Command | Use it when you want to |
+| --- | --- |
+| `agentseek create` | Create a project from a template. |
+| `agentseek doctor` | Check files, environment, dependencies, and ports. |
+| `agentseek dev` | Start the generated project's local development stack. |
+| `agentseek info` | Inspect project metadata and local entry points. |
+| `agentseek task` | Run project-defined tasks directly. |
+
+## Understand The Workflow
+
+A generated project carries its own lifecycle tasks.
+
+AgentSeek exposes the common tasks as first-class commands. It also lets you
+run project-specific tasks through `agentseek task`.
+
+This keeps the workflow predictable while leaving app behavior in the generated
+project.
+
+## Current Focus
+
+- Create editable apps from templates.
+- Check local readiness before development.
+- Run the local development stack.
+- Inspect project metadata and entry points.
+- Extend the app workflow with project tasks.
+
+## Next Reads
+
+- [Get started](get-started/index.md)
+- [Create a project](guides/create-project.md)
+- [Review the CLI](reference/cli.md)

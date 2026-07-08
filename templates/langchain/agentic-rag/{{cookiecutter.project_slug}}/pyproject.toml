@@ -1,12 +1,12 @@
 [project]
 name = "{{ cookiecutter.project_slug }}"
 version = "0.1.0"
-description = "{{ cookiecutter.project_name }} — LangChain agentic RAG with OceanBase/SeekDB vector store, served by langgraph dev."
+description = "{{ cookiecutter.project_name }} — LangChain agentic RAG with OceanBase/seekdb vector store, served by langgraph dev."
 authors = [{ name = "{{ cookiecutter.author }}" }]
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.12",
-    "httpx>=0.28",
+    "httpx[socks]>=0.28",
     "langchain>=1.0",
     "langchain-anthropic>=0.3",
     "langchain-google-genai>=2.0",

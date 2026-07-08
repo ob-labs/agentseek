@@ -1,6 +1,6 @@
 # Frontend — {{ cookiecutter.project_name }}
 
-CopilotKit + Vite frontend. Talks to the agentseek gateway over AG-UI
+CopilotKit + Vite frontend. Talks to the Bub gateway over AG-UI
 through a small Copilot Runtime (Express).
 
 ## Run
@@ -14,4 +14,4 @@ npm run dev
 | --- | --- |
 | Vite dev server | {{ cookiecutter.frontend_port }} |
 | Copilot Runtime | {{ cookiecutter.copilotkit_port }} |
-| Agentseek gateway | {{ cookiecutter.gateway_port }} |
+| Bub gateway | {{ cookiecutter.gateway_port }} |

@@ -1,13 +1,15 @@
 # DeepAgents — default template
 
-Scaffolds a local `create_deep_agent(...)` runnable bound to AgentSeek through
-`agentseek-langchain`.
+Scaffolds a local `create_deep_agent(...)` runnable with an AgentSeek lifecycle
+spec and an `agentseek-langchain` binding.
 
 ## Architecture
 
 ```text
-uv run agentseek run / agentseek gateway
-  -> agentseek-langchain
+uvx agentseek dev
+  -> .agentseek/lifecycle.toml
+    -> uv run bub gateway --enable-channel ag-ui
+      -> agentseek-langchain
     -> messages_spec(...)
       -> create_deep_agent(...)
 ```
@@ -22,7 +24,7 @@ The binding export is `{{ project_slug }}.demo_binding:build_spec`.
 | `project_slug` | Python package / directory name (auto-derived). |
 | `author` | Project author. |
 | `system_prompt` | System prompt baked into the agent. |
-| `default_model` | Default `AGENTSEEK_MODEL` value used by `settings.py`. |
+| `default_model` | Default `BUB_MODEL` value used by `settings.py`. |
 
 ## Generated layout
 
@@ -33,11 +35,27 @@ The binding export is `{{ project_slug }}.demo_binding:build_spec`.
   requirements.txt
   Dockerfile
   .env.example
+  .agentseek/
+    lifecycle.toml
   src/{{ project_slug }}/
     __init__.py
     demo_binding.py
     settings.py
 ```
+
+## Lifecycle
+
+The generated project exposes the standard AgentSeek lifecycle surface:
+
+```bash
+agentseek info
+agentseek doctor
+agentseek dev --dry-run
+agentseek task --list
+```
+
+Readiness checks, service URLs, the gateway process, and the AG-UI health
+check endpoint are declared in `.agentseek/lifecycle.toml`.
 
 ## Key code patterns
 

@@ -5,62 +5,68 @@
 [![License](https://img.shields.io/github/license/ob-labs/agentseek.svg)](LICENSE)
 [![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
 
-AgentSeek 是由 [OceanBase](https://www.oceanbase.com/) OSS Team 提供的
-数据库原生 agent harness。
-
-AgentSeek 帮团队把 agent 运行时数据变成数据库工作负载：turn、context、
-工具调用、任务、反馈、checkpoint、memory 和观测数据都保持可查询，而不是散落在
-日志和外围系统里。
+AgentSeek 是面向本地 AI 生态应用开发的 template-first toolkit。它帮助开发者
+创建应用、运行应用、查看本地生命周期状态，并诊断常见环境问题，然后再逐步进入
+[OceanBase](https://www.oceanbase.com/) AI 生态。
 
 > **《Deep Agents 实战》**：基于 AgentSeek 实验的 LangChain / DeepAgents 免费课程。
 > [课程仓库](https://github.com/datawhalechina/deepagents-in-action/)
 
 ## 从这里开始
 
-用 `uvx` 跑通最短路径：
+日常使用时先安装 CLI：
 
 ```bash
-mkdir agentseek-demo
-cd agentseek-demo
-AGENTSEEK_MODEL=openrouter:moonshotai/kimi-k2:free \
-AGENTSEEK_API_KEY=sk-or-v1-replace-me \
-uvx agentseek chat
+uv tool install agentseek
 ```
+
+如果只是临时试用，也可以把第一条 `agentseek create ...` 命令替换为
+`uvx agentseek create ...`。
 
 创建一个可以继续编辑的项目：
 
 ```bash
-uvx agentseek create deepagents/default --no-input
-cd my_deepagent
-cp .env.example .env
-uv sync
-uv pip install -r requirements.txt
+agentseek create bub/default --no-input
+cd my_bub_agent
 ```
 
-在 `.env` 中设置 `AGENTSEEK_API_KEY`，然后启动 harness gateway：
+准备生成出的项目：
 
 ```bash
-export PYTHONPATH=src
-export AGENTSEEK_LANGCHAIN_SPEC=my_deepagent.demo_binding:build_spec
-export AGENTSEEK_AG_UI_PORT=18088
-uv run agentseek gateway --enable-channel ag-ui
+cp .env.example .env
+$EDITOR .env
+uv sync
+npm install --prefix frontend
 ```
+
+在 `.env` 或运行 AgentSeek 的环境里，设置所选模板需要的模型和 provider
+凭证。AgentSeek 只把 `.env` 用作模板声明的生命周期环境检查来源，不会把
+`.env` 自动传给子进程。
+
+准备好 `.env` 和本地依赖后，再运行就绪检查和本地开发栈：
+
+```bash
+agentseek doctor
+agentseek dev
+```
+
+## 生命周期命令
+
+| 命令 | 用途 |
+| --- | --- |
+| `create` | 渲染应用模板。 |
+| `doctor` | 检查本地项目就绪状态。 |
+| `dev` | 启动本地开发栈。 |
+| `info` | 输出项目入口和 lifecycle 元数据。 |
+| `task` | 运行项目定义的任务。 |
 
 ## 文档
 
-- [首页](docs/index.zh.md)：从文档中选择最短路径。
-- [教程](docs/tutorials/index.zh.md)：跟随引导完成首次运行。
-- [第一个 harness 应用](docs/tutorials/02-first-harness-app.zh.md)：创建并运行可编辑项目。
-- [操作指南](docs/how-to/index.zh.md)：首次跑通后的任务食谱。
-- [参考](docs/reference/index.zh.md)：命令、环境变量、包和模板。
-- [Hub](docs/hub.zh.md)：bundled 与 contrib integrations。
-
-## 相关项目
-
-- [Bub](https://github.com/bubbuild/bub)：AgentSeek 底层使用的 hook-first agent runtime。
-- [ContextSeek](https://github.com/ob-labs/contextseek)：语义记忆、检索和 MCP 集成。
-- [agentseek-api](https://github.com/ob-labs/agentseek-api)：面向生产 LangGraph 服务的 Agent Protocol server。
-- [langchain-oceanbase](https://github.com/oceanbase/langchain-oceanbase)：OceanBase 上的 LangGraph checkpoint、store、向量检索和混合检索。
+- [文档首页](https://ob-labs.github.io/agentseek/zh/)
+- [快速开始](https://ob-labs.github.io/agentseek/zh/get-started/)
+- [指南](https://ob-labs.github.io/agentseek/zh/guides/)
+- [参考](https://ob-labs.github.io/agentseek/zh/reference/)
+- [概念](https://ob-labs.github.io/agentseek/zh/concepts/)
 
 ## 开发
 

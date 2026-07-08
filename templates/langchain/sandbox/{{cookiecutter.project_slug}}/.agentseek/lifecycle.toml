@@ -1,0 +1,58 @@
+version = 1
+template = "langchain/sandbox"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "node", "npm"]
+
+[paths]
+required = ["pyproject.toml", "langgraph.json", "frontend/package.json", "frontend/node_modules"]
+
+[env.AGENTSEEK_MODEL_PROVIDER]
+required = true
+default = "{{ cookiecutter.default_model_provider }}"
+description = "Model provider used by the generated LangChain agent."
+
+[env.AGENTSEEK_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model id passed to LangChain chat model initialization."
+aliases = ["DEEPAGENTS_MODEL", "BUB_MODEL"]
+
+[env.LANGSMITH_API_KEY]
+required = true
+description = "LangSmith key used for the sandbox backend and tracing."
+
+[services.backend]
+url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+
+[services.frontend]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[processes.backend]
+command = ["uv", "run", "langgraph", "dev", "--no-browser", "--port", "{{ cookiecutter.langgraph_port }}"]
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+cwd = "frontend"
+
+[checks.backend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.backend]
+description = "Sync backend dependencies."
+command = ["uv", "sync"]
+
+[tasks.frontend]
+description = "Install frontend dependencies."
+command = ["npm", "install", "--prefix", "frontend"]

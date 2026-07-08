@@ -1,0 +1,68 @@
+version = 1
+template = "deepagents/research"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "node", "npm"]
+
+[paths]
+required = ["pyproject.toml", "langgraph.json", "frontend/package.json", "frontend/node_modules"]
+
+[env.AGENTSEEK_MODEL_PROVIDER]
+required = true
+default = "{{ cookiecutter.default_model_provider }}"
+description = "LangChain model provider used by the research graph."
+
+[env.AGENTSEEK_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model id used by the research graph."
+aliases = ["DEEPAGENTS_MODEL", "BUB_MODEL"]
+
+[env.OPENAI_API_KEY]
+required = true
+description = "Credential for the selected model provider."
+aliases = ["ANTHROPIC_API_KEY", "GOOGLE_API_KEY", "BUB_OPENAI_API_KEY"]
+
+[env.TAVILY_API_KEY]
+required = true
+description = "Tavily search API key used by tavily_search."
+
+[env.LANGCHAIN_OPENAI_STREAM_CHUNK_TIMEOUT_S]
+required = false
+default = "300"
+description = "OpenAI stream chunk gap timeout in seconds."
+
+[services.langgraph]
+url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+
+[services.frontend]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[processes.langgraph]
+command = ["uv", "run", "langgraph", "dev", "--port", "{{ cookiecutter.langgraph_port }}", "--no-browser"]
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+cwd = "frontend"
+
+[checks.langgraph]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.backend]
+description = "Install Python dependencies with uv."
+command = ["uv", "sync"]
+
+[tasks.frontend]
+description = "Install frontend dependencies."
+command = ["npm", "install", "--prefix", "frontend"]

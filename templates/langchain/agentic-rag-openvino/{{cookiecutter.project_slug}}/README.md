@@ -3,7 +3,7 @@
 LangChain agentic RAG running **fully local** with
 [OpenVINO](https://docs.openvino.ai/) via the official
 [langchain-huggingface](https://python.langchain.com/docs/integrations/llms/openvino)
-integration and [OceanBase/SeekDB](https://github.com/oceanbase/seekdb)
+integration and [OceanBase/seekdb](https://github.com/oceanbase/seekdb)
 as the vector store. No cloud API keys required.
 
 Scaffolded with `agentseek create langchain/agentic-rag-openvino`.
@@ -17,7 +17,7 @@ Scaffolded with `agentseek create langchain/agentic-rag-openvino`.
 │  LLM:        HuggingFacePipeline(backend="openvino")     │
 │              → ChatHuggingFace → create_agent             │
 │  Embedding:  HuggingFaceEmbeddings(backend="openvino")   │
-│  Vector DB:  OceanBase/SeekDB                            │
+│  Vector DB:  OceanBase/seekdb                            │
 │  Serving:    langgraph dev → React frontend              │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -26,23 +26,63 @@ The agent uses `create_agent` with tool-calling — same pattern as the
 cloud-based `agentic-rag` template. The LLM decides when and how many
 times to search the knowledge base.
 
+## Lifecycle commands
+
+This project includes `.agentseek/lifecycle.toml`, so AgentSeek can inspect,
+check, and run the local development stack:
+
+```bash
+agentseek info           # show services, environment, and lifecycle metadata
+agentseek doctor         # run static checks for tools, paths, and .env
+agentseek dev --dry-run  # print the seekdb/backend/frontend startup plan
+agentseek task --list    # list setup and data tasks
+agentseek task seekdb-skills  # optionally install seekdb agent skills
+```
+
+`agentseek doctor` intentionally does not download or convert OpenVINO models.
+Use `agentseek task models` for that heavier step.
+
+## Agent Skills
+
+`agentseek task seekdb-skills` runs
+`npx skills add oceanbase/seekdb-ecology-plugins --all` to install recommended
+seekdb skills for supported coding agents. This uses the external `skills`
+tooling; `agentseek task --list` remains the canonical way to discover
+template tasks.
+
 ## Setup
 
 > **Python 3.10+ required** (not 3.12+). OpenVINO runtime and
 > `optimum[openvino]` have limited Python 3.13+ support, so this template
 > uses `requires-python = ">=3.10"`.
+>
+> **Node.js 20+ recommended** for the Vite frontend dependencies.
 
-### 1. Install dependencies
+### 1. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` if you changed model paths, want a different OpenVINO device, or
+want to enable LangSmith tracing. AgentSeek reads `.env` for lifecycle checks;
+LangGraph, the ingest CLI, and Docker Compose also read it at runtime.
+
+### 2. Install dependencies
 
 ```bash
 uv sync
-npm install --prefix frontend
+agentseek task frontend
+agentseek doctor
 ```
 
-### 2. Download and convert OpenVINO models
+`agentseek doctor` checks local prerequisites and does not run model conversion,
+ingestion, or Docker startup.
+
+### 3. Download and convert OpenVINO models
 
 ```bash
-uv run convert-models
+agentseek task models
 ```
 
 This downloads and converts via `optimum-cli export openvino`:
@@ -64,17 +104,10 @@ optimum-cli export openvino \
 
 Then update `LLM_MODEL_PATH` in `.env`.
 
-### 3. Start SeekDB
+### 4. Start seekdb
 
 ```bash
-docker compose up -d        # wait ~60s on first run
-```
-
-### 4. Configure environment
-
-```bash
-cp .env.example .env
-# Edit .env if you changed model paths or want to enable LangSmith tracing
+agentseek task seekdb        # wait ~60s on first run
 ```
 
 Key variables:
@@ -85,26 +118,30 @@ Key variables:
 | `EMBEDDING_MODEL_PATH` | ./models/bge-small-en-v1.5 | OpenVINO embedding model directory |
 | `OPENVINO_DEVICE` | CPU | Inference device: CPU, GPU, or NPU |
 | `MAX_NEW_TOKENS` | 512 | Max tokens for LLM generation |
-| `SEEKDB_HOST` | 127.0.0.1 | SeekDB host |
-| `SEEKDB_PORT` | 2881 | SeekDB port |
+| `SEEKDB_HOST` | 127.0.0.1 | seekdb host |
+| `SEEKDB_PORT` | 2881 | seekdb port |
 
 ## Ingest
 
 ```bash
-uv run ingest https://lilianweng.github.io/posts/2023-06-23-agent/
+agentseek task ingest-sample
 uv run ingest ./docs/
 ```
 
 Documents are chunked (1000 chars, 200 overlap), embedded with
 `HuggingFaceEmbeddings(backend="openvino")` using bge-small-en-v1.5
-(384-dim), and indexed into SeekDB.
+(384-dim), and indexed into seekdb.
 
 ## Run
 
 ```bash
-uv run langgraph dev --no-browser    # backend :2024
-npm run --prefix frontend dev        # frontend :{{ cookiecutter.frontend_port }}
+agentseek dev --dry-run
+agentseek dev
 ```
+
+`agentseek dev` starts seekdb, `langgraph dev`, and the Vite frontend from the
+lifecycle spec. In another terminal, use `agentseek doctor --live` to check the
+declared HTTP endpoints.
 
 ## Smoke test
 

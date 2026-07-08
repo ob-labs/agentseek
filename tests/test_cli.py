@@ -1,20 +1,24 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import AsyncIterable
-from pathlib import Path
 
 import typer
 from bub.channels.base import Channel
 from bub.channels.message import ChannelMessage
 from bub.framework import BubFramework
 from republic import StreamEvent
+from typer.testing import CliRunner
 
-from agentseek.cli import apply_agentseek_runtime_command_layout, resolve_enabled_channels
-from agentseek.cli.commands.chat import chat as agentseek_chat
-from agentseek.cli.commands.onboard import onboard as agentseek_onboard
-from agentseek.cli.commands.plugin import _ensure_plugin_sandbox
-from agentseek.env import DEFAULT_PLUGIN_SANDBOX
+from agentseek.cli import (
+    apply_agentseek_agent_command_layout,
+    apply_agentseek_runtime_command_layout,
+    register_app_profile_options,
+)
+from agentseek.cli.commands import chat as chat_module
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 
 class _DummyChannel(Channel):
@@ -36,58 +40,55 @@ class _DummyChannel(Channel):
 # ---------------------------------------------------------------------------
 
 
-def test_runtime_command_layout_replaces_and_regroups_bub_commands() -> None:
-    app = typer.Typer()
-
-    @app.command("run")
-    def run() -> None:
-        pass
-
-    @app.command("install")
-    def install() -> None:
-        pass
-
-    @app.command("uninstall")
-    def uninstall() -> None:
-        pass
-
-    @app.command("update")
-    def update() -> None:
-        pass
-
-    @app.command("chat")
-    def chat() -> None:
-        pass
-
-    @app.command("onboard")
-    def onboard() -> None:
-        pass
-
+def test_default_command_layout_mounts_lifecycle_commands() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
     apply_agentseek_runtime_command_layout(app)
 
-    root_commands = {command.name for command in app.registered_commands}
-    assert app.suggest_commands is False
-    # Bub originals removed from root
-    assert "run" not in root_commands
-    assert "install" not in root_commands
-    assert "uninstall" not in root_commands
-    assert "update" not in root_commands
-    # AgentSeek replacements present
-    assert "turn" in root_commands
-    assert "chat" in root_commands
-    assert "onboard" in root_commands
+    result = CliRunner().invoke(app, ["--help"])
 
-    # chat and onboard are AgentSeek's own implementations
-    chat_cmd = next(c for c in app.registered_commands if c.name == "chat")
-    assert chat_cmd.callback is agentseek_chat
-    onboard_cmd = next(c for c in app.registered_commands if c.name == "onboard")
-    assert onboard_cmd.callback is agentseek_onboard
+    assert result.exit_code == 0
+    for command in ("create", "dev", "info", "doctor", "task"):
+        assert command in result.output
+    for removed_command in ("run", "build", "deploy", "gateway"):
+        assert removed_command not in result.output
 
-    # plugin group
-    plugin_groups = [group.typer_instance for group in app.registered_groups if group.name == "plugin"]
-    assert len(plugin_groups) == 1
-    assert plugin_groups[0] is not None
-    assert {command.name for command in plugin_groups[0].registered_commands} == {"install", "uninstall", "update"}
+
+def test_removed_commands_are_not_registered() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
+    apply_agentseek_runtime_command_layout(app)
+
+    runner = CliRunner()
+    for command in ("run", "build", "deploy", "gateway"):
+        result = runner.invoke(app, [command])
+        assert result.exit_code == 2
+
+
+def test_lifecycle_command_help_does_not_advertise_subcommands() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
+    apply_agentseek_runtime_command_layout(app)
+
+    runner = CliRunner()
+    for command in ("doctor", "dev", "info"):
+        result = runner.invoke(app, [command, "--help"])
+        assert result.exit_code == 0
+        output = ANSI_RE.sub("", result.output)
+        assert f"Usage: agentseek {command} [OPTIONS]" in output
+        assert "COMMAND [ARGS]" not in output
+
+
+def test_task_help_is_available_outside_lifecycle_project() -> None:
+    app = typer.Typer(name="agentseek", add_completion=False)
+    register_app_profile_options(app)
+    apply_agentseek_runtime_command_layout(app)
+
+    result = CliRunner().invoke(app, ["task", "--help"])
+
+    assert result.exit_code == 0
+    assert "Usage: agentseek task" in result.output
+    assert ".agentseek/lifecycle.toml" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -103,85 +104,47 @@ class _FakeFramework(BubFramework):
         del message_handler
         return {
             "cli": _DummyChannel(),
-            "mcp.lifecycle": _DummyChannel(),
-            "skills.lifecycle": _DummyChannel(),
             "telegram": _DummyChannel(),
         }
 
 
-def test_resolve_enabled_channels_adds_lifecycle_channels() -> None:
-    enabled = resolve_enabled_channels(_FakeFramework(), ["cli"])
+def test_agent_command_layout_requires_confirmation(monkeypatch) -> None:
+    app = typer.Typer(name="agentseek")
+    framework = _FakeFramework()
+    called = False
 
-    assert enabled == ["cli", "mcp.lifecycle", "skills.lifecycle"]
+    def fake_chat(ctx: typer.Context) -> None:
+        nonlocal called
+        assert ctx.obj is framework
+        called = True
 
+    monkeypatch.setattr(chat_module, "chat", fake_chat)
+    apply_agentseek_agent_command_layout(app, framework)
 
-def test_resolve_enabled_channels_preserves_explicit_entries() -> None:
-    enabled = resolve_enabled_channels(_FakeFramework(), ["cli", "mcp.lifecycle"])
+    result = CliRunner().invoke(app, ["--mode", "agent"], input="n\n")
 
-    assert enabled == ["cli", "mcp.lifecycle", "skills.lifecycle"]
-
-
-# ---------------------------------------------------------------------------
-# Plugin sandbox
-# ---------------------------------------------------------------------------
-
-
-def test_ensure_plugin_sandbox_calls_uv_init_with_agentseek_name(monkeypatch, tmp_path) -> None:
-    import bub.builtin.cli as bub_cli
-
-    captured: list[list[str]] = []
-
-    def fake_uv(*args: str, cwd: Path) -> None:
-        captured.append(list(args))
-
-    monkeypatch.setattr(bub_cli, "_uv", fake_uv)
-    monkeypatch.setattr(bub_cli, "_build_bub_requirement", lambda: ["bub"])
-
-    sandbox = tmp_path / "sandbox"
-    sandbox.mkdir()
-    _ensure_plugin_sandbox(sandbox)
-
-    init_line = next(row for row in captured if row[:2] == ["init", "--bare"])
-    assert "--name" in init_line
-    assert init_line[init_line.index("--name") + 1] == DEFAULT_PLUGIN_SANDBOX
-    add_line = next(row for row in captured if row and row[0] == "add")
-    assert add_line[:3] == ["add", "--active", "--no-sync"]
-    assert "bub" in add_line
+    assert result.exit_code == 1
+    assert called is False
 
 
-def test_ensure_plugin_sandbox_skips_uv_when_pyproject_exists(monkeypatch, tmp_path) -> None:
-    import bub.builtin.cli as bub_cli
+def test_agent_command_layout_starts_chat_when_confirmed(monkeypatch) -> None:
+    app = typer.Typer(name="agentseek")
+    framework = _FakeFramework()
+    called = False
 
-    captured: list[list[str]] = []
+    def fake_chat(ctx: typer.Context) -> None:
+        nonlocal called
+        assert ctx.obj is framework
+        called = True
 
-    def fake_uv(*args: str, cwd: Path) -> None:
-        captured.append(list(args))
+    monkeypatch.setattr(chat_module, "chat", fake_chat)
+    apply_agentseek_agent_command_layout(app, framework)
 
-    monkeypatch.setattr(bub_cli, "_uv", fake_uv)
-    (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"\n', encoding="utf-8")
+    result = CliRunner().invoke(app, ["--mode", "agent"], input="y\n")
 
-    _ensure_plugin_sandbox(tmp_path)
-
-    assert captured == []
+    assert result.exit_code == 0
+    assert called is True
 
 
-def test_ensure_plugin_sandbox_creates_directory_when_missing(monkeypatch, tmp_path) -> None:
-    import bub.builtin.cli as bub_cli
-
-    cwds: list[Path] = []
-
-    def fake_uv(*args: str, cwd: Path) -> None:
-        if not cwd.is_dir():
-            raise FileNotFoundError(cwd)
-        cwds.append(cwd)
-
-    monkeypatch.setattr(bub_cli, "_uv", fake_uv)
-    monkeypatch.setattr(bub_cli, "_build_bub_requirement", lambda: ["bub"])
-
-    sandbox = tmp_path / "missing-sandbox"
-    assert not sandbox.exists()
-
-    _ensure_plugin_sandbox(sandbox)
-
-    assert sandbox.is_dir()
-    assert cwds == [sandbox, sandbox]
+def test_chat_defaults_are_plain_values_for_direct_agent_mode_call() -> None:
+    assert chat_module.chat.__defaults__ == ("local", None)

@@ -67,14 +67,16 @@ def test_unknown_type_exits_2() -> None:
     result = _runner().invoke(build_command_app(), ["create", "not-a-real-type"])
     assert result.exit_code == 2
     assert "Unknown framework type" in result.output
+    for project_type in create_module.KNOWN_TYPES:
+        assert project_type in result.output
 
 
 def test_list_templates_for_type_prints_bundled_names() -> None:
-    templates = create_module._list_templates("langchain")
+    templates = create_module._list_templates("bub")
     assert len(templates) >= 1
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--list-templates"])
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--list-templates"])
     assert result.exit_code == 0
-    assert "langchain" in result.output
+    assert "bub" in result.output
     for name in templates:
         assert name in result.output
 
@@ -96,15 +98,35 @@ def test_template_flag_no_value_lists_all_templates() -> None:
 
 
 def test_template_flag_no_value_with_type_lists_type_templates() -> None:
-    """``agentseek create langchain --template`` should list langchain templates only."""
-    templates = create_module._list_templates("langchain")
+    """``agentseek create bub --template`` should list bub templates only."""
+    templates = create_module._list_templates("bub")
     assert len(templates) >= 1
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--template"])
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--template"])
     assert result.exit_code == 0
-    assert "langchain" in result.output
+    assert "bub" in result.output
     for name in templates:
         assert name in result.output
     assert "Usage:" not in result.output
+
+
+def test_template_flag_unknown_value_lists_type_templates() -> None:
+    """A missing --template value should show the supported templates."""
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--template", "missing-template"])
+
+    assert result.exit_code == 2
+    assert "Template bub/missing-template was not found" in result.output
+    assert "Supported templates:" in result.output
+    assert "bub/default" in result.output
+
+
+def test_spec_unknown_template_lists_type_templates() -> None:
+    """A missing type/name spec should show the supported templates."""
+    result = _runner().invoke(build_command_app(), ["create", "bub/missing-template"])
+
+    assert result.exit_code == 2
+    assert "Template bub/missing-template was not found" in result.output
+    assert "Supported templates:" in result.output
+    assert "bub/default" in result.output
 
 
 def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypatch, tmp_path: Path) -> None:
@@ -113,9 +135,9 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
         monkeypatch,
         tmp_path,
         {
-            "deepagents/default": "Default DeepAgents template.",
-            "langchain/remote-only": "Remote-only LangChain template.",
             "bub/default": "Default Bub template.",
+            "deepagents/default": "Default DeepAgents template.",
+            "langchain/default": "Default LangChain template.",
         },
     )
 
@@ -123,9 +145,12 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
 
     assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
+    assert "bub/default" in result.output
+    assert "Default Bub template." in result.output
     assert "deepagents/default" in result.output
-    assert "langchain/remote-only" in result.output
-    assert "Remote-only LangChain template." in result.output
+    assert "Default DeepAgents template." in result.output
+    assert "langchain/default" in result.output
+    assert "Default LangChain template." in result.output
     assert "Usage:" in result.output
 
 
@@ -150,16 +175,16 @@ def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path:
     clone_calls = _mock_remote_template_repo(
         monkeypatch,
         tmp_path,
-        {"langchain/cached": "Cached LangChain template."},
+        {"bub/cached": "Cached Bub template."},
         cached=True,
     )
 
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--template"])
+    result = _runner().invoke(build_command_app(), ["create", "bub", "--template"])
 
     assert result.exit_code == 0, result.output
     assert clone_calls == []
-    assert "langchain/cached" in result.output
-    assert "Cached LangChain template." in result.output
+    assert "bub/cached" in result.output
+    assert "Cached Bub template." in result.output
 
 
 # -- template resolution ---------------------------------------------------
@@ -178,7 +203,7 @@ def test_resolve_type_template_local() -> None:
 
 
 def test_list_templates_returns_names() -> None:
-    templates = create_module._list_templates("langchain")
+    templates = create_module._list_templates("bub")
     assert len(templates) >= 1
     assert "default" in templates
 
@@ -191,17 +216,17 @@ def test_list_templates_unknown_type_returns_empty() -> None:
 
 
 def test_spec_with_slash_splits_into_type_and_name() -> None:
-    """``langchain/cli-remote`` → type=langchain, name=cli-remote."""
-    args = create_module._parse_argv(["langchain/cli-remote", "--no-input"])
+    """``bub/default`` → type=bub, name=default."""
+    args = create_module._parse_argv(["bub/default", "--no-input"])
     project_type, template_name = create_module._split_spec(args)
-    assert project_type == "langchain"
-    assert template_name == "cli-remote"
+    assert project_type == "bub"
+    assert template_name == "default"
 
 
 def test_spec_plain_type_returns_none_name() -> None:
-    args = create_module._parse_argv(["deepagents", "--no-input"])
+    args = create_module._parse_argv(["bub", "--no-input"])
     project_type, template_name = create_module._split_spec(args)
-    assert project_type == "deepagents"
+    assert project_type == "bub"
     assert template_name is None
 
 
@@ -222,17 +247,35 @@ def test_is_external_spec_url() -> None:
 
 
 def test_is_external_spec_local_type() -> None:
-    assert not create_module._is_external_spec("deepagents")
-    assert not create_module._is_external_spec("langchain/cli-remote")
+    assert not create_module._is_external_spec("bub")
+    assert not create_module._is_external_spec("bub/default")
 
 
 # -- integration with cookiecutter via monkeypatch -------------------------
 
 
+def _assert_next_steps(output: str, *, project_path: str, cd_path: str | None = None) -> None:
+    cd_path = cd_path or project_path
+    assert f"Created {project_path}" in output
+    assert "Next:" in output
+    assert f"cd {cd_path}" in output
+    assert "agentseek info" in output
+    assert "agentseek task --list" in output
+    assert "agentseek doctor" in output
+
+
+def _assert_no_next_steps(output: str) -> None:
+    assert "Created " not in output
+    assert "Next:" not in output
+    assert "agentseek info" not in output
+    assert "agentseek task --list" not in output
+    assert "agentseek doctor" not in output
+
+
 def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
     captured: dict[str, object] = {}
 
-    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
         captured["source"] = source
         captured["output_dir"] = output_dir
         captured["no_input"] = no_input
@@ -240,53 +283,62 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
         target = output_dir / "fake-project"
         target.mkdir(parents=True, exist_ok=True)
         (target / "README.md").write_text("ok", encoding="utf-8")
+        return target
 
     monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
     monkeypatch.chdir(tmp_path)
 
     result = _runner().invoke(
         build_command_app(),
-        ["create", "deepagents", "--template", "default", "--no-input"],
+        ["create", "bub", "--template", "default", "--no-input"],
     )
 
     assert result.exit_code == 0, result.output
     source = captured["source"]
     assert isinstance(source, TemplateSource)
     assert source.directory is None
-    assert "deepagents" in source.template and "default" in source.template
+    assert "bub" in source.template and "default" in source.template
     assert captured["no_input"] is True
     assert Path(str(captured["output_dir"])) == tmp_path
     assert (tmp_path / "fake-project" / "README.md").read_text(encoding="utf-8") == "ok"
+    _assert_next_steps(result.output, project_path="fake-project")
 
 
 def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
-    """``agentseek create langchain/cli-remote --no-input`` should resolve correctly."""
+    """``agentseek create bub/default --no-input`` should resolve correctly."""
     captured: dict[str, object] = {}
 
-    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
         captured["source"] = source
+        target = output_dir / "fake-project"
+        target.mkdir(parents=True, exist_ok=True)
+        return target
 
     monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
     monkeypatch.chdir(tmp_path)
 
     result = _runner().invoke(
         build_command_app(),
-        ["create", "langchain/cli-remote", "--no-input"],
+        ["create", "bub/default", "--no-input"],
     )
 
     assert result.exit_code == 0, result.output
     source = captured["source"]
     assert isinstance(source, TemplateSource)
     assert source.directory is None
-    assert "langchain" in source.template and "cli-remote" in source.template
+    assert "bub" in source.template and "default" in source.template
+    _assert_next_steps(result.output, project_path="fake-project")
 
 
 def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> None:
     """External URL spec should be passed directly to cookiecutter."""
     captured: dict[str, object] = {}
 
-    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
         captured["source"] = source
+        target = output_dir / "external project"
+        target.mkdir(parents=True, exist_ok=True)
+        return target
 
     monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
     monkeypatch.chdir(tmp_path)
@@ -300,3 +352,96 @@ def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> Non
     source = captured["source"]
     assert isinstance(source, TemplateSource)
     assert source.template == "https://github.com/foo/bar.git"
+    _assert_next_steps(result.output, project_path="external project", cd_path="'external project'")
+
+
+# -- --describe mode -------------------------------------------------------
+
+
+def test_describe_prints_template_info(monkeypatch, tmp_path: Path) -> None:
+    """``--describe`` should print template description and cookiecutter variables."""
+    captured: dict[str, object] = {}
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+        captured["called"] = True
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/default", "--describe"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "bub/default" in result.output
+    assert "Description:" in result.output
+    assert "Cookiecutter variables" in result.output
+    assert "project_name" in result.output
+    assert "project_slug" in result.output
+    _assert_no_next_steps(result.output)
+    # cookiecutter must not have been called
+    assert "called" not in captured
+
+
+def test_describe_does_not_create_files(monkeypatch, tmp_path: Path) -> None:
+    """``--describe`` must not run cookiecutter or create any files."""
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+        pytest.fail("cookiecutter should not be called in --describe mode")
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/default", "--describe"],
+    )
+
+    assert result.exit_code == 0, result.output
+    _assert_no_next_steps(result.output)
+    # No files should have been created in the working directory.
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        "https://github.com/foo/bar.git",
+        "/abs/template",
+    ],
+)
+def test_describe_external_specs_do_not_call_cookiecutter(
+    monkeypatch,
+    tmp_path: Path,
+    spec: str,
+) -> None:
+    """``--describe`` is limited to bundled templates before external passthrough."""
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+        pytest.fail("cookiecutter should not be called in --describe mode")
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", spec, "--describe"],
+    )
+
+    assert result.exit_code == 2
+    assert "--describe only supports bundled templates" in result.output
+    _assert_no_next_steps(result.output)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_describe_unknown_template_exits_2() -> None:
+    """``--describe`` on an unknown template should exit 2 and list available templates."""
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/missing-template", "--describe"],
+    )
+
+    assert result.exit_code == 2
+    assert "Template bub/missing-template was not found" in result.output
+    assert "bub/default" in result.output

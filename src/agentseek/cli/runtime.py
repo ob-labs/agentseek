@@ -1,38 +1,25 @@
-"""AgentSeek CLI runtime — orchestrates command layout on top of Bub's app.
-
-After ``BubFramework.create_cli_app()`` returns, ``apply_agentseek_runtime_command_layout``
-pops Bub's builtin commands and mounts AgentSeek's own implementations from
-:mod:`agentseek.cli.commands`.
-"""
+"""AgentSeek CLI runtime profiles."""
 
 from __future__ import annotations
 
+from enum import StrEnum
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as package_version
+from typing import Annotated
 
 import typer
 
-from agentseek.cli.commands import api, build, chat, create, ctx, deploy, onboard, plugin, run, skills
-from agentseek.cli.commands.chat import resolve_enabled_channels
-from agentseek.cli.commands.onboard import AGENTSEEK_ONBOARD_BANNER, AGENTSEEK_ONBOARD_WELCOME
+from agentseek.cli.commands import chat, create, dev, doctor, info, task
 
-AGENTSEEK_CLI_HELP = (
-    "AgentSeek is a database-native agent harness with one CLI entry point.\n\n"
-    "Project lifecycle: `agentseek create → run → build → deploy`.\n"
-    "Runtime: `agentseek chat / turn / gateway`.\n"
-    "Environment: `agentseek plugin / onboard / mcp / login`.\n"
-    "Services: `agentseek api / ctx / skills`."
-)
+AGENTSEEK_CLI_HELP = "AgentSeek is the Toolkit for App Development Lifecycle."
+AGENTSEEK_AGENT_MODE_HELP = f"{AGENTSEEK_CLI_HELP}\n\nAgent mode is experimental and requires explicit confirmation."
 
-RUNTIME_COMMAND_PANELS: dict[str, str] = {
-    "chat": "Runtime",
-    "gateway": "Runtime",
-    "turn": "Runtime",
-    "plugin": "Environment",
-    "mcp": "Environment",
-    "onboard": "Environment",
-    "login": "Environment",
-}
+PROJECT_COMMAND_PANEL = "Project"
+
+
+class CliMode(StrEnum):
+    CLI = "cli"
+    AGENT = "agent"
 
 
 def agentseek_version() -> str:
@@ -42,84 +29,108 @@ def agentseek_version() -> str:
         return "0.0.0"
 
 
-# ---------------------------------------------------------------------------
-# Layout — pop Bub commands, mount AgentSeek replacements
-# ---------------------------------------------------------------------------
+def resolve_cli_mode(argv: list[str]) -> CliMode:
+    """Resolve the requested root CLI profile from raw process arguments."""
+    args = argv[1:]
+    for index, arg in enumerate(args):
+        if arg == "--mode" and index + 1 < len(args):
+            return _parse_cli_mode(args[index + 1])
+        if arg.startswith("--mode="):
+            return _parse_cli_mode(arg.split("=", 1)[1])
+    return CliMode.CLI
 
 
-def _command_name(command: typer.models.CommandInfo) -> str | None:
-    if command.name:
-        return command.name
-    if command.callback is None:
-        return None
-    return getattr(command.callback, "__name__", None)
+def _parse_cli_mode(value: str) -> CliMode:
+    try:
+        return CliMode(value.lower())
+    except ValueError:
+        typer.echo(f"Unsupported CLI mode: {value}. Expected one of: cli, agent.", err=True)
+        raise SystemExit(2) from None
 
 
-def _pop_command(app: typer.Typer, name: str) -> typer.models.CommandInfo | None:
-    for index, command in enumerate(app.registered_commands):
-        if _command_name(command) == name:
-            return app.registered_commands.pop(index)
-    return None
-
-
-def _tag_panels(app: typer.Typer) -> None:
-    for group in app.registered_groups:
-        name = getattr(group, "name", None) or (group.typer_instance.info.name if group.typer_instance else None)
-        if name and name in RUNTIME_COMMAND_PANELS and group.typer_instance:
-            group.typer_instance.info.rich_help_panel = RUNTIME_COMMAND_PANELS[name]
-
-    for command in app.registered_commands:
-        name = _command_name(command)
-        if name and name in RUNTIME_COMMAND_PANELS:
-            command.rich_help_panel = RUNTIME_COMMAND_PANELS[name]
+def _clear_cli_surface(app: typer.Typer) -> None:
+    app.registered_commands.clear()
+    app.registered_groups.clear()
 
 
 def apply_agentseek_runtime_command_layout(app: typer.Typer) -> None:
-    """Replace Bub builtin commands with AgentSeek implementations and reorganize the layout."""
+    """Mount the default app lifecycle command surface."""
     app.suggest_commands = False
+    _clear_cli_surface(app)
 
-    # Bub's `run` → `turn` (callback reused unchanged)
-    run_cmd = _pop_command(app, "run")
-    if run_cmd and run_cmd.callback is not None:
-        app.command("turn", rich_help_panel="Runtime")(run_cmd.callback)
+    app.add_typer(create.app, name="create", rich_help_panel=PROJECT_COMMAND_PANEL)
+    app.command(
+        "dev", rich_help_panel=PROJECT_COMMAND_PANEL, help="Run the current project locally through the lifecycle spec."
+    )(dev.dev)
+    app.command("info", rich_help_panel=PROJECT_COMMAND_PANEL, help="Show a project summary from the lifecycle spec.")(
+        info.info
+    )
+    app.command(
+        "doctor",
+        rich_help_panel=PROJECT_COMMAND_PANEL,
+        help="Check local project readiness through the lifecycle spec.",
+    )(doctor.doctor)
+    app.command(
+        "task",
+        rich_help_panel=PROJECT_COMMAND_PANEL,
+        context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []},
+        help="Run project lifecycle spec tasks.",
+    )(task.task)
 
-    # Replace chat, onboard with AgentSeek implementations
-    _pop_command(app, "chat")
-    app.command("chat", rich_help_panel="Runtime")(chat.chat)
 
-    _pop_command(app, "onboard")
-    app.command("onboard", rich_help_panel="Environment")(onboard.onboard)
+def register_app_profile_options(app: typer.Typer) -> None:
+    """Register root options shared by the default app profile."""
 
-    # Group install/uninstall/update under `plugin`
-    for name in ("install", "uninstall", "update"):
-        _pop_command(app, name)
-    if not any(group.name == "plugin" for group in app.registered_groups):
-        app.add_typer(plugin.app, name="plugin", rich_help_panel="Environment")
+    @app.callback()
+    def root(
+        mode: Annotated[
+            CliMode,
+            typer.Option("--mode", case_sensitive=False, help="CLI profile."),
+        ] = CliMode.CLI,
+    ) -> None:
+        del mode
 
-    # Mount AgentSeek project + service commands
-    registered = {group.name for group in app.registered_groups if group.name}
-    registered.update(c.name for c in app.registered_commands if c.name)
-    for name, panel, sub_app in (
-        ("create", "Project", create.app),
-        ("run", "Project", run.app),
-        ("build", "Project", build.app),
-        ("deploy", "Project", deploy.app),
-        ("api", "Services", api.app),
-        ("ctx", "Services", ctx.app),
-        ("skills", "Services", skills.app),
-    ):
-        if name not in registered:
-            app.add_typer(sub_app, name=name, rich_help_panel=panel)
-            registered.add(name)
 
-    _tag_panels(app)
+def apply_agentseek_agent_command_layout(app: typer.Typer, framework) -> None:
+    """Mount the opt-in agent profile."""
+    app.suggest_commands = False
+    _clear_cli_surface(app)
+
+    @app.callback(invoke_without_command=True)
+    def agent_root(
+        ctx: typer.Context,
+        mode: Annotated[
+            CliMode,
+            typer.Option("--mode", case_sensitive=False, help="CLI profile."),
+        ] = CliMode.AGENT,
+    ) -> None:
+        if mode is not CliMode.AGENT:
+            return
+        _confirm_agent_mode()
+        ctx.obj = framework
+        if ctx.invoked_subcommand is None:
+            from agentseek.cli.banner import format_agentseek_banner
+
+            typer.echo(format_agentseek_banner(agentseek_version()))
+            chat.chat(ctx)
+
+
+def _confirm_agent_mode() -> None:
+    confirmed = typer.confirm(
+        "AgentSeek agent mode is experimental. Enter it?",
+        default=False,
+    )
+    if not confirmed:
+        raise typer.Exit(1)
 
 
 __all__ = [
+    "AGENTSEEK_AGENT_MODE_HELP",
     "AGENTSEEK_CLI_HELP",
-    "AGENTSEEK_ONBOARD_BANNER",
-    "AGENTSEEK_ONBOARD_WELCOME",
+    "CliMode",
     "agentseek_version",
+    "apply_agentseek_agent_command_layout",
     "apply_agentseek_runtime_command_layout",
-    "resolve_enabled_channels",
+    "register_app_profile_options",
+    "resolve_cli_mode",
 ]
