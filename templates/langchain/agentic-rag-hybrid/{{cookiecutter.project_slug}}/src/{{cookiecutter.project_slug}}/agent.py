@@ -37,6 +37,18 @@ def _nonempty_env(name: str) -> str | None:
     return value or None
 
 
+def _openai_compatible_base_url() -> str:
+    return _nonempty_env("OPENAI_API_BASE") or "https://api.siliconflow.cn/v1"
+
+
+def _openai_compatible_api_key() -> str | None:
+    base_url = _openai_compatible_base_url().lower()
+    if "siliconflow" in base_url:
+        # SILICONFLOW_API_KEY first keeps the default SiliconFlow endpoint paired with the right credential.
+        return _nonempty_env("SILICONFLOW_API_KEY") or _nonempty_env("OPENAI_API_KEY")
+    return _nonempty_env("OPENAI_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY")
+
+
 def _normalize_provider(provider: str) -> str:
     normalized = provider.strip().replace("-", "_").lower()
     if normalized in SUPPORTED_MODEL_PROVIDERS:
@@ -107,9 +119,9 @@ MODEL_INIT_KWARGS: dict[str, object] = {
     "model_provider": MODEL_PROVIDER,
 }
 if MODEL_PROVIDER == "openai":
-    if _nonempty_env("OPENAI_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY"):
-        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("OPENAI_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY")
-    MODEL_INIT_KWARGS["base_url"] = _nonempty_env("OPENAI_API_BASE") or "https://api.siliconflow.cn/v1"
+    if api_key := _openai_compatible_api_key():
+        MODEL_INIT_KWARGS["api_key"] = api_key
+    MODEL_INIT_KWARGS["base_url"] = _openai_compatible_base_url()
 elif MODEL_PROVIDER == "anthropic":
     if _nonempty_env("ANTHROPIC_API_KEY"):
         MODEL_INIT_KWARGS["api_key"] = _nonempty_env("ANTHROPIC_API_KEY")

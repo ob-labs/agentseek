@@ -6,6 +6,7 @@ Agentic hybrid RAG over an image-backed knowledge base.
 
 ```bash
 cp .env.example .env
+$EDITOR .env  # set SILICONFLOW_API_KEY
 uv sync --extra dev
 npm install --prefix frontend
 agentseek task seekdb
@@ -55,6 +56,14 @@ The template uses SiliconFlow for agent chat, image/text retrieval embeddings, a
 
 Set `SILICONFLOW_API_KEY` once in `.env` to feed all three paths. Use `OPENAI_API_KEY`, `EMBEDDING_API_KEY`, or `VLM_API_KEY` only when you need separate credentials for one path.
 
+## Agent Skills
+
+`agentseek task seekdb-skills` runs
+`npx skills add oceanbase/seekdb-ecology-plugins --all` to install recommended
+OceanBase seekdb skills for supported coding agents. This uses the external
+`skills` tooling; `agentseek task --list` remains the canonical way to discover
+template tasks.
+
 ## What This Template Teaches
 
 - Vector search finds visually or semantically similar records.
@@ -95,6 +104,7 @@ The default ingest command loads `examples/sample_pack/images`, stages each capt
 
 The implementation uses `langchain-oceanbase` as the storage/search infrastructure. Image vectors, hashed sparse token vectors, full-text content, captions, tags, and metadata are written through `OceanbaseVectorStore` with embedded SeekDB enabled by `SEEKDB_PATH`. The app intentionally keeps vector, sparse, full-text, and metadata routes visible in the Lab tab so developers can see how each retrieval signal changes the fused rank.
 
-Phoenix tracing follows the PR #122 pattern: `AGENTSEEK_PHOENIX_IMAGE`
-defaults to `ghcr.io/agentseek-ai/agentseek-phoenix:main`, and
+Phoenix tracing follows the AgentSeek Phoenix compose convention:
+`AGENTSEEK_PHOENIX_IMAGE` defaults to
+`ghcr.io/agentseek-ai/agentseek-phoenix:main`, and
 `OCEANBASE_SEEKDB_IMAGE` defaults to `quay.io/oceanbase/seekdb:latest`.

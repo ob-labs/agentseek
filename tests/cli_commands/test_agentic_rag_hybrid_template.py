@@ -56,8 +56,16 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
     assert lifecycle["services"]["phoenix"]["url"] == "http://127.0.0.1:6006"
     assert lifecycle["services"]["phoenix_seekdb"]["url"] == "mysql://127.0.0.1:2884/phoenix"
     assert lifecycle["checks"]["custom_routes"]["target"] == "http://127.0.0.1:2024/custom/health"
+    assert lifecycle["env"]["SILICONFLOW_API_KEY"]["required"] is True
     assert lifecycle["tasks"]["phoenix"]["command"] == ["docker", "compose", "up", "-d", "phoenix"]
     assert lifecycle["tasks"]["phoenix-stop"]["command"] == ["docker", "compose", "down"]
+    assert lifecycle["tasks"]["seekdb-skills"]["command"] == [
+        "npx",
+        "skills",
+        "add",
+        "oceanbase/seekdb-ecology-plugins",
+        "--all",
+    ]
 
 
 def test_hybrid_template_teaches_hybrid_search_modes() -> None:
@@ -72,10 +80,16 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     observability = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "observability.py").read_text(
         encoding="utf-8"
     )
+    readme = (project_dir / "README.md").read_text(encoding="utf-8")
     env_example = (project_dir / ".env.example").read_text(encoding="utf-8")
     compose = (project_dir / "docker-compose.yml").read_text(encoding="utf-8")
     template_config = json.loads((TEMPLATE_DIR / "cookiecutter.json").read_text(encoding="utf-8"))
 
+    assert "agentseek task seekdb-skills" in readme
+    assert "## Agent Skills" in readme
+    assert "PR #122" not in readme
+    assert "SILICONFLOW_API_KEY first" in agent
+    assert "HYBRID_AUXILIARY_CANDIDATE_LIMIT" in env_example
     for mode in ("semantic", "keyword", "exact", "balanced"):
         assert mode in guide
         assert mode in middleware

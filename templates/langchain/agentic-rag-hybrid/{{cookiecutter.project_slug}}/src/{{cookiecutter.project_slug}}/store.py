@@ -260,14 +260,13 @@ class HybridImageStore:
         vector_results = self.vector_store.similarity_search_with_score_by_vector(query_embedding, k=recall)
         fulltext_hits = self._fulltext_hits(query, recall)
         sparse_hits = self._sparse_hits(query, recall)
-        metadata_docs = self.vector_store.get_by_ids(self._load_index_ids())
         return _format_trace(
             query=query,
             mode=mode,
             vector_hits=self._scored_document_hits(vector_results),
             sparse_hits=sparse_hits,
             fulltext_hits=fulltext_hits,
-            metadata_hits=self._metadata_hits(metadata_docs, terms, recall),
+            metadata_hits=self._metadata_hits_from_index(terms, recall),
             top_k=top_k,
         )
 
@@ -284,12 +283,15 @@ class HybridImageStore:
         if not sparse_query:
             return []
         docs = self.vector_store.similarity_search_with_sparse_vector(sparse_query, k=recall)
-        indexed_docs = self.vector_store.get_by_ids(self._load_index_ids())
+        indexed_docs = self.vector_store.get_by_ids(self._auxiliary_index_ids())
         doc_pool = self._dedupe_documents([*docs, *indexed_docs])
         ranked_hits = self._rank_term_document_hits(doc_pool, query, recall)
         if ranked_hits:
             return ranked_hits
         return self._document_hits_with_terms(docs, query)
+
+    def _metadata_hits_from_index(self, terms: list[str], recall: int) -> list[SearchHit]:
+        return self._metadata_hits(self.vector_store.get_by_ids(self._auxiliary_index_ids()), terms, recall)
 
     def _metadata_hits(self, docs: list[Document], terms: list[str], recall: int) -> list[SearchHit]:
         ranked: list[tuple[int, SearchHit]] = []
@@ -378,3 +380,9 @@ class HybridImageStore:
             return []
         data = json.loads(path.read_text(encoding="utf-8"))
         return [str(item) for item in data if item]
+
+    def _auxiliary_index_ids(self) -> list[str]:
+        limit = max(self.settings.hybrid_auxiliary_candidate_limit, 0)
+        if limit == 0:
+            return []
+        return self._load_index_ids()[:limit]

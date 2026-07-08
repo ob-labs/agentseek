@@ -63,6 +63,39 @@ jobs:
       - name: Run contrib package checks
         run: make check-contrib
 
+  agentic-rag-hybrid-template-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+
+      - name: Render langchain/agentic-rag-hybrid template
+        run: |
+          set -euo pipefail
+          smoke_root="${RUNNER_TEMP}/agentseek-hybrid-smoke"
+          mkdir -p "${smoke_root}"
+          cd "${smoke_root}"
+          uv run --project "${GITHUB_WORKSPACE}" agentseek create langchain/agentic-rag-hybrid --no-input
+          echo "AGENTSEEK_HYBRID_SMOKE_PROJECT=${smoke_root}/my_hybrid_rag_agent" >> "${GITHUB_ENV}"
+
+      - name: Run rendered hybrid template tests
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_HYBRID_SMOKE_PROJECT}"
+          cp .env.example .env
+          {
+            echo ""
+            echo "SILICONFLOW_API_KEY=ci-placeholder"
+          } >> .env
+          uv sync --extra dev
+          uv run python -m pytest
+
   agentseek-phoenix-compose:
     runs-on: ubuntu-latest
     timeout-minutes: 20

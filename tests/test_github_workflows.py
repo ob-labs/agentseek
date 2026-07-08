@@ -15,3 +15,14 @@ def test_phoenix_smoke_verifies_multiple_trace_markers() -> None:
     assert "trace_markers.append(trace_name)" in text
     assert "for marker in $(cat /tmp/agentseek-trace-markers.txt); do" in text
     assert "Verified ${verified_count} Phoenix trace markers persisted in OceanBase seekdb." in text
+
+
+def test_hybrid_template_smoke_runs_rendered_project_tests() -> None:
+    """The hybrid template should be tested after rendering, not only by static source checks."""
+    workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "main.yml"
+    text = workflow.read_text(encoding="utf-8")
+
+    assert "agentic-rag-hybrid-template-smoke:" in text
+    assert "agentseek create langchain/agentic-rag-hybrid --no-input" in text
+    assert "uv sync --extra dev" in text
+    assert "uv run python -m pytest" in text

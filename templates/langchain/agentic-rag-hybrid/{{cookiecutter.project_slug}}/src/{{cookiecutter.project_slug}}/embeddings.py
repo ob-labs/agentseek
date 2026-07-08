@@ -21,7 +21,7 @@ class EmbeddingEngine:
             raise ValueError(f"Unsupported EMBEDDING_TYPE: {self.settings.embedding_type}")
         return self._embed_siliconflow(text)
 
-    def _embed_siliconflow(self, input_payload: str | list[dict[str, Any]]) -> list[float]:
+    def _embed_siliconflow(self, input_payload: str | dict[str, Any]) -> list[float]:
         if not self.settings.embedding_api_key:
             raise RuntimeError("SILICONFLOW_API_KEY or EMBEDDING_API_KEY is required for SiliconFlow embeddings.")
 

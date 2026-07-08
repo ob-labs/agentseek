@@ -41,6 +41,16 @@ required = true
 default = "{{ cookiecutter.image_table_name }}"
 description = "SeekDB collection/table for indexed image records."
 
+[env.SILICONFLOW_API_KEY]
+required = true
+default = ""
+description = "SiliconFlow API key used by default for chat, text/image embeddings, and VLM captions."
+
+[env.HYBRID_AUXILIARY_CANDIDATE_LIMIT]
+required = false
+default = "250"
+description = "Maximum indexed ids loaded for local metadata and sparse teaching reranks."
+
 [env.AGENTSEEK_OTEL_ENABLED]
 required = false
 default = "false"
@@ -94,6 +104,10 @@ command = ["npm", "install", "--prefix", "frontend"]
 [tasks.seekdb]
 description = "Prepare the embedded SeekDB data directory."
 command = ["uv", "run", "python", "-c", "from {{ cookiecutter.project_slug }}.settings import get_settings; s=get_settings(); s.seekdb_path.mkdir(parents=True, exist_ok=True); print(f'Embedded SeekDB data dir ready: {s.seekdb_path}')"]
+
+[tasks.seekdb-skills]
+description = "Install recommended OceanBase seekdb agent skills."
+command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]
 
 [tasks.ingest-sample]
 description = "Index the built-in hybrid-search starter image pack."

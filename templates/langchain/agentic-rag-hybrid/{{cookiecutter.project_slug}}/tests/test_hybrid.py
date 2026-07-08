@@ -350,6 +350,58 @@ def test_sparse_hits_rank_full_indexed_evidence_ahead_of_partial_native_hit(tmp_
     assert hits[0].matched_terms == ["red", "product", "tea", "label"]
 
 
+def test_sparse_and_metadata_routes_cap_auxiliary_index_candidates(tmp_path) -> None:
+    settings = Settings(
+        seekdb_path=tmp_path / "seekdb",
+        seekdb_db_name="test",
+        image_table_name="images",
+        embedding_type="siliconflow",
+        embedding_api_key="test",
+        embedding_base_url="https://example.test/v1",
+        embedding_model="test",
+        embedding_dimension=4,
+        vlm_api_key="",
+        vlm_base_url="https://example.test",
+        vlm_model="qwen-vl",
+        hybrid_default_mode="balanced",
+        hybrid_recall_multiplier=2,
+        hybrid_max_top_k=5,
+        media_data_dir=tmp_path / "media",
+        media_max_upload_bytes=1024,
+        hybrid_auxiliary_candidate_limit=2,
+    )
+
+    class RecordingVectorStore:
+        def __init__(self) -> None:
+            self.ids_calls: list[list[str]] = []
+
+        def similarity_search_with_sparse_vector(self, sparse_query, k: int):
+            return []
+
+        def get_by_ids(self, ids):
+            self.ids_calls.append(list(ids))
+            return [
+                Document(
+                    id=image_id,
+                    page_content=f"red product candidate {image_id}",
+                    metadata={"file_name": f"{image_id}.png", "caption": f"red product candidate {image_id}"},
+                )
+                for image_id in ids
+            ]
+
+    store = HybridImageStore.__new__(HybridImageStore)
+    store.settings = settings
+    vector_store = RecordingVectorStore()
+    store.vector_store = vector_store
+    store._load_index_ids = lambda: [f"indexed-{index}" for index in range(10)]
+
+    assert store._sparse_hits("red product", recall=4)
+    metadata_hits = store._metadata_hits_from_index(["indexed", "red"], recall=4)
+
+    assert vector_store.ids_calls == [["indexed-0", "indexed-1"], ["indexed-0", "indexed-1"]]
+    assert len(metadata_hits) <= 2
+
+
 def test_ingest_directory_embeds_each_real_sample_image_with_manifest_metadata(tmp_path) -> None:
     settings = Settings(
         seekdb_path=tmp_path / "seekdb",

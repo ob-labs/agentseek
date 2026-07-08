@@ -12,6 +12,13 @@ from {{ cookiecutter.project_slug }}.models import SearchHit, SearchTrace, Searc
 from {{ cookiecutter.project_slug }}.settings import Settings
 
 
+def test_openai_compatible_chat_uses_siliconflow_key_first(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SILICONFLOW_API_KEY", "siliconflow-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "global-openai-key")
+
+    assert agent._openai_compatible_api_key() == "siliconflow-key"
+
+
 def test_serialize_trace_includes_developer_diagnostics() -> None:
     trace = SearchTrace(
         query="golden retriever",

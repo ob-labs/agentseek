@@ -42,6 +42,7 @@ class Settings:
     hybrid_max_top_k: int
     media_data_dir: Path
     media_max_upload_bytes: int
+    hybrid_auxiliary_candidate_limit: int = 250
     otel_enabled: bool = False
     otel_service_name: str = "{{ cookiecutter.project_slug }}"
     otel_project_name: str = "{{ cookiecutter.project_slug }}"
@@ -68,6 +69,7 @@ def get_settings() -> Settings:
         hybrid_max_top_k=_int_env("HYBRID_MAX_TOP_K", 20),
         media_data_dir=Path(os.getenv("MEDIA_DATA_DIR", "{{ cookiecutter.media_data_dir }}")).expanduser().resolve(),
         media_max_upload_bytes=_int_env("MEDIA_MAX_UPLOAD_MB", 50) * 1024 * 1024,
+        hybrid_auxiliary_candidate_limit=_int_env("HYBRID_AUXILIARY_CANDIDATE_LIMIT", 250),
         otel_enabled=_bool_env("AGENTSEEK_OTEL_ENABLED", False),
         otel_service_name=os.getenv("AGENTSEEK_OTEL_SERVICE_NAME", "{{ cookiecutter.project_slug }}"),
         otel_project_name=os.getenv("AGENTSEEK_OTEL_PROJECT_NAME", "{{ cookiecutter.project_slug }}"),

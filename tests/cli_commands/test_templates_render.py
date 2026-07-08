@@ -54,6 +54,7 @@ def _discover_templates() -> list[tuple[str, str, Path]]:
 TEMPLATES = _discover_templates()
 seekdb_skill_templates = {
     ("bub", "contextseek"),
+    ("langchain", "agentic-rag-hybrid"),
     ("langchain", "agentic-rag"),
     ("langchain", "agentic-rag-openvino"),
     ("langchain", "default"),
