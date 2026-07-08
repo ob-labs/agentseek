@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import zipfile
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -121,6 +122,74 @@ def test_compare_clamps_top_k(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
     assert FakeStore.seen_top_k == 3
 
 
+def test_compare_route_emits_phoenix_span(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    spans: list[tuple[str, dict[str, object]]] = []
+
+    @contextmanager
+    def fake_trace(settings: Settings, name: str, attributes: dict[str, object]):
+        spans.append((name, attributes))
+        yield
+
+    class FakeStore:
+        def __init__(self, **kwargs) -> None:
+            pass
+
+        def compare_modes(self, query: str, top_k: int):
+            return {"keyword": {"query": query, "top_k": top_k}}
+
+    monkeypatch.setattr(routes, "get_settings", lambda: settings_for(tmp_path, max_top_k=3))
+    monkeypatch.setattr(routes, "trace_custom_route", fake_trace)
+    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
+
+    response = TestClient(app).get("/custom/compare", params={"query": "red tea label", "top_k": 999})
+
+    assert response.status_code == 200
+    assert spans == [
+        (
+            "custom.compare",
+            {
+                "agentseek.route": "/custom/compare",
+                "agentseek.query": "red tea label",
+                "agentseek.top_k": 3,
+                "agentseek.modes": "balanced,semantic,keyword,exact",
+            },
+        )
+    ]
+
+
+def test_ingest_sample_pack_route_emits_phoenix_span(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    spans: list[tuple[str, dict[str, object]]] = []
+
+    @contextmanager
+    def fake_trace(settings: Settings, name: str, attributes: dict[str, object]):
+        spans.append((name, attributes))
+        yield
+
+    class FakeStore:
+        def __init__(self, **kwargs) -> None:
+            pass
+
+        def ingest_directory(self, directory: Path):
+            return [object(), object()]
+
+    monkeypatch.setattr(routes, "get_settings", lambda: settings_for(tmp_path))
+    monkeypatch.setattr(routes, "trace_custom_route", fake_trace)
+    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
+
+    response = TestClient(app).post("/custom/sample-pack/ingest")
+
+    assert response.status_code == 200
+    assert spans == [
+        (
+            "custom.sample_pack.ingest",
+            {
+                "agentseek.route": "/custom/sample-pack/ingest",
+                "agentseek.source": "sample_pack",
+            },
+        )
+    ]
+
+
 def test_upload_archive_rejects_path_traversal_filename(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -165,6 +234,52 @@ def test_upload_archive_cleans_partial_extraction_on_failure(
 
     assert response.status_code == 400
     assert not list((settings.media_data_dir / "extracted").glob("**/*"))
+
+
+def test_upload_archive_route_emits_phoenix_span(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    spans: list[tuple[str, dict[str, object]]] = []
+
+    @contextmanager
+    def fake_trace(settings: Settings, name: str, attributes: dict[str, object]):
+        spans.append((name, attributes))
+        yield
+
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("ok.png", b"fake image")
+
+    def extract_archive(source: Path, target: Path, **kwargs):
+        target.mkdir(parents=True)
+        (target / "ok.png").write_bytes(b"fake image")
+        return [target / "ok.png"]
+
+    class FakeStore:
+        def __init__(self, **kwargs) -> None:
+            pass
+
+        def ingest_directory(self, directory: Path):
+            return [object()]
+
+    monkeypatch.setattr(routes, "get_settings", lambda: settings_for(tmp_path))
+    monkeypatch.setattr(routes, "extract_archive_safely", extract_archive)
+    monkeypatch.setattr(routes, "trace_custom_route", fake_trace)
+    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
+
+    response = TestClient(app).post(
+        "/custom/upload-archive",
+        files={"file": ("images.zip", archive.getvalue(), "application/zip")},
+    )
+
+    assert response.status_code == 200
+    assert spans == [
+        (
+            "custom.upload_archive",
+            {
+                "agentseek.route": "/custom/upload-archive",
+                "agentseek.archive_suffix": ".zip",
+            },
+        )
+    ]
 
 
 def test_media_route_rejects_paths_outside_allowed_roots(

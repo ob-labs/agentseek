@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse
 
 from .hybrid import clamp_top_k, normalize_query
 from .media import SUPPORTED_ARCHIVE_SUFFIXES, extract_archive_safely
+from .observability import trace_custom_route
 from .sample_pack import sample_pack_cases, sample_pack_dir, sample_pack_manifest, sample_pack_path
 from .settings import Settings, get_settings
 from .store import HybridImageStore
@@ -81,7 +82,16 @@ def sample_pack() -> dict[str, object]:
 
 @app.post("/custom/sample-pack/ingest")
 def ingest_sample_pack() -> dict[str, object]:
-    records = HybridImageStore().ingest_directory(sample_pack_dir() / "images")
+    settings = get_settings()
+    with trace_custom_route(
+        settings,
+        "custom.sample_pack.ingest",
+        {
+            "agentseek.route": "/custom/sample-pack/ingest",
+            "agentseek.source": "sample_pack",
+        },
+    ):
+        records = HybridImageStore(settings=settings).ingest_directory(sample_pack_dir() / "images")
     return {"indexed": len(records), "source": str(sample_pack_dir() / "images")}
 
 
@@ -103,14 +113,22 @@ async def upload_archive(file: UploadFile = File(...)) -> dict[str, object]:
     archive_path = upload_dir / f"{uuid.uuid4().hex}{suffix}"
     extracted_target = settings.media_data_dir / "extracted" / archive_path.stem
     try:
-        _save_upload_with_limit(file, archive_path, settings.media_max_upload_bytes)
-        extracted = extract_archive_safely(
-            archive_path,
-            extracted_target,
-            max_member_bytes=settings.media_max_upload_bytes,
-            max_total_bytes=settings.media_max_upload_bytes,
-        )
-        records = HybridImageStore(settings=settings).ingest_directory(extracted)
+        with trace_custom_route(
+            settings,
+            "custom.upload_archive",
+            {
+                "agentseek.route": "/custom/upload-archive",
+                "agentseek.archive_suffix": suffix,
+            },
+        ):
+            _save_upload_with_limit(file, archive_path, settings.media_max_upload_bytes)
+            extracted = extract_archive_safely(
+                archive_path,
+                extracted_target,
+                max_member_bytes=settings.media_max_upload_bytes,
+                max_total_bytes=settings.media_max_upload_bytes,
+            )
+            records = HybridImageStore(settings=settings).ingest_directory(extracted)
     except HTTPException:
         archive_path.unlink(missing_ok=True)
         shutil.rmtree(extracted_target, ignore_errors=True)
@@ -133,10 +151,21 @@ def compare(query: str, top_k: int = 5) -> dict[str, object]:
         normalized_query = normalize_query(query)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    traces = HybridImageStore(settings=settings).compare_modes(
-        query=normalized_query,
-        top_k=clamp_top_k(top_k, settings.hybrid_max_top_k),
-    )
+    clamped_top_k = clamp_top_k(top_k, settings.hybrid_max_top_k)
+    with trace_custom_route(
+        settings,
+        "custom.compare",
+        {
+            "agentseek.route": "/custom/compare",
+            "agentseek.query": normalized_query,
+            "agentseek.top_k": clamped_top_k,
+            "agentseek.modes": "balanced,semantic,keyword,exact",
+        },
+    ):
+        traces = HybridImageStore(settings=settings).compare_modes(
+            query=normalized_query,
+            top_k=clamped_top_k,
+        )
     return {mode: trace for mode, trace in traces.items()}
 
 

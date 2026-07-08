@@ -50,8 +50,9 @@ agentseek task phoenix
 ```
 
 Set `AGENTSEEK_OTEL_ENABLED=true` in `.env`, then restart `agentseek dev`.
-Phoenix opens at `http://127.0.0.1:6006`. Ask the agent one of the case
-prompts, then inspect the run and `hybrid_search_knowledge_base` tool span in
-Phoenix. The Phoenix compose service persists traces in OceanBase seekdb, while
-the hybrid retrieval index still uses embedded SeekDB through
-`langchain-oceanbase`.
+Phoenix opens at `http://127.0.0.1:6006`. Run a Lab case or Compare query to
+inspect `custom.sample_pack.ingest`, `custom.upload_archive`, and
+`custom.compare` spans. Ask the agent one of the case prompts to inspect the
+LangGraph run and `hybrid_search_knowledge_base` tool span. The Phoenix compose
+service persists traces in OceanBase seekdb, while the hybrid retrieval index
+still uses embedded SeekDB through `langchain-oceanbase`.
