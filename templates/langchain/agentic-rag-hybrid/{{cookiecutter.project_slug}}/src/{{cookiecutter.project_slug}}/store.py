@@ -8,9 +8,9 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+import yaml
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
-import yaml
 
 from .embeddings import EmbeddingEngine, caption_image
 from .hybrid import clamp_top_k, normalize_query, weighted_fuse, weights_for_mode

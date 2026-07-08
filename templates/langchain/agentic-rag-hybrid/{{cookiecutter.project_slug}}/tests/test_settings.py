@@ -52,3 +52,19 @@ def test_specific_siliconflow_keys_override_shared_key(monkeypatch) -> None:
     assert settings.vlm_api_key == "vlm-key"
     assert settings.vlm_base_url == "https://vlm.example/v1"
     get_settings.cache_clear()
+
+
+def test_phoenix_observability_settings(monkeypatch) -> None:
+    monkeypatch.setenv("AGENTSEEK_OTEL_ENABLED", "true")
+    monkeypatch.setenv("AGENTSEEK_OTEL_SERVICE_NAME", "hybrid-service")
+    monkeypatch.setenv("AGENTSEEK_OTEL_PROJECT_NAME", "hybrid-project")
+    monkeypatch.setenv("AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://phoenix.test/v1/traces")
+    get_settings.cache_clear()
+
+    settings = get_settings()
+
+    assert settings.otel_enabled is True
+    assert settings.otel_service_name == "hybrid-service"
+    assert settings.otel_project_name == "hybrid-project"
+    assert settings.otel_traces_endpoint == "http://phoenix.test/v1/traces"
+    get_settings.cache_clear()

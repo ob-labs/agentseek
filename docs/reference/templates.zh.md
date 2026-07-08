@@ -21,7 +21,7 @@ sources:
 | `deepagents/default` | 带 AgentSeek 生命周期规范的最小 DeepAgents 应用。 |
 | `deepagents/research` | 带检索流程、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents research 应用。 |
 | `langchain/agentic-rag` | 带 OceanBase vector search 和 AgentSeek 生命周期规范的 LangChain agentic RAG。 |
-| `langchain/agentic-rag-hybrid` | 基于 LangChain 的 Agentic Hybrid RAG 模板，包含图片导入、向量/稀疏/全文/元数据混合检索、对比演示和 AgentSeek 生命周期配置。 |
+| `langchain/agentic-rag-hybrid` | 基于 LangChain 的 Agentic Hybrid RAG 模板，包含图片导入、向量/稀疏/全文/元数据混合检索、对比演示、可选 Phoenix 可观测性和 AgentSeek 生命周期配置。 |
 | `langchain/agentic-rag-openvino` | 带本地 OpenVINO models 和 AgentSeek 生命周期规范的 LangChain agentic RAG。 |
 | `langchain/cli-remote` | 把本地生命周期工作流连接到远程 LangGraph 服务的 LangChain 模板。 |
 | `langchain/default` | 带本地 Web UI 和 AgentSeek 生命周期规范的 LangChain agent 应用。 |

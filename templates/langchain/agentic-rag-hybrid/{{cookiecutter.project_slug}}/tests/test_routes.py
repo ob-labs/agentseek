@@ -36,6 +36,7 @@ def settings_for(tmp_path: Path, *, max_top_k: int = 3) -> Settings:
 def test_custom_route_paths_are_mounted_under_custom_prefix() -> None:
     paths = {route.path for route in app.routes}
     assert "/custom/health" in paths
+    assert "/custom/observability" in paths
     assert "/custom/sample-pack" in paths
     assert "/custom/sample-pack/ingest" in paths
     assert "/custom/sample-pack/download" in paths
@@ -48,6 +49,48 @@ def test_custom_health_route() -> None:
     response = TestClient(app).get("/custom/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_observability_route_reports_phoenix_contract(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(
+        routes,
+        "get_settings",
+        lambda: Settings(
+            seekdb_path=tmp_path / "seekdb",
+            seekdb_db_name="test",
+            image_table_name="images",
+            embedding_type="siliconflow",
+            embedding_api_key="test",
+            embedding_base_url="https://example.test/v1",
+            embedding_model="test",
+            embedding_dimension=4,
+            vlm_api_key="",
+            vlm_base_url="https://example.test",
+            vlm_model="qwen-vl",
+            hybrid_default_mode="balanced",
+            hybrid_recall_multiplier=2,
+            hybrid_max_top_k=3,
+            media_data_dir=tmp_path / "media",
+            media_max_upload_bytes=1024,
+            otel_enabled=True,
+            otel_service_name="hybrid-service",
+            otel_project_name="hybrid-project",
+            otel_traces_endpoint="http://127.0.0.1:6006/v1/traces",
+        ),
+    )
+
+    response = TestClient(app).get("/custom/observability")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "otel_enabled": True,
+        "otel_service_name": "hybrid-service",
+        "otel_project_name": "hybrid-project",
+        "otel_traces_endpoint": "http://127.0.0.1:6006/v1/traces",
+        "phoenix_url": "http://127.0.0.1:6006",
+        "phoenix_seekdb_url": "mysql://127.0.0.1:2884/phoenix",
+        "start_command": "agentseek task phoenix",
+    }
 
 
 def test_compare_rejects_empty_query(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

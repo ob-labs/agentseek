@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+.phoenix-data/
 .seekdb-data/
 data/uploads/
 data/extracted/

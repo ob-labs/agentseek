@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import tarfile
 import shutil
+import tarfile
 import uuid
 import zipfile
 from pathlib import Path
@@ -54,6 +54,20 @@ def _servable_image_path(raw_path: str, settings: Settings) -> Path:
 @app.get("/custom/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/custom/observability")
+def observability() -> dict[str, object]:
+    settings = get_settings()
+    return {
+        "otel_enabled": settings.otel_enabled,
+        "otel_service_name": settings.otel_service_name,
+        "otel_project_name": settings.otel_project_name,
+        "otel_traces_endpoint": settings.otel_traces_endpoint,
+        "phoenix_url": "http://127.0.0.1:6006",
+        "phoenix_seekdb_url": "mysql://127.0.0.1:2884/phoenix",
+        "start_command": "agentseek task phoenix",
+    }
 
 
 @app.get("/custom/sample-pack")

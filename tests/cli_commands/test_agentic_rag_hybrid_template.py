@@ -22,9 +22,11 @@ def test_hybrid_template_contains_expected_custom_runtime_files() -> None:
 
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "routes.py").is_file()
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "middleware.py").is_file()
+    assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "observability.py").is_file()
     assert (project_dir / "src" / "{{cookiecutter.project_slug}}" / "sample_pack.py").is_file()
     assert (project_dir / "frontend" / "src" / "SampleLab.tsx").is_file()
     assert (project_dir / "examples" / "sample_pack" / "sample_pack.zip").is_file()
+    assert (project_dir / "docker-compose.yml").is_file()
     assert lifecycle.is_file()
     git = shutil.which("git")
     assert git is not None
@@ -51,7 +53,11 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
     lifecycle = tomllib.loads((generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
     assert lifecycle["template"] == "langchain/agentic-rag-hybrid"
     assert set(lifecycle["processes"]) == {"backend", "frontend"}
+    assert lifecycle["services"]["phoenix"]["url"] == "http://127.0.0.1:6006"
+    assert lifecycle["services"]["phoenix_seekdb"]["url"] == "mysql://127.0.0.1:2884/phoenix"
     assert lifecycle["checks"]["custom_routes"]["target"] == "http://127.0.0.1:2024/custom/health"
+    assert lifecycle["tasks"]["phoenix"]["command"] == ["docker", "compose", "up", "-d", "phoenix"]
+    assert lifecycle["tasks"]["phoenix-stop"]["command"] == ["docker", "compose", "down"]
 
 
 def test_hybrid_template_teaches_hybrid_search_modes() -> None:
@@ -62,7 +68,12 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     middleware = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "middleware.py").read_text(encoding="utf-8")
     routes = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "routes.py").read_text(encoding="utf-8")
     store = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "store.py").read_text(encoding="utf-8")
+    agent = (project_dir / "src" / "{{cookiecutter.project_slug}}" / "agent.py").read_text(encoding="utf-8")
+    observability = (
+        project_dir / "src" / "{{cookiecutter.project_slug}}" / "observability.py"
+    ).read_text(encoding="utf-8")
     env_example = (project_dir / ".env.example").read_text(encoding="utf-8")
+    compose = (project_dir / "docker-compose.yml").read_text(encoding="utf-8")
     template_config = json.loads((TEMPLATE_DIR / "cookiecutter.json").read_text(encoding="utf-8"))
 
     for mode in ("semantic", "keyword", "exact", "balanced"):
@@ -71,11 +82,21 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     assert "Index starter pack" in lab
     assert "/custom/sample-pack/ingest" in routes
     assert "/custom/compare" in routes
+    assert "/custom/observability" in routes
     assert "OceanbaseVectorStore" in store
     assert "import pyseekdb" not in store
+    assert "configure_tracing(get_settings())" in agent
+    assert "LangChainInstrumentor" in observability
+    assert "OTLPSpanExporter" in observability
     assert "SILICONFLOW_API_KEY" in env_example
     assert "SEEKDB_PATH={{ cookiecutter.seekdb_path }}" in env_example
     assert "EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1" in env_example
+    assert "AGENTSEEK_OTEL_ENABLED=false" in env_example
+    assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_example
+    assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_example
+    assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose
+    assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose
+    assert "PHOENIX_SQL_DATABASE_URL: mysql://root@seekdb:2881/phoenix" in compose
     assert template_config["default_model"] == "openai:zai-org/GLM-5.2"
     assert template_config["embedding_model"] == "Qwen/Qwen3-VL-Embedding-8B"
     assert template_config["vlm_model"] == "zai-org/GLM-4.5V"

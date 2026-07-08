@@ -12,6 +12,7 @@ from langchain.tools import tool
 from .hybrid import clamp_top_k, normalize_query, normalize_search_mode
 from .middleware import hybrid_mode_guidance
 from .models import SearchTrace
+from .observability import configure_tracing
 from .settings import Settings, get_settings
 from .store import HybridImageStore
 
@@ -120,6 +121,7 @@ elif MODEL_PROVIDER == "google_genai":
     if _nonempty_env("GOOGLE_API_BASE"):
         MODEL_INIT_KWARGS["base_url"] = _nonempty_env("GOOGLE_API_BASE")
 
+configure_tracing(get_settings())
 model = init_chat_model(**MODEL_INIT_KWARGS)
 
 graph = create_agent(

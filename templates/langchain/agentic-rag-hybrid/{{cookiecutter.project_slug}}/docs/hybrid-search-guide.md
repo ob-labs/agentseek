@@ -40,3 +40,18 @@ uv run hybrid-demo
 ```
 
 Then start `agentseek dev` and open the Lab tab. The Lab tab lets you index the starter pack, select each guided case, download the pack, and compare how the same query ranks across `semantic`, `keyword`, `exact`, and `balanced`.
+
+## Trace A Case In Phoenix
+
+Run the optional local tracing stack:
+
+```bash
+agentseek task phoenix
+```
+
+Set `AGENTSEEK_OTEL_ENABLED=true` in `.env`, then restart `agentseek dev`.
+Phoenix opens at `http://127.0.0.1:6006`. Ask the agent one of the case
+prompts, then inspect the run and `hybrid_search_knowledge_base` tool span in
+Phoenix. The Phoenix compose service persists traces in OceanBase seekdb, while
+the hybrid retrieval index still uses embedded SeekDB through
+`langchain-oceanbase`.

@@ -136,6 +136,24 @@ def test_template_renders_without_unrendered_jinja(
         assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
         assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
 
+    if (type_name, template_name) == ("langchain", "agentic-rag-hybrid"):
+        env_text = (generated / ".env.example").read_text(encoding="utf-8")
+        compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+        lifecycle_text = (generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8")
+        pyproject_text = (generated / "pyproject.toml").read_text(encoding="utf-8")
+        assert "AGENTSEEK_OTEL_ENABLED=false" in env_text
+        assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
+        assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
+        assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
+        assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
+        assert "PHOENIX_SQL_DATABASE_URL: mysql://root@seekdb:2881/phoenix" in compose_text
+        assert "agentseek task phoenix" in (generated / "README.md").read_text(encoding="utf-8")
+        assert "custom/observability" in (generated / "README.md").read_text(encoding="utf-8")
+        assert "phoenix" in lifecycle_data["tasks"]
+        assert "phoenix-stop" in lifecycle_data["tasks"]
+        assert "mysql://127.0.0.1:2884/phoenix" in lifecycle_text
+        assert "openinference-instrumentation-langchain" in pyproject_text
+
     frontend_pkg = generated / "frontend" / "package.json"
     if frontend_pkg.is_file():
         try:

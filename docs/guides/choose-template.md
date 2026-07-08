@@ -48,7 +48,7 @@ generated app code is Bub, DeepAgents, LangChain, or LangGraph shaped.
 | Build a LangChain AG-UI app | `langchain/default` | It keeps the LangChain `create_agent(...)` shape and binds it through AgentSeek. |
 | Start with a pure LangGraph-style chat UI | `langchain/markdown-messages` | It uses `langgraph dev`, `@langchain/react`, and markdown message rendering. |
 | Build RAG over OceanBase seekdb | `langchain/agentic-rag` | It includes an agentic retrieval tool, ingest command, frontend, and OceanBase seekdb setup. |
-| Learn and inspect hybrid retrieval behavior | `langchain/agentic-rag-hybrid` | It includes image ingestion, vector/sparse/full-text/metadata modes, a guided starter pack, and visual compare UI. |
+| Learn and inspect hybrid retrieval behavior | `langchain/agentic-rag-hybrid` | It includes image ingestion, vector/sparse/full-text/metadata modes, a guided starter pack, visual compare UI, and optional Phoenix traces. |
 | Connect to a remote LangGraph service | `langchain/cli-remote` | It bridges a remote LangGraph agent through `LangGraphClientRunnable`. |
 | Build a sandbox-backed coding agent | `langchain/sandbox` | It combines DeepAgents with a LangSmith sandbox backend and local UI. |
 

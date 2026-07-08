@@ -9,6 +9,7 @@ required = ["uv", "node", "npm"]
 [paths]
 required = [
   "pyproject.toml",
+  "docker-compose.yml",
   "langgraph.json",
   "frontend/package.json",
   "frontend/node_modules",
@@ -40,11 +41,22 @@ required = true
 default = "{{ cookiecutter.image_table_name }}"
 description = "SeekDB collection/table for indexed image records."
 
+[env.AGENTSEEK_OTEL_ENABLED]
+required = false
+default = "false"
+description = "Enable OpenTelemetry export from the LangGraph agent to Phoenix."
+
 [services.backend]
 url = "http://127.0.0.1:2024"
 
 [services.frontend]
 url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[services.phoenix]
+url = "http://127.0.0.1:6006"
+
+[services.phoenix_seekdb]
+url = "mysql://127.0.0.1:2884/phoenix"
 
 [processes.backend]
 command = ["uv", "run", "langgraph", "dev", "--no-browser"]
@@ -86,3 +98,13 @@ command = ["uv", "run", "python", "-c", "from {{ cookiecutter.project_slug }}.se
 [tasks.ingest-sample]
 description = "Index the built-in hybrid-search starter image pack."
 command = ["uv", "run", "ingest-images"]
+
+[tasks.phoenix]
+description = "Start Phoenix tracing backed by OceanBase seekdb."
+command = ["docker", "compose", "up", "-d", "phoenix"]
+cwd = "."
+
+[tasks.phoenix-stop]
+description = "Stop the Phoenix tracing stack."
+command = ["docker", "compose", "down"]
+cwd = "."
