@@ -146,7 +146,7 @@ def _resolve_type_template(
 ) -> TemplateSource:
     """Resolve ``<type>/<name>`` from an already prepared template root."""
     template_path = templates_root / project_type / template_name
-    if (template_path / "cookiecutter.json").is_file():
+    if _is_public_template(project_type, template_name, templates_root) and (template_path / "cookiecutter.json").is_file():
         install_source_path = str(templates_root.parent) if _local_templates_root() == templates_root else None
         return TemplateSource(
             template=str(template_path),
@@ -176,7 +176,12 @@ def _list_templates(project_type: str, templates_root: Path | None = None) -> li
     type_dir = templates_root / project_type
     if not type_dir.is_dir():
         return []
-    return sorted(entry.name for entry in type_dir.iterdir() if (entry / "cookiecutter.json").is_file())
+    templates = sorted(entry.name for entry in type_dir.iterdir() if (entry / "cookiecutter.json").is_file())
+    descriptions = _load_template_descriptions(templates_root)
+    if not descriptions:
+        return templates
+    public = _public_templates_for_type(project_type, descriptions)
+    return [name for name in templates if name in public]
 
 
 def _prepare_templates_root(checkout: str | None = None) -> Path:
@@ -221,6 +226,18 @@ def _load_template_descriptions(templates_root: Path | None = None) -> dict[str,
     if not isinstance(data, dict):
         return {}
     return {str(k): str(v) for k, v in data.items()}
+
+
+def _public_templates_for_type(project_type: str, descriptions: dict[str, str]) -> set[str]:
+    prefix = f"{project_type}/"
+    return {key.removeprefix(prefix) for key in descriptions if key.startswith(prefix)}
+
+
+def _is_public_template(project_type: str, template_name: str, templates_root: Path) -> bool:
+    descriptions = _load_template_descriptions(templates_root)
+    if not descriptions:
+        return True
+    return template_name in _public_templates_for_type(project_type, descriptions)
 
 
 def _print_templates_table(

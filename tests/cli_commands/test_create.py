@@ -129,6 +129,36 @@ def test_spec_unknown_template_lists_type_templates() -> None:
     assert "bub/default" in result.output
 
 
+def test_quarantined_contextseek_template_is_not_publicly_selectable(monkeypatch, tmp_path: Path) -> None:
+    """Bundled templates omitted from index.json must stay out of create/list/describe."""
+    templates = create_module._list_templates("bub")
+    assert "contextseek" not in templates
+
+    list_result = _runner().invoke(build_command_app(), ["create", "bub", "--list-templates"])
+    assert list_result.exit_code == 0, list_result.output
+    assert "bub/default" in list_result.output
+    assert "bub/contextseek" not in list_result.output
+
+    all_result = _runner().invoke(build_command_app(), ["create", "--list-templates"])
+    assert all_result.exit_code == 0, all_result.output
+    assert "bub/default" in all_result.output
+    assert "bub/contextseek" not in all_result.output
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
+        pytest.fail("quarantined bundled templates must not reach cookiecutter")
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    describe_result = _runner().invoke(build_command_app(), ["create", "bub/contextseek", "--describe"])
+    assert describe_result.exit_code == 2
+    assert "Template bub/contextseek was not found" in describe_result.output
+
+    create_result = _runner().invoke(build_command_app(), ["create", "bub/contextseek", "--no-input"])
+    assert create_result.exit_code == 2
+    assert "Template bub/contextseek was not found" in create_result.output
+
+
 def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypatch, tmp_path: Path) -> None:
     """Installed CLI should download templates before listing them."""
     clone_calls = _mock_remote_template_repo(
