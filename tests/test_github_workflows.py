@@ -27,6 +27,11 @@ def test_openvino_template_smoke_is_path_gated_and_invokes_graph() -> None:
     assert "concurrency:" in text
     assert "workflow_dispatch:" in text
     assert "pull_request:" in text
+    assert ".github/actions/setup-python-env/**" in text
+    assert "pyproject.toml" in text
+    assert "uv.lock" in text
+    assert "src/agentseek/**" in text
+    assert "templates/index.json" in text
     assert "templates/langchain/agentic-rag-openvino/**" in text
     assert "runs-on: ubuntu-latest" in text
     assert "agentseek create langchain/agentic-rag-openvino --no-input" in text
@@ -34,11 +39,14 @@ def test_openvino_template_smoke_is_path_gated_and_invokes_graph() -> None:
     assert "agentseek task models" in text
     assert "until docker compose exec -T seekdb mysql" in text
     assert "openvino-smoke-fixture.md" in text
+    assert "cobalt-lantern-42" in text
     assert "uv run ingest openvino-smoke-fixture.md" in text
     assert "agentseek task ingest-sample" not in text
     assert "lilianweng.github.io" not in text
     assert "agentseek dev --dry-run" in text
     assert "from langchain_core.messages import HumanMessage" in text
+    assert "from my_openvino_rag_agent.agent import graph, retrieve" in text
+    assert "OpenVINO retrieval did not return fixture context" in text
     assert "graph.invoke" in text
     assert "graph.ainvoke" in text
     assert "asyncio.run" in text

@@ -6,6 +6,11 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - ".github/workflows/openvino-template-smoke.yml"
+      - ".github/actions/setup-python-env/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "src/agentseek/**"
+      - "templates/index.json"
       - "templates/langchain/agentic-rag-openvino/**"
       - "tests/cli_commands/test_templates_render.py"
       - "tests/test_github_workflows.py"
@@ -76,7 +81,8 @@ jobs:
 
           Task decomposition breaks a complex objective into smaller, easier-to-solve
           subtasks. It helps agents plan, inspect intermediate progress, and recover
-          when one step fails.
+          when one step fails. This fixture contains the unique marker
+          cobalt-lantern-42.
           EOF
           uv run ingest openvino-smoke-fixture.md
 
@@ -90,7 +96,7 @@ jobs:
 
           from langchain_core.messages import HumanMessage
 
-          from my_openvino_rag_agent.agent import graph
+          from my_openvino_rag_agent.agent import graph, retrieve
 
           def response_text(result: dict) -> str:
               messages = result.get("messages", [])
@@ -100,6 +106,9 @@ jobs:
               return content if isinstance(content, str) else str(content)
 
           payload = {"messages": [HumanMessage(content="What is task decomposition?")]}
+          context, _docs = retrieve("Which unique marker is in the task decomposition fixture?")
+          if "cobalt-lantern-42" not in context:
+              raise RuntimeError("OpenVINO retrieval did not return fixture context")
 
           sync_content = response_text(graph.invoke(payload))
           if not sync_content.strip():
