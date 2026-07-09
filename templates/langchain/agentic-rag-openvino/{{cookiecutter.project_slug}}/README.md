@@ -71,7 +71,7 @@ LangGraph, the ingest CLI, and Docker Compose also read it at runtime.
 ### 2. Install dependencies
 
 ```bash
-uv sync
+agentseek task sync
 agentseek task frontend
 agentseek doctor
 ```

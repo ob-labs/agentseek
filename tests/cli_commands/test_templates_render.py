@@ -131,10 +131,13 @@ def test_template_renders_without_unrendered_jinja(
     if (type_name, template_name) == ("langchain", "default"):
         env_text = (generated / ".env.example").read_text(encoding="utf-8")
         compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+        dev_text = (generated / "src" / generated.name / "dev.py").read_text(encoding="utf-8")
         assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
         assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
         assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
         assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
+        assert "agentseek task frontend" in dev_text
+        assert "npm install --prefix frontend" not in dev_text
 
     if (type_name, template_name) == ("langchain", "agentic-rag"):
         lifecycle_text = (generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8")
