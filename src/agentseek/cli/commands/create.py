@@ -146,7 +146,10 @@ def _resolve_type_template(
 ) -> TemplateSource:
     """Resolve ``<type>/<name>`` from an already prepared template root."""
     template_path = templates_root / project_type / template_name
-    if _is_public_template(project_type, template_name, templates_root) and (template_path / "cookiecutter.json").is_file():
+    if (
+        _is_public_template(project_type, template_name, templates_root)
+        and (template_path / "cookiecutter.json").is_file()
+    ):
         install_source_path = str(templates_root.parent) if _local_templates_root() == templates_root else None
         return TemplateSource(
             template=str(template_path),

@@ -15,12 +15,7 @@ def test_quickstarts_prefer_lifecycle_tasks_over_raw_setup_commands() -> None:
         ROOT / "docs" / "get-started" / "index.md",
         ROOT / "docs" / "get-started" / "index.zh.md",
         ROOT / "templates" / "bub" / "default" / "{{cookiecutter.project_slug}}" / "README.md",
-        ROOT
-        / "templates"
-        / "langchain"
-        / "markdown-messages"
-        / "{{cookiecutter.project_slug}}"
-        / "README.md",
+        ROOT / "templates" / "langchain" / "markdown-messages" / "{{cookiecutter.project_slug}}" / "README.md",
     ]
 
     for doc in docs:
