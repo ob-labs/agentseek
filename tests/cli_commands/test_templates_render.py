@@ -147,6 +147,8 @@ def test_template_renders_without_unrendered_jinja(
         assert "ChatHuggingFace" not in agent_text
         assert "bind_tools" not in readme_text
         assert "deterministic retrieve-then-generate graph" in readme_text
+        assert "agentseek task sync" in readme_text
+        assert "uv sync" not in readme_text
 
     frontend_pkg = generated / "frontend" / "package.json"
     if frontend_pkg.is_file():

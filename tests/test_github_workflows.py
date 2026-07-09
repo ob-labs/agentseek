@@ -22,14 +22,25 @@ def test_openvino_template_smoke_is_path_gated_and_invokes_graph() -> None:
     workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "openvino-template-smoke.yml"
     text = workflow.read_text(encoding="utf-8")
 
+    assert "permissions:" in text
+    assert "contents: read" in text
+    assert "concurrency:" in text
     assert "workflow_dispatch:" in text
     assert "pull_request:" in text
     assert "templates/langchain/agentic-rag-openvino/**" in text
     assert "runs-on: ubuntu-latest" in text
     assert "agentseek create langchain/agentic-rag-openvino --no-input" in text
+    assert "agentseek task sync" in text
     assert "agentseek task models" in text
-    assert "agentseek task ingest-sample" in text
+    assert "until docker compose exec -T seekdb mysql" in text
+    assert "openvino-smoke-fixture.md" in text
+    assert "uv run ingest openvino-smoke-fixture.md" in text
+    assert "agentseek task ingest-sample" not in text
+    assert "lilianweng.github.io" not in text
     assert "agentseek dev --dry-run" in text
     assert "from langchain_core.messages import HumanMessage" in text
     assert "graph.invoke" in text
+    assert "graph.ainvoke" in text
+    assert "asyncio.run" in text
     assert "OpenVINO graph returned empty response" in text
+    assert "OpenVINO async graph returned empty response" in text

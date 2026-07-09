@@ -58,7 +58,7 @@ uv tool install agentseek                              # install the agentseek C
 agentseek create langchain/agentic-rag-openvino        # scaffold the project
 cd <project_slug>
 cp .env.example .env
-uv sync
+agentseek task sync          # install Python dependencies
 agentseek info
 agentseek task frontend      # install frontend dependencies
 agentseek doctor             # static lifecycle checks
