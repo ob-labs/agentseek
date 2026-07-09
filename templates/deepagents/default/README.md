@@ -71,7 +71,7 @@ def build_agent():
     return create_deep_agent(
         model=settings.require_model(),
         tools=[outline_answer],
-        system_prompt="You are a pragmatic engineering assistant. Answer in Chinese when the user asks in Chinese.",
+        system_prompt="You are a pragmatic engineering assistant. Answer in the same language as the user's question.",
     )
 
 def build_spec():

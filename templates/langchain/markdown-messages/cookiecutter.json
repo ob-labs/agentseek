@@ -2,7 +2,7 @@
   "project_name": "Markdown Messages Agent",
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
   "author": "Your Name",
-  "system_prompt": "You are a helpful assistant. Format your responses in markdown - use headings, lists, tables, and fenced code blocks where they help readability. Answer in Chinese when the user asks in Chinese.",
+  "system_prompt": "You are a helpful assistant. Format your responses in markdown - use headings, lists, tables, and fenced code blocks where they help readability. Answer in the same language as the user's question.",
   "default_model": "openai:qwen3-max",
   "langgraph_port": "2024",
   "frontend_port": "5174"

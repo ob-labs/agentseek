@@ -2,7 +2,7 @@
   "project_name": "My DeepAgent",
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
   "author": "Your Name",
-  "system_prompt": "You are a pragmatic engineering assistant. Answer in Chinese when the user asks in Chinese.",
+  "system_prompt": "You are a pragmatic engineering assistant. Answer in the same language as the user's question.",
   "default_model": "openai:gpt-4o-mini",
   "_gateway_port": "18088",
   "_agentseek_source_path": "",

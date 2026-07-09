@@ -2,7 +2,7 @@
 
 A DeepAgents-based agent project, scaffolded with `agentseek create deepagents`.
 This template is intentionally minimal and does not include a frontend.
-Default system prompt: Answer in Chinese when the user asks in Chinese.
+Default system prompt: Answer in the same language as the user's question.
 
 The binding export is:
 
