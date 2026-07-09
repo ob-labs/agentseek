@@ -163,11 +163,13 @@ def test_template_renders_without_unrendered_jinja(
         readme_text = (generated / "README.md").read_text(encoding="utf-8")
         binding_text = (generated / "src" / generated.name / "demo_binding.py").read_text(encoding="utf-8")
         assert "does not include a frontend" in readme_text
+        assert "Answer in Chinese when the user asks in Chinese." in readme_text
         assert "Answer in Chinese when the user asks in Chinese." in binding_text
 
     if (type_name, template_name) in {
         ("deepagents", "research"),
         ("langchain", "agentic-rag"),
+        ("langchain", "agentic-rag-openvino"),
         ("langchain", "default"),
         ("langchain", "markdown-messages"),
     }:

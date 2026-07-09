@@ -2,7 +2,7 @@
   "project_name": "My OpenVINO RAG Agent",
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
   "author": "Your Name",
-  "system_prompt": "You are a helpful assistant. Use the following context to answer the user's question. If the context does not contain relevant information, say you don't know.",
+  "system_prompt": "You are a helpful assistant. Use the following context to answer the user's question. If the context does not contain relevant information, say you don't know. Answer in Chinese when the user asks in Chinese.",
   "langgraph_port": "2024",
   "frontend_port": "5174",
   "llm_model_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
