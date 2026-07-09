@@ -21,7 +21,7 @@ sources:
 | `deepagents/default` | Minimal DeepAgents app with AgentSeek lifecycle spec. |
 | `deepagents/research` | DeepAgents research app with search workflow, local UI, and AgentSeek lifecycle spec. |
 | `langchain/agentic-rag` | LangChain agentic RAG with OceanBase vector search and AgentSeek lifecycle spec. |
-| `langchain/agentic-rag-openvino` | LangChain agentic RAG with local OpenVINO models and AgentSeek lifecycle spec. |
+| `langchain/agentic-rag-openvino` | LangChain local RAG with OpenVINO models and AgentSeek lifecycle spec. |
 | `langchain/cli-remote` | LangChain template for connecting the local lifecycle workflow to a remote LangGraph service. |
 | `langchain/default` | LangChain agent app with local web UI and AgentSeek lifecycle spec. |
 | `langchain/markdown-messages` | LangChain chat app with markdown message rendering and AgentSeek lifecycle spec. |

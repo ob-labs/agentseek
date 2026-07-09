@@ -136,6 +136,21 @@ def test_template_renders_without_unrendered_jinja(
         assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
         assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
 
+    if (type_name, template_name) == ("langchain", "agentic-rag-openvino"):
+        agent_text = (generated / "src" / generated.name / "agent.py").read_text(encoding="utf-8")
+        converter_text = (generated / "src" / generated.name / "convert_models.py").read_text(encoding="utf-8")
+        readme_text = (generated / "README.md").read_text(encoding="utf-8")
+        assert '"optimum-cli", "export", "openvino"' in converter_text
+        assert "python -m optimum.exporters.openvino" not in converter_text
+        assert "from langgraph.graph import MessagesState, StateGraph" in agent_text
+        assert "create_agent" not in agent_text
+        assert "ChatHuggingFace" not in agent_text
+        assert "Answer in the same language as the user's question." in agent_text
+        assert "bind_tools" not in readme_text
+        assert "deterministic retrieve-then-generate graph" in readme_text
+        assert "agentseek task sync" in readme_text
+        assert "uv sync" not in readme_text
+
     frontend_pkg = generated / "frontend" / "package.json"
     if frontend_pkg.is_file():
         try:

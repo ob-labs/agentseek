@@ -1,0 +1,148 @@
+name: OpenVINO Template Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - ".github/workflows/openvino-template-smoke.yml"
+      - ".github/actions/setup-python-env/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "src/agentseek/**"
+      - "templates/index.json"
+      - "templates/langchain/agentic-rag-openvino/**"
+      - "tests/cli_commands/test_templates_render.py"
+      - "tests/test_github_workflows.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  openvino-template-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+
+      - name: Render OpenVINO template
+        run: |
+          set -euo pipefail
+          smoke_root="${RUNNER_TEMP}/agentseek-openvino-smoke"
+          mkdir -p "${smoke_root}"
+          cd "${smoke_root}"
+          uv run --project "${GITHUB_WORKSPACE}" agentseek create langchain/agentic-rag-openvino --no-input
+          echo "AGENTSEEK_OPENVINO_SMOKE_PROJECT=${smoke_root}/my_openvino_rag_agent" >> "${GITHUB_ENV}"
+
+      - name: Install generated dependencies
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+          cp .env.example .env
+          uv run --project "${GITHUB_WORKSPACE}" agentseek task sync
+          uv run --project "${GITHUB_WORKSPACE}" agentseek task frontend
+          uv run --project "${GITHUB_WORKSPACE}" agentseek doctor
+          uv run --project "${GITHUB_WORKSPACE}" agentseek dev --dry-run
+
+      - name: Convert OpenVINO models
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+          uv run --project "${GITHUB_WORKSPACE}" agentseek task models
+          test -f models/tiny-llama-1b-chat/INT4_compressed_weights/openvino_model.xml
+          test -f models/bge-small-en-v1.5/openvino_model.xml
+
+      - name: Start OceanBase seekdb and ingest fixture
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+          uv run --project "${GITHUB_WORKSPACE}" agentseek task seekdb
+          i=0
+          until docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'; do
+            i=$((i + 1))
+            if [ "$i" -ge 60 ]; then
+              echo "seekdb did not become ready in time" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          cat > openvino-smoke-fixture.md <<'EOF'
+          # Task decomposition
+
+          Task decomposition breaks a complex objective into smaller, easier-to-solve
+          subtasks. It helps agents plan, inspect intermediate progress, and recover
+          when one step fails. This fixture contains the unique marker
+          cobalt-lantern-42.
+          EOF
+          uv run ingest openvino-smoke-fixture.md
+
+      - name: Invoke generated OpenVINO graph
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+          export MAX_NEW_TOKENS=64
+          uv run python - <<'PY'
+          import asyncio
+
+          from langchain_core.messages import HumanMessage
+
+          from my_openvino_rag_agent import agent as agent_module
+
+          def response_text(result: dict) -> str:
+              messages = result.get("messages", [])
+              content = getattr(messages[-1], "content", "") if messages else ""
+              if isinstance(content, list):
+                  content = "\n".join(str(part) for part in content)
+              return content if isinstance(content, str) else str(content)
+
+          graph = agent_module.graph
+          payload = {"messages": [HumanMessage(content="What is task decomposition?")]}
+
+          real_retrieve = agent_module.retrieve
+          retrieval_calls: list[str] = []
+
+          def verified_retrieve(query: str):
+              context, docs = real_retrieve(query)
+              if "cobalt-lantern-42" not in context:
+                  raise RuntimeError("OpenVINO retrieval did not return fixture context")
+              retrieval_calls.append(query)
+              return context, docs
+
+          agent_module.retrieve = verified_retrieve
+
+          retrieval_calls.clear()
+          sync_content = response_text(graph.invoke(payload))
+          if not retrieval_calls:
+              raise RuntimeError("OpenVINO graph did not call retrieval during sync invoke")
+          if not sync_content.strip():
+              raise RuntimeError("OpenVINO graph returned empty response")
+          print(sync_content[:1000])
+
+          retrieval_calls.clear()
+          async_content = response_text(asyncio.run(graph.ainvoke(payload)))
+          if not retrieval_calls:
+              raise RuntimeError("OpenVINO graph did not call retrieval during async invoke")
+          if not async_content.strip():
+              raise RuntimeError("OpenVINO async graph returned empty response")
+          print(async_content[:1000])
+          PY
+
+      - name: Clean up seekdb
+        if: always()
+        run: |
+          if [ -n "${AGENTSEEK_OPENVINO_SMOKE_PROJECT:-}" ] && [ -d "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}" ]; then
+            cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+            docker compose ps || true
+            docker compose logs --no-color --tail=200 seekdb || true
+            docker compose down -v || true
+          fi
