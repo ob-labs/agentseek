@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_quickstarts_prefer_lifecycle_tasks_over_raw_setup_commands() -> None:
     """Public quickstarts should route setup through AgentSeek lifecycle tasks."""
     docs = [
+        ROOT / "README.md",
+        ROOT / "README.zh.md",
         ROOT / "docs" / "index.md",
         ROOT / "docs" / "index.zh.md",
         ROOT / "docs" / "get-started" / "index.md",

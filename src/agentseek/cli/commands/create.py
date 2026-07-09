@@ -79,6 +79,7 @@ REPO_GIT_URL = f"{REPO_URL}.git"
 # The directory inside the repo that holds all cookiecutter templates.
 TEMPLATES_DIR = "templates"
 TEMPLATE_REPO_CACHE_DIR = "agentseek"
+QUARANTINED_TEMPLATE_KEYS: frozenset[str] = frozenset({"bub/contextseek"})
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +163,14 @@ def _resolve_type_template(
     raise typer.Exit(2)
 
 
+def _template_key(project_type: str, template_name: str) -> str:
+    return f"{project_type}/{template_name}"
+
+
+def _is_quarantined_template(project_type: str, template_name: str) -> bool:
+    return _template_key(project_type, template_name) in QUARANTINED_TEMPLATE_KEYS
+
+
 def _is_external_spec(spec: str) -> bool:
     """Return ``True`` if *spec* looks like a URL or absolute local path."""
     return spec.startswith(("https://", "http://", "git@", "gh:", "/"))
@@ -181,7 +190,11 @@ def _list_templates(project_type: str, templates_root: Path | None = None) -> li
     type_dir = templates_root / project_type
     if not type_dir.is_dir():
         return []
-    templates = sorted(entry.name for entry in type_dir.iterdir() if (entry / "cookiecutter.json").is_file())
+    templates = sorted(
+        entry.name
+        for entry in type_dir.iterdir()
+        if (entry / "cookiecutter.json").is_file() and not _is_quarantined_template(project_type, entry.name)
+    )
     descriptions = _load_template_descriptions(templates_root)
     if not descriptions:
         return templates
@@ -239,6 +252,8 @@ def _public_templates_for_type(project_type: str, descriptions: dict[str, str]) 
 
 
 def _is_public_template(project_type: str, template_name: str, templates_root: Path) -> bool:
+    if _is_quarantined_template(project_type, template_name):
+        return False
     descriptions = _load_template_descriptions(templates_root)
     if not descriptions:
         return True
@@ -271,7 +286,7 @@ def _print_templates_table(
 
 
 def _template_matches_filter(project_type: str, template_name: str, descriptions: dict[str, str], keyword: str) -> bool:
-    key = f"{project_type}/{template_name}"
+    key = _template_key(project_type, template_name)
     haystack = f"{key}\n{descriptions.get(key, '')}".casefold()
     return keyword.casefold() in haystack
 

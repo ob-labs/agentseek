@@ -236,6 +236,33 @@ def test_quarantined_contextseek_template_is_not_publicly_selectable(monkeypatch
     assert "Template bub/contextseek was not found" in create_result.output
 
 
+def test_quarantined_contextseek_template_stays_hidden_from_stale_cache(monkeypatch, tmp_path: Path) -> None:
+    """An older cached template index must not re-enable quarantined templates."""
+    clone_calls = _mock_remote_template_repo(
+        monkeypatch,
+        tmp_path,
+        {
+            "bub/default": "Default Bub template.",
+            "bub/contextseek": "Old ContextSeek template.",
+            "langchain/default": "Default LangChain template.",
+        },
+        cached=True,
+    )
+
+    list_result = _runner().invoke(build_command_app(), ["create", "bub", "--list-templates"])
+
+    assert list_result.exit_code == 0, list_result.output
+    assert clone_calls == []
+    assert "bub/default" in list_result.output
+    assert "bub/contextseek" not in list_result.output
+    assert "Old ContextSeek template." not in list_result.output
+
+    describe_result = _runner().invoke(build_command_app(), ["create", "bub/contextseek", "--describe"])
+
+    assert describe_result.exit_code == 2
+    assert "Template bub/contextseek was not found" in describe_result.output
+
+
 def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypatch, tmp_path: Path) -> None:
     """Installed CLI should download templates before listing them."""
     clone_calls = _mock_remote_template_repo(
