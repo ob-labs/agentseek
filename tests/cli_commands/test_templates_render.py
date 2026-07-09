@@ -136,6 +136,42 @@ def test_template_renders_without_unrendered_jinja(
         assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
         assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
 
+    if (type_name, template_name) == ("langchain", "agentic-rag"):
+        lifecycle_text = (generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8")
+        vite_text = (generated / "frontend" / "vite.config.ts").read_text(encoding="utf-8")
+        app_text = (generated / "frontend" / "src" / "App.tsx").read_text(encoding="utf-8")
+        readme_text = (generated / "README.md").read_text(encoding="utf-8")
+        assert "[env.LANGGRAPH_HOST]" in lifecycle_text
+        assert "--host ${LANGGRAPH_HOST:-127.0.0.1}" in lifecycle_text
+        assert "FRONTEND_HOST" in vite_text
+        assert "window.location.hostname" in app_text
+        assert "agentseek task sync" in readme_text
+        assert "agentseek task frontend" in readme_text
+        assert "LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev" in readme_text
+
+    if (type_name, template_name) == ("deepagents", "content-builder"):
+        readme_text = (generated / "README.md").read_text(encoding="utf-8")
+        agents_text = (generated / "AGENTS.md").read_text(encoding="utf-8")
+        assert "agentseek task backend" in readme_text
+        assert "agentseek task frontend" in readme_text
+        assert "Answer in Chinese when the user asks in Chinese" in agents_text
+
+    if (type_name, template_name) == ("deepagents", "default"):
+        readme_text = (generated / "README.md").read_text(encoding="utf-8")
+        binding_text = (generated / "src" / generated.name / "demo_binding.py").read_text(encoding="utf-8")
+        assert "does not include a frontend" in readme_text
+        assert "Answer in Chinese when the user asks in Chinese." in binding_text
+
+    if (type_name, template_name) in {
+        ("deepagents", "research"),
+        ("langchain", "agentic-rag"),
+        ("langchain", "default"),
+        ("langchain", "markdown-messages"),
+    }:
+        agent_files = sorted((generated / "src" / generated.name).glob("*.py"))
+        rendered_python = "\n".join(path.read_text(encoding="utf-8") for path in agent_files)
+        assert "Answer in Chinese when the user asks in Chinese." in rendered_python
+
     frontend_pkg = generated / "frontend" / "package.json"
     if frontend_pkg.is_file():
         try:

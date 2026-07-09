@@ -8,7 +8,6 @@ sources:
   - templates/index.json
   - docs/reference/templates.md
   - templates/bub/default/README.md
-  - templates/bub/contextseek/README.md
   - templates/deepagents/default/README.md
   - templates/deepagents/research/README.md
   - templates/deepagents/content-builder/README.md
@@ -40,7 +39,6 @@ generated app code is Bub, DeepAgents, LangChain, or LangGraph shaped.
 | Goal | Choose | Why |
 | --- | --- | --- |
 | Build the smallest Bub AG-UI app | `bub/default` | It starts a Bub gateway and Vite frontend with the least extra runtime surface. |
-| Add semantic memory to a Bub app | `bub/contextseek` | It extends `bub/default` with ContextSeek memory and a ctx HTTP API. |
 | Wrap a minimal DeepAgents runnable for AgentSeek | `deepagents/default` | It binds `create_deep_agent(...)` through `agentseek-langchain`. |
 | Run a DeepAgents research workflow | `deepagents/research` | It includes search, tool streaming, sub-agent progress, and a React frontend. |
 | Run a DeepAgents content workflow | `deepagents/content-builder` | It includes brand memory, skills, subagents, image generation, and streamed UI. |
@@ -52,8 +50,8 @@ generated app code is Bub, DeepAgents, LangChain, or LangGraph shaped.
 
 ## Choose AgentSeek-Wrapped Or Framework-Native
 
-Use `bub/default`, `bub/contextseek`, `deepagents/default`, or
-`langchain/default` when you want the generated app to run through the
+Use `bub/default`, `deepagents/default`, or `langchain/default` when you want
+the generated app to run through the
 AgentSeek/Bub gateway path.
 
 Use `deepagents/research`, `deepagents/content-builder`,

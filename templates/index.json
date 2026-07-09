@@ -1,5 +1,4 @@
 {
-  "bub/contextseek": "Bub agent with ContextSeek semantic memory and AgentSeek lifecycle spec.",
   "bub/default": "Lightweight Bub agent with AgentSeek lifecycle spec.",
   "deepagents/content-builder": "DeepAgents content builder with skills, subagents, image generation, streamed UI, and AgentSeek lifecycle spec.",
   "deepagents/default": "Local create_deep_agent runnable with AgentSeek lifecycle spec.",

@@ -1,6 +1,7 @@
 # {{ cookiecutter.project_name }}
 
 A DeepAgents-based agent project, scaffolded with `agentseek create deepagents`.
+This template is intentionally minimal and does not include a frontend.
 
 The binding export is:
 

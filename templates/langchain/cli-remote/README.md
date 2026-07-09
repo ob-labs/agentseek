@@ -28,6 +28,12 @@ bridge 会向 remote graph 发送只包含 messages 的 state dict：
 这样可以避免把本地 Bub runtime 对象写入 JSON request，同时保持
 remote `create_agent(...)` 期望的输入形状。
 
+## Observability
+
+This template does not start a local LangSmith or Phoenix observability stack.
+Use the tracing or observability configuration of the remote LangGraph service
+you connect to.
+
 ## Inputs
 
 | Variable | Description |

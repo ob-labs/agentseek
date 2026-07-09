@@ -40,14 +40,21 @@ agentseek create langchain/agentic-rag          # scaffold the project
 # 2. Project setup
 cd <project_slug>
 cp .env.example .env        # fill in API keys
-uv sync
-npm install --prefix frontend
-docker compose up -d        # start OceanBase seekdb
+agentseek task sync
+agentseek task frontend
+agentseek task seekdb       # start OceanBase seekdb
 agentseek doctor
 agentseek dev --dry-run
 
 # 3. Run
 agentseek dev
+```
+
+For trusted remote development hosts such as ECS, start dev with explicit bind
+hosts:
+
+```bash
+LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
 ```
 
 ## Cookiecutter variables
@@ -109,3 +116,6 @@ agentseek dev
   multi-step retrieval — complex queries trigger multiple searches
   autonomously, unlike a fixed two-step RAG chain.
 - LangSmith tracing is opt-in via `LANGSMITH_TRACING=true` in `.env`.
+- Remote development is opt-in: `LANGGRAPH_HOST` and `FRONTEND_HOST` stay
+  `127.0.0.1` by default and can be set to `0.0.0.0` from the shell on trusted
+  networks.

@@ -47,6 +47,7 @@ Simply list items with details - no introduction needed:
 - Write in paragraph form by default - be text-heavy, not just bullet points
 - Do NOT use self-referential language ("I found...", "I researched...")
 - Write as a professional report without meta-commentary
+- Match the user's language. Answer in Chinese when the user asks in Chinese.
 - Each section should be comprehensive and detailed
 - Use bullet points only when listing is more appropriate than prose
 
@@ -116,6 +117,7 @@ When providing your findings back to the orchestrator:
 1. **Structure your response**: Organize findings with clear headings and detailed explanations
 2. **Cite sources inline**: Use [1], [2], [3] format when referencing information from your searches
 3. **Include Sources section**: End with ### Sources listing each numbered source with title and URL
+4. **Match the user's language**: Answer in Chinese when the user asks in Chinese
 
 Example:
 ```

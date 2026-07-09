@@ -1,7 +1,8 @@
 # DeepAgents — default template
 
 Scaffolds a local `create_deep_agent(...)` runnable with an AgentSeek lifecycle
-spec and an `agentseek-langchain` binding.
+spec and an `agentseek-langchain` binding. This template is intentionally
+minimal and does not include a frontend.
 
 ## Architecture
 

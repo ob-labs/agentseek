@@ -15,7 +15,6 @@ sources:
 
 | Template | Description |
 | --- | --- |
-| `bub/contextseek` | Bub agent with ContextSeek semantic memory and AgentSeek lifecycle spec. |
 | `bub/default` | Lightweight Bub agent with AgentSeek lifecycle spec. |
 | `deepagents/content-builder` | DeepAgents content builder with writing workflows, image generation, local UI, and AgentSeek lifecycle spec. |
 | `deepagents/default` | Minimal DeepAgents app with AgentSeek lifecycle spec. |

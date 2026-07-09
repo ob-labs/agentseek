@@ -29,4 +29,10 @@ OpenAI-compatible 环境变量。`BUB_LANGCHAIN_SPEC` 指向本项目的
 Bub binding，`LANGGRAPH_URL` 和 `LANGGRAPH_ASSISTANT_ID` 指向
 LangGraph Agent Server。
 
+## Observability
+
+This template does not provide a local LangSmith or Phoenix observability
+stack. Use the tracing or observability configuration of the remote LangGraph
+service you connect to.
+
 Author: {{ cookiecutter.author }}
