@@ -2,6 +2,13 @@ name: OpenVINO Template Smoke
 
 on:
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - ".github/workflows/openvino-template-smoke.yml"
+      - "templates/langchain/agentic-rag-openvino/**"
+      - "tests/cli_commands/test_templates_render.py"
+      - "tests/test_github_workflows.py"
 
 jobs:
   openvino-template-smoke:
@@ -49,6 +56,26 @@ jobs:
           cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
           uv run --project "${GITHUB_WORKSPACE}" agentseek task seekdb
           uv run --project "${GITHUB_WORKSPACE}" agentseek task ingest-sample
+
+      - name: Invoke generated OpenVINO graph
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+          export MAX_NEW_TOKENS=64
+          uv run python - <<'PY'
+          from langchain_core.messages import HumanMessage
+
+          from my_openvino_rag_agent.agent import graph
+
+          result = graph.invoke({"messages": [HumanMessage(content="What is task decomposition?")]})
+          messages = result.get("messages", [])
+          content = getattr(messages[-1], "content", "") if messages else ""
+          if isinstance(content, list):
+              content = "\n".join(str(part) for part in content)
+          if not isinstance(content, str) or not content.strip():
+              raise RuntimeError("OpenVINO graph returned empty response")
+          print(content[:1000])
+          PY
 
       - name: Clean up seekdb
         if: always()

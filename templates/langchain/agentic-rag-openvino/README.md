@@ -36,8 +36,8 @@ graph = StateGraph(MessagesState).add_node("answer", answer).set_entry_point("an
 
 - **Backend** — a deterministic retrieve-then-generate graph backed by
   `OceanbaseVectorStore`, served by `langgraph dev`.
-- **Frontend** — React + Vite chat UI with streaming tool-call cards and
-  markdown rendering via `@langchain/react` `useStream`.
+- **Frontend** — React + Vite chat UI with streamed message rendering and
+  markdown support via `@langchain/react` `useStream`.
 - **Ingest CLI** — `uv run ingest` loads documents, embeds with OpenVINO, and
   indexes into OceanBase seekdb.
 - **Model converter** — `uv run convert-models` downloads HuggingFace models
