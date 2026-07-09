@@ -27,12 +27,15 @@ def test_openvino_template_smoke_is_path_gated_and_invokes_graph() -> None:
     assert "concurrency:" in text
     assert "workflow_dispatch:" in text
     assert "pull_request:" in text
+    assert ".github/workflows/openvino-template-smoke.yml" in text
     assert ".github/actions/setup-python-env/**" in text
     assert "pyproject.toml" in text
     assert "uv.lock" in text
     assert "src/agentseek/**" in text
     assert "templates/index.json" in text
     assert "templates/langchain/agentic-rag-openvino/**" in text
+    assert "tests/cli_commands/test_templates_render.py" in text
+    assert "tests/test_github_workflows.py" in text
     assert "runs-on: ubuntu-latest" in text
     assert "agentseek create langchain/agentic-rag-openvino --no-input" in text
     assert "agentseek task sync" in text
@@ -45,8 +48,12 @@ def test_openvino_template_smoke_is_path_gated_and_invokes_graph() -> None:
     assert "lilianweng.github.io" not in text
     assert "agentseek dev --dry-run" in text
     assert "from langchain_core.messages import HumanMessage" in text
-    assert "from my_openvino_rag_agent.agent import graph, retrieve" in text
+    assert "from my_openvino_rag_agent import agent as agent_module" in text
+    assert "agent_module.retrieve = verified_retrieve" in text
+    assert "retrieval_calls.clear()" in text
     assert "OpenVINO retrieval did not return fixture context" in text
+    assert "OpenVINO graph did not call retrieval during sync invoke" in text
+    assert "OpenVINO graph did not call retrieval during async invoke" in text
     assert "graph.invoke" in text
     assert "graph.ainvoke" in text
     assert "asyncio.run" in text

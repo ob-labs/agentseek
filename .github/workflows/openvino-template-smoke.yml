@@ -96,7 +96,7 @@ jobs:
 
           from langchain_core.messages import HumanMessage
 
-          from my_openvino_rag_agent.agent import graph, retrieve
+          from my_openvino_rag_agent import agent as agent_module
 
           def response_text(result: dict) -> str:
               messages = result.get("messages", [])
@@ -105,17 +105,33 @@ jobs:
                   content = "\n".join(str(part) for part in content)
               return content if isinstance(content, str) else str(content)
 
+          graph = agent_module.graph
           payload = {"messages": [HumanMessage(content="What is task decomposition?")]}
-          context, _docs = retrieve("Which unique marker is in the task decomposition fixture?")
-          if "cobalt-lantern-42" not in context:
-              raise RuntimeError("OpenVINO retrieval did not return fixture context")
 
+          real_retrieve = agent_module.retrieve
+          retrieval_calls: list[str] = []
+
+          def verified_retrieve(query: str):
+              context, docs = real_retrieve(query)
+              if "cobalt-lantern-42" not in context:
+                  raise RuntimeError("OpenVINO retrieval did not return fixture context")
+              retrieval_calls.append(query)
+              return context, docs
+
+          agent_module.retrieve = verified_retrieve
+
+          retrieval_calls.clear()
           sync_content = response_text(graph.invoke(payload))
+          if not retrieval_calls:
+              raise RuntimeError("OpenVINO graph did not call retrieval during sync invoke")
           if not sync_content.strip():
               raise RuntimeError("OpenVINO graph returned empty response")
           print(sync_content[:1000])
 
+          retrieval_calls.clear()
           async_content = response_text(asyncio.run(graph.ainvoke(payload)))
+          if not retrieval_calls:
+              raise RuntimeError("OpenVINO graph did not call retrieval during async invoke")
           if not async_content.strip():
               raise RuntimeError("OpenVINO async graph returned empty response")
           print(async_content[:1000])
