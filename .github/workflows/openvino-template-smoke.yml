@@ -1,0 +1,61 @@
+name: OpenVINO Template Smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  openvino-template-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+
+      - name: Render OpenVINO template
+        run: |
+          set -euo pipefail
+          smoke_root="${RUNNER_TEMP}/agentseek-openvino-smoke"
+          mkdir -p "${smoke_root}"
+          cd "${smoke_root}"
+          uv run --project "${GITHUB_WORKSPACE}" agentseek create langchain/agentic-rag-openvino --no-input
+          echo "AGENTSEEK_OPENVINO_SMOKE_PROJECT=${smoke_root}/my_openvino_rag_agent" >> "${GITHUB_ENV}"
+
+      - name: Install generated dependencies
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+          cp .env.example .env
+          uv sync
+          uv run --project "${GITHUB_WORKSPACE}" agentseek task frontend
+          uv run --project "${GITHUB_WORKSPACE}" agentseek doctor
+          uv run --project "${GITHUB_WORKSPACE}" agentseek dev --dry-run
+
+      - name: Convert OpenVINO models
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+          uv run --project "${GITHUB_WORKSPACE}" agentseek task models
+          test -f models/tiny-llama-1b-chat/INT4_compressed_weights/openvino_model.xml
+          test -f models/bge-small-en-v1.5/openvino_model.xml
+
+      - name: Start OceanBase seekdb and ingest sample
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+          uv run --project "${GITHUB_WORKSPACE}" agentseek task seekdb
+          uv run --project "${GITHUB_WORKSPACE}" agentseek task ingest-sample
+
+      - name: Clean up seekdb
+        if: always()
+        run: |
+          if [ -n "${AGENTSEEK_OPENVINO_SMOKE_PROJECT:-}" ] && [ -d "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}" ]; then
+            cd "${AGENTSEEK_OPENVINO_SMOKE_PROJECT}"
+            docker compose ps || true
+            docker compose logs --no-color --tail=200 seekdb || true
+            docker compose down -v || true
+          fi

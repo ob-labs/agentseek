@@ -1,26 +1,26 @@
 # langchain/agentic-rag-openvino
 
-Cookiecutter template for an **agentic RAG** application running fully local
+Cookiecutter template for a local RAG application running fully local
 with [OpenVINO](https://docs.openvino.ai/) via LangChain's official
 [langchain-huggingface](https://python.langchain.com/docs/integrations/llms/openvino)
 integration and [OceanBase seekdb](https://github.com/oceanbase/seekdb) as the
 vector store. No cloud API keys required.
 
-Uses the same `create_agent` + tool-calling pattern as `langchain/agentic-rag`,
-just with local OpenVINO models instead of cloud APIs.
+The generated graph uses a deterministic retrieve-then-generate graph instead
+of `create_agent` tool-calling. Local Hugging Face/OpenVINO pipelines are kept
+on the stable LLM path while retrieval stays explicit and predictable.
 
 ## How it integrates
 
 ```python
-from langchain_huggingface import HuggingFacePipeline, ChatHuggingFace, HuggingFaceEmbeddings
-from langchain.agents import create_agent
+from langchain_huggingface import HuggingFacePipeline, HuggingFaceEmbeddings
+from langgraph.graph import MessagesState, StateGraph
 
 # LLM: HuggingFacePipeline with backend="openvino"
 ov_llm = HuggingFacePipeline.from_model_id(
     model_id="./models/tiny-llama/INT4", task="text-generation",
     backend="openvino", model_kwargs={"device": "CPU"},
 )
-model = ChatHuggingFace(llm=ov_llm)  # has bind_tools → works with create_agent
 
 # Embeddings: HuggingFaceEmbeddings with backend="openvino"
 embeddings = HuggingFaceEmbeddings(
@@ -28,15 +28,14 @@ embeddings = HuggingFaceEmbeddings(
     model_kwargs={"device": "cpu", "backend": "openvino"},
 )
 
-# Same agent pattern as cloud template
-graph = create_agent(model=model, tools=[retrieve], system_prompt=PROMPT)
+# Deterministic graph pattern
+graph = StateGraph(MessagesState).add_node("answer", answer).set_entry_point("answer").compile()
 ```
 
 ## What's generated
 
-- **Backend** — a `create_agent` graph with a retrieval tool backed by
-  `OceanbaseVectorStore`, served by `langgraph dev`. The agent autonomously
-  decides when and how many times to search the knowledge base.
+- **Backend** — a deterministic retrieve-then-generate graph backed by
+  `OceanbaseVectorStore`, served by `langgraph dev`.
 - **Frontend** — React + Vite chat UI with streaming tool-call cards and
   markdown rendering via `@langchain/react` `useStream`.
 - **Ingest CLI** — `uv run ingest` loads documents, embeds with OpenVINO, and
@@ -91,9 +90,10 @@ is running to check the declared HTTP endpoints.
 - **Official LangChain integration**: uses `langchain-huggingface` with
   `backend="openvino"` for both LLM and embeddings — standard, maintained,
   documented.
-- **`ChatHuggingFace` enables `create_agent`**: wrapping the pipeline as a
-  chat model gives `bind_tools()` support, so the agent can autonomously
-  decide when to search (same as cloud template).
+- **Deterministic graph instead of tool-calling**: local OpenVINO inference
+  uses `HuggingFacePipeline` directly, retrieves first, then generates from the
+  retrieved context. Use the cloud `langchain/agentic-rag` template when you
+  need autonomous tool-calling.
 - **`optimum-cli export openvino`** for model conversion: standard HuggingFace
   tooling, supports INT4/INT8/FP16 weight compression.
 - **OceanBase seekdb** for vector storage: same production-grade DB as the
