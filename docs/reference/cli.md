@@ -3,7 +3,7 @@ title: CLI Reference
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-06-23
+verified_on: 2026-07-07
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
@@ -63,9 +63,11 @@ The built-in template type set is currently `bub`, `deepagents`, and
 | --- | --- |
 | `spec` | Template type, `type/name`, Git URL, or absolute local path. |
 | `--list-templates` | List templates. With a `type`, list only that type. |
+| `--filter keyword` | Filter listed templates by template spec or description. |
 | `--template name` | Select a template under the chosen type, for example `bub --template default`. |
 | `--template` | Compatibility entry point that lists templates. Prefer `--list-templates` in new scripts. |
 | `--checkout ref` | Use a branch, tag, or commit when fetching the remote template source. |
+| `--output-dir path` | Write the generated project below the selected directory. Defaults to the current working directory. |
 | `--no-input` | Skip Cookiecutter variable prompts and use template defaults. |
 | `--describe` | Print template description and Cookiecutter variables without generating a project. |
 
