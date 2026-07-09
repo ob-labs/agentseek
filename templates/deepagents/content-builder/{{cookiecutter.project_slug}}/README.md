@@ -13,12 +13,12 @@ inspection, readiness checks, development, and project tasks.
 ## Setup
 
 ```bash
-uv sync
-
 cp .env.example .env
 cp frontend/.env.example frontend/.env
 $EDITOR .env
 
+agentseek task --list
+agentseek task backend
 agentseek task frontend
 agentseek info
 agentseek doctor

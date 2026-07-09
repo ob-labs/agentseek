@@ -79,6 +79,7 @@ REPO_GIT_URL = f"{REPO_URL}.git"
 # The directory inside the repo that holds all cookiecutter templates.
 TEMPLATES_DIR = "templates"
 TEMPLATE_REPO_CACHE_DIR = "agentseek"
+QUARANTINED_TEMPLATE_KEYS: frozenset[str] = frozenset({"bub/contextseek"})
 
 
 # ---------------------------------------------------------------------------
@@ -148,7 +149,10 @@ def _resolve_type_template(
 ) -> TemplateSource:
     """Resolve ``<type>/<name>`` from an already prepared template root."""
     template_path = templates_root / project_type / template_name
-    if (template_path / "cookiecutter.json").is_file():
+    if (
+        _is_public_template(project_type, template_name, templates_root)
+        and (template_path / "cookiecutter.json").is_file()
+    ):
         install_source_path = str(templates_root.parent) if _local_templates_root() == templates_root else None
         return TemplateSource(
             template=str(template_path),
@@ -157,6 +161,14 @@ def _resolve_type_template(
         )
     _print_unknown_template(project_type, template_name, templates_root=templates_root)
     raise typer.Exit(2)
+
+
+def _template_key(project_type: str, template_name: str) -> str:
+    return f"{project_type}/{template_name}"
+
+
+def _is_quarantined_template(project_type: str, template_name: str) -> bool:
+    return _template_key(project_type, template_name) in QUARANTINED_TEMPLATE_KEYS
 
 
 def _is_external_spec(spec: str) -> bool:
@@ -178,7 +190,16 @@ def _list_templates(project_type: str, templates_root: Path | None = None) -> li
     type_dir = templates_root / project_type
     if not type_dir.is_dir():
         return []
-    return sorted(entry.name for entry in type_dir.iterdir() if (entry / "cookiecutter.json").is_file())
+    templates = sorted(
+        entry.name
+        for entry in type_dir.iterdir()
+        if (entry / "cookiecutter.json").is_file() and not _is_quarantined_template(project_type, entry.name)
+    )
+    descriptions = _load_template_descriptions(templates_root)
+    if not descriptions:
+        return templates
+    public = _public_templates_for_type(project_type, descriptions)
+    return [name for name in templates if name in public]
 
 
 def _prepare_templates_root(checkout: str | None = None) -> Path:
@@ -225,6 +246,20 @@ def _load_template_descriptions(templates_root: Path | None = None) -> dict[str,
     return {str(k): str(v) for k, v in data.items()}
 
 
+def _public_templates_for_type(project_type: str, descriptions: dict[str, str]) -> set[str]:
+    prefix = f"{project_type}/"
+    return {key.removeprefix(prefix) for key in descriptions if key.startswith(prefix)}
+
+
+def _is_public_template(project_type: str, template_name: str, templates_root: Path) -> bool:
+    if _is_quarantined_template(project_type, template_name):
+        return False
+    descriptions = _load_template_descriptions(templates_root)
+    if not descriptions:
+        return True
+    return template_name in _public_templates_for_type(project_type, descriptions)
+
+
 def _print_templates_table(
     project_type: str,
     templates: list[str],
@@ -251,7 +286,7 @@ def _print_templates_table(
 
 
 def _template_matches_filter(project_type: str, template_name: str, descriptions: dict[str, str], keyword: str) -> bool:
-    key = f"{project_type}/{template_name}"
+    key = _template_key(project_type, template_name)
     haystack = f"{key}\n{descriptions.get(key, '')}".casefold()
     return keyword.casefold() in haystack
 

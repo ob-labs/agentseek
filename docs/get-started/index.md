@@ -37,8 +37,8 @@ lifecycle commands.
 ```bash
 cp .env.example .env
 $EDITOR .env
-uv sync
-npm install --prefix frontend
+agentseek task --list
+agentseek task frontend
 ```
 
 Set the model and provider credentials required by the selected template in

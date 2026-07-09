@@ -10,8 +10,9 @@ declares its local lifecycle in `.agentseek/lifecycle.toml`.
 cp .env.example .env
 $EDITOR .env
 
-uv sync
-npm install --prefix frontend
+agentseek task --list
+agentseek task sync
+agentseek task frontend
 
 agentseek info
 agentseek doctor

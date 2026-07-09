@@ -1,7 +1,8 @@
 # DeepAgents — default template
 
 Scaffolds a local `create_deep_agent(...)` runnable with an AgentSeek lifecycle
-spec and an `agentseek-langchain` binding.
+spec and an `agentseek-langchain` binding. This template is intentionally
+minimal and does not include a frontend.
 
 ## Architecture
 
@@ -70,7 +71,7 @@ def build_agent():
     return create_deep_agent(
         model=settings.require_model(),
         tools=[outline_answer],
-        system_prompt="You are a pragmatic engineering assistant.",
+        system_prompt="You are a pragmatic engineering assistant. Answer in the same language as the user's question.",
     )
 
 def build_spec():

@@ -81,7 +81,7 @@ def _validate_frontend(frontend_dir: Path) -> None:
         raise typer.Exit(2)
     if not (frontend_dir / "node_modules").is_dir():
         typer.echo(
-            "Frontend dependencies are missing. Run `npm install --prefix frontend` first.",
+            "Frontend dependencies are missing. Run `agentseek task frontend` first.",
             err=True,
         )
         raise typer.Exit(2)

@@ -4,6 +4,8 @@ SYSTEM_PROMPT = """You are an expert coding assistant with access to an isolated
 
 You can execute shell commands, read and write files, and interact with the filesystem inside the sandbox. Use these capabilities to help users with coding tasks.
 
+Answer in the same language as the user's question.
+
 ## Capabilities
 
 - **Execute commands**: Run any shell command (install packages, run scripts, build projects, run tests)

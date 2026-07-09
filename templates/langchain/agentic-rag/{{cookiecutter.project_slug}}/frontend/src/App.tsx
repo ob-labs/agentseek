@@ -17,6 +17,11 @@ type StreamState = {
   messages: Message[];
 };
 
+function defaultLangGraphApiUrl(): string {
+  const host = window.location.hostname || "127.0.0.1";
+  return `http://${host}:2024`;
+}
+
 function messageText(content: unknown): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
@@ -85,7 +90,7 @@ function buildRows(messages: Message[]): Row[] {
 
 export default function App() {
   const apiUrl =
-    import.meta.env.VITE_LANGGRAPH_API_URL ?? "http://127.0.0.1:2024";
+    import.meta.env.VITE_LANGGRAPH_API_URL ?? defaultLangGraphApiUrl();
 
   const stream = useStream<StreamState>({
     apiUrl,

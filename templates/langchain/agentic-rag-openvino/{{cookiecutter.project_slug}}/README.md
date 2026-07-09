@@ -144,6 +144,21 @@ agentseek dev
 lifecycle spec. In another terminal, use `agentseek doctor --live` to check the
 declared HTTP endpoints.
 
+By default the backend listens on `http://127.0.0.1:{{ cookiecutter.langgraph_port }}` and the
+frontend on `http://127.0.0.1:{{ cookiecutter.frontend_port }}`.
+
+For a trusted remote development host such as an ECS instance, bind both
+servers to all interfaces from the shell that starts AgentSeek:
+
+```bash
+LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
+```
+
+Open the frontend with the server's reachable host name or IP. The browser
+defaults the LangGraph API URL to the same host on port `{{ cookiecutter.langgraph_port }}`; set
+`VITE_LANGGRAPH_API_URL` before starting the frontend if the backend uses a
+different public URL.
+
 ## Smoke test
 
 Open `http://127.0.0.1:{{ cookiecutter.frontend_port }}` and ask:

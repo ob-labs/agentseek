@@ -8,7 +8,6 @@ sources:
   - templates/index.json
   - docs/reference/templates.zh.md
   - templates/bub/default/README.md
-  - templates/bub/contextseek/README.md
   - templates/deepagents/default/README.md
   - templates/deepagents/research/README.md
   - templates/deepagents/content-builder/README.md
@@ -40,7 +39,6 @@ DeepAgents、LangChain 或 LangGraph 的形态。
 | 目标 | 选择 | 原因 |
 | --- | --- | --- |
 | 构建最小 Bub AG-UI 应用 | `bub/default` | 它启动 Bub gateway 和 Vite frontend，额外运行时表面积最小。 |
-| 给 Bub 应用加入语义记忆 | `bub/contextseek` | 它在 `bub/default` 上加入 ContextSeek memory 和 ctx HTTP API。 |
 | 将最小 DeepAgents runnable 接入 AgentSeek | `deepagents/default` | 它通过 `agentseek-langchain` 绑定 `create_deep_agent(...)`。 |
 | 运行 DeepAgents research 工作流 | `deepagents/research` | 它包含搜索、工具流式事件、sub-agent 进度和 React frontend。 |
 | 运行 DeepAgents 内容工作流 | `deepagents/content-builder` | 它包含品牌记忆、skills、subagents、图像生成和 streamed UI。 |
@@ -53,8 +51,7 @@ DeepAgents、LangChain 或 LangGraph 的形态。
 ## 选择 AgentSeek 包装形态或框架原生形态
 
 如果你希望生成应用走 AgentSeek/Bub gateway 路径，选择
-`bub/default`、`bub/contextseek`、`deepagents/default` 或
-`langchain/default`。
+`bub/default`、`deepagents/default` 或 `langchain/default`。
 
 如果你希望保留 `langgraph dev` 等框架原生 backend，同时仍由 AgentSeek
 生命周期命令管理本地开发，选择 `deepagents/research`、

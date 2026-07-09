@@ -15,7 +15,6 @@ sources:
 
 | 模板 | 描述 |
 | --- | --- |
-| `bub/contextseek` | 带 ContextSeek 语义记忆和 AgentSeek 生命周期规范的 Bub agent。 |
 | `bub/default` | 带 AgentSeek 生命周期规范的轻量 Bub agent。 |
 | `deepagents/content-builder` | 带写作流程、图像生成、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents 内容构建器。 |
 | `deepagents/default` | 带 AgentSeek 生命周期规范的最小 DeepAgents 应用。 |
