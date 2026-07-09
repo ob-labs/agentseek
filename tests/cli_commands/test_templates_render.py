@@ -145,6 +145,7 @@ def test_template_renders_without_unrendered_jinja(
         assert "from langgraph.graph import MessagesState, StateGraph" in agent_text
         assert "create_agent" not in agent_text
         assert "ChatHuggingFace" not in agent_text
+        assert "Answer in the same language as the user's question." in agent_text
         assert "bind_tools" not in readme_text
         assert "deterministic retrieve-then-generate graph" in readme_text
         assert "agentseek task sync" in readme_text
