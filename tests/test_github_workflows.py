@@ -33,7 +33,7 @@ def test_hybrid_template_smoke_builds_rendered_frontend() -> None:
     workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "main.yml"
     text = workflow.read_text(encoding="utf-8")
 
-    assert "cd \"${AGENTSEEK_HYBRID_SMOKE_PROJECT}/frontend\"" in text
+    assert 'cd "${AGENTSEEK_HYBRID_SMOKE_PROJECT}/frontend"' in text
     assert "npm install" in text
     assert "npm run build" in text
 

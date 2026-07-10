@@ -210,6 +210,21 @@ def _assert_frontend_package_json(generated: Path) -> None:
         pytest.fail(f"frontend/package.json is not valid JSON: {exc}")
 
 
+def _assert_dependency_sync_task(
+    type_name: str,
+    template_name: str,
+    generated: Path,
+    lifecycle_data: dict[str, Any],
+) -> None:
+    if (type_name, template_name) not in dependency_sync_templates:
+        return
+
+    assert "sync" in lifecycle_data["tasks"]
+    assert lifecycle_data["tasks"]["sync"]["command"] == ["uv", "sync"]
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    assert "agentseek task sync" in readme_text
+
+
 def test_at_least_one_template_discovered() -> None:
     """Sanity check: the harness must see the bundled templates."""
     assert TEMPLATES, (
@@ -269,10 +284,7 @@ def test_template_renders_without_unrendered_jinja(
     assert "backend" not in lifecycle_data.get("tasks", {})
     readme_text = (generated / "README.md").read_text(encoding="utf-8")
     assert "agentseek task backend" not in readme_text
-    if (type_name, template_name) in dependency_sync_templates:
-        assert "sync" in lifecycle_data["tasks"]
-        assert lifecycle_data["tasks"]["sync"]["command"] == ["uv", "sync"]
-        assert "agentseek task sync" in readme_text
+    _assert_dependency_sync_task(type_name, template_name, generated, lifecycle_data)
     if (type_name, template_name) in seekdb_skill_templates:
         _assert_seekdb_skill_task(generated, lifecycle_data)
 

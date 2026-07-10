@@ -77,7 +77,7 @@ The ingest command stages captions through a LangChain `Embeddings` adapter, emb
 The generated test suite includes a deterministic integration proof that creates the real `langchain-oceanbase` `OceanbaseVectorStore` through `HybridImageStore`, writes two captioned image fixtures to a temporary embedded seekdb path, verifies their managed media copies, and retrieves the expected image with a text query. It injects a small local deterministic embedding engine, so this test makes no hosted or network calls:
 
 ```bash
-uv sync --extra dev
+agentseek task sync
 uv run python -m pytest
 cd frontend
 npm install
