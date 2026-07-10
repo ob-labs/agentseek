@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import io
 import zipfile
 from pathlib import Path
@@ -260,6 +261,10 @@ def test_upload_archive_route_invokes_langchain_runnable_for_phoenix_trace(
     assert configured == [settings]
     assert fake_runnable.seen_payload is not None
     assert Path(str(fake_runnable.seen_payload["directory"])).parent == settings.media_data_dir / "extracted"
+
+
+def test_upload_archive_runs_in_fastapi_threadpool() -> None:
+    assert not inspect.iscoroutinefunction(routes.upload_archive)
 
 
 def test_media_route_rejects_paths_outside_allowed_roots(

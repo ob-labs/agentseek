@@ -98,7 +98,7 @@ def download_sample_pack() -> FileResponse:
 
 
 @app.post("/custom/upload-archive")
-async def upload_archive(file: UploadFile = File(...)) -> dict[str, object]:
+def upload_archive(file: UploadFile = File(...)) -> dict[str, object]:
     settings = get_settings()
     upload_dir = settings.media_data_dir / "uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)

@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from langchain_core.documents import Document
 
 from {{ cookiecutter.project_slug }}.hybrid import normalize_search_mode, weighted_fuse, weights_for_mode
 from {{ cookiecutter.project_slug }}.models import SearchHit
 from {{ cookiecutter.project_slug }}.sample_pack import sample_pack_dir, sample_pack_manifest
 from {{ cookiecutter.project_slug }}.settings import Settings
-from {{ cookiecutter.project_slug }}.store import HybridImageEmbeddings, HybridImageStore, _format_trace, _sparse_vector
+from {{ cookiecutter.project_slug }}.store import (
+    HybridImageEmbeddings,
+    HybridImageStore,
+    _format_trace,
+    _image_id,
+    _sparse_vector,
+)
 
 
 def hit(image_id: str, rank: int, matched_terms: list[str] | None = None) -> SearchHit:
@@ -455,7 +463,8 @@ def test_ingest_directory_embeds_each_real_sample_image_with_manifest_metadata(t
     records = store.ingest_directory(sample_pack_dir() / "images")
 
     manifest_by_file = {item["file_name"]: item for item in manifest["images"]}
-    assert set(engine.image_paths) == set(manifest_by_file)
+    assert set(engine.image_paths) == {record.file_path.name for record in records}
+    assert all(record.file_path.parent == settings.media_data_dir / "images" for record in records)
     assert vector_store.add_args is not None
     assert [document.page_content for document in vector_store.add_args["documents"]] == [
         manifest_by_file[record.file_name]["caption"]
@@ -476,3 +485,70 @@ def test_ingest_directory_embeds_each_real_sample_image_with_manifest_metadata(t
     assert all(extra["sparse_embedding"] for extra in vector_store.add_args["extras"])
     assert all("fulltext_content" in extra for extra in vector_store.add_args["extras"])
     assert set(store._load_index_ids()) == set(vector_store.add_args["ids"])
+
+
+def test_ingest_directory_copies_external_images_to_managed_media_storage(tmp_path) -> None:
+    settings = Settings(
+        seekdb_path=tmp_path / "seekdb",
+        seekdb_db_name="test",
+        image_table_name="images",
+        embedding_type="siliconflow",
+        embedding_api_key="test",
+        embedding_base_url="https://example.test/v1",
+        embedding_model="test",
+        embedding_dimension=4,
+        vlm_api_key="",
+        vlm_base_url="https://example.test",
+        vlm_model="qwen-vl",
+        hybrid_default_mode="balanced",
+        hybrid_recall_multiplier=2,
+        hybrid_max_top_k=5,
+        media_data_dir=tmp_path / "media",
+        media_max_upload_bytes=1024,
+    )
+    source_dir = tmp_path / "custom-source"
+    source_dir.mkdir()
+    source_image = source_dir / "Display.PNG"
+    source_image.write_bytes(b"external image content")
+    (source_dir / "manifest.yml").write_text(
+        "images:\n  - file_name: Display.PNG\n    caption: externally supplied image\n",
+        encoding="utf-8",
+    )
+
+    class FakeEmbeddingEngine:
+        def __init__(self) -> None:
+            self.image_paths: list[Path] = []
+
+        def embed_image(self, image_path: Path) -> list[float]:
+            self.image_paths.append(image_path)
+            return [0.1, 0.2, 0.3, 0.4]
+
+        def embed_text(self, text: str) -> list[float]:
+            return [0.4, 0.3, 0.2, 0.1]
+
+    class RecordingVectorStore:
+        def __init__(self) -> None:
+            self.add_args = None
+
+        def add_documents(self, documents, **kwargs):
+            self.add_args = {"documents": documents, **kwargs}
+            store.embedding_adapter.embed_documents([document.page_content for document in documents])
+            return kwargs["ids"]
+
+    engine = FakeEmbeddingEngine()
+    store = HybridImageStore.__new__(HybridImageStore)
+    store.settings = settings
+    store.embedding_engine = engine
+    store.embedding_adapter = HybridImageEmbeddings(engine)
+    vector_store = RecordingVectorStore()
+    store.vector_store = vector_store
+
+    records = store.ingest_directory(source_dir)
+
+    expected_path = settings.media_data_dir / "images" / f"{_image_id(source_image)}.png"
+    assert expected_path.read_bytes() == b"external image content"
+    assert records[0].file_name == "Display.PNG"
+    assert records[0].file_path == expected_path
+    assert records[0].metadata["file_path"] == str(expected_path)
+    assert engine.image_paths == [expected_path]
+    assert vector_store.add_args["documents"][0].metadata["file_path"] == str(expected_path)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shutil
 from collections import defaultdict, deque
 from dataclasses import replace
 from pathlib import Path
@@ -180,6 +181,9 @@ class HybridImageStore:
             include_fulltext=True,
         )
 
+    def _managed_image_path(self, image_path: Path, image_id: str) -> Path:
+        return self.settings.media_data_dir / "images" / f"{image_id}{image_path.suffix.lower()}"
+
     def ingest_directory(self, directory: Path) -> list[ImageRecord]:
         manifest = _caption_manifest(directory)
         records: list[ImageRecord] = []
@@ -187,17 +191,23 @@ class HybridImageStore:
         documents: list[Document] = []
         extras: list[dict[str, Any]] = []
         for image_path in scan_images(directory):
-            manifest_item = manifest.get(image_path.name, {})
-            caption = str(manifest_item.get("caption") or caption_image(image_path, self.settings))
+            source_path = image_path.resolve()
+            image_id = _image_id(source_path)
+            managed_path = self._managed_image_path(source_path, image_id)
+            managed_path.parent.mkdir(parents=True, exist_ok=True)
+            if source_path != managed_path.resolve():
+                shutil.copy2(source_path, managed_path)
+
+            manifest_item = manifest.get(source_path.name, {})
+            caption = str(manifest_item.get("caption") or caption_image(managed_path, self.settings))
             manifest_tags = manifest_item.get("tags", [])
             tags = ", ".join(manifest_tags)
             positive_tags = " ".join(_positive_tags(manifest_tags))
-            image_id = _image_id(image_path)
-            manifest_id = str(manifest_item.get("id") or image_path.stem)
+            manifest_id = str(manifest_item.get("id") or source_path.stem)
             metadata = {
                 "image_id": image_id,
-                "file_name": image_path.name,
-                "file_path": str(image_path),
+                "file_name": source_path.name,
+                "file_path": str(managed_path),
                 "source_dir": str(directory),
                 "tags": tags,
                 "manifest_id": manifest_id,
@@ -205,15 +215,15 @@ class HybridImageStore:
             }
             record = ImageRecord(
                 image_id=image_id,
-                file_name=image_path.name,
-                file_path=image_path,
+                file_name=source_path.name,
+                file_path=managed_path,
                 caption=caption,
                 metadata=metadata,
             )
             ids.append(image_id)
-            self.embedding_adapter.stage_image_document(caption, image_path)
+            self.embedding_adapter.stage_image_document(caption, managed_path)
             documents.append(Document(id=image_id, page_content=caption, metadata=metadata))
-            search_text = " ".join([caption, positive_tags, image_path.name, manifest_id])
+            search_text = " ".join([caption, positive_tags, source_path.name, manifest_id])
             extras.append(
                 {
                     "sparse_embedding": _sparse_vector(search_text),
