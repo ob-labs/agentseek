@@ -116,14 +116,19 @@ export default function HybridCompare() {
                 <span className={`weight-rail__bar weight-rail__bar--${mode}`} />
               </div>
               <small>{trace?.weights ? formatWeights(trace.weights) : "Run Compare to populate"}</small>
-              {(trace?.hits ?? []).map((hit: any) => (
-                <div className="result" key={hit.image_id}>
-                  <img src={resolveCustomUrl(hit.image_url)} alt="" />
-                  <div>
-                    <strong>{hit.file_name}</strong>
-                    <p>{hit.caption}</p>
+              {(trace?.hits ?? []).map((hit: any, index: number) => (
+                <div className="result result--compare" key={hit.image_id}>
+                  <div className="result__media">
+                    <img src={resolveCustomUrl(hit.image_url)} alt={hit.caption ?? hit.file_name} />
+                    <span className="result__rank">#{index + 1}</span>
+                  </div>
+                  <div className="result__body">
+                    <div className="result__headline">
+                      <strong className="result__file">{hit.file_name}</strong>
+                      <small className="result__score">fused {hit.fused_score?.toFixed?.(3) ?? "n/a"}</small>
+                    </div>
+                    <p className="result__caption">{hit.caption}</p>
                     <EvidenceTerms terms={hit.matched_terms} />
-                    <small>fused {hit.fused_score?.toFixed?.(3) ?? "n/a"}</small>
                   </div>
                 </div>
               ))}
