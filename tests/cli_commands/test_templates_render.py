@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import shutil
 import tomllib
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
@@ -267,6 +268,23 @@ def test_template_lifecycle_commands_smoke(
     info = runner.invoke(app, ["info"])
     assert info.exit_code == 0, info.stdout + info.stderr
     assert f"Template: {type_name}/{template_name}" in info.stdout
+
+    if (type_name, template_name) in dependency_sync_templates:
+        task_calls: list[tuple[list[str], Path]] = []
+
+        def record_task(command: Sequence[str], *, cwd: Path) -> int:
+            task_calls.append((list(command), cwd))
+            return 0
+
+        monkeypatch.setattr("agentseek.cli.lifecycle.core._run_command", record_task)
+
+        sync = runner.invoke(app, ["task", "sync"])
+        assert sync.exit_code == 0, sync.stdout + sync.stderr
+        assert task_calls == [(["uv", "sync"], generated)]
+
+        backend = runner.invoke(app, ["task", "backend"])
+        assert backend.exit_code == 1
+        assert "Unknown lifecycle task: backend" in backend.stderr
 
     dev = runner.invoke(app, ["dev", "--dry-run", "--skip-check"])
     assert dev.exit_code == 0, dev.stdout + dev.stderr
