@@ -28,6 +28,16 @@ def test_hybrid_template_smoke_runs_rendered_project_tests() -> None:
     assert "uv run python -m pytest" in text
 
 
+def test_hybrid_template_smoke_builds_rendered_frontend() -> None:
+    """The hybrid smoke should install and production-build the rendered frontend."""
+    workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "main.yml"
+    text = workflow.read_text(encoding="utf-8")
+
+    assert "cd \"${AGENTSEEK_HYBRID_SMOKE_PROJECT}/frontend\"" in text
+    assert "npm install" in text
+    assert "npm run build" in text
+
+
 def test_openvino_template_smoke_is_path_gated_and_invokes_graph() -> None:
     """The heavy OpenVINO smoke should run only for relevant PRs and prove runtime wiring."""
     workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "openvino-template-smoke.yml"

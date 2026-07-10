@@ -96,6 +96,13 @@ jobs:
           uv sync --extra dev
           uv run python -m pytest
 
+      - name: Build rendered hybrid frontend
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_HYBRID_SMOKE_PROJECT}/frontend"
+          npm install
+          npm run build
+
   agentseek-phoenix-compose:
     runs-on: ubuntu-latest
     timeout-minutes: 20

@@ -72,6 +72,22 @@ uv run hybrid-demo
 
 The ingest command stages captions through a LangChain `Embeddings` adapter, embeds PNG files through the SiliconFlow multimodal image embedding path, and writes records through `langchain-oceanbase` `OceanbaseVectorStore` in embedded OceanBase seekdb mode. The demo embeds each query through the SiliconFlow text embedding path, then runs the same query through `semantic`, `keyword`, `exact`, and `balanced` modes.
 
+## Verification
+
+The generated test suite includes a deterministic integration proof that creates the real `langchain-oceanbase` `OceanbaseVectorStore` through `HybridImageStore`, writes two captioned image fixtures to a temporary embedded seekdb path, verifies their managed media copies, and retrieves the expected image with a text query. It injects a small local deterministic embedding engine, so this test makes no hosted or network calls:
+
+```bash
+uv sync --extra dev
+uv run python -m pytest
+cd frontend
+npm install
+npm run build
+```
+
+The hybrid template CI smoke runs that full Python suite and the frontend production build. It does not call SiliconFlow models and does not prove a live Phoenix deployment.
+
+Credentialed live proof is separate: configure a real `AGENTSEEK_API_KEY`, run `agentseek task ingest-sample` and `uv run hybrid-demo` for hosted SiliconFlow embeddings, then start and enable Phoenix as described below to inspect exported traces. Those steps validate external credentials, model behavior, and the optional observability stack beyond the deterministic CI contract.
+
 ## Phoenix Observability
 
 The template can export LangChain/LangGraph spans to a local Phoenix instance using the same AgentSeek Phoenix image as the default LangChain template. Phoenix trace storage is backed by OceanBase seekdb through `docker-compose.yml`; this tracing database is separate from the embedded `SEEKDB_PATH` used by hybrid retrieval.
