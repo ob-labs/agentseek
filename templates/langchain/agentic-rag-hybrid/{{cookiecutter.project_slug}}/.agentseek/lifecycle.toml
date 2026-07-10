@@ -53,11 +53,6 @@ required = true
 default = "{{ cookiecutter.image_table_name }}"
 description = "SeekDB collection/table for indexed image records."
 
-[env.SILICONFLOW_API_KEY]
-required = true
-default = ""
-description = "SiliconFlow API key used by default for chat, text/image embeddings, and VLM captions."
-
 [env.HYBRID_AUXILIARY_CANDIDATE_LIMIT]
 required = false
 default = "250"

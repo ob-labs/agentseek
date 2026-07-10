@@ -12,6 +12,7 @@
       "allow_origins": [
         "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
       ],
+      "allow_origin_regex": "^https?://[^/:]+:{{ cookiecutter.frontend_port }}$",
       "allow_methods": [
         "GET",
         "POST",

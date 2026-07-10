@@ -20,6 +20,15 @@ def test_openai_compatible_chat_uses_agentseek_key_first(monkeypatch: pytest.Mon
     assert agent._openai_compatible_api_key() == "agentseek-key"
 
 
+def test_native_adapters_prefer_native_provider_keys(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENTSEEK_API_KEY", "agentseek-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "anthropic-key")
+    monkeypatch.setenv("GOOGLE_API_KEY", "google-key")
+
+    assert agent._native_provider_api_key("ANTHROPIC_API_KEY") == "anthropic-key"
+    assert agent._native_provider_api_key("GOOGLE_API_KEY") == "google-key"
+
+
 def test_serialize_trace_includes_developer_diagnostics() -> None:
     trace = SearchTrace(
         query="golden retriever",

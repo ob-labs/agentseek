@@ -48,6 +48,10 @@ def _openai_compatible_api_key() -> str | None:
     return _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("OPENAI_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY")
 
 
+def _native_provider_api_key(name: str) -> str | None:
+    return _nonempty_env(name) or _nonempty_env("AGENTSEEK_API_KEY")
+
+
 def _normalize_provider(provider: str) -> str:
     normalized = provider.strip().replace("-", "_").lower()
     if normalized in SUPPORTED_MODEL_PROVIDERS:
@@ -123,12 +127,12 @@ if MODEL_PROVIDER == "openai":
     MODEL_INIT_KWARGS["base_url"] = _openai_compatible_base_url()
 elif MODEL_PROVIDER == "anthropic":
     if _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("ANTHROPIC_API_KEY"):
-        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("ANTHROPIC_API_KEY")
+        MODEL_INIT_KWARGS["api_key"] = _native_provider_api_key("ANTHROPIC_API_KEY")
     if _nonempty_env("ANTHROPIC_API_URL"):
         MODEL_INIT_KWARGS["base_url"] = _nonempty_env("ANTHROPIC_API_URL")
 elif MODEL_PROVIDER == "google_genai":
     if _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("GOOGLE_API_KEY"):
-        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("GOOGLE_API_KEY")
+        MODEL_INIT_KWARGS["api_key"] = _native_provider_api_key("GOOGLE_API_KEY")
     if _nonempty_env("GOOGLE_API_BASE"):
         MODEL_INIT_KWARGS["base_url"] = _nonempty_env("GOOGLE_API_BASE")
 

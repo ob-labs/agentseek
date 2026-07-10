@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import tomllib
@@ -11,6 +12,9 @@ from pathlib import Path
 
 import yaml
 from cookiecutter.main import cookiecutter
+from typer.testing import CliRunner
+
+from tests.cli_commands.helpers import build_command_app
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE_DIR = REPO_ROOT / "templates" / "langchain" / "agentic-rag-hybrid"
@@ -50,6 +54,15 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
     assert langgraph["graphs"]["hybrid-rag"] == "my_hybrid_rag_agent.agent:graph"
     assert langgraph["http"]["app"] == "my_hybrid_rag_agent.routes:app"
     assert langgraph["http"]["middleware_order"] == "middleware_first"
+    cors = langgraph["http"]["cors"]
+    assert cors["allow_origins"] == ["http://127.0.0.1:5175"]
+    origin_pattern = cors["allow_origin_regex"]
+    assert re.fullmatch(origin_pattern, "http://192.0.2.10:5175")
+    assert re.fullmatch(origin_pattern, "https://frontend.example.test:5175")
+    assert not re.fullmatch(origin_pattern, "https://frontend.example.test:5176")
+
+    frontend_package = json.loads((generated / "frontend" / "package.json").read_text(encoding="utf-8"))
+    assert "--host" not in frontend_package["scripts"]["dev"]
 
     lifecycle = tomllib.loads((generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
     assert lifecycle["template"] == "langchain/agentic-rag-hybrid"
@@ -58,7 +71,8 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
     assert lifecycle["services"]["phoenix_seekdb"]["url"] == "mysql://127.0.0.1:2884/phoenix"
     assert lifecycle["checks"]["custom_routes"]["target"] == "http://127.0.0.1:2024/custom/health"
     assert lifecycle["env"]["AGENTSEEK_API_KEY"]["required"] is True
-    assert "SILICONFLOW_API_KEY" in lifecycle["env"]["AGENTSEEK_API_KEY"]["aliases"]
+    assert lifecycle["env"]["AGENTSEEK_API_KEY"]["aliases"] == ["SILICONFLOW_API_KEY", "OPENAI_API_KEY"]
+    assert "SILICONFLOW_API_KEY" not in lifecycle["env"]
     assert lifecycle["env"]["AGENTSEEK_API_BASE"]["default"] == "https://api.siliconflow.cn/v1"
     assert lifecycle["tasks"]["phoenix"]["command"] == ["docker", "compose", "up", "-d", "phoenix"]
     assert lifecycle["tasks"]["phoenix-stop"]["command"] == ["docker", "compose", "down"]
@@ -69,6 +83,24 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
         "oceanbase/seekdb-ecology-plugins",
         "--all",
     ]
+
+
+def test_hybrid_template_lifecycle_accepts_canonical_api_key(tmp_path: Path, monkeypatch) -> None:
+    out_dir = tmp_path / "output"
+    out_dir.mkdir()
+    cookiecutter(str(TEMPLATE_DIR), output_dir=str(out_dir), no_input=True)
+    generated = out_dir / "my_hybrid_rag_agent"
+
+    (generated / ".env").write_text("AGENTSEEK_API_KEY=test-key\n", encoding="utf-8")
+    (generated / "frontend" / "node_modules").mkdir()
+    for name in ("AGENTSEEK_API_KEY", "SILICONFLOW_API_KEY", "OPENAI_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.chdir(generated)
+
+    result = CliRunner().invoke(build_command_app(), ["doctor", "--strict"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "ok   AGENTSEEK_API_KEY:" in result.stdout
 
 
 def test_hybrid_template_teaches_hybrid_search_modes() -> None:
@@ -125,6 +157,7 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     assert template_config["default_model"] == "openai:zai-org/GLM-5.2"
     assert template_config["embedding_model"] == "Qwen/Qwen3-VL-Embedding-8B"
     assert template_config["vlm_model"] == "zai-org/GLM-4.5V"
+    assert "Answer in the same language as the user's question." in template_config["system_prompt"]
 
 
 def test_hybrid_template_sample_cases_explain_mode_specific_winners() -> None:

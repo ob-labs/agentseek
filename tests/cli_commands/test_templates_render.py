@@ -70,6 +70,7 @@ rag_host_binding_templates = {
 language_instruction_templates = {
     ("deepagents", "research"),
     ("langchain", "agentic-rag"),
+    ("langchain", "agentic-rag-hybrid"),
     ("langchain", "agentic-rag-openvino"),
     ("langchain", "cli-remote"),
     ("langchain", "default"),
