@@ -1,0 +1,82 @@
+version = 1
+template = "deepagents/ragflow-knowledge-qa"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "node", "npm"]
+
+[paths]
+required = ["pyproject.toml", "langgraph.json", "frontend/package.json", "frontend/node_modules"]
+
+[env.AGENTSEEK_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "OpenAI-compatible model id used by the knowledge-base agent."
+
+[env.AGENTSEEK_API_KEY]
+required = true
+description = "Credential for the OpenAI-compatible agent model endpoint."
+aliases = ["OPENAI_API_KEY"]
+
+[env.AGENTSEEK_API_BASE]
+required = false
+default = ""
+description = "Optional OpenAI-compatible agent model endpoint."
+aliases = ["OPENAI_API_BASE"]
+
+[env.RAGFLOW_BASE_URL]
+required = true
+description = "Base URL of the user-provided RAGFlow service."
+
+[env.RAGFLOW_API_KEY]
+required = true
+description = "API key used for dataset-scoped RAGFlow operations."
+
+[env.RAGFLOW_UPLOAD_ROOT]
+required = false
+default = "./uploads"
+description = "Server-local root containing documents approved for upload."
+
+[env.LANGGRAPH_HOST]
+required = false
+default = "127.0.0.1"
+description = "LangGraph dev bind host. Use 0.0.0.0 only on trusted networks."
+
+[env.FRONTEND_HOST]
+required = false
+default = "127.0.0.1"
+description = "Vite frontend bind host. Use 0.0.0.0 only on trusted networks."
+
+[services.langgraph]
+url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+
+[services.frontend]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[processes.langgraph]
+command = ["sh", "-lc", "uv run langgraph dev --port {{ cookiecutter.langgraph_port }} --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}"]
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+cwd = "frontend"
+
+[checks.langgraph]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.sync]
+description = "Install Python dependencies."
+command = ["uv", "sync"]
+
+[tasks.frontend]
+description = "Install frontend dependencies."
+command = ["npm", "install", "--prefix", "frontend"]
