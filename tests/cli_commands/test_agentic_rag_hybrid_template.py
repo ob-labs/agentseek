@@ -59,7 +59,9 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
     origin_pattern = cors["allow_origin_regex"]
     assert re.fullmatch(origin_pattern, "http://192.0.2.10:5175")
     assert re.fullmatch(origin_pattern, "https://frontend.example.test:5175")
+    assert re.fullmatch(origin_pattern, "http://[2001:db8::1]:5175")
     assert not re.fullmatch(origin_pattern, "https://frontend.example.test:5176")
+    assert not re.fullmatch(origin_pattern, "http://[2001:db8::1]:5176")
 
     frontend_package = json.loads((generated / "frontend" / "package.json").read_text(encoding="utf-8"))
     assert "--host" not in frontend_package["scripts"]["dev"]
