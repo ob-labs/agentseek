@@ -36,7 +36,7 @@ cp .env.example .env
 $EDITOR .env
 
 # 3. Install project dependencies
-uvx agentseek task backend
+uvx agentseek task sync
 uvx agentseek task frontend
 
 # 4. Inspect, check, and run the lifecycle

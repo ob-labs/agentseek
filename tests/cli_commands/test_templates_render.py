@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import shutil
 import tomllib
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -75,6 +76,12 @@ language_instruction_templates = {
     ("langchain", "markdown-messages"),
     ("langchain", "sandbox"),
 }
+dependency_sync_templates = {
+    ("deepagents", "content-builder"),
+    ("deepagents", "research"),
+    ("langchain", "agentic-rag-hybrid"),
+    ("langchain", "sandbox"),
+}
 
 
 def _assert_rag_template_host_binding(generated: Path, *, check_frontend_env: bool = False) -> None:
@@ -125,7 +132,6 @@ def _assert_langchain_default_template(generated: Path) -> None:
 def _assert_deepagents_content_builder_template(generated: Path) -> None:
     readme_text = (generated / "README.md").read_text(encoding="utf-8")
     agents_text = (generated / "AGENTS.md").read_text(encoding="utf-8")
-    assert "agentseek task backend" in readme_text
     assert "agentseek task frontend" in readme_text
     assert "same language as the user's question" in agents_text
 
@@ -259,6 +265,13 @@ def test_template_renders_without_unrendered_jinja(
     assert lifecycle_data["template"] == f"{type_name}/{template_name}"
     assert lifecycle_data["processes"]
     assert not (generated / "duties.py").exists()
+    assert "backend" not in lifecycle_data.get("tasks", {})
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    assert "agentseek task backend" not in readme_text
+    if (type_name, template_name) in dependency_sync_templates:
+        assert "sync" in lifecycle_data["tasks"]
+        assert lifecycle_data["tasks"]["sync"]["command"] == ["uv", "sync"]
+        assert "agentseek task sync" in readme_text
     if (type_name, template_name) in seekdb_skill_templates:
         _assert_seekdb_skill_task(generated, lifecycle_data)
 
@@ -321,6 +334,23 @@ def test_template_lifecycle_commands_smoke(
     info = runner.invoke(app, ["info"])
     assert info.exit_code == 0, info.stdout + info.stderr
     assert f"Template: {type_name}/{template_name}" in info.stdout
+
+    if (type_name, template_name) in dependency_sync_templates:
+        task_calls: list[tuple[list[str], Path]] = []
+
+        def record_task(command: Sequence[str], *, cwd: Path) -> int:
+            task_calls.append((list(command), cwd))
+            return 0
+
+        monkeypatch.setattr("agentseek.cli.lifecycle.core._run_command", record_task)
+
+        sync = runner.invoke(app, ["task", "sync"])
+        assert sync.exit_code == 0, sync.stdout + sync.stderr
+        assert task_calls == [(["uv", "sync"], generated)]
+
+        backend = runner.invoke(app, ["task", "backend"])
+        assert backend.exit_code == 1
+        assert "Unknown lifecycle task: backend" in backend.stderr
 
     dev = runner.invoke(app, ["dev", "--dry-run", "--skip-check"])
     assert dev.exit_code == 0, dev.stdout + dev.stderr

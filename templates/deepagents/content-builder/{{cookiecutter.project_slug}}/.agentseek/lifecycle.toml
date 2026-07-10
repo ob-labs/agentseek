@@ -62,6 +62,6 @@ attempts = 3
 description = "Install frontend dependencies."
 command = ["npm", "install", "--prefix", "frontend"]
 
-[tasks.backend]
+[tasks.sync]
 description = "Install Python dependencies with uv."
 command = ["uv", "sync"]

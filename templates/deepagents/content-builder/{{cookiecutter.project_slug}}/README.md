@@ -18,7 +18,7 @@ cp frontend/.env.example frontend/.env
 $EDITOR .env
 
 agentseek task --list
-agentseek task backend
+agentseek task sync
 agentseek task frontend
 agentseek info
 agentseek doctor
