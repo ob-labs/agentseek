@@ -16,6 +16,7 @@ import json
 import shutil
 import tomllib
 from pathlib import Path
+from typing import Any
 
 import pytest
 from cookiecutter.main import cookiecutter
@@ -64,6 +65,15 @@ rag_host_binding_templates = {
     ("langchain", "agentic-rag"),
     ("langchain", "agentic-rag-openvino"),
 }
+language_instruction_templates = {
+    ("deepagents", "research"),
+    ("langchain", "agentic-rag"),
+    ("langchain", "agentic-rag-openvino"),
+    ("langchain", "cli-remote"),
+    ("langchain", "default"),
+    ("langchain", "markdown-messages"),
+    ("langchain", "sandbox"),
+}
 
 
 def _assert_rag_template_host_binding(generated: Path, *, check_frontend_env: bool = False) -> None:
@@ -82,6 +92,101 @@ def _assert_rag_template_host_binding(generated: Path, *, check_frontend_env: bo
     if check_frontend_env:
         frontend_env_text = (generated / "frontend" / ".env.example").read_text(encoding="utf-8")
         assert "VITE_LANGGRAPH_API_URL=http://127.0.0.1" not in frontend_env_text
+
+
+def _assert_bub_default_dependencies(dependencies: list[Any], pyproject_data: dict[str, Any]) -> None:
+    assert "bub==0.3.9" in dependencies
+    assert "agentseek-ag-ui" in dependencies
+    assert "duty>=1.9" not in pyproject_data.get("dependency-groups", {}).get("dev", [])
+
+
+def _assert_seekdb_skill_task(generated: Path, lifecycle_data: dict[str, Any]) -> None:
+    task = lifecycle_data["tasks"]["seekdb-skills"]
+    assert task["description"] == "Install recommended OceanBase seekdb agent skills."
+    assert task["command"] == seekdb_skill_command
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    assert "agentseek task seekdb-skills" in readme_text
+    assert "## Agent Skills" in readme_text
+
+
+def _assert_langchain_default_template(generated: Path) -> None:
+    env_text = (generated / ".env.example").read_text(encoding="utf-8")
+    compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+    dev_text = (generated / "src" / generated.name / "dev.py").read_text(encoding="utf-8")
+    assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
+    assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
+    assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
+    assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
+    assert "agentseek task frontend" in dev_text
+    assert "npm install --prefix frontend" not in dev_text
+
+
+def _assert_deepagents_content_builder_template(generated: Path) -> None:
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    agents_text = (generated / "AGENTS.md").read_text(encoding="utf-8")
+    assert "agentseek task backend" in readme_text
+    assert "agentseek task frontend" in readme_text
+    assert "same language as the user's question" in agents_text
+
+
+def _assert_deepagents_default_template(generated: Path) -> None:
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    binding_text = (generated / "src" / generated.name / "demo_binding.py").read_text(encoding="utf-8")
+    assert "does not include a frontend" in readme_text
+    assert "Answer in the same language as the user's question." in readme_text
+    assert "Answer in the same language as the user's question." in binding_text
+
+
+def _assert_language_instruction_template(generated: Path) -> None:
+    agent_files = sorted((generated / "src" / generated.name).glob("*.py"))
+    rendered_python = "\n".join(path.read_text(encoding="utf-8") for path in agent_files)
+    assert "Answer in the same language as the user's question." in rendered_python
+
+
+def _assert_agentic_rag_openvino_template(generated: Path) -> None:
+    agent_text = (generated / "src" / generated.name / "agent.py").read_text(encoding="utf-8")
+    converter_text = (generated / "src" / generated.name / "convert_models.py").read_text(encoding="utf-8")
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    assert '"optimum-cli", "export", "openvino"' in converter_text
+    assert "python -m optimum.exporters.openvino" not in converter_text
+    assert "from langgraph.graph import MessagesState, StateGraph" in agent_text
+    assert "create_agent" not in agent_text
+    assert "ChatHuggingFace" not in agent_text
+    assert "Answer in the same language as the user's question." in agent_text
+    assert "bind_tools" not in readme_text
+    assert "deterministic retrieve-then-generate graph" in readme_text
+    assert "agentseek task sync" in readme_text
+    assert "uv sync" not in readme_text
+
+
+def _assert_agentic_rag_hybrid_template(generated: Path, lifecycle_data: dict[str, Any]) -> None:
+    env_text = (generated / ".env.example").read_text(encoding="utf-8")
+    compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+    lifecycle_text = (generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8")
+    pyproject_text = (generated / "pyproject.toml").read_text(encoding="utf-8")
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    assert "AGENTSEEK_OTEL_ENABLED=false" in env_text
+    assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
+    assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
+    assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
+    assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
+    assert "PHOENIX_SQL_DATABASE_URL: mysql://root@seekdb:2881/phoenix" in compose_text
+    assert "agentseek task phoenix" in readme_text
+    assert "custom/observability" in readme_text
+    assert "phoenix" in lifecycle_data["tasks"]
+    assert "phoenix-stop" in lifecycle_data["tasks"]
+    assert "mysql://127.0.0.1:2884/phoenix" in lifecycle_text
+    assert "openinference-instrumentation-langchain" in pyproject_text
+
+
+def _assert_frontend_package_json(generated: Path) -> None:
+    frontend_pkg = generated / "frontend" / "package.json"
+    if not frontend_pkg.is_file():
+        return
+    try:
+        json.loads(frontend_pkg.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        pytest.fail(f"frontend/package.json is not valid JSON: {exc}")
 
 
 def test_at_least_one_template_discovered() -> None:
@@ -127,9 +232,7 @@ def test_template_renders_without_unrendered_jinja(
     dependencies = pyproject_data["project"].get("dependencies", [])
     assert isinstance(dependencies, list)
     if (type_name, template_name) == ("bub", "default"):
-        assert "bub==0.3.9" in dependencies
-        assert "agentseek-ag-ui" in dependencies
-        assert "duty>=1.9" not in pyproject_data.get("dependency-groups", {}).get("dev", [])
+        _assert_bub_default_dependencies(dependencies, pyproject_data)
 
     lifecycle = generated / ".agentseek" / "lifecycle.toml"
     assert lifecycle.is_file(), f"missing .agentseek/lifecycle.toml in {generated}"
@@ -143,24 +246,10 @@ def test_template_renders_without_unrendered_jinja(
     assert lifecycle_data["processes"]
     assert not (generated / "duties.py").exists()
     if (type_name, template_name) in seekdb_skill_templates:
-        task = lifecycle_data["tasks"]["seekdb-skills"]
-        assert task["description"] == "Install recommended OceanBase seekdb agent skills."
-        assert task["command"] == seekdb_skill_command
-        readme = generated / "README.md"
-        readme_text = readme.read_text(encoding="utf-8")
-        assert "agentseek task seekdb-skills" in readme_text
-        assert "## Agent Skills" in readme_text
+        _assert_seekdb_skill_task(generated, lifecycle_data)
 
     if (type_name, template_name) == ("langchain", "default"):
-        env_text = (generated / ".env.example").read_text(encoding="utf-8")
-        compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
-        dev_text = (generated / "src" / generated.name / "dev.py").read_text(encoding="utf-8")
-        assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
-        assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
-        assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
-        assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
-        assert "agentseek task frontend" in dev_text
-        assert "npm install --prefix frontend" not in dev_text
+        _assert_langchain_default_template(generated)
 
     if (type_name, template_name) in rag_host_binding_templates:
         _assert_rag_template_host_binding(
@@ -169,71 +258,21 @@ def test_template_renders_without_unrendered_jinja(
         )
 
     if (type_name, template_name) == ("deepagents", "content-builder"):
-        readme_text = (generated / "README.md").read_text(encoding="utf-8")
-        agents_text = (generated / "AGENTS.md").read_text(encoding="utf-8")
-        assert "agentseek task backend" in readme_text
-        assert "agentseek task frontend" in readme_text
-        assert "same language as the user's question" in agents_text
+        _assert_deepagents_content_builder_template(generated)
 
     if (type_name, template_name) == ("deepagents", "default"):
-        readme_text = (generated / "README.md").read_text(encoding="utf-8")
-        binding_text = (generated / "src" / generated.name / "demo_binding.py").read_text(encoding="utf-8")
-        assert "does not include a frontend" in readme_text
-        assert "Answer in the same language as the user's question." in readme_text
-        assert "Answer in the same language as the user's question." in binding_text
+        _assert_deepagents_default_template(generated)
 
-    if (type_name, template_name) in {
-        ("deepagents", "research"),
-        ("langchain", "agentic-rag"),
-        ("langchain", "agentic-rag-openvino"),
-        ("langchain", "cli-remote"),
-        ("langchain", "default"),
-        ("langchain", "markdown-messages"),
-        ("langchain", "sandbox"),
-    }:
-        agent_files = sorted((generated / "src" / generated.name).glob("*.py"))
-        rendered_python = "\n".join(path.read_text(encoding="utf-8") for path in agent_files)
-        assert "Answer in the same language as the user's question." in rendered_python
+    if (type_name, template_name) in language_instruction_templates:
+        _assert_language_instruction_template(generated)
 
     if (type_name, template_name) == ("langchain", "agentic-rag-openvino"):
-        agent_text = (generated / "src" / generated.name / "agent.py").read_text(encoding="utf-8")
-        converter_text = (generated / "src" / generated.name / "convert_models.py").read_text(encoding="utf-8")
-        readme_text = (generated / "README.md").read_text(encoding="utf-8")
-        assert '"optimum-cli", "export", "openvino"' in converter_text
-        assert "python -m optimum.exporters.openvino" not in converter_text
-        assert "from langgraph.graph import MessagesState, StateGraph" in agent_text
-        assert "create_agent" not in agent_text
-        assert "ChatHuggingFace" not in agent_text
-        assert "Answer in the same language as the user's question." in agent_text
-        assert "bind_tools" not in readme_text
-        assert "deterministic retrieve-then-generate graph" in readme_text
-        assert "agentseek task sync" in readme_text
-        assert "uv sync" not in readme_text
+        _assert_agentic_rag_openvino_template(generated)
 
     if (type_name, template_name) == ("langchain", "agentic-rag-hybrid"):
-        env_text = (generated / ".env.example").read_text(encoding="utf-8")
-        compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
-        lifecycle_text = (generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8")
-        pyproject_text = (generated / "pyproject.toml").read_text(encoding="utf-8")
-        assert "AGENTSEEK_OTEL_ENABLED=false" in env_text
-        assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
-        assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
-        assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
-        assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
-        assert "PHOENIX_SQL_DATABASE_URL: mysql://root@seekdb:2881/phoenix" in compose_text
-        assert "agentseek task phoenix" in (generated / "README.md").read_text(encoding="utf-8")
-        assert "custom/observability" in (generated / "README.md").read_text(encoding="utf-8")
-        assert "phoenix" in lifecycle_data["tasks"]
-        assert "phoenix-stop" in lifecycle_data["tasks"]
-        assert "mysql://127.0.0.1:2884/phoenix" in lifecycle_text
-        assert "openinference-instrumentation-langchain" in pyproject_text
+        _assert_agentic_rag_hybrid_template(generated, lifecycle_data)
 
-    frontend_pkg = generated / "frontend" / "package.json"
-    if frontend_pkg.is_file():
-        try:
-            json.loads(frontend_pkg.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            pytest.fail(f"frontend/package.json is not valid JSON: {exc}")
+    _assert_frontend_package_json(generated)
 
 
 @pytest.mark.parametrize(
