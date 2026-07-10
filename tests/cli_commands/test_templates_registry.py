@@ -9,7 +9,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 TEMPLATES_ROOT = REPO_ROOT / "templates"
 INDEX_PATH = TEMPLATES_ROOT / "index.json"
 EXPECTED_TEMPLATE_KEYS = {
-    "bub/contextseek",
     "bub/default",
     "deepagents/content-builder",
     "deepagents/default",
@@ -21,6 +20,9 @@ EXPECTED_TEMPLATE_KEYS = {
     "langchain/default",
     "langchain/markdown-messages",
     "langchain/sandbox",
+}
+QUARANTINED_TEMPLATE_KEYS = {
+    "bub/contextseek",
 }
 
 
@@ -41,7 +43,7 @@ def _template_dirs() -> set[str]:
 
 def test_all_cookiecutter_templates_are_registered() -> None:
     """Every templates/<type>/<name>/cookiecutter.json entry is in index.json."""
-    missing = sorted(_template_dirs() - _registered_templates())
+    missing = sorted(_template_dirs() - _registered_templates() - QUARANTINED_TEMPLATE_KEYS)
 
     assert not missing, f"template(s) missing from templates/index.json: {missing}"
 
@@ -51,6 +53,12 @@ def test_registry_contains_expected_template_keys() -> None:
     missing = sorted(EXPECTED_TEMPLATE_KEYS - _registered_templates())
 
     assert not missing, f"templates/index.json missing expected key(s): {missing}"
+
+
+def test_contextseek_template_is_not_advertised_until_dev_locking_is_resolved() -> None:
+    """Do not offer bub/contextseek while its embedded store can be double-opened by dev."""
+    assert "bub/contextseek" in QUARANTINED_TEMPLATE_KEYS
+    assert "bub/contextseek" not in _registered_templates()
 
 
 def test_registered_templates_have_readme() -> None:

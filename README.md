@@ -37,14 +37,16 @@ Prepare the generated project.
 ```bash
 cp .env.example .env
 $EDITOR .env
-uv sync
-npm install --prefix frontend
+agentseek task --list
+agentseek task frontend
 ```
 
 Set the model and provider credentials required by the selected template in
 `.env` or the environment used to run AgentSeek. AgentSeek uses `.env` only for
 lifecycle environment checks declared by the template; it does not automatically
 pass `.env` to child processes.
+Run any additional setup tasks listed by your selected template before starting
+the development stack.
 
 ```bash
 agentseek doctor

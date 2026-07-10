@@ -60,6 +60,16 @@ required = true
 default = "{{ cookiecutter.vector_table_name }}"
 description = "seekdb vector table for indexed document chunks."
 
+[env.LANGGRAPH_HOST]
+required = false
+default = "127.0.0.1"
+description = "LangGraph dev bind host. Use 0.0.0.0 only on trusted networks."
+
+[env.FRONTEND_HOST]
+required = false
+default = "127.0.0.1"
+description = "Vite frontend bind host. Use 0.0.0.0 only on trusted networks."
+
 [env.LANGSMITH_TRACING]
 required = false
 default = "false"
@@ -83,10 +93,10 @@ url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 command = ["docker", "compose", "up", "seekdb"]
 
 [processes.backend]
-command = ["sh", "-lc", "i=0; until docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'; do i=$((i + 1)); if [ \"$i\" -ge 60 ]; then exit 1; fi; sleep 2; done && uv run langgraph dev --no-browser --port {{ cookiecutter.langgraph_port }}"]
+command = ["sh", "-lc", "i=0; until docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'; do i=$((i + 1)); if [ \"$i\" -ge 60 ]; then exit 1; fi; sleep 2; done && uv run langgraph dev --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1} --port {{ cookiecutter.langgraph_port }}"]
 
 [processes.frontend]
-command = ["npm", "run", "dev", "--", "--host", "127.0.0.1"]
+command = ["npm", "run", "dev"]
 cwd = "frontend"
 
 [checks.backend]

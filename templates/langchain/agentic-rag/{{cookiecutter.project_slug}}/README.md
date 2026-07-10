@@ -13,9 +13,9 @@ markdown answer.
 cp .env.example .env
 $EDITOR .env
 
-uv sync
-npm install --prefix frontend
-docker compose up -d
+agentseek task sync
+agentseek task frontend
+agentseek task seekdb
 
 agentseek info
 agentseek doctor
@@ -80,7 +80,7 @@ Before running the agent, ingest documents into the knowledge base:
 # Web pages
 uv run ingest https://lilianweng.github.io/posts/2023-06-23-agent/
 
-# Local files or directories (.txt, .md)
+# Local files or directories (.txt, .md). ./docs/ is only an example path.
 uv run ingest ./docs/
 
 # Multiple sources at once
@@ -100,6 +100,18 @@ agentseek dev
 
 By default the backend listens on `http://127.0.0.1:2024` and the frontend on
 `http://127.0.0.1:{{ cookiecutter.frontend_port }}`.
+
+For a trusted remote development host such as an ECS instance, bind both
+servers to all interfaces from the shell that starts AgentSeek:
+
+```bash
+LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
+```
+
+Open the frontend with the server's reachable host name or IP. The browser
+defaults the LangGraph API URL to the same host on port `2024`; set
+`VITE_LANGGRAPH_API_URL` before starting the frontend if the backend uses a
+different public URL.
 
 Run `agentseek doctor --live` after `agentseek dev` starts to check the
 backend and frontend HTTP endpoints declared in the lifecycle spec.

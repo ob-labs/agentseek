@@ -3,7 +3,7 @@ title: CLI 参考
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-06-26
+verified_on: 2026-07-07
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
@@ -62,9 +62,11 @@ sources:
 | --- | --- |
 | `spec` | 模板类型、`type/name`、Git URL 或绝对本地路径。 |
 | `--list-templates` | 列出模板。带 `type` 时只列出该类型。 |
+| `--filter keyword` | 按模板 spec 或描述过滤列出的模板。 |
 | `--template name` | 选择所选类型下的命名模板，例如 `bub --template default`。 |
 | `--template` | 列出模板的兼容入口。新脚本优先使用 `--list-templates`。 |
 | `--checkout ref` | 拉取远程模板源时使用分支、tag 或 commit。 |
+| `--output-dir path` | 将生成项目写入所选目录下。默认使用当前工作目录。 |
 | `--no-input` | 跳过 Cookiecutter 变量提示，使用模板默认值。 |
 | `--describe` | 打印模板描述和 Cookiecutter 变量，不生成项目。 |
 

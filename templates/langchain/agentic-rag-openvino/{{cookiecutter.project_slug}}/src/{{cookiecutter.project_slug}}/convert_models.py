@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 # Model IDs default to cookiecutter values but can be overridden via env vars.
@@ -37,11 +36,7 @@ def convert_model(name: str, cfg: dict) -> None:
         print(f"[{name}] Already converted at {output}, skipping.")
         return
 
-    cmd = [
-        sys.executable, "-m", "optimum.exporters.openvino",
-        "--model", cfg["model_id"],
-        "--task", cfg["task"],
-    ]
+    cmd = ["optimum-cli", "export", "openvino", "--model", cfg["model_id"], "--task", cfg["task"]]
     if cfg.get("weight_format"):
         cmd += ["--weight-format", cfg["weight_format"]]
     cmd.append(str(output))

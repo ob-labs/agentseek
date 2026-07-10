@@ -35,13 +35,14 @@ cd my_bub_agent
 ```bash
 cp .env.example .env
 $EDITOR .env
-uv sync
-npm install --prefix frontend
+agentseek task --list
+agentseek task frontend
 ```
 
 在 `.env` 或运行 AgentSeek 的环境里，设置所选模板需要的模型和 provider
 凭证。AgentSeek 只把 `.env` 用作模板声明的生命周期环境检查来源，不会把
 `.env` 自动传给子进程。
+启动开发栈前，请按所选模板 `agentseek task --list` 列出的任务完成额外准备。
 
 准备好 `.env` 和本地依赖后，再运行就绪检查和本地开发栈：
 

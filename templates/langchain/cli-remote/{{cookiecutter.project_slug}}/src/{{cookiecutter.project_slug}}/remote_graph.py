@@ -33,7 +33,8 @@ def build_graph() -> Any:
         tools=[rollout_steps],
         system_prompt=(
             "You are a remote LangChain agent running behind LangGraph Agent Server. "
-            "Use rollout_steps when a short execution scaffold would help."
+            "Use rollout_steps when a short execution scaffold would help. "
+            "Answer in the same language as the user's question."
         ),
     )
 

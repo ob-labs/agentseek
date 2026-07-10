@@ -1,14 +1,14 @@
-"""LangChain agentic RAG with OpenVINO local models, served by `langgraph dev`."""
+"""Local OpenVINO RAG graph, served by `langgraph dev`."""
 
 from __future__ import annotations
 
 import os
 
 from dotenv import load_dotenv
-from langchain.agents import create_agent
-from langchain.tools import tool
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEmbeddings, HuggingFacePipeline
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
 from langchain_oceanbase.vectorstores import OceanbaseVectorStore
+from langgraph.graph import MessagesState, StateGraph
 
 load_dotenv()
 
@@ -66,9 +66,8 @@ except Exception as exc:
     ) from exc
 
 
-@tool(response_format="content_and_artifact")
-def retrieve(query: str):
-    """Retrieve relevant documents from the knowledge base to answer a query."""
+def retrieve(query: str) -> tuple[str, list]:
+    """Retrieve relevant documents from the knowledge base."""
     retrieved_docs = vector_store.similarity_search(query, k=4)
     serialized = "\n\n".join(
         f"Source: {doc.metadata}\nContent: {doc.page_content}"
@@ -85,10 +84,38 @@ ov_llm = HuggingFacePipeline.from_model_id(
     model_kwargs={"device": DEVICE},
     pipeline_kwargs={"max_new_tokens": MAX_NEW_TOKENS},
 )
-model = ChatHuggingFace(llm=ov_llm)
 
-graph = create_agent(
-    model=model,
-    tools=[retrieve],
-    system_prompt=SYSTEM_PROMPT,
-)
+
+def _latest_human_text(messages: list[BaseMessage]) -> str:
+    for message in reversed(messages):
+        if isinstance(message, HumanMessage) or getattr(message, "type", "") == "human":
+            return str(message.content)
+    return ""
+
+
+def _text_from_generation(result: object) -> str:
+    content = getattr(result, "content", result)
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(str(part) for part in content)
+    return str(content)
+
+
+def answer(state: MessagesState) -> dict:
+    """Run deterministic retrieve-then-generate RAG with the local OpenVINO LLM."""
+    query = _latest_human_text(state["messages"])
+    context, _docs = retrieve(query)
+    prompt = (
+        f"{SYSTEM_PROMPT}\n\n"
+        "Answer the user's question using only the retrieved context below. "
+        "If the context does not contain the answer, say you don't know.\n\n"
+        f"Retrieved context:\n{context or '(no relevant documents retrieved)'}\n\n"
+        f"Question: {query}\n\n"
+        "Answer:"
+    )
+    response = _text_from_generation(ov_llm.invoke(prompt)).strip()
+    return {"messages": [AIMessage(content=response)]}
+
+
+graph = StateGraph(MessagesState).add_node("answer", answer).set_entry_point("answer").compile()

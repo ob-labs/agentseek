@@ -1,6 +1,6 @@
 # {{ cookiecutter.project_name }}
 
-LangChain agentic RAG running **fully local** with
+LangChain RAG running **fully local** with
 [OpenVINO](https://docs.openvino.ai/) via the official
 [langchain-huggingface](https://python.langchain.com/docs/integrations/llms/openvino)
 integration and [OceanBase seekdb](https://github.com/oceanbase/seekdb)
@@ -15,16 +15,17 @@ Scaffolded with `agentseek create langchain/agentic-rag-openvino`.
 │  All inference local via langchain-huggingface + OpenVINO │
 ├──────────────────────────────────────────────────────────┤
 │  LLM:        HuggingFacePipeline(backend="openvino")     │
-│              → ChatHuggingFace → create_agent             │
+│              → deterministic retrieve-then-generate graph │
 │  Embedding:  HuggingFaceEmbeddings(backend="openvino")   │
 │  Vector DB:  OceanBase seekdb                            │
 │  Serving:    langgraph dev → React frontend              │
 └──────────────────────────────────────────────────────────┘
 ```
 
-The agent uses `create_agent` with tool-calling — same pattern as the
-cloud-based `agentic-rag` template. The LLM decides when and how many
-times to search the knowledge base.
+The graph retrieves relevant documents first, then asks the local OpenVINO LLM
+to answer from that retrieved context. This avoids relying on local pipeline
+tool-calling behavior that is not consistently supported across model/runtime
+versions.
 
 ## Lifecycle commands
 
@@ -71,7 +72,7 @@ LangGraph, the ingest CLI, and Docker Compose also read it at runtime.
 ### 2. Install dependencies
 
 ```bash
-uv sync
+agentseek task sync
 agentseek task frontend
 agentseek doctor
 ```
@@ -143,6 +144,21 @@ agentseek dev
 lifecycle spec. In another terminal, use `agentseek doctor --live` to check the
 declared HTTP endpoints.
 
+By default the backend listens on `http://127.0.0.1:{{ cookiecutter.langgraph_port }}` and the
+frontend on `http://127.0.0.1:{{ cookiecutter.frontend_port }}`.
+
+For a trusted remote development host such as an ECS instance, bind both
+servers to all interfaces from the shell that starts AgentSeek:
+
+```bash
+LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
+```
+
+Open the frontend with the server's reachable host name or IP. The browser
+defaults the LangGraph API URL to the same host on port `{{ cookiecutter.langgraph_port }}`; set
+`VITE_LANGGRAPH_API_URL` before starting the frontend if the backend uses a
+different public URL.
+
 ## Smoke test
 
 Open `http://127.0.0.1:{{ cookiecutter.frontend_port }}` and ask:
@@ -151,15 +167,16 @@ Open `http://127.0.0.1:{{ cookiecutter.frontend_port }}` and ask:
 What is task decomposition?
 ```
 
-The agent autonomously calls the `retrieve` tool, then generates a
-grounded answer — same behavior as the cloud-based template.
+The graph retrieves relevant documents, then generates a grounded answer with
+the local OpenVINO LLM.
 
 ## How it works
 
 The integration uses LangChain's official OpenVINO path:
 
 ```python
-from langchain_huggingface import HuggingFacePipeline, ChatHuggingFace
+from langchain_huggingface import HuggingFacePipeline
+from langgraph.graph import MessagesState, StateGraph
 
 # Load LLM with OpenVINO backend (no PyTorch inference, just optimum-intel)
 ov_llm = HuggingFacePipeline.from_model_id(
@@ -168,15 +185,13 @@ ov_llm = HuggingFacePipeline.from_model_id(
     backend="openvino",
     model_kwargs={"device": "CPU"},
 )
-# Wrap as ChatModel with bind_tools support
-model = ChatHuggingFace(llm=ov_llm)
-
-# Same create_agent pattern as cloud-based template
-graph = create_agent(model=model, tools=[retrieve], system_prompt=...)
+# Deterministic retrieve-then-generate graph
+graph = StateGraph(MessagesState).add_node("answer", answer).set_entry_point("answer").compile()
 ```
 
-`ChatHuggingFace` provides `bind_tools()`, enabling the standard
-`create_agent` flow where the LLM decides when to call retrieval tools.
+Use the cloud-based `langchain/agentic-rag` template when you need an
+autonomous tool-calling agent. This local OpenVINO template keeps retrieval
+explicit so the generated project works with local pipeline inference.
 
 ## Advanced: native `openvino-genai` approach (with reranking)
 
@@ -213,10 +228,10 @@ Trade-offs vs the `langchain-huggingface` approach:
 
 | | `langchain-huggingface` (default) | `openvino-genai` (native) |
 | --- | --- | --- |
-| LangChain integration | Official, `bind_tools` works | Custom wrappers needed |
+| LangChain integration | Official LLM and embedding wrappers | Custom wrappers needed |
 | Reranking | Not supported | Native pipeline |
 | Runtime PyTorch | Yes (optimum-intel loads via torch) | No (pure C++ inference) |
-| `create_agent` compatible | Yes | No (`LLM` base, no `bind_tools`) |
+| `create_agent` compatible | Not used by default | No (`LLM` base, no tool calling) |
 
 **Note on PyTorch**: both approaches need `optimum-cli` for initial model
 conversion, which pulls in PyTorch. The difference is at **inference runtime**:
@@ -228,8 +243,8 @@ cases. The benefit of `openvino-genai` is smaller runtime memory footprint
 (torch not loaded into process) and native reranking support.
 
 Use `openvino-genai` when you need reranking or want lower runtime memory.
-Use `langchain-huggingface` (this template's default) when you want standard
-LangChain tool-calling and `create_agent` compatibility.
+Use `langchain-huggingface` (this template's default) when you want the
+maintained LangChain/OpenVINO local model path.
 
 ## Hardware requirements
 

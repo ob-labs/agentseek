@@ -1,7 +1,7 @@
 [project]
 name = "{{ cookiecutter.project_slug }}"
 version = "0.1.0"
-description = "{{ cookiecutter.project_name }} — LangChain agentic RAG with OpenVINO local models, served by langgraph dev."
+description = "{{ cookiecutter.project_name }} — LangChain local RAG with OpenVINO models, served by langgraph dev."
 authors = [{ name = "{{ cookiecutter.author }}" }]
 requires-python = ">=3.10"
 dependencies = [

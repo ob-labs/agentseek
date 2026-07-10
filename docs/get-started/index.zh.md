@@ -35,8 +35,8 @@ cd my_bub_agent
 ```bash
 cp .env.example .env
 $EDITOR .env
-uv sync
-npm install --prefix frontend
+agentseek task --list
+agentseek task frontend
 ```
 
 在 `.env` 或运行 AgentSeek 的环境里，设置所选模板需要的模型和 provider 凭证。
