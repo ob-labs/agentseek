@@ -253,8 +253,12 @@ class HybridImageStore:
         return self._search_routes(query, query_embedding, mode, top_k)
 
     def compare_modes(self, query: str, top_k: int) -> dict[SearchMode, SearchTrace]:
+        query = normalize_query(query)
+        top_k = clamp_top_k(top_k, self.settings.hybrid_max_top_k)
+        query_embedding = self.embedding_engine.embed_text(query)
+        candidates = self._retrieve_candidates(query, query_embedding, top_k)
         return {
-            mode: self.search_text(query, mode, top_k)
+            mode: _format_trace(query, mode, *candidates, top_k)
             for mode in ("balanced", "semantic", "keyword", "exact")
         }
 
@@ -265,19 +269,25 @@ class HybridImageStore:
         mode: SearchMode,
         top_k: int,
     ) -> SearchTrace:
+        candidates = self._retrieve_candidates(query, query_embedding, top_k)
+        return _format_trace(query, mode, *candidates, top_k)
+
+    def _retrieve_candidates(
+        self,
+        query: str,
+        query_embedding: list[float],
+        top_k: int,
+    ) -> tuple[list[SearchHit], list[SearchHit], list[SearchHit], list[SearchHit]]:
         recall = max(top_k * self.settings.hybrid_recall_multiplier, top_k)
         terms = _query_terms(query)
         vector_results = self.vector_store.similarity_search_with_score_by_vector(query_embedding, k=recall)
         fulltext_hits = self._fulltext_hits(query, recall)
-        sparse_hits = self._sparse_hits(query, recall)
-        return _format_trace(
-            query=query,
-            mode=mode,
-            vector_hits=self._scored_document_hits(vector_results),
-            sparse_hits=sparse_hits,
-            fulltext_hits=fulltext_hits,
-            metadata_hits=self._metadata_hits_from_index(terms, recall),
-            top_k=top_k,
+        indexed_docs = self.vector_store.get_by_ids(self._auxiliary_index_ids())
+        return (
+            self._scored_document_hits(vector_results),
+            self._sparse_hits(query, recall, indexed_docs),
+            fulltext_hits,
+            self._metadata_hits(indexed_docs, terms, recall),
         )
 
     def _fulltext_hits(self, query: str, recall: int) -> list[SearchHit]:
@@ -288,12 +298,18 @@ class HybridImageStore:
         )
         return self._document_hits_with_terms(docs, query)
 
-    def _sparse_hits(self, query: str, recall: int) -> list[SearchHit]:
+    def _sparse_hits(
+        self,
+        query: str,
+        recall: int,
+        indexed_docs: list[Document] | None = None,
+    ) -> list[SearchHit]:
         sparse_query = _sparse_vector(query)
         if not sparse_query:
             return []
         docs = self.vector_store.similarity_search_with_sparse_vector(sparse_query, k=recall)
-        indexed_docs = self.vector_store.get_by_ids(self._auxiliary_index_ids())
+        if indexed_docs is None:
+            indexed_docs = self.vector_store.get_by_ids(self._auxiliary_index_ids())
         doc_pool = self._dedupe_documents([*docs, *indexed_docs])
         ranked_hits = self._rank_term_document_hits(doc_pool, query, recall)
         if ranked_hits:

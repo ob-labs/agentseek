@@ -233,12 +233,113 @@ def test_search_routes_use_distinct_sparse_fulltext_and_metadata_candidates(tmp_
     assert vector_store.fulltext_calls[0]["fulltext_query"] == "red product label"
     assert vector_store.fulltext_calls[0]["modality_weights"] == {"vector": 0.0, "sparse": 0.0, "fulltext": 1.0}
     assert vector_store.sparse_calls[0]["sparse_query"] == _sparse_vector("red product label")
-    assert vector_store.ids_calls == [["sparse-red", "metadata"], ["sparse-red", "metadata"]]
+    assert vector_store.ids_calls == [["sparse-red", "metadata"]]
     assert trace.route_counts["sparse"] == 1
     assert trace.route_counts["metadata"] == 1
     assert trace.hits[0].matched_terms
     assert engine.seen_text == "red product label"
     assert vector_store.vector_calls[0]["embedding"] == [0.1, 0.2, 0.3, 0.4]
+
+
+def test_compare_modes_reuses_one_retrieval_for_all_mode_traces(tmp_path) -> None:
+    settings = Settings(
+        seekdb_path=tmp_path / "seekdb",
+        seekdb_db_name="test",
+        image_table_name="images",
+        embedding_type="siliconflow",
+        embedding_api_key="test",
+        embedding_base_url="https://example.test/v1",
+        embedding_model="test",
+        embedding_dimension=4,
+        vlm_api_key="",
+        vlm_base_url="https://example.test",
+        vlm_model="qwen-vl",
+        hybrid_default_mode="balanced",
+        hybrid_recall_multiplier=2,
+        hybrid_max_top_k=5,
+        media_data_dir=tmp_path / "media",
+        media_max_upload_bytes=1024,
+    )
+
+    class RecordingEmbeddingEngine:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def embed_text(self, text: str) -> list[float]:
+            self.calls.append(text)
+            return [0.1, 0.2, 0.3, 0.4]
+
+    class RecordingVectorStore:
+        def __init__(self) -> None:
+            self.vector_calls: list[dict] = []
+            self.sparse_calls: list[dict] = []
+            self.fulltext_calls: list[dict] = []
+            self.ids_calls: list[list[str]] = []
+
+        def similarity_search_with_score_by_vector(self, embedding, k: int):
+            self.vector_calls.append({"embedding": embedding, "k": k})
+            return [
+                (
+                    Document(
+                        id="vector",
+                        page_content="red product label",
+                        metadata={"file_name": "vector.png"},
+                    ),
+                    0.1,
+                )
+            ]
+
+        def similarity_search_with_sparse_vector(self, sparse_query, k: int):
+            self.sparse_calls.append({"sparse_query": sparse_query, "k": k})
+            return [
+                Document(
+                    id="sparse",
+                    page_content="red product label",
+                    metadata={"file_name": "sparse.png"},
+                )
+            ]
+
+        def advanced_hybrid_search(self, **kwargs):
+            self.fulltext_calls.append(kwargs)
+            return [
+                Document(
+                    id="fulltext",
+                    page_content="red product label",
+                    metadata={"file_name": "fulltext.png"},
+                )
+            ]
+
+        def get_by_ids(self, ids):
+            self.ids_calls.append(list(ids))
+            return [
+                Document(
+                    id="indexed",
+                    page_content="red product label",
+                    metadata={"file_name": "indexed.png", "tags": "red"},
+                )
+            ]
+
+    store = HybridImageStore.__new__(HybridImageStore)
+    store.settings = settings
+    engine = RecordingEmbeddingEngine()
+    store.embedding_engine = engine
+    vector_store = RecordingVectorStore()
+    store.vector_store = vector_store
+    store._load_index_ids = lambda: ["indexed"]
+
+    traces = store.compare_modes("  red product label  ", top_k=3)
+
+    assert set(traces) == {"balanced", "semantic", "keyword", "exact"}
+    assert engine.calls == ["red product label"]
+    assert len(vector_store.vector_calls) == 1
+    assert len(vector_store.sparse_calls) == 1
+    assert len(vector_store.fulltext_calls) == 1
+    assert vector_store.ids_calls == [["indexed"]]
+    expected_route_counts = {"vector": 1, "sparse": 2, "fulltext": 1, "metadata": 1}
+    assert all(trace.route_counts == expected_route_counts for trace in traces.values())
+    assert traces["semantic"].weights == weights_for_mode("semantic")
+    assert traces["keyword"].weights == weights_for_mode("keyword")
+    assert traces["exact"].weights == weights_for_mode("exact")
 
 
 def test_sparse_hits_fall_back_to_indexed_docs_when_native_sparse_has_no_evidence(tmp_path) -> None:
