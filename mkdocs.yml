@@ -13,6 +13,7 @@ nav:
       - Overview: guides/index.md
       - Choose a Template: guides/choose-template.md
       - Create a Project: guides/create-project.md
+      - Create a Template: guides/create-template.md
       - Inspect a Project: guides/inspect-project.md
       - Check a Project: guides/check-project.md
       - Run Local Development: guides/run-local-development.md
@@ -24,6 +25,7 @@ nav:
       - CLI: reference/cli.md
       - Lifecycle Spec: reference/lifecycle-spec.md
       - Templates: reference/templates.md
+      - Template Authoring Contract: reference/template-authoring-contract.md
   - Concepts:
       - Overview: concepts/index.md
       - Lifecycle Toolkit: concepts/lifecycle-toolkit.md
@@ -53,6 +55,7 @@ plugins:
                 - 概览: guides/index.md
                 - 选择模板: guides/choose-template.md
                 - 创建项目: guides/create-project.md
+                - 创建模板: guides/create-template.md
                 - 查看项目: guides/inspect-project.md
                 - 检查项目: guides/check-project.md
                 - 运行本地开发: guides/run-local-development.md
@@ -64,6 +67,7 @@ plugins:
                 - CLI: reference/cli.md
                 - 生命周期规范: reference/lifecycle-spec.md
                 - 模板: reference/templates.md
+                - 模板编写规范: reference/template-authoring-contract.md
             - 概念:
                 - 概览: concepts/index.md
                 - 生命周期工具包: concepts/lifecycle-toolkit.md

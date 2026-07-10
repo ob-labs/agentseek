@@ -3,9 +3,10 @@ title: Reference
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-06-22
+verified_on: 2026-07-10
 sources:
   - src/agentseek/cli/runtime.py
+  - docs/reference/template-authoring-contract.md
 ---
 
 # Reference
@@ -15,3 +16,4 @@ sources:
 | [CLI](cli.md) | Command and option lookup. |
 | [Lifecycle Spec](lifecycle-spec.md) | Generated project lifecycle contract. |
 | [Templates](templates.md) | Available template paths. |
+| [Template Authoring Contract](template-authoring-contract.md) | Required files, configuration, lifecycle behavior, and validation for contributed templates. |
