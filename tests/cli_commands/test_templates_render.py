@@ -83,6 +83,18 @@ def _assert_rag_template_host_binding(generated: Path, *, check_frontend_env: bo
         assert "VITE_LANGGRAPH_API_URL=http://127.0.0.1" not in frontend_env_text
 
 
+def _assert_frontend_package_json(generated: Path) -> None:
+    """Validate package.json when the rendered template includes a frontend."""
+    frontend_package = generated / "frontend" / "package.json"
+    if not frontend_package.is_file():
+        return
+
+    try:
+        json.loads(frontend_package.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        pytest.fail(f"frontend/package.json is not valid JSON: {exc}")
+
+
 def test_at_least_one_template_discovered() -> None:
     """Sanity check: the harness must see the bundled templates."""
     assert TEMPLATES, (
@@ -209,12 +221,7 @@ def test_template_renders_without_unrendered_jinja(
         assert "agentseek task sync" in readme_text
         assert "uv sync" not in readme_text
 
-    frontend_pkg = generated / "frontend" / "package.json"
-    if frontend_pkg.is_file():
-        try:
-            json.loads(frontend_pkg.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            pytest.fail(f"frontend/package.json is not valid JSON: {exc}")
+    _assert_frontend_package_json(generated)
 
 
 @pytest.mark.parametrize(
