@@ -15,7 +15,7 @@ cp .env.example .env
 cp frontend/.env.example frontend/.env
 $EDITOR .env
 
-uvx agentseek task backend
+uvx agentseek task sync
 uvx agentseek task frontend
 
 uvx agentseek info

@@ -63,6 +63,11 @@ rag_host_binding_templates = {
     ("langchain", "agentic-rag"),
     ("langchain", "agentic-rag-openvino"),
 }
+dependency_sync_templates = {
+    ("deepagents", "content-builder"),
+    ("deepagents", "research"),
+    ("langchain", "sandbox"),
+}
 
 
 def _assert_rag_template_host_binding(generated: Path, *, check_frontend_env: bool = False) -> None:
@@ -153,6 +158,13 @@ def test_template_renders_without_unrendered_jinja(
     assert lifecycle_data["template"] == f"{type_name}/{template_name}"
     assert lifecycle_data["processes"]
     assert not (generated / "duties.py").exists()
+    assert "backend" not in lifecycle_data.get("tasks", {})
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    assert "agentseek task backend" not in readme_text
+    if (type_name, template_name) in dependency_sync_templates:
+        assert "sync" in lifecycle_data["tasks"]
+        assert lifecycle_data["tasks"]["sync"]["command"] == ["uv", "sync"]
+        assert "agentseek task sync" in readme_text
     if (type_name, template_name) in seekdb_skill_templates:
         task = lifecycle_data["tasks"]["seekdb-skills"]
         assert task["description"] == "Install recommended OceanBase seekdb agent skills."
@@ -182,7 +194,6 @@ def test_template_renders_without_unrendered_jinja(
     if (type_name, template_name) == ("deepagents", "content-builder"):
         readme_text = (generated / "README.md").read_text(encoding="utf-8")
         agents_text = (generated / "AGENTS.md").read_text(encoding="utf-8")
-        assert "agentseek task backend" in readme_text
         assert "agentseek task frontend" in readme_text
         assert "same language as the user's question" in agents_text
 

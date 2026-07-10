@@ -10,7 +10,7 @@ Requires **Python 3.12+**, [uv](https://docs.astral.sh/uv/), Node.js, and npm.
 cp .env.example .env
 $EDITOR .env
 
-uvx agentseek task backend
+uvx agentseek task sync
 uvx agentseek task frontend
 
 uvx agentseek info

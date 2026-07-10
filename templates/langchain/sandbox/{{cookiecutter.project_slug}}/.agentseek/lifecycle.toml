@@ -49,8 +49,8 @@ target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 timeout = 2
 attempts = 3
 
-[tasks.backend]
-description = "Sync backend dependencies."
+[tasks.sync]
+description = "Install Python dependencies with uv."
 command = ["uv", "sync"]
 
 [tasks.frontend]
