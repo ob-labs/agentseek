@@ -2,6 +2,7 @@
   "bub/default": "Lightweight Bub agent with AgentSeek lifecycle spec.",
   "deepagents/content-builder": "DeepAgents content builder with skills, subagents, image generation, streamed UI, and AgentSeek lifecycle spec.",
   "deepagents/default": "Local create_deep_agent runnable with AgentSeek lifecycle spec.",
+  "deepagents/ragflow-knowledge-qa": "DeepAgents knowledge-base agent with RAGFlow retrieval, approved ingestion, streamed UI, and AgentSeek lifecycle spec.",
   "deepagents/research": "DeepAgents research agent with Tavily search, streamed tool/sub-agent UI, and AgentSeek lifecycle spec.",
   "langchain/agentic-rag": "LangChain agentic RAG with OceanBase vector search and AgentSeek lifecycle spec.",
   "langchain/agentic-rag-openvino": "LangChain local RAG with OpenVINO models and AgentSeek lifecycle spec.",
