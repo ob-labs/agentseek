@@ -23,7 +23,7 @@ class EmbeddingEngine:
 
     def _embed_siliconflow(self, input_payload: str | dict[str, Any]) -> list[float]:
         if not self.settings.embedding_api_key:
-            raise RuntimeError("SILICONFLOW_API_KEY or EMBEDDING_API_KEY is required for SiliconFlow embeddings.")
+            raise RuntimeError("AGENTSEEK_API_KEY or EMBEDDING_API_KEY is required for SiliconFlow embeddings.")
 
         import httpx
 

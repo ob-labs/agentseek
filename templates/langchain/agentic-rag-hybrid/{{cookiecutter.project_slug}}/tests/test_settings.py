@@ -3,8 +3,8 @@ from __future__ import annotations
 from {{ cookiecutter.project_slug }}.settings import get_settings
 
 
-def test_siliconflow_api_key_feeds_embedding_and_vlm(monkeypatch) -> None:
-    monkeypatch.setenv("SILICONFLOW_API_KEY", "shared-key")
+def test_agentseek_api_key_feeds_embedding_and_vlm(monkeypatch) -> None:
+    monkeypatch.setenv("AGENTSEEK_API_KEY", "shared-key")
     monkeypatch.setenv("SEEKDB_PATH", "./custom-seekdb")
     monkeypatch.delenv("EMBEDDING_API_KEY", raising=False)
     monkeypatch.delenv("VLM_API_KEY", raising=False)
@@ -23,6 +23,20 @@ def test_siliconflow_api_key_feeds_embedding_and_vlm(monkeypatch) -> None:
     get_settings.cache_clear()
 
 
+def test_siliconflow_api_key_remains_compatibility_alias(monkeypatch) -> None:
+    monkeypatch.delenv("AGENTSEEK_API_KEY", raising=False)
+    monkeypatch.setenv("SILICONFLOW_API_KEY", "legacy-shared-key")
+    monkeypatch.delenv("EMBEDDING_API_KEY", raising=False)
+    monkeypatch.delenv("VLM_API_KEY", raising=False)
+    get_settings.cache_clear()
+
+    settings = get_settings()
+
+    assert settings.embedding_api_key == "legacy-shared-key"
+    assert settings.vlm_api_key == "legacy-shared-key"
+    get_settings.cache_clear()
+
+
 def test_default_runtime_paths_expand_under_home(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.delenv("SEEKDB_PATH", raising=False)
@@ -37,8 +51,9 @@ def test_default_runtime_paths_expand_under_home(monkeypatch, tmp_path) -> None:
     get_settings.cache_clear()
 
 
-def test_specific_siliconflow_keys_override_shared_key(monkeypatch) -> None:
-    monkeypatch.setenv("SILICONFLOW_API_KEY", "shared-key")
+def test_specific_embedding_and_vlm_keys_override_agentseek_key(monkeypatch) -> None:
+    monkeypatch.setenv("AGENTSEEK_API_KEY", "shared-key")
+    monkeypatch.setenv("AGENTSEEK_API_BASE", "https://shared.example/v1")
     monkeypatch.setenv("EMBEDDING_API_KEY", "embedding-key")
     monkeypatch.setenv("EMBEDDING_BASE_URL", "https://embed.example/v1")
     monkeypatch.setenv("VLM_API_KEY", "vlm-key")

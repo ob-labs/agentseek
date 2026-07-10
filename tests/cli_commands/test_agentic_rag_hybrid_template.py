@@ -57,7 +57,9 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
     assert lifecycle["services"]["phoenix"]["url"] == "http://127.0.0.1:6006"
     assert lifecycle["services"]["phoenix_seekdb"]["url"] == "mysql://127.0.0.1:2884/phoenix"
     assert lifecycle["checks"]["custom_routes"]["target"] == "http://127.0.0.1:2024/custom/health"
-    assert lifecycle["env"]["SILICONFLOW_API_KEY"]["required"] is True
+    assert lifecycle["env"]["AGENTSEEK_API_KEY"]["required"] is True
+    assert "SILICONFLOW_API_KEY" in lifecycle["env"]["AGENTSEEK_API_KEY"]["aliases"]
+    assert lifecycle["env"]["AGENTSEEK_API_BASE"]["default"] == "https://api.siliconflow.cn/v1"
     assert lifecycle["tasks"]["phoenix"]["command"] == ["docker", "compose", "up", "-d", "phoenix"]
     assert lifecycle["tasks"]["phoenix-stop"]["command"] == ["docker", "compose", "down"]
     assert lifecycle["tasks"]["seekdb-skills"]["command"] == [
@@ -92,7 +94,7 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     assert "agentseek task seekdb-skills" in readme
     assert "## Agent Skills" in readme
     assert "PR #122" not in readme
-    assert "SILICONFLOW_API_KEY first" in agent
+    assert '_nonempty_env("AGENTSEEK_API_KEY")' in agent
     assert "HYBRID_AUXILIARY_CANDIDATE_LIMIT" in env_example
     for mode in ("semantic", "keyword", "exact", "balanced"):
         assert mode in guide
@@ -110,9 +112,10 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     assert "configure_tracing(get_settings())" in agent
     assert "LangChainInstrumentor" in observability
     assert "OTLPSpanExporter" in observability
-    assert "SILICONFLOW_API_KEY" in env_example
+    assert "AGENTSEEK_API_KEY=" in env_example
+    assert "AGENTSEEK_API_BASE=https://api.siliconflow.cn/v1" in env_example
     assert "SEEKDB_PATH={{ cookiecutter.seekdb_path }}" in env_example
-    assert "EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1" in env_example
+    assert "EMBEDDING_BASE_URL=" in env_example
     assert "AGENTSEEK_OTEL_ENABLED=false" in env_example
     assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_example
     assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_example

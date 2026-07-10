@@ -38,15 +38,14 @@ def _nonempty_env(name: str) -> str | None:
 
 
 def _openai_compatible_base_url() -> str:
-    return _nonempty_env("OPENAI_API_BASE") or "https://api.siliconflow.cn/v1"
+    return _nonempty_env("AGENTSEEK_API_BASE") or _nonempty_env("OPENAI_API_BASE") or "https://api.siliconflow.cn/v1"
 
 
 def _openai_compatible_api_key() -> str | None:
     base_url = _openai_compatible_base_url().lower()
     if "siliconflow" in base_url:
-        # SILICONFLOW_API_KEY first keeps the default SiliconFlow endpoint paired with the right credential.
-        return _nonempty_env("SILICONFLOW_API_KEY") or _nonempty_env("OPENAI_API_KEY")
-    return _nonempty_env("OPENAI_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY")
+        return _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY") or _nonempty_env("OPENAI_API_KEY")
+    return _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("OPENAI_API_KEY") or _nonempty_env("SILICONFLOW_API_KEY")
 
 
 def _normalize_provider(provider: str) -> str:
@@ -123,13 +122,13 @@ if MODEL_PROVIDER == "openai":
         MODEL_INIT_KWARGS["api_key"] = api_key
     MODEL_INIT_KWARGS["base_url"] = _openai_compatible_base_url()
 elif MODEL_PROVIDER == "anthropic":
-    if _nonempty_env("ANTHROPIC_API_KEY"):
-        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("ANTHROPIC_API_KEY")
+    if _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("ANTHROPIC_API_KEY"):
+        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("ANTHROPIC_API_KEY")
     if _nonempty_env("ANTHROPIC_API_URL"):
         MODEL_INIT_KWARGS["base_url"] = _nonempty_env("ANTHROPIC_API_URL")
 elif MODEL_PROVIDER == "google_genai":
-    if _nonempty_env("GOOGLE_API_KEY"):
-        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("GOOGLE_API_KEY")
+    if _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("GOOGLE_API_KEY"):
+        MODEL_INIT_KWARGS["api_key"] = _nonempty_env("AGENTSEEK_API_KEY") or _nonempty_env("GOOGLE_API_KEY")
     if _nonempty_env("GOOGLE_API_BASE"):
         MODEL_INIT_KWARGS["base_url"] = _nonempty_env("GOOGLE_API_BASE")
 

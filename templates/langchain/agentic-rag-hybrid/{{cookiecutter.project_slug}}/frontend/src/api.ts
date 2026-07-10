@@ -1,4 +1,9 @@
-const customRoutesUrl = import.meta.env.VITE_CUSTOM_ROUTES_URL ?? "http://127.0.0.1:2024";
+function defaultCustomRoutesUrl(): string {
+  const host = window.location.hostname || "127.0.0.1";
+  return `http://${host}:2024`;
+}
+
+const customRoutesUrl = import.meta.env.VITE_CUSTOM_ROUTES_URL ?? defaultCustomRoutesUrl();
 
 export async function compareHybridModes(query: string, topK = 5) {
   const url = new URL("/custom/compare", customRoutesUrl);

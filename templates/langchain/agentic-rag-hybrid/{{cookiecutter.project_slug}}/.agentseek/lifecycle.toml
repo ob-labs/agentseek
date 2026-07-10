@@ -26,6 +26,18 @@ default = "{{ cookiecutter.default_model }}"
 description = "Model id passed to LangChain chat model initialization."
 aliases = ["BUB_MODEL"]
 
+[env.AGENTSEEK_API_KEY]
+required = true
+default = ""
+description = "Primary OpenAI-compatible credential used by chat, embedding, and VLM clients."
+aliases = ["SILICONFLOW_API_KEY", "OPENAI_API_KEY"]
+
+[env.AGENTSEEK_API_BASE]
+required = false
+default = "https://api.siliconflow.cn/v1"
+description = "OpenAI-compatible API base URL. Defaults to SiliconFlow."
+aliases = ["OPENAI_API_BASE"]
+
 [env.SEEKDB_PATH]
 required = true
 default = "{{ cookiecutter.seekdb_path }}"
@@ -56,6 +68,16 @@ required = false
 default = "false"
 description = "Enable OpenTelemetry export from the LangGraph agent to Phoenix."
 
+[env.LANGGRAPH_HOST]
+required = false
+default = "127.0.0.1"
+description = "LangGraph dev bind host. Use 0.0.0.0 only on trusted networks."
+
+[env.FRONTEND_HOST]
+required = false
+default = "127.0.0.1"
+description = "Vite frontend bind host. Use 0.0.0.0 only on trusted networks."
+
 [services.backend]
 url = "http://127.0.0.1:2024"
 
@@ -69,7 +91,7 @@ url = "http://127.0.0.1:6006"
 url = "mysql://127.0.0.1:2884/phoenix"
 
 [processes.backend]
-command = ["uv", "run", "langgraph", "dev", "--no-browser"]
+command = ["sh", "-lc", "uv run langgraph dev --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}"]
 
 [processes.frontend]
 command = ["npm", "run", "dev"]

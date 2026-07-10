@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-os.environ.setdefault("OPENAI_API_KEY", "test-key")
+os.environ.setdefault("AGENTSEEK_API_KEY", "test-key")
 
 import pytest
 
@@ -12,11 +12,12 @@ from {{ cookiecutter.project_slug }}.models import SearchHit, SearchTrace, Searc
 from {{ cookiecutter.project_slug }}.settings import Settings
 
 
-def test_openai_compatible_chat_uses_siliconflow_key_first(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_openai_compatible_chat_uses_agentseek_key_first(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENTSEEK_API_KEY", "agentseek-key")
     monkeypatch.setenv("SILICONFLOW_API_KEY", "siliconflow-key")
     monkeypatch.setenv("OPENAI_API_KEY", "global-openai-key")
 
-    assert agent._openai_compatible_api_key() == "siliconflow-key"
+    assert agent._openai_compatible_api_key() == "agentseek-key"
 
 
 def test_serialize_trace_includes_developer_diagnostics() -> None:

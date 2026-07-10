@@ -62,6 +62,7 @@ seekdb_skill_templates = {
 }
 seekdb_skill_command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]
 rag_host_binding_templates = {
+    ("langchain", "agentic-rag-hybrid"),
     ("langchain", "agentic-rag"),
     ("langchain", "agentic-rag-openvino"),
 }
@@ -165,14 +166,25 @@ def _assert_agentic_rag_hybrid_template(generated: Path, lifecycle_data: dict[st
     lifecycle_text = (generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8")
     pyproject_text = (generated / "pyproject.toml").read_text(encoding="utf-8")
     readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    app_text = (generated / "frontend" / "src" / "App.tsx").read_text(encoding="utf-8")
     assert "AGENTSEEK_OTEL_ENABLED=false" in env_text
+    assert "AGENTSEEK_API_KEY=" in env_text
+    assert "AGENTSEEK_API_BASE=https://api.siliconflow.cn/v1" in env_text
+    assert "OPENAI_API_BASE=" not in env_text
+    assert "VITE_LANGGRAPH_API_URL=http://127.0.0.1" not in env_text
+    assert "VITE_CUSTOM_ROUTES_URL=http://127.0.0.1" not in env_text
     assert "AGENTSEEK_PHOENIX_IMAGE=ghcr.io/agentseek-ai/agentseek-phoenix:main" in env_text
     assert "OCEANBASE_SEEKDB_IMAGE=quay.io/oceanbase/seekdb:latest" in env_text
     assert "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}" in compose_text
     assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
     assert "PHOENIX_SQL_DATABASE_URL: mysql://root@seekdb:2881/phoenix" in compose_text
+    assert "AGENTSEEK_API_KEY" in lifecycle_data["env"]
+    assert "AGENTSEEK_API_BASE" in lifecycle_data["env"]
     assert "agentseek task phoenix" in readme_text
+    assert "agentseek doctor" in readme_text
+    assert "LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev" in readme_text
     assert "custom/observability" in readme_text
+    assert "window.location.hostname" in app_text
     assert "phoenix" in lifecycle_data["tasks"]
     assert "phoenix-stop" in lifecycle_data["tasks"]
     assert "mysql://127.0.0.1:2884/phoenix" in lifecycle_text
@@ -180,11 +192,13 @@ def _assert_agentic_rag_hybrid_template(generated: Path, lifecycle_data: dict[st
 
 
 def _assert_frontend_package_json(generated: Path) -> None:
-    frontend_pkg = generated / "frontend" / "package.json"
-    if not frontend_pkg.is_file():
+    """Validate package.json when the rendered template includes a frontend."""
+    frontend_package = generated / "frontend" / "package.json"
+    if not frontend_package.is_file():
         return
+
     try:
-        json.loads(frontend_pkg.read_text(encoding="utf-8"))
+        json.loads(frontend_package.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         pytest.fail(f"frontend/package.json is not valid JSON: {exc}")
 

@@ -24,6 +24,14 @@ def _bool_env(name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _nonempty_env(*names: str) -> str:
+    for name in names:
+        value = os.getenv(name)
+        if value and value.strip():
+            return value.strip()
+    return ""
+
+
 @dataclass(frozen=True)
 class Settings:
     seekdb_path: Path
@@ -51,18 +59,19 @@ class Settings:
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    siliconflow_api_key = os.getenv("SILICONFLOW_API_KEY", "")
+    agentseek_api_key = _nonempty_env("AGENTSEEK_API_KEY", "SILICONFLOW_API_KEY", "OPENAI_API_KEY")
+    agentseek_api_base = _nonempty_env("AGENTSEEK_API_BASE", "OPENAI_API_BASE") or "https://api.siliconflow.cn/v1"
     return Settings(
         seekdb_path=Path(os.getenv("SEEKDB_PATH", "{{ cookiecutter.seekdb_path }}")).expanduser().resolve(),
         seekdb_db_name=os.getenv("SEEKDB_DB_NAME", "{{ cookiecutter.seekdb_db_name }}"),
         image_table_name=os.getenv("IMAGE_TABLE_NAME", "{{ cookiecutter.image_table_name }}"),
         embedding_type=os.getenv("EMBEDDING_TYPE", "siliconflow"),
-        embedding_api_key=os.getenv("EMBEDDING_API_KEY") or siliconflow_api_key,
-        embedding_base_url=os.getenv("EMBEDDING_BASE_URL", "https://api.siliconflow.cn/v1"),
+        embedding_api_key=_nonempty_env("EMBEDDING_API_KEY") or agentseek_api_key,
+        embedding_base_url=_nonempty_env("EMBEDDING_BASE_URL") or agentseek_api_base,
         embedding_model=os.getenv("EMBEDDING_MODEL", "{{ cookiecutter.embedding_model }}"),
         embedding_dimension=_int_env("EMBEDDING_DIMENSION", {{ cookiecutter.embedding_dimension }}),
-        vlm_api_key=os.getenv("VLM_API_KEY") or siliconflow_api_key,
-        vlm_base_url=os.getenv("VLM_BASE_URL", "https://api.siliconflow.cn/v1"),
+        vlm_api_key=_nonempty_env("VLM_API_KEY") or agentseek_api_key,
+        vlm_base_url=_nonempty_env("VLM_BASE_URL") or agentseek_api_base,
         vlm_model=os.getenv("VLM_MODEL", "{{ cookiecutter.vlm_model }}"),
         hybrid_default_mode=os.getenv("HYBRID_DEFAULT_MODE", "balanced"),
         hybrid_recall_multiplier=_int_env("HYBRID_RECALL_MULTIPLIER", 5),

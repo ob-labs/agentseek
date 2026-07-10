@@ -27,6 +27,12 @@ Anything tagged with "bug" and "help wanted" is open to whoever wants to impleme
 Look through the GitHub issues for features.
 Anything tagged with "enhancement" and "help wanted" is open to whoever wants to implement it.
 
+## Add Templates
+
+Before contributing a bundled app template, follow [Create a Template](docs/guides/create-template.md).
+Use the [Template Authoring Contract](docs/reference/template-authoring-contract.md) to check configuration,
+lifecycle tasks, generated documentation, exceptions, and validation.
+
 ## Write Documentation
 
 agentseek could always use more documentation, whether as part of the official docs, in docstrings, or even on the web in blog posts, articles, and such.
