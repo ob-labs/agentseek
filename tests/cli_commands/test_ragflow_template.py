@@ -37,9 +37,7 @@ def rendered_modules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         sys.modules.pop(f"{package}.{leaf}", None)
 
 
-def test_retrieve_requires_explicit_dataset_scope(
-    rendered_modules: dict[str, ModuleType], tmp_path: Path
-) -> None:
+def test_retrieve_requires_explicit_dataset_scope(rendered_modules: dict[str, ModuleType], tmp_path: Path) -> None:
     """Retrieval cannot silently expand to every dataset visible to the API key."""
     adapter = rendered_modules["ragflow"].RAGFlowAdapter(client=object(), upload_root=tmp_path)
 
@@ -47,9 +45,7 @@ def test_retrieve_requires_explicit_dataset_scope(
         adapter.retrieve(dataset_ids=[], question="Where is the policy?")
 
 
-def test_retrieve_calls_ragflow_and_serializes_chunks(
-    rendered_modules: dict[str, ModuleType], tmp_path: Path
-) -> None:
+def test_retrieve_calls_ragflow_and_serializes_chunks(rendered_modules: dict[str, ModuleType], tmp_path: Path) -> None:
     """The adapter returns JSON-safe evidence instead of leaking SDK objects."""
 
     class Client:
@@ -99,9 +95,7 @@ def test_retrieve_calls_ragflow_and_serializes_chunks(
     ]
 
 
-def test_list_datasets_returns_compact_scope_choices(
-    rendered_modules: dict[str, ModuleType], tmp_path: Path
-) -> None:
+def test_list_datasets_returns_compact_scope_choices(rendered_modules: dict[str, ModuleType], tmp_path: Path) -> None:
     """Dataset discovery exposes selection metadata without raw SDK state."""
 
     class Client:
@@ -170,9 +164,7 @@ def test_list_datasets_tool_forwards_requested_page(
     assert calls == [{"page": 3, "page_size": 10}]
 
 
-def test_upload_rejects_paths_outside_staging_root(
-    rendered_modules: dict[str, ModuleType], tmp_path: Path
-) -> None:
+def test_upload_rejects_paths_outside_staging_root(rendered_modules: dict[str, ModuleType], tmp_path: Path) -> None:
     """An agent-supplied path cannot escape the configured upload directory."""
     upload_root = tmp_path / "uploads"
     upload_root.mkdir()
@@ -183,9 +175,7 @@ def test_upload_rejects_paths_outside_staging_root(
         adapter.upload_documents(dataset_id="dataset-1", relative_paths=["../secret.txt"])
 
 
-def test_upload_reads_staged_files_and_calls_dataset(
-    rendered_modules: dict[str, ModuleType], tmp_path: Path
-) -> None:
+def test_upload_reads_staged_files_and_calls_dataset(rendered_modules: dict[str, ModuleType], tmp_path: Path) -> None:
     """Approved uploads send named byte payloads through the selected dataset."""
 
     class Dataset:
@@ -219,9 +209,7 @@ def test_upload_reads_staged_files_and_calls_dataset(
     assert result == [{"id": "document-1", "name": "policy.md"}]
 
 
-def test_parse_starts_non_blocking_ragflow_operation(
-    rendered_modules: dict[str, ModuleType], tmp_path: Path
-) -> None:
+def test_parse_starts_non_blocking_ragflow_operation(rendered_modules: dict[str, ModuleType], tmp_path: Path) -> None:
     """Parsing uses async_parse_documents instead of polling inside an agent run."""
 
     class Dataset:
@@ -265,7 +253,7 @@ def test_parse_tool_cancel_never_calls_ragflow(
 
     class Adapter:
         def parse_documents(self, **kwargs: object) -> dict[str, object]:
-            raise AssertionError(f"parse should not run after cancellation: {kwargs}")
+            pytest.fail(f"parse should not run after cancellation: {kwargs}")
 
     tools = rendered_modules["tools"]
     monkeypatch.setattr(tools, "_adapter", lambda: Adapter())
@@ -389,18 +377,17 @@ def test_parse_tool_rejects_empty_review_without_interrupting(
         tools.parse_ragflow_documents.func(dataset_id="dataset-1", document_ids=[])
 
 
-def test_sdk_errors_do_not_leak_credentials(
-    rendered_modules: dict[str, ModuleType], tmp_path: Path
-) -> None:
+def test_sdk_errors_do_not_leak_credentials(rendered_modules: dict[str, ModuleType], tmp_path: Path) -> None:
     """Tool-facing errors identify the operation without exposing SDK response details."""
 
     class Client:
         def retrieve(self, **kwargs: object) -> list[object]:
-            raise Exception("Authorization: Bearer secret-key")
+            error = RuntimeError("Authorization: Bearer secret-key")
+            raise error
 
     adapter = rendered_modules["ragflow"].RAGFlowAdapter(client=Client(), upload_root=tmp_path)
 
-    with pytest.raises(RuntimeError, match="^RAGFlow retrieval failed$") as exc_info:
+    with pytest.raises(RuntimeError, match=r"^RAGFlow retrieval failed$") as exc_info:
         adapter.retrieve(dataset_ids=["dataset-1"], question="policy")
 
     assert "secret-key" not in str(exc_info.value)
