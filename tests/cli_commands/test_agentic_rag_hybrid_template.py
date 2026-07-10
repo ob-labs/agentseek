@@ -105,6 +105,19 @@ def test_hybrid_template_lifecycle_accepts_canonical_api_key(tmp_path: Path, mon
     assert "ok   AGENTSEEK_API_KEY:" in result.stdout
 
 
+def test_hybrid_template_env_example_explains_shared_retrieval_credentials(tmp_path: Path) -> None:
+    out_dir = tmp_path / "output"
+    out_dir.mkdir()
+    cookiecutter(str(TEMPLATE_DIR), output_dir=str(out_dir), no_input=True)
+
+    env_example = (out_dir / "my_hybrid_rag_agent" / ".env.example").read_text(encoding="utf-8")
+
+    assert "fill only that provider's block" not in env_example
+    assert "AGENTSEEK_API_KEY remains the shared default SiliconFlow embedding/VLM credential." in env_example
+    assert "ANTHROPIC_API_KEY overrides chat authentication when AGENTSEEK_MODEL_PROVIDER=anthropic." in env_example
+    assert "GOOGLE_API_KEY overrides chat authentication when AGENTSEEK_MODEL_PROVIDER=google_genai." in env_example
+
+
 def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     project_dir = TEMPLATE_DIR / "{{cookiecutter.project_slug}}"
 

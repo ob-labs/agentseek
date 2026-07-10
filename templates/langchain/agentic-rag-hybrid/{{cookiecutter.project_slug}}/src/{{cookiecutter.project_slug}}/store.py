@@ -22,7 +22,8 @@ from .settings import Settings, get_settings
 
 def _image_id(path: Path) -> str:
     digest = hashlib.sha1(str(path.resolve()).encode("utf-8")).hexdigest()[:16]
-    return f"{path.stem}-{digest}"
+    readable_stem = re.sub(r"[^A-Za-z0-9._-]+", "-", path.stem).strip("._-")[:64].strip("._-")
+    return f"{readable_stem or 'image'}-{digest}"
 
 
 def _query_terms(query: str) -> list[str]:

@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from {{ cookiecutter.project_slug }} import routes
 from {{ cookiecutter.project_slug }}.routes import app
 from {{ cookiecutter.project_slug }}.settings import Settings
+from {{ cookiecutter.project_slug }}.store import _image_id
 
 
 def settings_for(tmp_path: Path, *, max_top_k: int = 3) -> Settings:
@@ -292,3 +293,50 @@ def test_media_route_rejects_paths_outside_allowed_roots(
     response = TestClient(app).get("/custom/media/images/escape")
 
     assert response.status_code == 404
+
+
+def test_media_route_serves_managed_file_for_fragment_like_source_stem(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    source_image = tmp_path / "front#1.png"
+    image_id = _image_id(source_image)
+    managed_path = settings.media_data_dir / "images" / f"{image_id}.png"
+    managed_path.parent.mkdir(parents=True)
+    managed_path.write_bytes(b"managed image")
+
+    class FakeVectorStore:
+        def __init__(self) -> None:
+            self.ids: list[list[str]] = []
+
+        def get_by_ids(self, ids: list[str]):
+            from langchain_core.documents import Document
+
+            self.ids.append(ids)
+            return [
+                Document(
+                    id=image_id,
+                    page_content="",
+                    metadata={"file_path": str(managed_path), "file_name": source_image.name},
+                )
+            ]
+
+    vector_store = FakeVectorStore()
+
+    class FakeStore:
+        def __init__(self, **kwargs) -> None:
+            self.vector_store = vector_store
+
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
+
+    image_url = f"/custom/media/images/{image_id}"
+    assert "#" not in image_url
+    assert "?" not in image_url
+
+    response = TestClient(app).get(image_url)
+
+    assert response.status_code == 200
+    assert response.content == b"managed image"
+    assert vector_store.ids == [[image_id]]

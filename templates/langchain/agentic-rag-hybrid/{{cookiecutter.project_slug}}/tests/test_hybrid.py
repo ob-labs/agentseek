@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from langchain_core.documents import Document
@@ -586,6 +587,35 @@ def test_ingest_directory_embeds_each_real_sample_image_with_manifest_metadata(t
     assert all(extra["sparse_embedding"] for extra in vector_store.add_args["extras"])
     assert all("fulltext_content" in extra for extra in vector_store.add_args["extras"])
     assert set(store._load_index_ids()) == set(vector_store.add_args["ids"])
+
+
+def test_image_id_sanitizes_url_path_segments_and_preserves_safe_short_stems(tmp_path: Path) -> None:
+    def digest(path: Path) -> str:
+        return hashlib.sha1(str(path.resolve()).encode("utf-8")).hexdigest()[:16]
+
+    safe_path = tmp_path / "Display.PNG"
+    fragment_path = tmp_path / "front#?% 1.png"
+    unicode_path = tmp_path / "\u4e2d\u6587.png"
+    overlong_path = tmp_path / f"{'a' * 100}.png"
+
+    image_ids = [
+        _image_id(safe_path),
+        _image_id(fragment_path),
+        _image_id(unicode_path),
+        _image_id(overlong_path),
+    ]
+
+    assert image_ids == [
+        f"Display-{digest(safe_path)}",
+        f"front-1-{digest(fragment_path)}",
+        f"image-{digest(unicode_path)}",
+        f"{'a' * 64}-{digest(overlong_path)}",
+    ]
+    assert all(
+        character.isascii() and (character.isalnum() or character in "._-")
+        for image_id in image_ids
+        for character in image_id
+    )
 
 
 def test_ingest_directory_copies_external_images_to_managed_media_storage(tmp_path) -> None:
