@@ -7,8 +7,8 @@ Agentic hybrid RAG over an image-backed knowledge base.
 ```bash
 cp .env.example .env
 $EDITOR .env  # set SILICONFLOW_API_KEY
-uv sync --extra dev
-npm install --prefix frontend
+agentseek task sync
+agentseek task frontend
 agentseek task seekdb
 agentseek task ingest-sample
 uv run hybrid-demo
