@@ -66,6 +66,7 @@ rag_host_binding_templates = {
 }
 dependency_sync_templates = {
     ("deepagents", "content-builder"),
+    ("deepagents", "ragflow-knowledge-qa"),
     ("deepagents", "research"),
     ("deepagents", "sandbox"),
 }
@@ -99,6 +100,55 @@ def _assert_frontend_package_json(generated: Path) -> None:
         json.loads(frontend_package.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         pytest.fail(f"frontend/package.json is not valid JSON: {exc}")
+
+
+def _assert_ragflow_template_contract(
+    type_name: str,
+    template_name: str,
+    generated: Path,
+    pyproject_data: dict,
+    dependencies: list,
+    lifecycle_data: dict,
+    lifecycle_text: str,
+    readme_text: str,
+) -> None:
+    """Check the RAGFlow template's SDK, lifecycle, safety, and UI contract."""
+    if (type_name, template_name) != ("deepagents", "ragflow-knowledge-qa"):
+        return
+
+    assert pyproject_data["project"]["requires-python"] == ">=3.13,<3.14"
+    assert "ragflow-sdk==0.26.4" in dependencies
+    assert {"sync", "frontend"} <= set(lifecycle_data["tasks"])
+    assert {
+        "AGENTSEEK_MODEL",
+        "AGENTSEEK_API_KEY",
+        "AGENTSEEK_API_BASE",
+        "RAGFLOW_BASE_URL",
+        "RAGFLOW_API_KEY",
+        "RAGFLOW_UPLOAD_ROOT",
+    } <= set(lifecycle_data["env"])
+    assert "[env.LANGGRAPH_HOST]" in lifecycle_text
+    assert "--host ${LANGGRAPH_HOST:-127.0.0.1}" in lifecycle_text
+
+    assert "agentseek task frontend" in readme_text
+    assert "RAGFLOW_UPLOAD_ROOT" in readme_text
+    assert "ContextSeek is not included" in readme_text
+    assert "LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev" in readme_text
+
+    vite_text = (generated / "frontend" / "vite.config.ts").read_text(encoding="utf-8")
+    app_text = (generated / "frontend" / "src" / "App.tsx").read_text(encoding="utf-8")
+    frontend_env_text = (generated / "frontend" / ".env.example").read_text(encoding="utf-8")
+    assert "FRONTEND_HOST" in vite_text
+    assert "window.location.hostname" in app_text
+    assert "VITE_LANGGRAPH_API_URL=http://127.0.0.1" not in frontend_env_text
+
+    agent_files = sorted((generated / "src" / generated.name).glob("*.py"))
+    rendered_python = "\n".join(path.read_text(encoding="utf-8") for path in agent_files)
+    assert "Answer in the same language as the user's question." in rendered_python
+    agent_text = (generated / "src" / generated.name / "agent.py").read_text(encoding="utf-8")
+    assert "upload_staged_documents" in agent_text
+    assert "parse_ragflow_documents" in agent_text
+    assert '"tools": [list_ragflow_datasets, retrieve_ragflow]' in agent_text
 
 
 def test_at_least_one_template_discovered() -> None:
@@ -166,6 +216,16 @@ def test_template_renders_without_unrendered_jinja(
         assert "sync" in lifecycle_data["tasks"]
         assert lifecycle_data["tasks"]["sync"]["command"] == ["uv", "sync"]
         assert "agentseek task sync" in readme_text
+    _assert_ragflow_template_contract(
+        type_name,
+        template_name,
+        generated,
+        pyproject_data,
+        dependencies,
+        lifecycle_data,
+        lifecycle_text,
+        readme_text,
+    )
     if (type_name, template_name) in seekdb_skill_templates:
         task = lifecycle_data["tasks"]["seekdb-skills"]
         assert task["description"] == "Install recommended OceanBase seekdb agent skills."

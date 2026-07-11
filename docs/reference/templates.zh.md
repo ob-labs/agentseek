@@ -19,6 +19,7 @@ sources:
 | `bub/default` | 带 AgentSeek 生命周期规范的轻量 Bub agent。 |
 | `deepagents/content-builder` | 带写作流程、图像生成、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents 内容构建器。 |
 | `deepagents/default` | 带 AgentSeek 生命周期规范的最小 DeepAgents 应用。 |
+| `deepagents/ragflow-knowledge-qa` | 带 RAGFlow 检索、需审批的知识摄取、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents 知识库问答应用。 |
 | `deepagents/research` | 带检索流程、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents research 应用。 |
 | `deepagents/sandbox` | DeepAgents sandbox coding agent，默认接入 Daytona，并提供收费的 LangSmith Sandbox 备选、本地 UI 和 AgentSeek 生命周期规范。 |
 | `langchain/agentic-rag` | 带 OceanBase vector search 和 AgentSeek 生命周期规范的 LangChain agentic RAG。 |

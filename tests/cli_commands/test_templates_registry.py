@@ -12,6 +12,7 @@ EXPECTED_TEMPLATE_KEYS = {
     "bub/default",
     "deepagents/content-builder",
     "deepagents/default",
+    "deepagents/ragflow-knowledge-qa",
     "deepagents/research",
     "deepagents/sandbox",
     "langchain/agentic-rag",
@@ -73,3 +74,22 @@ def test_registered_templates_have_readme() -> None:
     )
 
     assert not missing_readmes, f"registered template(s) missing README.md: {missing_readmes}"
+
+
+def test_ragflow_template_has_required_source_structure() -> None:
+    """The RAGFlow contribution follows the bundled-template source contract."""
+    template_root = TEMPLATES_ROOT / "deepagents" / "ragflow-knowledge-qa"
+    generated_root = template_root / "{{cookiecutter.project_slug}}"
+
+    required = {
+        template_root / "cookiecutter.json",
+        template_root / "README.md",
+        generated_root / ".agentseek" / "lifecycle.toml",
+        generated_root / ".env.example",
+        generated_root / "README.md",
+        generated_root / "pyproject.toml",
+        generated_root / "uploads" / "sample-policy.md",
+    }
+
+    missing = sorted(str(path.relative_to(TEMPLATES_ROOT)) for path in required if not path.is_file())
+    assert not missing, f"RAGFlow template missing required source files: {missing}"
