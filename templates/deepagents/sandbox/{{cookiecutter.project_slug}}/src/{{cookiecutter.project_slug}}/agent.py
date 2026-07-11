@@ -1,9 +1,10 @@
 """DeepAgents sandbox coding agent, served by `langgraph dev`.
 
-Uses a LangSmith sandbox backend so the agent can execute shell commands
-and interact with an isolated filesystem. The model provider abstraction
-mirrors the research template: set AGENTSEEK_MODEL_PROVIDER + AGENTSEEK_MODEL
-in .env to target OpenAI, Anthropic, or Gemini.
+Uses Daytona by default and supports LangSmith Sandbox as an alternative so
+the agent can execute shell commands and interact with an isolated filesystem.
+The model provider abstraction mirrors the research template: set
+AGENTSEEK_MODEL_PROVIDER + AGENTSEEK_MODEL in .env to target OpenAI, Anthropic,
+or Gemini.
 """
 
 from __future__ import annotations

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 import sys
 import tomllib
@@ -37,13 +38,24 @@ def test_rendered_dependencies_include_both_sandbox_integrations(rendered_sandbo
     assert "langsmith[sandbox]" in dependencies
 
 
+def test_rendered_descriptions_default_to_daytona_and_keep_langsmith_as_an_alternative(
+    rendered_sandbox: Path,
+) -> None:
+    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text())
+    agent_source = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text()
+    agent_docstring = ast.get_docstring(ast.parse(agent_source))
+
+    for description in (project["project"]["description"], agent_docstring):
+        assert description is not None
+        assert "Daytona by default" in description
+        assert "LangSmith Sandbox as an alternative" in description
+
+
 def test_generated_configuration_defaults_to_daytona_and_warns_about_langsmith_charges(
     rendered_sandbox: Path,
 ) -> None:
     env_text = (rendered_sandbox / ".env.example").read_text()
-    lifecycle = tomllib.loads(
-        (rendered_sandbox / ".agentseek" / "lifecycle.toml").read_text()
-    )
+    lifecycle = tomllib.loads((rendered_sandbox / ".agentseek" / "lifecycle.toml").read_text())
     readme = (rendered_sandbox / "README.md").read_text()
 
     assert "AGENTSEEK_SANDBOX_PROVIDER=daytona" in env_text
