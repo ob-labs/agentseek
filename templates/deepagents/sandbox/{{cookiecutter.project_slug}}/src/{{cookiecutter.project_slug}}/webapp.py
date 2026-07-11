@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -15,7 +16,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
-        cleanup_sandbox()
+        await asyncio.to_thread(cleanup_sandbox)
 
 
 app = FastAPI(lifespan=lifespan)

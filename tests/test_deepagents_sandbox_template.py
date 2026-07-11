@@ -127,16 +127,24 @@ def test_rendered_webapp_lifespan_always_invokes_agent_cleanup(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     events: list[str] = []
-    module = _load_webapp_module(rendered_sandbox, monkeypatch, lambda: events.append("cleanup"))
+    cleanup_threads: list[int] = []
+
+    def cleanup() -> None:
+        events.append("cleanup")
+        cleanup_threads.append(threading.get_ident())
+
+    module = _load_webapp_module(rendered_sandbox, monkeypatch, cleanup)
 
     class LifespanError(RuntimeError):
         pass
 
     async def exercise_lifespan() -> None:
+        event_loop_thread = threading.get_ident()
         with pytest.raises(LifespanError):
             async with module.app.lifespan(module.app):
                 events.append("running")
                 raise LifespanError
+        assert cleanup_threads != [event_loop_thread]
 
     asyncio.run(exercise_lifespan())
     assert events == ["running", "cleanup"]
