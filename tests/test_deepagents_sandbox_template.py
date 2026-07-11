@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import ast
 import asyncio
+import importlib
 import importlib.util
 import json
 import sys
+import threading
 import tomllib
 import types
 import warnings
@@ -40,6 +42,8 @@ def _load_webapp_module(rendered: Path, monkeypatch: pytest.MonkeyPatch, cleanup
     package.__path__ = [str(rendered / "src" / package_name)]
     agent = types.ModuleType(f"{package_name}.agent")
     agent.__dict__["cleanup_sandbox"] = cleanup_sandbox
+    runtime = types.ModuleType(f"{package_name}.runtime")
+    runtime.__dict__["cleanup_sandbox"] = cleanup_sandbox
 
     class FakeFastAPI:
         def __init__(self, *, lifespan):
@@ -47,6 +51,7 @@ def _load_webapp_module(rendered: Path, monkeypatch: pytest.MonkeyPatch, cleanup
 
     monkeypatch.setitem(sys.modules, package_name, package)
     monkeypatch.setitem(sys.modules, f"{package_name}.agent", agent)
+    monkeypatch.setitem(sys.modules, f"{package_name}.runtime", runtime)
     monkeypatch.setitem(sys.modules, "fastapi", types.SimpleNamespace(FastAPI=FakeFastAPI))
 
     path = rendered / "src" / package_name / "webapp.py"
@@ -140,13 +145,108 @@ def test_provider_normalization(rendered_sandbox: Path) -> None:
         module.normalize_sandbox_provider("other")
 
 
-def test_rendered_agent_uses_provider_factory(rendered_sandbox: Path) -> None:
+def test_rendered_runtime_is_the_only_sandbox_resource_owner(rendered_sandbox: Path) -> None:
     agent = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text()
-    assert f"from {rendered_sandbox.name}.sandbox import create_sandbox_backend" in agent
-    assert "backend, cleanup_sandbox = create_sandbox_backend()" in agent
-    assert "atexit.register(cleanup_sandbox)" in agent
+    runtime_path = rendered_sandbox / "src" / rendered_sandbox.name / "runtime.py"
+    assert runtime_path.is_file()
+    runtime = runtime_path.read_text()
+    webapp = (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").read_text()
+
+    assert f"from {rendered_sandbox.name}.runtime import backend" in agent
+    assert "create_sandbox_backend" not in agent
+    assert "atexit.register" not in agent
     assert "from deepagents.backends import LangSmithSandbox" not in agent
     assert "from langsmith.sandbox import SandboxClient" not in agent
+    assert f"from {rendered_sandbox.name}.sandbox import create_sandbox_backend" in runtime
+    assert "backend, cleanup_sandbox = create_sandbox_backend()" in runtime
+    assert "atexit.register(cleanup_sandbox)" in runtime
+    assert f"from {rendered_sandbox.name}.runtime import cleanup_sandbox" in webapp
+    assert f"from {rendered_sandbox.name}.agent import cleanup_sandbox" not in webapp
+
+
+def test_file_graph_and_package_webapp_share_one_runtime_owner(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
+    graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
+    assert graph_path.name == "agent.py"
+    webapp_path_text, app_name = config["http"]["app"].split(":", maxsplit=1)
+    webapp_path = Path(webapp_path_text.removeprefix("./"))
+    assert webapp_path.name == "webapp.py"
+    assert app_name == "app"
+
+    package_name = rendered_sandbox.name
+    factory_calls = 0
+    provider_create_calls: list[object] = []
+    remote = types.SimpleNamespace(id="sandbox-id")
+
+    class FakeDaytona:
+        def create(self):
+            provider_create_calls.append(remote)
+            return remote
+
+        def delete(self, value):
+            pass
+
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+    monkeypatch.syspath_prepend(str(rendered_sandbox / "src"))
+    monkeypatch.setenv("DAYTONA_API_KEY", "test-key")
+    monkeypatch.setitem(sys.modules, "daytona", types.SimpleNamespace(Daytona=FakeDaytona))
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "deepagents",
+        types.SimpleNamespace(create_deep_agent=lambda **kwargs: types.SimpleNamespace(**kwargs)),
+    )
+    monkeypatch.setitem(sys.modules, "dotenv", types.SimpleNamespace(load_dotenv=lambda: None))
+    fake_langchain = types.ModuleType("langchain")
+    fake_langchain.__path__ = []
+    monkeypatch.setitem(sys.modules, "langchain", fake_langchain)
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain.chat_models",
+        types.SimpleNamespace(init_chat_model=lambda **kwargs: types.SimpleNamespace(**kwargs)),
+    )
+
+    class FakeFastAPI:
+        def __init__(self, *, lifespan):
+            self.lifespan = lifespan
+
+    monkeypatch.setitem(sys.modules, "fastapi", types.SimpleNamespace(FastAPI=FakeFastAPI))
+
+    sandbox_module = importlib.import_module(f"{package_name}.sandbox")
+    create_sandbox_backend = sandbox_module.create_sandbox_backend
+
+    def count_factory_calls(*args, **kwargs):
+        nonlocal factory_calls
+        factory_calls += 1
+        return create_sandbox_backend(*args, **kwargs)
+
+    monkeypatch.setattr(sandbox_module, "create_sandbox_backend", count_factory_calls)
+
+    graph_spec = importlib.util.spec_from_file_location("langgraph_generated_graph", graph_path)
+    assert graph_spec is not None and graph_spec.loader is not None
+    graph_module = importlib.util.module_from_spec(graph_spec)
+    monkeypatch.setitem(sys.modules, graph_spec.name, graph_module)
+    graph_spec.loader.exec_module(graph_module)
+
+    webapp_module_name = ".".join(webapp_path.with_suffix("").parts[1:])
+    webapp_module = importlib.import_module(webapp_module_name)
+
+    assert factory_calls == 1
+    assert len(provider_create_calls) == 1
+    runtime_module = sys.modules[f"{package_name}.runtime"]
+    assert graph_module.backend is runtime_module.backend
+    assert webapp_module.cleanup_sandbox is runtime_module.cleanup_sandbox
+    runtime_module.cleanup_sandbox()
 
 
 def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -438,3 +538,65 @@ def test_cleanup_suppresses_provider_delete_errors_and_emits_safe_warning(
         warnings.simplefilter("error", RuntimeWarning)
         strict_cleanup()
     assert delete_calls == 2
+
+
+def test_cleanup_is_idempotent_when_two_threads_call_concurrently(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sandbox = types.SimpleNamespace(id="sandbox-123")
+    delete_calls = 0
+    delete_count_lock = threading.Lock()
+    callers_ready = threading.Barrier(3)
+    callers_entered = threading.Condition()
+    caller_count = 0
+    delete_started = threading.Event()
+    release_delete = threading.Event()
+
+    class FakeDaytona:
+        def create(self):
+            return sandbox
+
+        def delete(self, value):
+            nonlocal delete_calls
+            with delete_count_lock:
+                delete_calls += 1
+            delete_started.set()
+            assert release_delete.wait(timeout=5)
+
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+    monkeypatch.setenv("DAYTONA_API_KEY", "test-key")
+    monkeypatch.setitem(sys.modules, "daytona", types.SimpleNamespace(Daytona=FakeDaytona))
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    _, cleanup = module.create_sandbox_backend("daytona")
+
+    def call_cleanup() -> None:
+        nonlocal caller_count
+        callers_ready.wait(timeout=5)
+        with callers_entered:
+            caller_count += 1
+            callers_entered.notify_all()
+        cleanup()
+
+    threads = [threading.Thread(target=call_cleanup) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    try:
+        callers_ready.wait(timeout=5)
+        with callers_entered:
+            assert callers_entered.wait_for(lambda: caller_count == 2, timeout=5)
+        assert delete_started.wait(timeout=5)
+    finally:
+        release_delete.set()
+        for thread in threads:
+            thread.join(timeout=5)
+            assert not thread.is_alive()
+
+    assert delete_calls == 1

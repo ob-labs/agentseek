@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from {{ cookiecutter.project_slug }}.agent import cleanup_sandbox
+from {{ cookiecutter.project_slug }}.runtime import cleanup_sandbox
 
 
 @asynccontextmanager
