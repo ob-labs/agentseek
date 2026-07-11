@@ -118,6 +118,157 @@ def test_langsmith_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pyte
     assert events == ["create", ("delete", "sandbox-id")]
 
 
+def test_daytona_adapter_failure_cleans_up_and_reraises(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events: list[object] = []
+    sandbox = object()
+
+    class AdapterError(RuntimeError):
+        pass
+
+    class FakeDaytona:
+        def create(self):
+            events.append("create")
+            return sandbox
+
+        def delete(self, value):
+            events.append(("delete", value))
+
+    class FailingBackend:
+        def __init__(self, *, sandbox):
+            events.append(("adapter", sandbox))
+            raise AdapterError
+
+    monkeypatch.setenv("DAYTONA_API_KEY", "test-key")
+    monkeypatch.setitem(sys.modules, "daytona", types.SimpleNamespace(Daytona=FakeDaytona))
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FailingBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    with pytest.raises(AdapterError):
+        module.create_sandbox_backend("daytona")
+    assert events == ["create", ("adapter", sandbox), ("delete", sandbox)]
+
+
+def test_langsmith_adapter_failure_cleans_up_and_reraises(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events: list[object] = []
+    remote = types.SimpleNamespace(name="sandbox-id")
+
+    class AdapterError(RuntimeError):
+        pass
+
+    class FakeClient:
+        def create_sandbox(self):
+            events.append("create")
+            return remote
+
+        def delete_sandbox(self, name):
+            events.append(("delete", name))
+
+    class FailingBackend:
+        def __init__(self, *, sandbox):
+            events.append(("adapter", sandbox))
+            raise AdapterError
+
+    monkeypatch.setenv("LANGSMITH_API_KEY", "test-key")
+    monkeypatch.setitem(
+        sys.modules,
+        "langsmith.sandbox",
+        types.SimpleNamespace(SandboxClient=FakeClient),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "deepagents.backends",
+        types.SimpleNamespace(LangSmithSandbox=FailingBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    with pytest.raises(AdapterError):
+        module.create_sandbox_backend("langsmith")
+    assert events == ["create", ("adapter", remote), ("delete", "sandbox-id")]
+
+
+def test_no_provider_argument_defaults_to_daytona(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    sandbox = object()
+
+    class FakeDaytona:
+        def create(self):
+            return sandbox
+
+        def delete(self, value):
+            pass
+
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+    monkeypatch.delenv("AGENTSEEK_SANDBOX_PROVIDER", raising=False)
+    monkeypatch.setenv("DAYTONA_API_KEY", "test-key")
+    monkeypatch.setitem(sys.modules, "daytona", types.SimpleNamespace(Daytona=FakeDaytona))
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    backend, cleanup = module.create_sandbox_backend()
+    assert backend.sandbox is sandbox
+    cleanup()
+
+
+def test_provider_environment_selects_langsmith(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    remote = types.SimpleNamespace(name="sandbox-id")
+
+    class FakeClient:
+        def create_sandbox(self):
+            return remote
+
+        def delete_sandbox(self, name):
+            pass
+
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+    monkeypatch.setenv("AGENTSEEK_SANDBOX_PROVIDER", "langsmith")
+    monkeypatch.setenv("LANGSMITH_API_KEY", "test-key")
+    monkeypatch.setitem(
+        sys.modules,
+        "langsmith.sandbox",
+        types.SimpleNamespace(SandboxClient=FakeClient),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "deepagents.backends",
+        types.SimpleNamespace(LangSmithSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    backend, cleanup = module.create_sandbox_backend()
+    assert backend.sandbox is remote
+    cleanup()
+
+
+def test_unsupported_provider_environment_fails_before_provider_imports(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class BombModule(types.ModuleType):
+        def __getattr__(self, name: str):
+            raise AssertionError
+
+    monkeypatch.setenv("AGENTSEEK_SANDBOX_PROVIDER", "other")
+    monkeypatch.setitem(sys.modules, "daytona", BombModule("daytona"))
+    monkeypatch.setitem(sys.modules, "langchain_daytona", BombModule("langchain_daytona"))
+    monkeypatch.setitem(sys.modules, "deepagents.backends", BombModule("deepagents.backends"))
+    monkeypatch.setitem(sys.modules, "langsmith.sandbox", BombModule("langsmith.sandbox"))
+    module = _load_sandbox_module(rendered_sandbox)
+    with pytest.raises(ValueError, match="AGENTSEEK_SANDBOX_PROVIDER='other'"):
+        module.create_sandbox_backend()
+
+
 @pytest.mark.parametrize(
     ("provider", "credential"),
     [

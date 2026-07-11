@@ -49,8 +49,13 @@ def create_sandbox_backend(provider: str | None = None) -> tuple[Any, Callable[[
 
         client = Daytona()
         sandbox = client.create()
-        backend = DaytonaSandbox(sandbox=sandbox)
-        return backend, _best_effort_cleanup(lambda: client.delete(sandbox))
+        cleanup = _best_effort_cleanup(lambda: client.delete(sandbox))
+        try:
+            backend = DaytonaSandbox(sandbox=sandbox)
+        except Exception:
+            cleanup()
+            raise
+        return backend, cleanup
 
     if not _nonempty_env("LANGSMITH_API_KEY"):
         raise RuntimeError("LANGSMITH_API_KEY is required when AGENTSEEK_SANDBOX_PROVIDER=langsmith.")
@@ -59,5 +64,10 @@ def create_sandbox_backend(provider: str | None = None) -> tuple[Any, Callable[[
 
     client = SandboxClient()
     sandbox = client.create_sandbox()
-    backend = LangSmithSandbox(sandbox=sandbox)
-    return backend, _best_effort_cleanup(lambda: client.delete_sandbox(sandbox.name))
+    cleanup = _best_effort_cleanup(lambda: client.delete_sandbox(sandbox.name))
+    try:
+        backend = LangSmithSandbox(sandbox=sandbox)
+    except Exception:
+        cleanup()
+        raise
+    return backend, cleanup
