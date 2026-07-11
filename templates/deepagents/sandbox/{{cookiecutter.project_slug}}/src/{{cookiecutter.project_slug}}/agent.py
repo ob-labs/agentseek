@@ -1,24 +1,23 @@
 """DeepAgents sandbox coding agent, served by `langgraph dev`.
 
-Uses a LangSmith sandbox backend so the agent can execute shell commands
-and interact with an isolated filesystem. The model provider abstraction
-mirrors the research template: set AGENTSEEK_MODEL_PROVIDER + AGENTSEEK_MODEL
-in .env to target OpenAI, Anthropic, or Gemini.
+Uses Daytona by default and supports LangSmith Sandbox as an alternative so
+the agent can execute shell commands and interact with an isolated filesystem.
+The model provider abstraction mirrors the research template: set
+AGENTSEEK_MODEL_PROVIDER + AGENTSEEK_MODEL in .env to target OpenAI, Anthropic,
+or Gemini.
 """
 
 from __future__ import annotations
 
-import atexit
 import os
 import warnings
 
 from deepagents import create_deep_agent
-from deepagents.backends import LangSmithSandbox
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
-from langsmith.sandbox import SandboxClient
 
 from {{ cookiecutter.project_slug }}.prompts import SYSTEM_PROMPT
+from {{ cookiecutter.project_slug }}.runtime import get_backend
 
 load_dotenv()
 
@@ -125,28 +124,7 @@ elif MODEL_PROVIDER == "google_genai":
         MODEL_INIT_KWARGS["base_url"] = _nonempty_env("GOOGLE_API_BASE")
 
 model = init_chat_model(**MODEL_INIT_KWARGS)
-
-# ---------------------------------------------------------------------------
-# Sandbox backend + lifecycle cleanup
-#
-# The sandbox is created once per process. On hot-reload (langgraph dev),
-# the previous module's atexit handler deletes its sandbox before the new
-# module creates a fresh one, so sandboxes don't leak.
-# ---------------------------------------------------------------------------
-
-_sandbox_client = SandboxClient()
-_ls_sandbox = _sandbox_client.create_sandbox()
-backend = LangSmithSandbox(sandbox=_ls_sandbox)
-
-
-def _cleanup_sandbox() -> None:
-    try:
-        _sandbox_client.delete_sandbox(_ls_sandbox.name)
-    except Exception:
-        pass
-
-
-atexit.register(_cleanup_sandbox)
+backend = get_backend()
 
 # ---------------------------------------------------------------------------
 # Graph
