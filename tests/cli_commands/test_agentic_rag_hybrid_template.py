@@ -65,6 +65,9 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
 
     frontend_package = json.loads((generated / "frontend" / "package.json").read_text(encoding="utf-8"))
     assert "--host" not in frontend_package["scripts"]["dev"]
+    assert frontend_package["engines"]["node"] == ">=20.19.0"
+    assert frontend_package["devDependencies"]["@vitejs/plugin-react"] == "^6.0.3"
+    assert frontend_package["devDependencies"]["vite"] == "^8.1.4"
 
     lifecycle = tomllib.loads((generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
     assert lifecycle["template"] == "langchain/agentic-rag-hybrid"
@@ -161,6 +164,8 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     assert 'seekdb_db_name="test"' in seekdb_integration
     assert 'dir="/tmp"' in seekdb_integration
     assert "sys.platform" not in seekdb_integration
+    assert "subprocess.run" in seekdb_integration
+    assert "shutil.rmtree" in seekdb_integration
     assert "configure_tracing(get_settings())" in agent
     assert "LangChainInstrumentor" in observability
     assert "OTLPSpanExporter" in observability

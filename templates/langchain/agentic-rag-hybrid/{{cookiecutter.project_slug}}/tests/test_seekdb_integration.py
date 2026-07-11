@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import base64
+import shutil
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -32,8 +35,8 @@ class DeterministicEmbeddingEngine:
         return [0.0, 1.0, 0.0, 0.0]
 
 
-def test_real_seekdb_persists_images_and_serves_semantic_text_search(tmp_path: Path) -> None:
-    fixture_dir = tmp_path / "fixtures"
+def _run_real_seekdb_integration(root: Path, seekdb_path: Path) -> None:
+    fixture_dir = root / "fixtures"
     fixture_dir.mkdir()
     (fixture_dir / "sunset-lake.png").write_bytes(PNG_1X1)
     (fixture_dir / "city-train.png").write_bytes(PNG_1X1)
@@ -50,8 +53,6 @@ def test_real_seekdb_persists_images_and_serves_semantic_text_search(tmp_path: P
 """,
         encoding="utf-8",
     )
-    # Keep the native database path short enough for macOS local sockets.
-    seekdb_path = Path(tempfile.mkdtemp(prefix="agentseek-seekdb-", dir="/tmp"))
     settings = Settings(
         seekdb_path=seekdb_path,
         seekdb_db_name="test",
@@ -67,7 +68,7 @@ def test_real_seekdb_persists_images_and_serves_semantic_text_search(tmp_path: P
         hybrid_default_mode="semantic",
         hybrid_recall_multiplier=2,
         hybrid_max_top_k=5,
-        media_data_dir=tmp_path / "managed-media",
+        media_data_dir=root / "managed-media",
         media_max_upload_bytes=1024,
     )
 
@@ -97,3 +98,24 @@ def test_real_seekdb_persists_images_and_serves_semantic_text_search(tmp_path: P
     assert trace.hits
     assert trace.hits[0].file_name == "sunset-lake.png"
     assert trace.hits[0].caption == "Crimson sunset above a mountain lake."
+
+
+def test_real_seekdb_persists_images_and_serves_semantic_text_search(tmp_path: Path) -> None:
+    # A child process gives the native engine a definitive shutdown boundary.
+    # Keep its database path short enough for macOS local sockets.
+    seekdb_path = Path(tempfile.mkdtemp(prefix="agentseek-seekdb-", dir="/tmp"))
+    try:
+        result = subprocess.run(  # noqa: S603
+            [sys.executable, str(Path(__file__).resolve()), str(tmp_path), str(seekdb_path)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+    finally:
+        shutil.rmtree(seekdb_path, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    _run_real_seekdb_integration(Path(sys.argv[1]), Path(sys.argv[2]))
