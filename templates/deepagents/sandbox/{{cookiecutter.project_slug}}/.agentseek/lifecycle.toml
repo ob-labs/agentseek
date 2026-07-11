@@ -1,5 +1,5 @@
 version = 1
-template = "langchain/sandbox"
+template = "deepagents/sandbox"
 name = "{{ cookiecutter.project_name }}"
 env_file = ".env"
 

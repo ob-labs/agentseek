@@ -1,4 +1,4 @@
-# langchain/sandbox
+# deepagents/sandbox
 
 Cookiecutter template for a **sandbox-backed coding agent** using
 [DeepAgents](https://docs.langchain.com/oss/deepagents) +
@@ -28,7 +28,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ```bash
 # 1. Scaffold
-uvx cookiecutter templates/langchain/sandbox
+uvx cookiecutter templates/deepagents/sandbox
 
 # 2. Configure
 cd <project_slug>

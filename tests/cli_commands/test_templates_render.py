@@ -67,7 +67,7 @@ rag_host_binding_templates = {
 dependency_sync_templates = {
     ("deepagents", "content-builder"),
     ("deepagents", "research"),
-    ("langchain", "sandbox"),
+    ("deepagents", "sandbox"),
 }
 
 
@@ -212,7 +212,7 @@ def test_template_renders_without_unrendered_jinja(
         ("langchain", "cli-remote"),
         ("langchain", "default"),
         ("langchain", "markdown-messages"),
-        ("langchain", "sandbox"),
+        ("deepagents", "sandbox"),
     }:
         agent_files = sorted((generated / "src" / generated.name).glob("*.py"))
         rendered_python = "\n".join(path.read_text(encoding="utf-8") for path in agent_files)
