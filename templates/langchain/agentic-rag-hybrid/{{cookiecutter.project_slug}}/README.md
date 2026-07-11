@@ -86,6 +86,8 @@ npm run build
 
 The hybrid template CI smoke runs that full Python suite and the frontend production build. It does not call SiliconFlow models and does not prove a live Phoenix deployment.
 
+The seekdb proof runs with embedded bindings on supported Linux and macOS arm64 installations, and skips only when `pylibseekdb` is unavailable. It uses seekdb's built-in `test` database and a short native data path so the same test exercises real storage on macOS.
+
 Credentialed live proof is separate: configure a real `AGENTSEEK_API_KEY`, run `agentseek task ingest-sample` and `uv run hybrid-demo` for hosted SiliconFlow embeddings, then start and enable Phoenix as described below to inspect exported traces. Those steps validate external credentials, model behavior, and the optional observability stack beyond the deterministic CI contract.
 
 ## Phoenix Observability

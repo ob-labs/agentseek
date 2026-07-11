@@ -134,6 +134,7 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
         encoding="utf-8"
     )
     readme = (project_dir / "README.md").read_text(encoding="utf-8")
+    seekdb_integration = (project_dir / "tests" / "test_seekdb_integration.py").read_text(encoding="utf-8")
     env_example = (project_dir / ".env.example").read_text(encoding="utf-8")
     compose = (project_dir / "docker-compose.yml").read_text(encoding="utf-8")
     template_config = json.loads((TEMPLATE_DIR / "cookiecutter.json").read_text(encoding="utf-8"))
@@ -156,6 +157,10 @@ def test_hybrid_template_teaches_hybrid_search_modes() -> None:
     assert "trace_custom_route" not in observability
     assert "OceanbaseVectorStore" in store
     assert "import pyseekdb" not in store
+    assert 'pytest.importorskip("pylibseekdb"' in seekdb_integration
+    assert 'seekdb_db_name="test"' in seekdb_integration
+    assert 'dir="/tmp"' in seekdb_integration
+    assert "sys.platform" not in seekdb_integration
     assert "configure_tracing(get_settings())" in agent
     assert "LangChainInstrumentor" in observability
     assert "OTLPSpanExporter" in observability

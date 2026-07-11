@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import base64
-import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -10,10 +10,7 @@ from {{ cookiecutter.project_slug }}.settings import Settings
 from {{ cookiecutter.project_slug }}.store import HybridImageStore
 
 
-pytestmark = pytest.mark.skipif(
-    sys.platform != "linux",
-    reason="embedded pylibseekdb is supported only on Linux",
-)
+pytest.importorskip("pylibseekdb", reason="embedded seekdb bindings are unavailable on this platform")
 
 
 PNG_1X1 = base64.b64decode(
@@ -53,9 +50,11 @@ def test_real_seekdb_persists_images_and_serves_semantic_text_search(tmp_path: P
 """,
         encoding="utf-8",
     )
+    # Keep the native database path short enough for macOS local sockets.
+    seekdb_path = Path(tempfile.mkdtemp(prefix="agentseek-seekdb-", dir="/tmp"))
     settings = Settings(
-        seekdb_path=tmp_path / "seekdb",
-        seekdb_db_name="hybrid_smoke",
+        seekdb_path=seekdb_path,
+        seekdb_db_name="test",
         image_table_name="image_records",
         embedding_type="deterministic",
         embedding_api_key="",
