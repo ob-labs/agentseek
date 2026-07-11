@@ -65,7 +65,7 @@ def test_hybrid_template_langgraph_http_app_contract(tmp_path: Path) -> None:
 
     frontend_package = json.loads((generated / "frontend" / "package.json").read_text(encoding="utf-8"))
     assert "--host" not in frontend_package["scripts"]["dev"]
-    assert frontend_package["engines"]["node"] == ">=20.19.0"
+    assert frontend_package["engines"]["node"] == "^20.19.0 || >=22.12.0"
     assert frontend_package["devDependencies"]["@vitejs/plugin-react"] == "^6.0.3"
     assert frontend_package["devDependencies"]["vite"] == "^8.1.4"
 
