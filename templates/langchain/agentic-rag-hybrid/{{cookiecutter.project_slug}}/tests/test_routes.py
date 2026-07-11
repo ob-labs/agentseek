@@ -268,27 +268,14 @@ def test_upload_archive_runs_in_fastapi_threadpool() -> None:
     assert not inspect.iscoroutinefunction(routes.upload_archive)
 
 
-def test_media_route_rejects_paths_outside_allowed_roots(
+def test_media_route_rejects_files_outside_managed_image_root(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     outside = tmp_path / "outside.png"
     outside.write_bytes(b"fake image")
 
-    class FakeVectorStore:
-        def get_by_ids(self, ids):
-            from langchain_core.documents import Document
-
-            return [Document(id="escape", page_content="", metadata={"file_path": str(outside), "file_name": "outside.png"})]
-
-    class FakeStore:
-        vector_store = FakeVectorStore()
-
-        def __init__(self, **kwargs) -> None:
-            pass
-
     monkeypatch.setattr(routes, "get_settings", lambda: settings_for(tmp_path))
-    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
 
     response = TestClient(app).get("/custom/media/images/escape")
 
@@ -306,30 +293,7 @@ def test_media_route_serves_managed_file_for_fragment_like_source_stem(
     managed_path.parent.mkdir(parents=True)
     managed_path.write_bytes(b"managed image")
 
-    class FakeVectorStore:
-        def __init__(self) -> None:
-            self.ids: list[list[str]] = []
-
-        def get_by_ids(self, ids: list[str]):
-            from langchain_core.documents import Document
-
-            self.ids.append(ids)
-            return [
-                Document(
-                    id=image_id,
-                    page_content="",
-                    metadata={"file_path": str(managed_path), "file_name": source_image.name},
-                )
-            ]
-
-    vector_store = FakeVectorStore()
-
-    class FakeStore:
-        def __init__(self, **kwargs) -> None:
-            self.vector_store = vector_store
-
     monkeypatch.setattr(routes, "get_settings", lambda: settings)
-    monkeypatch.setattr(routes, "HybridImageStore", FakeStore)
 
     image_url = f"/custom/media/images/{image_id}"
     assert "#" not in image_url
@@ -339,4 +303,118 @@ def test_media_route_serves_managed_file_for_fragment_like_source_stem(
 
     assert response.status_code == 200
     assert response.content == b"managed image"
-    assert vector_store.ids == [[image_id]]
+
+
+def test_media_route_rejects_unsafe_image_id(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+
+    response = TestClient(app).get("/custom/media/images/bad$id")
+
+    assert response.status_code == 404
+
+    with pytest.raises(routes.HTTPException) as exc_info:
+        routes._managed_image_path("../outside", settings)
+
+    assert exc_info.value.status_code == 404
+
+
+def test_media_route_rejects_symlinked_image_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    outside_root = tmp_path / "outside"
+    outside_root.mkdir()
+    (outside_root / "escape.png").write_bytes(b"outside image")
+    settings.media_data_dir.mkdir(parents=True)
+    (settings.media_data_dir / "images").symlink_to(outside_root, target_is_directory=True)
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+
+    response = TestClient(app).get("/custom/media/images/escape")
+
+    assert response.status_code == 404
+
+
+def test_media_route_rejects_symlinked_image_file(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    image_root = settings.media_data_dir / "images"
+    image_root.mkdir(parents=True)
+    outside = tmp_path / "outside.png"
+    outside.write_bytes(b"outside image")
+    (image_root / "escape.png").symlink_to(outside)
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+
+    response = TestClient(app).get("/custom/media/images/escape")
+
+    assert response.status_code == 404
+
+
+def test_media_route_rejects_symlink_loop_as_image_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    settings.media_data_dir.mkdir(parents=True)
+    image_root = settings.media_data_dir / "images"
+    image_root.symlink_to(image_root, target_is_directory=True)
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+
+    response = TestClient(app).get("/custom/media/images/loop")
+
+    assert response.status_code == 404
+
+
+def test_media_route_rejects_symlink_loop_as_image_file(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    image_root = settings.media_data_dir / "images"
+    image_root.mkdir(parents=True)
+    candidate = image_root / "loop.png"
+    candidate.symlink_to(candidate)
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+
+    response = TestClient(app).get("/custom/media/images/loop")
+
+    assert response.status_code == 404
+
+
+def test_media_route_rejects_ambiguous_duplicate_stems(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    image_root = settings.media_data_dir / "images"
+    image_root.mkdir(parents=True)
+    (image_root / "duplicate.png").write_bytes(b"png image")
+    (image_root / "duplicate.jpg").write_bytes(b"jpg image")
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+
+    response = TestClient(app).get("/custom/media/images/duplicate")
+
+    assert response.status_code == 404
+
+
+def test_media_route_accepts_valid_image_id_characters(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    settings = settings_for(tmp_path)
+    image_id = "A1.uuid_like-name_part"
+    managed_path = settings.media_data_dir / "images" / f"{image_id}.webp"
+    managed_path.parent.mkdir(parents=True)
+    managed_path.write_bytes(b"managed image")
+    monkeypatch.setattr(routes, "get_settings", lambda: settings)
+
+    response = TestClient(app).get(f"/custom/media/images/{image_id}")
+
+    assert response.status_code == 200
+    assert response.content == b"managed image"

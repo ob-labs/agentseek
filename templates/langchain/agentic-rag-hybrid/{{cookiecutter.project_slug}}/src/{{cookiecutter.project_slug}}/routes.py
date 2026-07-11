@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 import tarfile
 import uuid
@@ -10,14 +11,14 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 from .hybrid import clamp_top_k, normalize_query
-from .media import SUPPORTED_ARCHIVE_SUFFIXES, extract_archive_safely
+from .media import SUPPORTED_ARCHIVE_SUFFIXES, SUPPORTED_IMAGE_SUFFIXES, extract_archive_safely
 from .observability import configure_tracing
 from .retrieval_runnables import archive_ingest_runnable, compare_modes_runnable, sample_pack_ingest_runnable
-from .sample_pack import sample_pack_cases, sample_pack_dir, sample_pack_manifest, sample_pack_path
+from .sample_pack import sample_pack_cases, sample_pack_manifest, sample_pack_path
 from .settings import Settings, get_settings
-from .store import HybridImageStore
 
 app = FastAPI(title="{{ cookiecutter.project_name }} Custom Routes")
+IMAGE_ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
 
 def _archive_suffix(filename: str | None) -> str:
@@ -45,12 +46,41 @@ def _path_is_under(path: Path, root: Path) -> bool:
     return path == root or root in path.parents
 
 
-def _servable_image_path(raw_path: str, settings: Settings) -> Path:
-    path = Path(raw_path).resolve()
-    allowed_roots = (settings.media_data_dir.resolve(), sample_pack_dir().resolve())
-    if not path.is_file() or not any(_path_is_under(path, root) for root in allowed_roots):
-        raise HTTPException(status_code=404, detail="Image file missing")
-    return path
+def _managed_image_path(image_id: str, settings: Settings) -> Path:
+    if not IMAGE_ID_PATTERN.fullmatch(image_id):
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    image_dir = settings.media_data_dir / "images"
+    if image_dir.is_symlink():
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    try:
+        media_root = settings.media_data_dir.resolve()
+        image_root = image_dir.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise HTTPException(status_code=404, detail="Image not found") from exc
+
+    if not image_root.is_dir() or not _path_is_under(image_root, media_root):
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    matches: list[Path] = []
+    for candidate in image_root.iterdir():
+        if (
+            candidate.stem != image_id
+            or candidate.suffix.lower() not in SUPPORTED_IMAGE_SUFFIXES
+            or candidate.is_symlink()
+        ):
+            continue
+        try:
+            resolved = candidate.resolve()
+        except (OSError, RuntimeError):
+            continue
+        if resolved.is_file() and _path_is_under(resolved, image_root):
+            matches.append(resolved)
+
+    if len(matches) != 1:
+        raise HTTPException(status_code=404, detail="Image not found")
+    return matches[0]
 
 
 @app.get("/custom/health")
@@ -146,9 +176,4 @@ def compare(query: str, top_k: int = 5) -> dict[str, object]:
 @app.get("/custom/media/images/{image_id}")
 def image(image_id: str) -> FileResponse:
     settings = get_settings()
-    store = HybridImageStore(settings=settings)
-    docs = store.vector_store.get_by_ids([image_id])
-    if not docs:
-        raise HTTPException(status_code=404, detail="Image not found")
-    file_path = _servable_image_path(docs[0].metadata.get("file_path", ""), settings)
-    return FileResponse(file_path)
+    return FileResponse(_managed_image_path(image_id, settings))
