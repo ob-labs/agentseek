@@ -13,12 +13,11 @@ import os
 import warnings
 
 from deepagents import create_deep_agent
-from deepagents.backends import LangSmithSandbox
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
-from langsmith.sandbox import SandboxClient
 
 from {{ cookiecutter.project_slug }}.prompts import SYSTEM_PROMPT
+from {{ cookiecutter.project_slug }}.sandbox import create_sandbox_backend
 
 load_dotenv()
 
@@ -134,18 +133,7 @@ model = init_chat_model(**MODEL_INIT_KWARGS)
 # module creates a fresh one, so sandboxes don't leak.
 # ---------------------------------------------------------------------------
 
-_sandbox_client = SandboxClient()
-_ls_sandbox = _sandbox_client.create_sandbox()
-backend = LangSmithSandbox(sandbox=_ls_sandbox)
-
-
-def _cleanup_sandbox() -> None:
-    try:
-        _sandbox_client.delete_sandbox(_ls_sandbox.name)
-    except Exception:
-        pass
-
-
+backend, _cleanup_sandbox = create_sandbox_backend()
 atexit.register(_cleanup_sandbox)
 
 # ---------------------------------------------------------------------------
