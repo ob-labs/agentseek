@@ -11,11 +11,11 @@ sources:
   - templates/deepagents/default/README.md
   - templates/deepagents/research/README.md
   - templates/deepagents/content-builder/README.md
+  - templates/deepagents/sandbox/README.md
   - templates/langchain/default/README.md
   - templates/langchain/markdown-messages/README.md
   - templates/langchain/agentic-rag/README.md
   - templates/langchain/cli-remote/README.md
-  - templates/langchain/sandbox/README.md
 ---
 
 # Choose a Template
@@ -27,8 +27,8 @@ Use this guide before you create a project.
 | Start with | When you need |
 | --- | --- |
 | `bub` | A lightweight Bub app, AG-UI gateway, and AgentSeek lifecycle commands. |
-| `deepagents` | Planning, tool use, sub-agent workflows, or DeepAgents examples with local development. |
-| `langchain` | LangChain or LangGraph app patterns, including RAG, markdown chat, sandbox, or AG-UI integration. |
+| `deepagents` | Planning, tool use, sub-agent workflows, sandbox-backed coding agents, or DeepAgents examples with local development. |
+| `langchain` | LangChain or LangGraph app patterns, including RAG, markdown chat, or AG-UI integration. |
 
 Every maintained template exposes AgentSeek lifecycle commands through
 `.agentseek/lifecycle.toml`. The runtime choice still matters because the
@@ -42,11 +42,11 @@ generated app code is Bub, DeepAgents, LangChain, or LangGraph shaped.
 | Wrap a minimal DeepAgents runnable for AgentSeek | `deepagents/default` | It binds `create_deep_agent(...)` through `agentseek-langchain`. |
 | Run a DeepAgents research workflow | `deepagents/research` | It includes search, tool streaming, sub-agent progress, and a React frontend. |
 | Run a DeepAgents content workflow | `deepagents/content-builder` | It includes brand memory, skills, subagents, image generation, and streamed UI. |
+| Build a sandbox-backed coding agent | `deepagents/sandbox` | It combines DeepAgents with a LangSmith sandbox backend and local UI. |
 | Build a LangChain AG-UI app | `langchain/default` | It keeps the LangChain `create_agent(...)` shape and binds it through AgentSeek. |
 | Start with a pure LangGraph-style chat UI | `langchain/markdown-messages` | It uses `langgraph dev`, `@langchain/react`, and markdown message rendering. |
 | Build RAG over OceanBase seekdb | `langchain/agentic-rag` | It includes an agentic retrieval tool, ingest command, frontend, and OceanBase seekdb setup. |
 | Connect to a remote LangGraph service | `langchain/cli-remote` | It bridges a remote LangGraph agent through `LangGraphClientRunnable`. |
-| Build a sandbox-backed coding agent | `langchain/sandbox` | It combines DeepAgents with a LangSmith sandbox backend and local UI. |
 
 ## Choose AgentSeek-Wrapped Or Framework-Native
 
@@ -54,8 +54,8 @@ Use `bub/default`, `deepagents/default`, or `langchain/default` when you want
 the generated app to run through the
 AgentSeek/Bub gateway path.
 
-Use `deepagents/research`, `deepagents/content-builder`,
-`langchain/markdown-messages`, `langchain/agentic-rag`, or `langchain/sandbox`
+Use `deepagents/research`, `deepagents/content-builder`, `deepagents/sandbox`,
+`langchain/markdown-messages`, or `langchain/agentic-rag`
 when you want a framework-native backend such as `langgraph dev`, still managed
 by AgentSeek lifecycle commands.
 

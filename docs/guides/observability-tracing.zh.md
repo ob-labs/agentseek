@@ -12,7 +12,7 @@ sources:
   - templates/langchain/default/{{cookiecutter.project_slug}}/docker-compose.yml
   - templates/deepagents/research/{{cookiecutter.project_slug}}/.env.example
   - templates/langchain/markdown-messages/{{cookiecutter.project_slug}}/.env.example
-  - templates/langchain/sandbox/{{cookiecutter.project_slug}}/.env.example
+  - templates/deepagents/sandbox/{{cookiecutter.project_slug}}/.env.example
 ---
 
 # 可观测性和追踪

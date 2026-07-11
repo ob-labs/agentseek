@@ -19,12 +19,12 @@ sources:
 | `deepagents/content-builder` | 带写作流程、图像生成、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents 内容构建器。 |
 | `deepagents/default` | 带 AgentSeek 生命周期规范的最小 DeepAgents 应用。 |
 | `deepagents/research` | 带检索流程、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents research 应用。 |
+| `deepagents/sandbox` | 带本地 UI 和 AgentSeek 生命周期规范的 sandbox coding agent。 |
 | `langchain/agentic-rag` | 带 OceanBase vector search 和 AgentSeek 生命周期规范的 LangChain agentic RAG。 |
 | `langchain/agentic-rag-openvino` | 带本地 OpenVINO models 和 AgentSeek 生命周期规范的 LangChain local RAG。 |
 | `langchain/cli-remote` | 把本地生命周期工作流连接到远程 LangGraph 服务的 LangChain 模板。 |
 | `langchain/default` | 带本地 Web UI 和 AgentSeek 生命周期规范的 LangChain agent 应用。 |
 | `langchain/markdown-messages` | 带 Markdown 消息渲染和 AgentSeek 生命周期规范的 LangChain chat 应用。 |
-| `langchain/sandbox` | 带本地 UI 和 AgentSeek 生命周期规范的 sandbox coding agent。 |
 
 ## 模板 spec
 
