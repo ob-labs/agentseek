@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 
 from {{ cookiecutter.project_slug }}.prompts import SYSTEM_PROMPT
-from {{ cookiecutter.project_slug }}.runtime import backend
+from {{ cookiecutter.project_slug }}.runtime import get_backend
 
 load_dotenv()
 
@@ -124,6 +124,7 @@ elif MODEL_PROVIDER == "google_genai":
         MODEL_INIT_KWARGS["base_url"] = _nonempty_env("GOOGLE_API_BASE")
 
 model = init_chat_model(**MODEL_INIT_KWARGS)
+backend = get_backend()
 
 # ---------------------------------------------------------------------------
 # Graph

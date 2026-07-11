@@ -10,6 +10,8 @@ import threading
 import tomllib
 import types
 import warnings
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -34,6 +36,43 @@ def _load_sandbox_module(rendered: Path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+@contextmanager
+def _isolated_package_modules(package_name: str) -> Iterator[None]:
+    prefix = f"{package_name}."
+    previous = {name: module for name, module in sys.modules.items() if name == package_name or name.startswith(prefix)}
+    for name in previous:
+        sys.modules.pop(name, None)
+    try:
+        yield
+    finally:
+        for name in list(sys.modules):
+            if name == package_name or name.startswith(prefix):
+                sys.modules.pop(name, None)
+        sys.modules.update(previous)
+
+
+def _install_agent_import_fakes(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    load_dotenv,
+    init_chat_model,
+) -> None:
+    monkeypatch.setitem(
+        sys.modules,
+        "deepagents",
+        types.SimpleNamespace(create_deep_agent=lambda **kwargs: types.SimpleNamespace(**kwargs)),
+    )
+    monkeypatch.setitem(sys.modules, "dotenv", types.SimpleNamespace(load_dotenv=load_dotenv))
+    fake_langchain = types.ModuleType("langchain")
+    fake_langchain.__path__ = []
+    monkeypatch.setitem(sys.modules, "langchain", fake_langchain)
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain.chat_models",
+        types.SimpleNamespace(init_chat_model=init_chat_model),
+    )
 
 
 def _load_webapp_module(rendered: Path, monkeypatch: pytest.MonkeyPatch, cleanup_sandbox):
@@ -152,16 +191,140 @@ def test_rendered_runtime_is_the_only_sandbox_resource_owner(rendered_sandbox: P
     runtime = runtime_path.read_text()
     webapp = (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").read_text()
 
-    assert f"from {rendered_sandbox.name}.runtime import backend" in agent
+    assert f"from {rendered_sandbox.name}.runtime import get_backend" in agent
     assert "create_sandbox_backend" not in agent
     assert "atexit.register" not in agent
+    assert "backend = get_backend()" in agent
+    assert agent.index("model = init_chat_model") < agent.index("backend = get_backend()")
     assert "from deepagents.backends import LangSmithSandbox" not in agent
     assert "from langsmith.sandbox import SandboxClient" not in agent
     assert f"from {rendered_sandbox.name}.sandbox import create_sandbox_backend" in runtime
-    assert "backend, cleanup_sandbox = create_sandbox_backend()" in runtime
-    assert "atexit.register(cleanup_sandbox)" in runtime
+    assert "threading.Lock()" in runtime
+    assert "with _lock:" in runtime
+    assert "def get_backend()" in runtime
+    assert "def cleanup_sandbox()" in runtime
+    assert runtime.index("def get_backend()") < runtime.index("create_sandbox_backend()")
+    assert runtime.index("create_sandbox_backend()") < runtime.index("atexit.register(cleanup_sandbox)")
     assert f"from {rendered_sandbox.name}.runtime import cleanup_sandbox" in webapp
     assert f"from {rendered_sandbox.name}.agent import cleanup_sandbox" not in webapp
+
+
+def test_importing_configured_webapp_does_not_initialize_sandbox(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    webapp_path_text, _ = config["http"]["app"].split(":", maxsplit=1)
+    webapp_path = Path(webapp_path_text.removeprefix("./"))
+    webapp_module_name = ".".join(webapp_path.with_suffix("").parts[1:])
+    package_name = rendered_sandbox.name
+    factory_calls = 0
+
+    class FakeFastAPI:
+        def __init__(self, *, lifespan):
+            self.lifespan = lifespan
+
+    monkeypatch.syspath_prepend(str(rendered_sandbox / "src"))
+    monkeypatch.setitem(sys.modules, "fastapi", types.SimpleNamespace(FastAPI=FakeFastAPI))
+
+    with _isolated_package_modules(package_name):
+        sandbox_module = importlib.import_module(f"{package_name}.sandbox")
+
+        def count_factory_calls():
+            nonlocal factory_calls
+            factory_calls += 1
+            return object(), lambda: None
+
+        monkeypatch.setattr(sandbox_module, "create_sandbox_backend", count_factory_calls)
+        webapp_module = importlib.import_module(webapp_module_name)
+
+        assert callable(webapp_module.cleanup_sandbox)
+        webapp_module.cleanup_sandbox()
+        assert factory_calls == 0
+
+
+def test_invalid_model_configuration_does_not_initialize_sandbox(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
+    graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
+    package_name = rendered_sandbox.name
+    factory_calls = 0
+    events: list[str] = []
+
+    monkeypatch.syspath_prepend(str(rendered_sandbox / "src"))
+    monkeypatch.setenv("AGENTSEEK_MODEL_PROVIDER", "invalid")
+    _install_agent_import_fakes(
+        monkeypatch,
+        load_dotenv=lambda: events.append("dotenv"),
+        init_chat_model=lambda **kwargs: events.append("model"),
+    )
+
+    with _isolated_package_modules(package_name):
+        sandbox_module = importlib.import_module(f"{package_name}.sandbox")
+
+        def count_factory_calls():
+            nonlocal factory_calls
+            factory_calls += 1
+            events.append("backend")
+            return object(), lambda: None
+
+        monkeypatch.setattr(sandbox_module, "create_sandbox_backend", count_factory_calls)
+        graph_spec = importlib.util.spec_from_file_location("invalid_model_graph", graph_path)
+        assert graph_spec is not None and graph_spec.loader is not None
+        graph_module = importlib.util.module_from_spec(graph_spec)
+
+        with pytest.raises(ValueError, match="Unsupported AGENTSEEK_MODEL_PROVIDER"):
+            graph_spec.loader.exec_module(graph_module)
+
+        assert factory_calls == 0
+        assert events == ["dotenv"]
+
+
+def test_model_initialization_failure_does_not_initialize_sandbox(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
+    graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
+    package_name = rendered_sandbox.name
+    factory_calls = 0
+    events: list[str] = []
+
+    class ModelInitError(RuntimeError):
+        pass
+
+    def fail_model_init(**kwargs):
+        events.append("model")
+        raise ModelInitError
+
+    monkeypatch.syspath_prepend(str(rendered_sandbox / "src"))
+    monkeypatch.setenv("AGENTSEEK_MODEL_PROVIDER", "openai")
+    _install_agent_import_fakes(
+        monkeypatch,
+        load_dotenv=lambda: events.append("dotenv"),
+        init_chat_model=fail_model_init,
+    )
+
+    with _isolated_package_modules(package_name):
+        sandbox_module = importlib.import_module(f"{package_name}.sandbox")
+
+        def count_factory_calls():
+            nonlocal factory_calls
+            factory_calls += 1
+            events.append("backend")
+            return object(), lambda: None
+
+        monkeypatch.setattr(sandbox_module, "create_sandbox_backend", count_factory_calls)
+        graph_spec = importlib.util.spec_from_file_location("failed_model_init_graph", graph_path)
+        assert graph_spec is not None and graph_spec.loader is not None
+        graph_module = importlib.util.module_from_spec(graph_spec)
+
+        with pytest.raises(ModelInitError):
+            graph_spec.loader.exec_module(graph_module)
+
+        assert factory_calls == 0
+        assert events == ["dotenv", "model"]
 
 
 def test_file_graph_and_package_webapp_share_one_runtime_owner(
@@ -179,6 +342,7 @@ def test_file_graph_and_package_webapp_share_one_runtime_owner(
     package_name = rendered_sandbox.name
     factory_calls = 0
     provider_create_calls: list[object] = []
+    events: list[str] = []
     remote = types.SimpleNamespace(id="sandbox-id")
 
     class FakeDaytona:
@@ -201,19 +365,10 @@ def test_file_graph_and_package_webapp_share_one_runtime_owner(
         "langchain_daytona",
         types.SimpleNamespace(DaytonaSandbox=FakeBackend),
     )
-    monkeypatch.setitem(
-        sys.modules,
-        "deepagents",
-        types.SimpleNamespace(create_deep_agent=lambda **kwargs: types.SimpleNamespace(**kwargs)),
-    )
-    monkeypatch.setitem(sys.modules, "dotenv", types.SimpleNamespace(load_dotenv=lambda: None))
-    fake_langchain = types.ModuleType("langchain")
-    fake_langchain.__path__ = []
-    monkeypatch.setitem(sys.modules, "langchain", fake_langchain)
-    monkeypatch.setitem(
-        sys.modules,
-        "langchain.chat_models",
-        types.SimpleNamespace(init_chat_model=lambda **kwargs: types.SimpleNamespace(**kwargs)),
+    _install_agent_import_fakes(
+        monkeypatch,
+        load_dotenv=lambda: events.append("dotenv"),
+        init_chat_model=lambda **kwargs: events.append("model") or types.SimpleNamespace(**kwargs),
     )
 
     class FakeFastAPI:
@@ -222,31 +377,34 @@ def test_file_graph_and_package_webapp_share_one_runtime_owner(
 
     monkeypatch.setitem(sys.modules, "fastapi", types.SimpleNamespace(FastAPI=FakeFastAPI))
 
-    sandbox_module = importlib.import_module(f"{package_name}.sandbox")
-    create_sandbox_backend = sandbox_module.create_sandbox_backend
+    with _isolated_package_modules(package_name):
+        sandbox_module = importlib.import_module(f"{package_name}.sandbox")
+        create_sandbox_backend = sandbox_module.create_sandbox_backend
 
-    def count_factory_calls(*args, **kwargs):
-        nonlocal factory_calls
-        factory_calls += 1
-        return create_sandbox_backend(*args, **kwargs)
+        def count_factory_calls(*args, **kwargs):
+            nonlocal factory_calls
+            factory_calls += 1
+            events.append("backend")
+            return create_sandbox_backend(*args, **kwargs)
 
-    monkeypatch.setattr(sandbox_module, "create_sandbox_backend", count_factory_calls)
+        monkeypatch.setattr(sandbox_module, "create_sandbox_backend", count_factory_calls)
 
-    graph_spec = importlib.util.spec_from_file_location("langgraph_generated_graph", graph_path)
-    assert graph_spec is not None and graph_spec.loader is not None
-    graph_module = importlib.util.module_from_spec(graph_spec)
-    monkeypatch.setitem(sys.modules, graph_spec.name, graph_module)
-    graph_spec.loader.exec_module(graph_module)
+        graph_spec = importlib.util.spec_from_file_location("langgraph_generated_graph", graph_path)
+        assert graph_spec is not None and graph_spec.loader is not None
+        graph_module = importlib.util.module_from_spec(graph_spec)
+        monkeypatch.setitem(sys.modules, graph_spec.name, graph_module)
+        graph_spec.loader.exec_module(graph_module)
 
-    webapp_module_name = ".".join(webapp_path.with_suffix("").parts[1:])
-    webapp_module = importlib.import_module(webapp_module_name)
+        webapp_module_name = ".".join(webapp_path.with_suffix("").parts[1:])
+        webapp_module = importlib.import_module(webapp_module_name)
 
-    assert factory_calls == 1
-    assert len(provider_create_calls) == 1
-    runtime_module = sys.modules[f"{package_name}.runtime"]
-    assert graph_module.backend is runtime_module.backend
-    assert webapp_module.cleanup_sandbox is runtime_module.cleanup_sandbox
-    runtime_module.cleanup_sandbox()
+        assert factory_calls == 1
+        assert len(provider_create_calls) == 1
+        assert events == ["dotenv", "model", "backend"]
+        runtime_module = sys.modules[f"{package_name}.runtime"]
+        assert graph_module.backend is runtime_module.get_backend()
+        assert webapp_module.cleanup_sandbox is runtime_module.cleanup_sandbox
+        runtime_module.cleanup_sandbox()
 
 
 def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
