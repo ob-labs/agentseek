@@ -1,4 +1,4 @@
-﻿---
+---
 name: langchain-dev-guide
 description: "LangChain / LangGraph engineering pitfalls and verified fixes. Covers DeepAgents, OpenAI-compatible model integration (including Chinese provider adapters: DeepSeek, Qwen, GLM, etc.), middleware, streaming, multi-agent orchestration, and other common development issues. Use when hitting unexpected behavior, making architecture decisions, or integrating Chinese LLM providers during LangChain development."
 ---
