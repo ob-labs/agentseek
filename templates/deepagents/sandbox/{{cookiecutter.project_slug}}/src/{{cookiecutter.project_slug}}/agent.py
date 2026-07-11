@@ -127,15 +127,12 @@ elif MODEL_PROVIDER == "google_genai":
 model = init_chat_model(**MODEL_INIT_KWARGS)
 
 # ---------------------------------------------------------------------------
-# Sandbox backend + lifecycle cleanup
-#
-# The sandbox is created once per process. On hot-reload (langgraph dev),
-# the previous module's atexit handler deletes its sandbox before the new
-# module creates a fresh one, so sandboxes don't leak.
+# Sandbox backend + lifecycle cleanup. The custom FastAPI lifespan calls the
+# exported callback during graceful server shutdown. atexit remains a fallback.
 # ---------------------------------------------------------------------------
 
-backend, _cleanup_sandbox = create_sandbox_backend()
-atexit.register(_cleanup_sandbox)
+backend, cleanup_sandbox = create_sandbox_backend()
+atexit.register(cleanup_sandbox)
 
 # ---------------------------------------------------------------------------
 # Graph

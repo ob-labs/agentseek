@@ -6,6 +6,7 @@ authors = [{ name = "{{ cookiecutter.author }}" }]
 requires-python = ">=3.12"
 dependencies = [
     "deepagents>=0.5.3",
+    "fastapi>=0.115",
     "langchain>=1.0",
     "langchain-anthropic>=1.0",
     "langchain-google-genai>=4.0",

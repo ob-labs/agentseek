@@ -51,10 +51,11 @@ running, use `uvx agentseek doctor --live` to run the HTTP checks declared in
 - **Frontend**: React + Vite chat UI with streaming tool-call cards on port {{ cookiecutter.frontend_port }}
 
 The agent can execute shell commands, read/write files, and interact with the
-filesystem inside an isolated sandbox. The backend registers provider-specific
-cleanup. Stop it gracefully with Ctrl+C so the remote sandbox is deleted. An
-abrupt process termination can leave the sandbox active; check the provider
-dashboard and delete it manually if graceful shutdown does not run.
+filesystem inside an isolated sandbox. A custom server lifespan performs
+provider-specific cleanup during graceful shutdown, while `atexit` remains a
+fallback. Stop it gracefully with Ctrl+C so the remote sandbox is deleted. If
+a cleanup warning appears or the process is killed, check the provider
+dashboard and delete any active sandbox manually.
 
 ## Switch to LangSmith Sandbox
 

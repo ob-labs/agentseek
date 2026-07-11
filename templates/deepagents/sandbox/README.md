@@ -92,10 +92,11 @@ LANGSMITH_PROJECT=my-sandbox-agent
 
 ## Sandbox cleanup
 
-The generated backend registers provider-specific cleanup. Stop
-`uvx agentseek dev` gracefully with Ctrl+C so the remote sandbox is deleted.
-An abrupt process termination can leave the remote sandbox active; check the
-provider dashboard and delete it manually if graceful shutdown does not run.
+The generated custom server lifespan performs provider-specific cleanup during
+graceful shutdown, while `atexit` remains a fallback. Stop `uvx agentseek dev`
+gracefully with Ctrl+C so the remote sandbox is deleted. If a cleanup warning
+appears or the process is killed, check the provider dashboard and delete any
+active sandbox manually.
 
 ## Cookiecutter variables
 

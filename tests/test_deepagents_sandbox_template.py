@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import ast
+import asyncio
 import importlib.util
+import json
 import sys
 import tomllib
 import types
+import warnings
 from pathlib import Path
 
 import pytest
@@ -31,11 +34,60 @@ def _load_sandbox_module(rendered: Path):
     return module
 
 
+def _load_webapp_module(rendered: Path, monkeypatch: pytest.MonkeyPatch, cleanup_sandbox):
+    package_name = rendered.name
+    package = types.ModuleType(package_name)
+    package.__path__ = [str(rendered / "src" / package_name)]
+    agent = types.ModuleType(f"{package_name}.agent")
+    agent.__dict__["cleanup_sandbox"] = cleanup_sandbox
+
+    class FakeFastAPI:
+        def __init__(self, *, lifespan):
+            self.lifespan = lifespan
+
+    monkeypatch.setitem(sys.modules, package_name, package)
+    monkeypatch.setitem(sys.modules, f"{package_name}.agent", agent)
+    monkeypatch.setitem(sys.modules, "fastapi", types.SimpleNamespace(FastAPI=FakeFastAPI))
+
+    path = rendered / "src" / package_name / "webapp.py"
+    spec = importlib.util.spec_from_file_location("rendered_sandbox_webapp", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_rendered_dependencies_include_both_sandbox_integrations(rendered_sandbox: Path) -> None:
     project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text())
     dependencies = project["project"]["dependencies"]
     assert "langchain-daytona>=0.0.7" in dependencies
     assert "langsmith[sandbox]" in dependencies
+    assert "fastapi>=0.115" in dependencies
+
+
+def test_rendered_langgraph_uses_custom_http_app(rendered_sandbox: Path) -> None:
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    assert config["http"]["app"] == f"./src/{rendered_sandbox.name}/webapp.py:app"
+    assert (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").is_file()
+
+
+def test_rendered_webapp_lifespan_always_invokes_agent_cleanup(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    events: list[str] = []
+    module = _load_webapp_module(rendered_sandbox, monkeypatch, lambda: events.append("cleanup"))
+
+    class LifespanError(RuntimeError):
+        pass
+
+    async def exercise_lifespan() -> None:
+        with pytest.raises(LifespanError):
+            async with module.app.lifespan(module.app):
+                events.append("running")
+                raise LifespanError
+
+    asyncio.run(exercise_lifespan())
+    assert events == ["running", "cleanup"]
 
 
 def test_rendered_descriptions_default_to_daytona_and_keep_langsmith_as_an_alternative(
@@ -70,6 +122,16 @@ def test_generated_configuration_defaults_to_daytona_and_warns_about_langsmith_c
     assert "charged" in readme.lower()
 
 
+def test_template_and_generated_readmes_explain_cleanup_paths(rendered_sandbox: Path) -> None:
+    for readme_path in (TEMPLATE / "README.md", rendered_sandbox / "README.md"):
+        readme = " ".join(readme_path.read_text().lower().split())
+        assert "custom server lifespan" in readme
+        assert "atexit" in readme
+        assert "cleanup warning" in readme
+        assert "provider dashboard" in readme
+        assert "process is killed" in readme
+
+
 def test_provider_normalization(rendered_sandbox: Path) -> None:
     module = _load_sandbox_module(rendered_sandbox)
     assert module.normalize_sandbox_provider("DAYTONA") == "daytona"
@@ -81,8 +143,8 @@ def test_provider_normalization(rendered_sandbox: Path) -> None:
 def test_rendered_agent_uses_provider_factory(rendered_sandbox: Path) -> None:
     agent = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text()
     assert f"from {rendered_sandbox.name}.sandbox import create_sandbox_backend" in agent
-    assert "backend, _cleanup_sandbox = create_sandbox_backend()" in agent
-    assert "atexit.register(_cleanup_sandbox)" in agent
+    assert "backend, cleanup_sandbox = create_sandbox_backend()" in agent
+    assert "atexit.register(cleanup_sandbox)" in agent
     assert "from deepagents.backends import LangSmithSandbox" not in agent
     assert "from langsmith.sandbox import SandboxClient" not in agent
 
@@ -113,6 +175,7 @@ def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest
     module = _load_sandbox_module(rendered_sandbox)
     backend, cleanup = module.create_sandbox_backend("daytona")
     assert backend.sandbox is sandbox
+    cleanup()
     cleanup()
     assert events == ["create", ("delete", sandbox)]
 
@@ -147,6 +210,7 @@ def test_langsmith_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pyte
     module = _load_sandbox_module(rendered_sandbox)
     backend, cleanup = module.create_sandbox_backend("langsmith")
     assert backend.sandbox is remote
+    cleanup()
     cleanup()
     assert events == ["create", ("delete", "sandbox-id")]
 
@@ -324,15 +388,24 @@ def test_provider_requires_credential(
         module.create_sandbox_backend(provider)
 
 
-def test_cleanup_suppresses_provider_delete_errors(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    sandbox = object()
+def test_cleanup_suppresses_provider_delete_errors_and_emits_safe_warning(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sandbox = types.SimpleNamespace(id="sandbox-123")
+    delete_calls = 0
+
+    class DeleteError(RuntimeError):
+        def __init__(self) -> None:
+            super().__init__("credential=do-not-leak arbitrary provider detail")
 
     class FakeDaytona:
         def create(self):
             return sandbox
 
         def delete(self, value):
-            raise RuntimeError
+            nonlocal delete_calls
+            delete_calls += 1
+            raise DeleteError
 
     class FakeBackend:
         def __init__(self, *, sandbox):
@@ -347,4 +420,21 @@ def test_cleanup_suppresses_provider_delete_errors(rendered_sandbox: Path, monke
     )
     module = _load_sandbox_module(rendered_sandbox)
     _, cleanup = module.create_sandbox_backend("daytona")
+    with pytest.warns(RuntimeWarning) as captured:
+        cleanup()
     cleanup()
+
+    assert delete_calls == 1
+    warning = str(captured[0].message)
+    assert "daytona" in warning
+    assert "sandbox-123" in warning
+    assert "delete it manually" in warning.lower()
+    assert "provider dashboard" in warning.lower()
+    assert "do-not-leak" not in warning
+    assert "credential" not in warning
+
+    _, strict_cleanup = module.create_sandbox_backend("daytona")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        strict_cleanup()
+    assert delete_calls == 2

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import threading
+import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -27,12 +29,37 @@ def normalize_sandbox_provider(provider: str) -> str:
     )
 
 
-def _best_effort_cleanup(action: Callable[[], None]) -> Callable[[], None]:
+def _sandbox_identifier(sandbox: Any, attribute: str) -> str:
+    value = getattr(sandbox, attribute, None)
+    if isinstance(value, (str, int)) and str(value):
+        return str(value)
+    return "unknown"
+
+
+def _best_effort_cleanup(
+    action: Callable[[], None], *, provider: str, sandbox_id: str
+) -> Callable[[], None]:
+    lock = threading.Lock()
+    attempted = False
+
     def cleanup() -> None:
+        nonlocal attempted
+        with lock:
+            if attempted:
+                return
+            attempted = True
         try:
             action()
         except Exception:
-            pass
+            try:
+                warnings.warn(
+                    f"Failed to delete {provider} sandbox {sandbox_id!r}. "
+                    "Delete it manually in the provider dashboard.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            except RuntimeWarning:
+                pass
 
     return cleanup
 
@@ -49,7 +76,11 @@ def create_sandbox_backend(provider: str | None = None) -> tuple[Any, Callable[[
 
         client = Daytona()
         sandbox = client.create()
-        cleanup = _best_effort_cleanup(lambda: client.delete(sandbox))
+        cleanup = _best_effort_cleanup(
+            lambda: client.delete(sandbox),
+            provider="daytona",
+            sandbox_id=_sandbox_identifier(sandbox, "id"),
+        )
         try:
             backend = DaytonaSandbox(sandbox=sandbox)
         except Exception:
@@ -64,7 +95,11 @@ def create_sandbox_backend(provider: str | None = None) -> tuple[Any, Callable[[
 
     client = SandboxClient()
     sandbox = client.create_sandbox()
-    cleanup = _best_effort_cleanup(lambda: client.delete_sandbox(sandbox.name))
+    cleanup = _best_effort_cleanup(
+        lambda: client.delete_sandbox(sandbox.name),
+        provider="langsmith",
+        sandbox_id=_sandbox_identifier(sandbox, "name"),
+    )
     try:
         backend = LangSmithSandbox(sandbox=sandbox)
     except Exception:
