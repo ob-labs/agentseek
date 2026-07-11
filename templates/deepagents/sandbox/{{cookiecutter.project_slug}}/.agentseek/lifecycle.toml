@@ -20,9 +20,18 @@ default = "{{ cookiecutter.default_model }}"
 description = "Model id passed to LangChain chat model initialization."
 aliases = ["DEEPAGENTS_MODEL", "BUB_MODEL"]
 
-[env.LANGSMITH_API_KEY]
+[env.AGENTSEEK_SANDBOX_PROVIDER]
 required = true
-description = "LangSmith key used for the sandbox backend and tracing."
+default = "daytona"
+description = "Sandbox backend: daytona (default) or langsmith (charged usage)."
+
+[env.DAYTONA_API_KEY]
+required = false
+description = "Required at runtime when AGENTSEEK_SANDBOX_PROVIDER=daytona."
+
+[env.LANGSMITH_API_KEY]
+required = false
+description = "Required for the charged LangSmith Sandbox alternative or optional tracing."
 
 [services.backend]
 url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"

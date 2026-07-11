@@ -37,6 +37,27 @@ def test_rendered_dependencies_include_both_sandbox_integrations(rendered_sandbo
     assert "langsmith[sandbox]" in dependencies
 
 
+def test_generated_configuration_defaults_to_daytona_and_warns_about_langsmith_charges(
+    rendered_sandbox: Path,
+) -> None:
+    env_text = (rendered_sandbox / ".env.example").read_text()
+    lifecycle = tomllib.loads(
+        (rendered_sandbox / ".agentseek" / "lifecycle.toml").read_text()
+    )
+    readme = (rendered_sandbox / "README.md").read_text()
+
+    assert "AGENTSEEK_SANDBOX_PROVIDER=daytona" in env_text
+    assert "DAYTONA_API_KEY=" in env_text
+    assert "LANGSMITH_API_KEY=" in env_text
+    assert "charged" in env_text.lower()
+    assert lifecycle["env"]["AGENTSEEK_SANDBOX_PROVIDER"]["default"] == "daytona"
+    assert lifecycle["env"]["DAYTONA_API_KEY"]["required"] is False
+    assert lifecycle["env"]["LANGSMITH_API_KEY"]["required"] is False
+    assert "Daytona" in readme
+    assert "LangSmith Sandbox" in readme
+    assert "charged" in readme.lower()
+
+
 def test_provider_normalization(rendered_sandbox: Path) -> None:
     module = _load_sandbox_module(rendered_sandbox)
     assert module.normalize_sandbox_provider("DAYTONA") == "daytona"

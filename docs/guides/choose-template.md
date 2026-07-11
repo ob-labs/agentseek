@@ -3,7 +3,7 @@ title: Choose a Template
 type: how-to
 audience: [A1, A2]
 runs: no
-verified_on: 2026-06-27
+verified_on: 2026-07-11
 sources:
   - templates/index.json
   - docs/reference/templates.md
@@ -42,7 +42,7 @@ generated app code is Bub, DeepAgents, LangChain, or LangGraph shaped.
 | Wrap a minimal DeepAgents runnable for AgentSeek | `deepagents/default` | It binds `create_deep_agent(...)` through `agentseek-langchain`. |
 | Run a DeepAgents research workflow | `deepagents/research` | It includes search, tool streaming, sub-agent progress, and a React frontend. |
 | Run a DeepAgents content workflow | `deepagents/content-builder` | It includes brand memory, skills, subagents, image generation, and streamed UI. |
-| Build a sandbox-backed coding agent | `deepagents/sandbox` | It combines DeepAgents with a LangSmith sandbox backend and local UI. |
+| Build a sandbox-backed coding agent | `deepagents/sandbox` | It uses `create_deep_agent(...)` with Daytona by default and keeps the charged LangSmith Sandbox as an alternative. |
 | Build a LangChain AG-UI app | `langchain/default` | It keeps the LangChain `create_agent(...)` shape and binds it through AgentSeek. |
 | Start with a pure LangGraph-style chat UI | `langchain/markdown-messages` | It uses `langgraph dev`, `@langchain/react`, and markdown message rendering. |
 | Build RAG over OceanBase seekdb | `langchain/agentic-rag` | It includes an agentic retrieval tool, ingest command, frontend, and OceanBase seekdb setup. |

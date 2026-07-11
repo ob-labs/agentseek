@@ -3,7 +3,7 @@ title: 选择模板
 type: how-to
 audience: [A1, A2]
 runs: no
-verified_on: 2026-06-27
+verified_on: 2026-07-11
 sources:
   - templates/index.json
   - docs/reference/templates.zh.md
@@ -42,7 +42,7 @@ DeepAgents、LangChain 或 LangGraph 的形态。
 | 将最小 DeepAgents runnable 接入 AgentSeek | `deepagents/default` | 它通过 `agentseek-langchain` 绑定 `create_deep_agent(...)`。 |
 | 运行 DeepAgents research 工作流 | `deepagents/research` | 它包含搜索、工具流式事件、sub-agent 进度和 React frontend。 |
 | 运行 DeepAgents 内容工作流 | `deepagents/content-builder` | 它包含品牌记忆、skills、subagents、图像生成和 streamed UI。 |
-| 构建 sandbox coding agent | `deepagents/sandbox` | 它把 DeepAgents、LangSmith sandbox backend 和本地 UI 组合起来。 |
+| 构建 sandbox coding agent | `deepagents/sandbox` | 它使用 `create_deep_agent(...)`，默认接入 Daytona，并保留收费的 LangSmith Sandbox 作为备选。 |
 | 构建 LangChain AG-UI 应用 | `langchain/default` | 它保留 LangChain `create_agent(...)` 形态，并通过 AgentSeek 接入。 |
 | 从纯 LangGraph 风格 chat UI 开始 | `langchain/markdown-messages` | 它使用 `langgraph dev`、`@langchain/react` 和 Markdown 消息渲染。 |
 | 基于 OceanBase seekdb 构建 RAG | `langchain/agentic-rag` | 它包含 agentic retrieval tool、ingest command、frontend 和 OceanBase seekdb 设置。 |

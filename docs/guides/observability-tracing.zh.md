@@ -3,7 +3,7 @@ title: 可观测性和追踪
 type: how-to
 audience: [A2, A4]
 runs: no
-verified_on: 2026-07-07
+verified_on: 2026-07-11
 sources:
   - src/agentseek/env.py
   - src/agentseek/__main__.py
@@ -28,6 +28,12 @@ sources:
 | Phoenix | 使用 `langchain/default` 并需要本地 OpenTelemetry traces。 | `AGENTSEEK_OTEL_*` 变量和模板 compose stack。 |
 
 这些目标彼此独立。启用其中一个不会把数据发送到另一个。
+
+对于 `deepagents/sandbox`，tracing 与 sandbox provider 也相互独立。Daytona
+是默认 sandbox backend，LangSmith Sandbox 是收费的备选。使用 Daytona 时，
+设置 `LANGSMITH_TRACING=true` 和 `LANGSMITH_API_KEY` 即可发送 traces，
+不需要切换 `AGENTSEEK_SANDBOX_PROVIDER`。使用 LangSmith Sandbox 时也可以
+保持 tracing 关闭。
 
 ## 配置 LangSmith cloud tracing
 

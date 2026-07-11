@@ -3,7 +3,7 @@ title: Observability and Tracing
 type: how-to
 audience: [A2, A4]
 runs: no
-verified_on: 2026-07-07
+verified_on: 2026-07-11
 sources:
   - src/agentseek/env.py
   - src/agentseek/__main__.py
@@ -29,6 +29,13 @@ showing up where you expect them.
 | Phoenix | You use `langchain/default` and want local OpenTelemetry traces. | `AGENTSEEK_OTEL_*` variables and the template compose stack. |
 
 These targets are independent. Enabling one does not send data to the others.
+
+For `deepagents/sandbox`, tracing is also independent of the sandbox provider.
+Daytona is the default sandbox backend. LangSmith Sandbox remains a charged
+alternative. A Daytona-backed agent can set `LANGSMITH_TRACING=true` and a
+`LANGSMITH_API_KEY` to send traces without switching
+`AGENTSEEK_SANDBOX_PROVIDER`. A LangSmith Sandbox user can leave tracing
+disabled.
 
 ## Configure LangSmith Cloud Tracing
 
