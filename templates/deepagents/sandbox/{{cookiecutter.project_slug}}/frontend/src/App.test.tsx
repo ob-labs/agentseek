@@ -1,8 +1,17 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 
-const mockStream = {
-  messages: [] as unknown[],
+type MockStreamState = {
+  messages: unknown[];
+  values: Record<string, unknown>;
+  isLoading: boolean;
+  error: string | null;
+  submit: ReturnType<typeof vi.fn>;
+  stop: ReturnType<typeof vi.fn>;
+};
+
+const mockStream: MockStreamState = {
+  messages: [],
   values: {},
   isLoading: false,
   error: null,

@@ -115,6 +115,14 @@ def test_rendered_langgraph_uses_custom_http_app(rendered_sandbox: Path) -> None
     assert (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").is_file()
 
 
+def test_rendered_frontend_test_mock_allows_stream_errors(rendered_sandbox: Path) -> None:
+    test_source = (rendered_sandbox / "frontend" / "src" / "App.test.tsx").read_text()
+
+    assert "type MockStreamState = {" in test_source
+    assert "error: string | null;" in test_source
+    assert "const mockStream: MockStreamState = {" in test_source
+
+
 def test_rendered_webapp_lifespan_always_invokes_agent_cleanup(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
