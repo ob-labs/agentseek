@@ -99,7 +99,46 @@ A collection of standalone but high-frequency issues that span multiple categori
   - Reliability ranking of the three tiers from high to low: `json_schema` > `function_calling + tool_choice` > `json_mode + prompt`. Try the most reliable first in development; only fall back when the provider doesn't support it.
   - Weak model + complex schema is the most failure-prone combination — split the schema into multiple smaller schemas across multiple calls if possible, rather than forcing the model to output a large object in one go.
 
-## Issue 3: MCP tool can't access the agent's user_id / API key / current state
+## Issue 3: `with_structured_output(..., method="function_calling")` fails because the model does not support `tool_choice`
+
+- **Symptom**: Calling `model.with_structured_output(schema)` or `model.with_structured_output(schema, method="function_calling")` raises a provider-side 400 error like "`<model>` does not support this `tool_choice`". This often happens when using `ChatOpenAI`-style integrations or derived classes such as `ChatDeepSeek` to access third-party OpenAI-compatible models. A typical example is `deepseek-v4-flash` in thinking mode, which supports tool calling itself but rejects forced `tool_choice`.
+- **Cause**: For `function_calling`, LangChain's OpenAI-family chat models try to make structured output more reliable by **forcing the schema tool to be called**. Internally, `with_structured_output` binds the schema as a tool and usually passes `tool_choice=<schema_tool_name>`. That is the right strategy for providers that support forced tool selection, but some OpenAI-compatible backends only support free-form tool calling and reject any explicit `tool_choice`. When you access those models through `ChatOpenAI`, `ChatDeepSeek`, or another subclass inheriting the same behavior, the adapter forwards `tool_choice` and the provider errors before generation starts.
+- **Solution**: Disable forwarding of `tool_choice` for that model instance, so LangChain still binds the schema tool but does not send the unsupported parameter:
+
+  ```python
+  from langchain_deepseek import ChatDeepSeek
+  from pydantic import BaseModel
+
+  class User(BaseModel):
+      name: str
+      age: int
+
+  model = ChatDeepSeek(
+      model="deepseek-v4-flash",
+      disabled_params={"tool_choice": None},
+      extra_body={"thinking": {"type": "enabled"}},
+  )
+
+  structured_model = model.with_structured_output(
+      User,
+      method="function_calling",
+  )
+
+  print(structured_model.invoke("My name is John and I am 25 years old."))
+  ```
+
+  Why this works: OpenAI-family integrations call `_filter_disabled_params(...)` before building the final payload. Setting `disabled_params={"tool_choice": None}` tells the adapter to strip that field entirely whenever it would have been sent.
+
+  If the model still behaves unreliably after removing `tool_choice`, fall back by capability:
+  - If the provider supports native schema-constrained decoding, prefer `method="json_schema"`.
+  - If it supports only plain JSON generation, fall back to `method="json_mode"` and enforce field constraints in the prompt plus Python-side validation.
+- **Lessons learned**:
+  - This failure mode is **not** "the schema is wrong" and **not** "tool calling is unsupported" in general; the narrower issue is that the backend rejects **forced** tool selection via `tool_choice`.
+  - `ChatOpenAI` compatibility is only a transport-level starting point. Once you connect it to non-OpenAI providers, always verify which OpenAI request parameters they truly support, especially on reasoning models.
+  - When a provider says "`... does not support this tool_choice`", the fastest fix is usually model-level configuration (`disabled_params`) rather than patching LangChain source code.
+  - Removing `tool_choice` trades reliability for compatibility: the model is again free to skip the schema tool call, so if outputs start coming back as `None`, see Issue 2 and downgrade to `json_schema` or `json_mode` based on provider capability.
+
+## Issue 4: MCP tool can't access the agent's user_id / API key / current state
 
 - **Symptom**: You wire an MCP server in as a regular LangChain tool and want to read `runtime.context.user_id`, current agent state, or user preferences from `store` inside the tool — only to find the MCP tool can't access any of these and is limited to the args declared in the schema. Adding `user_id` directly to the tool schema makes the model fabricate one for every call, polluting context and being insecure.
 - **Cause**: MCP servers run in a **separate process** (stdio subprocess or remote HTTP service), **completely process-isolated** from the LangGraph runtime — they can't see store, context, state, or tool_call_id. Importing LangGraph runtime APIs on the MCP server side is pointless because it's not running in that process.
@@ -137,7 +176,7 @@ A collection of standalone but high-frequency issues that span multiple categori
   - Multiple interceptors follow **onion order**: `[outer, inner]` → outer enters first / exits last. When composing "auth + rate limit + retry", put the outer concern in front, inner (closest to the tool call) in back.
   - `MultiServerMCPClient` is **stateless by default** — a new session opens for every tool call. When you need to reuse context across calls (e.g. server-side login state), use `async with client.session("server_name") as session:` to explicitly manage the lifecycle.
 
-## Issue 4: Model always outputs `invalid_tool_calls` — tool never actually executes
+## Issue 5: Model always outputs `invalid_tool_calls` - tool never actually executes
 
 - **Symptom**: The model is bound with tools and consistently "calls" them, but the tool function never fires. Inspecting the `AIMessage` shows `tool_calls` is empty while `invalid_tool_calls` is populated. The agent loop either silently skips the call or raises a parsing error. The weaker the model (small-parameter open-source, quantized, vLLM-served), the more frequent this becomes.
 - **Cause**: When the model generates a tool call, the `arguments` field must be valid JSON conforming to the tool's schema. Weak models often produce malformed JSON — missing quotes, trailing commas, unescaped characters, truncated output, etc. LangChain's tool-call parser **cannot parse** the broken JSON, so instead of placing it in `tool_calls` it moves it to `invalid_tool_calls`. Since the agent executor only processes entries in `tool_calls`, the tool never runs — it looks like the model "called" it but nothing happened.
@@ -171,7 +210,7 @@ A collection of standalone but high-frequency issues that span multiple categori
   - `ToolCallRepairMiddleware` cannot guarantee 100% repair — severely garbled output (e.g. half the JSON is natural language) will still fail. For those cases, consider simplifying the tool schema, splitting complex parameters into multiple smaller tools, or upgrading to a stronger model.
   - This middleware only acts on `invalid_tool_calls` — valid calls pass through untouched with zero overhead.
 
-## Issue 5: How to use placeholders in system prompt that get dynamically replaced at runtime
+## Issue 6: How to use placeholders in system prompt that get dynamically replaced at runtime
 
 - **Symptom**: You want the system prompt to include dynamic information — user name, role, current date, conversation context, etc. — that varies per request. Hardcoding these values means creating a new agent for every variation; concatenating strings manually is error-prone and hard to maintain.
 - **Cause**: `create_agent` treats `system_prompt` as a static string by default — it does not perform any template interpolation. To get runtime substitution, you need an explicit formatting middleware that resolves placeholders against `state` and `context` before the prompt reaches the model.

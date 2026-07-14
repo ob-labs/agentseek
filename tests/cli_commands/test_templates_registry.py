@@ -13,13 +13,13 @@ EXPECTED_TEMPLATE_KEYS = {
     "deepagents/content-builder",
     "deepagents/default",
     "deepagents/research",
+    "deepagents/sandbox",
     "langchain/agentic-rag",
     "langchain/agentic-rag-hybrid",
     "langchain/agentic-rag-openvino",
     "langchain/cli-remote",
     "langchain/default",
     "langchain/markdown-messages",
-    "langchain/sandbox",
 }
 QUARANTINED_TEMPLATE_KEYS = {
     "bub/contextseek",
@@ -53,6 +53,12 @@ def test_registry_contains_expected_template_keys() -> None:
     missing = sorted(EXPECTED_TEMPLATE_KEYS - _registered_templates())
 
     assert not missing, f"templates/index.json missing expected key(s): {missing}"
+
+
+def test_sandbox_template_is_classified_as_deepagents() -> None:
+    registered = _registered_templates()
+    assert "deepagents/sandbox" in registered
+    assert "langchain/sandbox" not in registered
 
 
 def test_contextseek_template_is_not_advertised_until_dev_locking_is_resolved() -> None:

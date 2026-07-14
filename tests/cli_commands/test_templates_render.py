@@ -69,19 +69,19 @@ rag_host_binding_templates = {
 }
 language_instruction_templates = {
     ("deepagents", "research"),
+    ("deepagents", "sandbox"),
     ("langchain", "agentic-rag"),
     ("langchain", "agentic-rag-hybrid"),
     ("langchain", "agentic-rag-openvino"),
     ("langchain", "cli-remote"),
     ("langchain", "default"),
     ("langchain", "markdown-messages"),
-    ("langchain", "sandbox"),
 }
 dependency_sync_templates = {
     ("deepagents", "content-builder"),
     ("deepagents", "research"),
+    ("deepagents", "sandbox"),
     ("langchain", "agentic-rag-hybrid"),
-    ("langchain", "sandbox"),
 }
 
 

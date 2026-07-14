@@ -1,16 +1,18 @@
 [project]
 name = "{{ cookiecutter.project_slug }}"
 version = "0.1.0"
-description = "{{ cookiecutter.project_name }} — DeepAgents sandbox coding agent with LangSmith sandbox, served by langgraph dev."
+description = "{{ cookiecutter.project_name }} — DeepAgents sandbox coding agent using Daytona by default, with LangSmith Sandbox as an alternative, served by langgraph dev."
 authors = [{ name = "{{ cookiecutter.author }}" }]
 requires-python = ">=3.12"
 dependencies = [
     "deepagents>=0.5.3",
+    "fastapi>=0.115",
     "langchain>=1.0",
     "langchain-anthropic>=1.0",
     "langchain-google-genai>=4.0",
     "langchain-openai>=0.3",
     "httpx[socks]>=0.28",
+    "langchain-daytona>=0.0.7",
     "langsmith[sandbox]",
     "python-dotenv>=1.0",
     "langgraph-cli[inmem]>=0.4",
