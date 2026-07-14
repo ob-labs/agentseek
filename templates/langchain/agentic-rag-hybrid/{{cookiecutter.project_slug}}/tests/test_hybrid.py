@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+import pytest
 from langchain_core.documents import Document
 
 from {{ cookiecutter.project_slug }}.hybrid import normalize_search_mode, weighted_fuse, weights_for_mode
@@ -587,6 +588,69 @@ def test_ingest_directory_embeds_each_real_sample_image_with_manifest_metadata(t
     assert all(extra["sparse_embedding"] for extra in vector_store.add_args["extras"])
     assert all("fulltext_content" in extra for extra in vector_store.add_args["extras"])
     assert set(store._load_index_ids()) == set(vector_store.add_args["ids"])
+
+
+def _controlled_ingestion_store(tmp_path: Path, confirmed_indexes: list[int]):
+    settings = Settings(
+        seekdb_path=tmp_path / "seekdb",
+        seekdb_db_name="test",
+        image_table_name="images",
+        embedding_type="siliconflow",
+        embedding_api_key="test",
+        embedding_base_url="https://example.test/v1",
+        embedding_model="test",
+        embedding_dimension=4,
+        vlm_api_key="",
+        vlm_base_url="https://example.test",
+        vlm_model="qwen-vl",
+        hybrid_default_mode="balanced",
+        hybrid_recall_multiplier=2,
+        hybrid_max_top_k=5,
+        media_data_dir=tmp_path / "media",
+        media_max_upload_bytes=1024,
+    )
+
+    class FakeEmbeddingEngine:
+        def embed_image(self, image_path: Path) -> list[float]:
+            return [0.1, 0.2, 0.3, 0.4]
+
+        def embed_text(self, text: str) -> list[float]:
+            return [0.4, 0.3, 0.2, 0.1]
+
+    class ControlledVectorStore:
+        def __init__(self) -> None:
+            self.requested_ids: list[str] = []
+
+        def add_documents(self, documents, **kwargs):
+            self.requested_ids = [str(image_id) for image_id in kwargs["ids"]]
+            return [self.requested_ids[index] for index in confirmed_indexes]
+
+    engine = FakeEmbeddingEngine()
+    store = HybridImageStore.__new__(HybridImageStore)
+    store.settings = settings
+    store.embedding_engine = engine
+    store.embedding_adapter = HybridImageEmbeddings(engine)
+    vector_store = ControlledVectorStore()
+    store.vector_store = vector_store
+    return store, vector_store
+
+
+def test_ingest_directory_rejects_zero_confirmed_vector_store_inserts(tmp_path) -> None:
+    store, _ = _controlled_ingestion_store(tmp_path, confirmed_indexes=[])
+
+    with pytest.raises(RuntimeError, match="confirmed 0 of"):
+        store.ingest_directory(sample_pack_dir() / "images")
+
+    assert store._load_index_ids() == []
+
+
+def test_ingest_directory_records_confirmed_ids_but_rejects_partial_insert(tmp_path) -> None:
+    store, vector_store = _controlled_ingestion_store(tmp_path, confirmed_indexes=[0])
+
+    with pytest.raises(RuntimeError, match="confirmed 1 of"):
+        store.ingest_directory(sample_pack_dir() / "images")
+
+    assert store._load_index_ids() == vector_store.requested_ids[:1]
 
 
 def test_image_id_sanitizes_url_path_segments_and_preserves_safe_short_stems(tmp_path: Path) -> None:

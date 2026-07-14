@@ -233,12 +233,24 @@ class HybridImageStore:
             )
             records.append(record)
         if ids:
-            self.vector_store.add_documents(
+            inserted_ids = self.vector_store.add_documents(
                 documents,
                 ids=ids,
                 extras=extras,
             )
-            self._save_index_ids(ids)
+            returned_ids = [str(image_id) for image_id in (inserted_ids or [])]
+            requested_ids = set(ids)
+            confirmed_ids = list(
+                dict.fromkeys(image_id for image_id in returned_ids if image_id in requested_ids)
+            )
+            if confirmed_ids:
+                self._save_index_ids(confirmed_ids)
+            if len(returned_ids) != len(ids) or set(returned_ids) != requested_ids:
+                raise RuntimeError(
+                    "OceanBase vector store "
+                    f"confirmed {len(confirmed_ids)} of {len(ids)} requested image inserts "
+                    f"and returned {len(returned_ids)} IDs."
+                )
         return records
 
     def search_text(self, query: str, mode: SearchMode, top_k: int) -> SearchTrace:
