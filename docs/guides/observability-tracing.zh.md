@@ -10,6 +10,9 @@ sources:
   - templates/langchain/default/{{cookiecutter.project_slug}}/.env.example
   - templates/langchain/default/{{cookiecutter.project_slug}}/README.md
   - templates/langchain/default/{{cookiecutter.project_slug}}/docker-compose.yml
+  - templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/.env.example
+  - templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/README.md
+  - templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/docker-compose.yml
   - templates/deepagents/research/{{cookiecutter.project_slug}}/.env.example
   - templates/langchain/markdown-messages/{{cookiecutter.project_slug}}/.env.example
   - templates/deepagents/sandbox/{{cookiecutter.project_slug}}/.env.example
@@ -25,7 +28,7 @@ sources:
 | --- | --- | --- |
 | LangSmith cloud | 需要托管的 LangChain 或 LangGraph traces。 | `.env` 或 shell 中的 `LANGSMITH_*` 变量。 |
 | AgentSeek console | 需要本地 CLI 诊断 spans 和 events。 | `AGENTSEEK_CONSOLE=true`。 |
-| Phoenix | 使用 `langchain/default` 并需要本地 OpenTelemetry traces。 | `AGENTSEEK_OTEL_*` 变量和模板 compose stack。 |
+| Phoenix | 使用 `langchain/default` 或 `langchain/agentic-rag-hybrid` 并需要本地 OpenTelemetry traces。 | `AGENTSEEK_OTEL_*` 变量和模板 compose stack。 |
 
 这些目标彼此独立。启用其中一个不会把数据发送到另一个。
 
@@ -114,6 +117,29 @@ AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
 运行 Phoenix，并通过 OceanBase seekdb（`quay.io/oceanbase/seekdb:latest`）
 持久化 Phoenix 数据。可以用 `.env` 中的 `AGENTSEEK_PHOENIX_IMAGE` 和
 `OCEANBASE_SEEKDB_IMAGE` 覆盖默认镜像。
+
+## 在 `langchain/agentic-rag-hybrid` 中使用 Phoenix
+
+Hybrid 模板默认保持 `agentseek dev` 轻量，只启动 `uv`、`langgraph dev`
+和 Vite frontend。Phoenix 是可选 tracing stack：
+
+```bash
+agentseek task phoenix
+```
+
+然后在 `.env` 中启用 OTEL，再启动 `agentseek dev`。
+
+```env
+AGENTSEEK_OTEL_ENABLED=true
+AGENTSEEK_OTEL_SERVICE_NAME=<project-slug>
+AGENTSEEK_OTEL_PROJECT_NAME=<project-slug>
+AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
+```
+
+生成项目的 `/custom/observability` 路由会返回当前 OTEL endpoint、
+Phoenix URL 和 Phoenix 使用的 OceanBase seekdb URL。Phoenix trace 存储
+使用 compose stack；hybrid retrieval 仍然通过 `langchain-oceanbase` 使用
+embedded SeekDB。
 
 ## 相关内容
 

@@ -1,0 +1,141 @@
+version = 1
+template = "langchain/agentic-rag-hybrid"
+name = "{{ cookiecutter.project_name }}"
+env_file = ".env"
+
+[tools]
+required = ["uv", "node", "npm"]
+
+[paths]
+required = [
+  "pyproject.toml",
+  "docker-compose.yml",
+  "langgraph.json",
+  "frontend/package.json",
+  "frontend/node_modules",
+]
+
+[env.AGENTSEEK_MODEL_PROVIDER]
+required = true
+default = "{{ cookiecutter.default_model_provider }}"
+description = "LangChain model provider: openai, anthropic, or google_genai."
+
+[env.AGENTSEEK_MODEL]
+required = true
+default = "{{ cookiecutter.default_model }}"
+description = "Model id passed to LangChain chat model initialization."
+aliases = ["BUB_MODEL"]
+
+[env.AGENTSEEK_API_KEY]
+required = true
+default = ""
+description = "Primary OpenAI-compatible credential used by chat, embedding, and VLM clients."
+aliases = ["SILICONFLOW_API_KEY", "OPENAI_API_KEY"]
+
+[env.AGENTSEEK_API_BASE]
+required = false
+default = "https://api.siliconflow.cn/v1"
+description = "OpenAI-compatible API base URL. Defaults to SiliconFlow."
+aliases = ["OPENAI_API_BASE"]
+
+[env.SEEKDB_PATH]
+required = true
+default = "{{ cookiecutter.seekdb_path }}"
+description = "Embedded SeekDB data directory used through langchain-oceanbase. Defaults outside the project tree to avoid LangGraph dev reloads while indexing."
+
+[env.SEEKDB_DB_NAME]
+required = true
+default = "{{ cookiecutter.seekdb_db_name }}"
+description = "SeekDB database name."
+
+[env.IMAGE_TABLE_NAME]
+required = true
+default = "{{ cookiecutter.image_table_name }}"
+description = "SeekDB collection/table for indexed image records."
+
+[env.HYBRID_AUXILIARY_CANDIDATE_LIMIT]
+required = false
+default = "250"
+description = "Maximum indexed ids loaded for local metadata and sparse teaching reranks."
+
+[env.AGENTSEEK_OTEL_ENABLED]
+required = false
+default = "false"
+description = "Enable OpenTelemetry export from the LangGraph agent to Phoenix."
+
+[env.LANGGRAPH_HOST]
+required = false
+default = "127.0.0.1"
+description = "LangGraph dev bind host. Use 0.0.0.0 only on trusted networks."
+
+[env.FRONTEND_HOST]
+required = false
+default = "127.0.0.1"
+description = "Vite frontend bind host. Use 0.0.0.0 only on trusted networks."
+
+[services.backend]
+url = "http://127.0.0.1:2024"
+
+[services.frontend]
+url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+
+[services.phoenix]
+url = "http://127.0.0.1:6006"
+
+[services.phoenix_seekdb]
+url = "mysql://127.0.0.1:2884/phoenix"
+
+[processes.backend]
+command = ["sh", "-lc", "uv run langgraph dev --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}"]
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+cwd = "frontend"
+
+[checks.backend]
+type = "http"
+target = "http://127.0.0.1:2024"
+timeout = 2
+attempts = 3
+
+[checks.custom_routes]
+type = "http"
+target = "http://127.0.0.1:2024/custom/health"
+timeout = 2
+attempts = 3
+
+[checks.frontend]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
+timeout = 2
+attempts = 3
+
+[tasks.sync]
+description = "Install Python dependencies."
+command = ["uv", "sync"]
+
+[tasks.frontend]
+description = "Install frontend dependencies."
+command = ["npm", "install", "--prefix", "frontend"]
+
+[tasks.seekdb]
+description = "Prepare the embedded SeekDB data directory."
+command = ["uv", "run", "python", "-c", "from {{ cookiecutter.project_slug }}.settings import get_settings; s=get_settings(); s.seekdb_path.mkdir(parents=True, exist_ok=True); print(f'Embedded SeekDB data dir ready: {s.seekdb_path}')"]
+
+[tasks.seekdb-skills]
+description = "Install recommended OceanBase seekdb agent skills."
+command = ["npx", "skills", "add", "oceanbase/seekdb-ecology-plugins", "--all"]
+
+[tasks.ingest-sample]
+description = "Index the built-in hybrid-search starter image pack."
+command = ["uv", "run", "ingest-images"]
+
+[tasks.phoenix]
+description = "Start Phoenix tracing backed by OceanBase seekdb."
+command = ["docker", "compose", "up", "-d", "phoenix"]
+cwd = "."
+
+[tasks.phoenix-stop]
+description = "Stop the Phoenix tracing stack."
+command = ["docker", "compose", "down"]
+cwd = "."

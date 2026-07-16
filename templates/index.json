@@ -5,6 +5,7 @@
   "deepagents/research": "DeepAgents research agent with Tavily search, streamed tool/sub-agent UI, and AgentSeek lifecycle spec.",
   "deepagents/sandbox": "DeepAgents sandbox coding agent with streamed UI and AgentSeek lifecycle spec.",
   "langchain/agentic-rag": "LangChain agentic RAG with OceanBase vector search and AgentSeek lifecycle spec.",
+  "langchain/agentic-rag-hybrid": "LangChain agentic hybrid RAG with image ingestion, vector/sparse/full-text/metadata search, comparison demos, optional Phoenix observability, and AgentSeek lifecycle spec.",
   "langchain/agentic-rag-openvino": "LangChain local RAG with OpenVINO models and AgentSeek lifecycle spec.",
   "langchain/cli-remote": "Remote LangGraph CLI agent bridged through LangGraphClientRunnable with AgentSeek lifecycle spec.",
   "langchain/default": "LangChain create_agent plus CopilotKit middleware with AgentSeek lifecycle spec.",

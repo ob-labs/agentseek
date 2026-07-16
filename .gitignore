@@ -223,6 +223,8 @@ __marimo__/
 .agentseek/
 !templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/
 !templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml
+!templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/.agentseek/
+!templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml
 agentseek-tapes.db
 
 # References

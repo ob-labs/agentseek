@@ -1,0 +1,109 @@
+pack:
+  id: hybrid-search-starter
+  title: "Hybrid Search Starter Pack"
+  description: "Photo-style generated PNG fixtures with controlled captions, tags, and visible rendered text for testing hybrid search modes."
+images:
+  - id: golden_dog_park
+    file_name: golden-dog-park.png
+    caption: "A golden retriever with brown fur running outdoors in a grassy park."
+    tags: ["animal", "dog", "golden retriever", "brown fur", "outdoor"]
+  - id: yellow_dog_yard
+    file_name: yellow-dog-yard.png
+    caption: "A yellow dog playing in a yard with a plain collar."
+    tags: ["animal", "dog", "outdoor", "similar dog"]
+  - id: brown_horse_field
+    file_name: brown-horse-field.png
+    caption: "A brown horse standing outside in an open green field."
+    tags: ["animal", "horse", "brown fur", "outdoor"]
+  - id: brown_fur_coat
+    file_name: brown-fur-coat.png
+    caption: "A brown fur coat hanging outside beside a shop window."
+    tags: ["brown fur", "outdoor", "clothing", "shop window"]
+  - id: red_tea_label
+    file_name: red-tea-label.png
+    caption: "A product package with a red tea label showing RED TEA in white text."
+    tags: ["product", "red label", "tea", "package"]
+  - id: green_tea_label
+    file_name: green-tea-label.png
+    caption: "A product package with a green tea label showing GREEN TEA in white text."
+    tags: ["product", "green label", "tea", "package"]
+  - id: red_stop_sign
+    file_name: red-stop-sign.png
+    caption: "A red stop sign with large white STOP letters."
+    tags: ["red", "traffic sign", "white text", "street"]
+  - id: blue_logo_sneaker
+    file_name: blue-logo-sneaker.png
+    caption: "A blue running shoe with a visible OB logo on the side."
+    tags: ["shoe", "sneaker", "blue logo", "running"]
+  - id: plain_blue_sneaker
+    file_name: plain-blue-sneaker.png
+    caption: "A plain blue running shoe with clean unmarked side panels."
+    tags: ["shoe", "sneaker", "blue", "running", "plain side"]
+  - id: black_logo_sneaker
+    file_name: black-logo-sneaker.png
+    caption: "A black running shoe with a visible OB side logo."
+    tags: ["shoe", "sneaker", "logo", "running", "black"]
+  - id: blue_logo_mug
+    file_name: blue-logo-mug.png
+    caption: "A blue mug with LOGO MUG text printed on the side."
+    tags: ["blue logo", "mug", "visible logo", "drinkware"]
+  - id: fragile_shipping_a17
+    file_name: fragile-shipping-a17.png
+    caption: "A cardboard shipping box with a white barcode label reading FRAGILE A17."
+    tags: ["shipping", "cardboard box", "barcode", "fragile", "A17", "warehouse"]
+  - id: plain_cardboard_box
+    file_name: plain-cardboard-box.png
+    caption: "A plain cardboard box in a warehouse with taped seams."
+    tags: ["shipping", "cardboard box", "warehouse", "unlabeled"]
+  - id: warehouse_shelf_a17
+    file_name: warehouse-shelf-a17.png
+    caption: "A warehouse shelf label reading SHELF A17 beside stacked boxes."
+    tags: ["warehouse", "shelf", "A17", "boxes", "shelf marker"]
+  - id: red_fragile_sticker
+    file_name: red-fragile-sticker.png
+    caption: "A red FRAGILE sticker attached to a glass jar on a desk."
+    tags: ["fragile", "red sticker", "glass", "desk jar"]
+  - id: invoice_overdue_q4
+    file_name: invoice-overdue-q4.png
+    caption: "A paper invoice titled INVOICE Q4 with a red OVERDUE stamp."
+    tags: ["document", "invoice", "Q4", "overdue", "paper"]
+  - id: cafe_receipt_total
+    file_name: cafe-receipt-total.png
+    caption: "A cafe receipt with item lines and a bold TOTAL amount."
+    tags: ["document", "receipt", "total", "paper", "cafe"]
+  - id: q4_planning_calendar
+    file_name: q4-planning-calendar.png
+    caption: "A planning calendar page labeled Q4 PLANNING."
+    tags: ["document", "calendar", "Q4", "planning", "schedule"]
+  - id: red_overdue_stamp
+    file_name: red-overdue-stamp.png
+    caption: "A blank paper page with a large red OVERDUE stamp."
+    tags: ["document", "overdue", "stamp", "paper", "not invoice"]
+  - id: glass_water_bottle_table
+    file_name: glass-water-bottle-table.png
+    caption: "A clear glass water bottle standing on a wooden table."
+    tags: ["glass", "bottle", "water", "wooden table", "transparent"]
+  - id: recycling_bottle_poster
+    file_name: recycling-bottle-poster.png
+    caption: "A recycling poster with text that says RECYCLE GLASS BOTTLE."
+    tags: ["poster", "glass bottle text", "recycle", "printed poster"]
+  - id: green_glass_vase
+    file_name: green-glass-vase.png
+    caption: "A green glass vase on a wooden table."
+    tags: ["glass", "vase", "wooden table", "green decor"]
+  - id: yellow_warning_triangle
+    file_name: yellow-warning-triangle.png
+    caption: "A yellow triangular warning sign with a CAUTION label."
+    tags: ["warning", "triangle", "yellow", "caution", "sign"]
+  - id: yellow_tea_box
+    file_name: yellow-tea-box.png
+    caption: "A yellow tea product box on a table."
+    tags: ["yellow", "product", "box", "tea", "package"]
+  - id: construction_helmet
+    file_name: construction-helmet.png
+    caption: "A yellow construction helmet on a warehouse floor."
+    tags: ["yellow", "helmet", "construction", "safety", "warehouse"]
+  - id: blue_safety_manual
+    file_name: blue-safety-manual.png
+    caption: "A blue document cover reading SAFETY MANUAL."
+    tags: ["document", "safety", "manual", "blue", "cover"]
