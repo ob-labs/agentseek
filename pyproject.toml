@@ -66,6 +66,7 @@ includes = [
     "src/agentseek",
     "src/skills",
 ]
+package-data = {"agentseek" = ["data/*.json"]}
 skills = [
     { git = "https://github.com/PsiACE/skills.git", subpath = "skills", include = ["friendly-python", "piglet"] },
 ]
