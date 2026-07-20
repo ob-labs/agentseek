@@ -22,7 +22,7 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 | Category | File | Trigger Scenarios |
 |----------|------|-------------------|
 | Deep Agents | [reference/deepagents.md](reference/deepagents.md) | Model selection, filesystem backend, disabling the general-purpose sub-agent, file permissions, long-term memory, long `SKILL.md` truncated by `read_file` 100-line default |
-| Structured Output | [reference/structured-output.md](reference/structured-output.md) | `with_structured_output` returning None, missing fields, unsupported `tool_choice`, provider-side 400 errors on forced schema tool selection |
+| Structured Output | [reference/structured-output.md](reference/structured-output.md) | Model-level method selection, `create_agent` strategies, missing fields, unsupported `tool_choice`, provider-side 400 errors on forced schema tool selection |
 | OpenAI-compatible Model Integration | [reference/model-integration.md](reference/model-integration.md) | Pitfalls when using `ChatOpenAI` against OpenAI-compatible providers, integrating Reasoning models (chain-of-thought / `reasoning_content`) |
 | CN Model Integration | [reference/cn-models/README.md](reference/cn-models/README.md) | Generating LangChain integration classes for Chinese providers (DeepSeek, Qwen, GLM, Moonshot) |
 | Middleware | [reference/middleware.md](reference/middleware.md) | Middleware execution order, `state_schema` merging, HITL `resume` values, modifying state from `wrap_model_call` |
@@ -42,6 +42,7 @@ A systematic summary of typical issues, non-obvious behaviors, and verified solu
 | Long-term memory / store | deepagents issue 5 |
 | `SKILL.md` truncated / only first 100 lines read / `read_file` limit / progressive disclosure | deepagents issue 6 |
 | `with_structured_output` returning None / missing fields | structured-output issue 1 |
+| `create_agent` / `response_format` / `ProviderStrategy` / `ToolStrategy` | structured-output issue 1 |
 | `with_structured_output` / `function_calling` / `tool_choice` unsupported / `deepseek-reasoner does not support this tool_choice` | structured-output issue 2 |
 | OpenAI-compatible model / `ChatOpenAI` not working | model-integration issue 1 |
 | Reasoning model / `reasoning_content` / chain-of-thought lost | model-integration issue 2 |
