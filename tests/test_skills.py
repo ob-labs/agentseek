@@ -46,3 +46,20 @@ def test_structured_output_guide_explains_when_models_can_skip_schema_tools() ->
 
     assert "forces the schema tool" in guide
     assert "free to skip the schema tool" in guide
+
+
+def test_structured_output_guide_scopes_disabled_params_to_model_wrapper() -> None:
+    """The model-wrapper workaround must not be advertised for agent ToolStrategy."""
+    guide = STRUCTURED_OUTPUT_GUIDE.read_text(encoding="utf-8")
+
+    assert "model-wrapper workaround" in guide
+    assert "does not configure agent `ToolStrategy`" in guide
+    assert "still forces structured-tool use" in guide
+
+
+def test_structured_output_guide_describes_agent_strategy_behavior_precisely() -> None:
+    """Automatic selection and retry behavior must reflect the locked runtime."""
+    guide = STRUCTURED_OUTPUT_GUIDE.read_text(encoding="utf-8")
+
+    assert "fallback and tool-compatibility checks" in guide
+    assert "`ToolStrategy` can retry" in guide

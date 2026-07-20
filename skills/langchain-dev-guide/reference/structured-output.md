@@ -7,7 +7,7 @@ A focused reference for `with_structured_output`, `response_format`, and provide
 LangChain exposes two related but different structured-output APIs. Diagnose and configure the one the application actually uses:
 
 - **Model wrapper — `model.with_structured_output(...)`**: the model integration selects a steering method such as `json_schema`, `function_calling`, or `json_mode`, then parses the model response into the requested schema. Defaults vary by integration and version, so set `method` explicitly when behavior matters.
-- **Agent — `create_agent(response_format=...)`**: passing a schema directly lets the agent select `ProviderStrategy` when the model profile advertises native structured output, or `ToolStrategy` otherwise. These agent strategies include agent-loop behavior such as validation and retry; they are not aliases for the model wrapper's `method` argument.
+- **Agent — `create_agent(response_format=...)`**: passing a schema directly lets the agent select a strategy using model capability metadata plus LangChain fallback and tool-compatibility checks. Both strategies parse and validate structured responses; `ToolStrategy` can retry configured structured-output errors, while `ProviderStrategy` surfaces provider or schema validation failures. These strategies are not aliases for the model wrapper's `method` argument.
 
 Use the automatic agent strategy when the model profile is accurate:
 
@@ -122,7 +122,9 @@ tool_agent = create_agent(
   print(structured_model.invoke("My name is John and I am 25 years old."))
   ```
 
-  Why this works: OpenAI-family integrations call `_filter_disabled_params(...)` before building the final payload. Setting `disabled_params={"tool_choice": None}` tells the adapter to strip that field entirely whenever it would have been sent.
+  Why this model-wrapper workaround works: OpenAI-family `with_structured_output(..., method="function_calling")` calls `_filter_disabled_params(...)` before binding the schema tool. Setting `disabled_params={"tool_choice": None}` strips the forced selection from this model-wrapper path.
+
+  This setting does not configure agent `ToolStrategy`. Stock `create_agent(response_format=ToolStrategy(...))` still forces structured-tool use through `model.bind_tools(..., tool_choice="any")`, and ordinary `bind_tools` does not consult `disabled_params`. If an agent's provider rejects forced tool selection, use a documented native `ProviderStrategy`, a compatible model or integration, or an adapter that explicitly handles this provider limitation.
 
   Removing forced selection restores compatibility but also makes the model free to skip the schema tool. Use `include_raw=True` to detect that case and choose another method by capability:
   - If the provider documents native schema-constrained decoding for this model, use `method="json_schema"`.
