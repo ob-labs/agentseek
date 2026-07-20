@@ -32,13 +32,22 @@ from __future__ import annotations
 import argparse
 import json
 import shlex
+import shutil
 import subprocess
+import tarfile
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import httpx
 import typer
 from typer.core import TyperGroup
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files  # type: ignore[import-not-found]
 
 # ---------------------------------------------------------------------------
 # Typer plumbing
@@ -229,21 +238,161 @@ def _prepare_templates_root(checkout: str | None = None) -> Path:
     return templates_root
 
 
+def _download_template_tarball(
+    project_type: str,
+    template_name: str,
+    *,
+    repo_url: str = REPO_URL,
+    checkout: str = "main",
+) -> Path | None:
+    """Download a specific template using GitHub's tarball API.
+
+    This avoids cloning the entire repo when the user requests a single template.
+    Falls back to full clone on any error.
+
+    Args:
+        project_type: Framework type (bub, deepagents, langchain)
+        template_name: Template name (default, research, etc.)
+        repo_url: Base GitHub repo URL
+        checkout: Branch/tag/commit to download
+
+    Returns:
+        Path to templates root in cache, or None on failure
+    """
+    from cookiecutter.config import get_user_config
+
+    template_rel_path = f"{TEMPLATES_DIR}/{project_type}/{template_name}"
+    tarball_url = f"{repo_url}/archive/refs/heads/{checkout}.tar.gz"
+
+    try:
+        # Create cache directory
+        cookiecutters_dir = Path(get_user_config()["cookiecutters_dir"]).expanduser()
+        cache_dir = cookiecutters_dir / TEMPLATE_REPO_CACHE_DIR
+        cache_dir.mkdir(parents=True, exist_ok=True)
+
+        template_cache_path = cache_dir / TEMPLATES_DIR / project_type / template_name
+
+        # Skip if already cached
+        if template_cache_path.is_dir() and (template_cache_path / "cookiecutter.json").is_file():
+            return cache_dir / TEMPLATES_DIR
+
+        typer.echo(f"Downloading {project_type}/{template_name}...", err=True)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            tarball_path = tmpdir_path / "repo.tar.gz"
+
+            # Download tarball
+            with httpx.stream("GET", tarball_url, follow_redirects=True, timeout=30.0) as response:
+                response.raise_for_status()
+                with open(tarball_path, "wb") as f:
+                    for chunk in response.iter_bytes(chunk_size=8192):
+                        f.write(chunk)
+
+            # Extract only the needed template
+            with tarfile.open(tarball_path, "r:gz") as tar:
+                # GitHub tarball format: agentseek-main/templates/...
+                repo_prefix = f"agentseek-{checkout}/"
+                target_prefix = f"{repo_prefix}{template_rel_path}/"
+
+                members_to_extract = []
+                for member in tar.getmembers():
+                    if member.name.startswith(target_prefix):
+                        # Strip the repo prefix
+                        member.name = member.name[len(repo_prefix):]
+                        members_to_extract.append(member)
+
+                if not members_to_extract:
+                    typer.echo(
+                        f"Template {project_type}/{template_name} not found in {checkout}.",
+                        err=True,
+                    )
+                    return None
+
+                # Extract to temp dir first
+                for member in members_to_extract:
+                    tar.extract(member, tmpdir_path)
+
+            # Move to cache
+            extracted_template = tmpdir_path / TEMPLATES_DIR / project_type / template_name
+            if not extracted_template.is_dir():
+                return None
+
+            template_cache_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(extracted_template), str(template_cache_path))
+
+            return cache_dir / TEMPLATES_DIR
+
+    except (httpx.HTTPError, tarfile.TarError, OSError) as exc:
+        typer.echo(
+            f"Fast download failed ({type(exc).__name__}), falling back to full clone...",
+            err=True,
+        )
+        return None
+
+
+def _prepare_templates_root_optimized(
+    project_type: str | None = None,
+    template_name: str | None = None,
+    checkout: str | None = None,
+) -> Path:
+    """Prepare templates root, using tarball download when possible.
+
+    Strategy:
+    1. Use local templates if available (development mode)
+    2. Use tarball API for specific template (fast, ~3s)
+    3. Fall back to full clone (slow, ~30s)
+    """
+    local_root = _local_templates_root()
+    if local_root is not None:
+        return local_root
+
+    # Try tarball download for specific templates
+    if project_type and template_name and checkout is None:
+        templates_root = _download_template_tarball(project_type, template_name)
+        if templates_root is not None:
+            return templates_root
+
+    # Fallback to full clone
+    return _prepare_templates_root(checkout=checkout)
+
+    if not templates_root.is_dir():
+        typer.echo(f"Templates directory not found at {templates_root}.", err=True)
+        raise typer.Exit(1)
+    return templates_root
+
+
 def _load_template_descriptions(templates_root: Path | None = None) -> dict[str, str]:
+    """Load template descriptions from index.json.
+
+    Resolution order:
+    1. Local templates/index.json (if templates_root exists)
+    2. Embedded templates_index.json from package data
+    """
+    # Try local first
     if templates_root is None:
         templates_root = _local_templates_root()
-    if templates_root is None:
-        return {}
-    index = templates_root / "index.json"
-    if not index.is_file():
-        return {}
+
+    if templates_root is not None:
+        index = templates_root / "index.json"
+        if index.is_file():
+            try:
+                data = json.loads(index.read_text(encoding="utf-8"))
+                if isinstance(data, dict):
+                    return {str(k): str(v) for k, v in data.items()}
+            except json.JSONDecodeError:
+                pass
+
+    # Fallback to embedded
     try:
-        data = json.loads(index.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-    if not isinstance(data, dict):
-        return {}
-    return {str(k): str(v) for k, v in data.items()}
+        embedded_data = files("agentseek").joinpath("data/templates_index.json").read_text(encoding="utf-8")
+        data = json.loads(embedded_data)
+        if isinstance(data, dict):
+            return {str(k): str(v) for k, v in data.items()}
+    except (FileNotFoundError, json.JSONDecodeError, AttributeError):
+        pass
+
+    return {}
 
 
 def _public_templates_for_type(project_type: str, descriptions: dict[str, str]) -> set[str]:
@@ -600,7 +749,12 @@ def create(ctx: typer.Context) -> None:
         _show_templates(project_type, checkout=args.checkout, filter_keyword=args.filter)
         return
 
-    templates_root = _prepare_templates_root(checkout=args.checkout)
+    # --- Prepare templates root (optimized path) ---
+    templates_root = _prepare_templates_root_optimized(
+        project_type=project_type,
+        template_name=template_name,
+        checkout=args.checkout,
+    )
 
     # --- Interactive type selection if needed ---
     if project_type is None:
