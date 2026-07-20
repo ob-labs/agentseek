@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+    
+    <meta name="description" content="Application development lifecycle toolkit for AI ecosystem apps."> 
+     
+    
+    <link rel="canonical" href="https://ob-labs.github.io/agentseek/guides/choose-template/"><link rel="icon" type="image/png" sizes="192x192" href="../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Choose a Template - agentseek</title>
+
+
+<link href="../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../css/normalize.css" rel="stylesheet">
+<link href="../../css/terminal.css" rel="stylesheet">
+<link href="../../css/theme.css" rel="stylesheet">
+<link href="../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../..",
+    shortcuts = "{}";
+</script>
+<script src="../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://ob-labs.github.io/agentseek/" class="no-style">agentseek</a></div>
+        </header>
+        
+
+
+
+    
+    
+    
+
+
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Home</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../get-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Get Started</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Guides</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../reference/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Reference</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../concepts/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Concepts</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                <li>
+                    <a href="../../zh/guides/choose-template/" class="menu-item language-toggle" lang="zh">
+                        <span>中文</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../..">Home</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Get Started</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../get-started/">Overview</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">Guides</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Choose a Template</span>
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../create-project/">Create a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../create-template/">Create a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../inspect-project/">Inspect a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../check-project/">Check a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../run-local-development/">Run Local Development</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../local-execution-modes/">Local Execution Modes</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../observability-tracing/">Observability and Tracing</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../run-project-tasks/">Run Project Tasks</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Reference</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/cli/">CLI</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/lifecycle-spec/">Lifecycle Spec</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/templates/">Templates</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/template-authoring-contract/">Template Authoring Contract</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Concepts</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/lifecycle-toolkit/">Lifecycle Toolkit</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#choose-a-template">Choose a Template</a></li>
+        <li><a href="#choose-the-runtime-family">Choose The Runtime Family</a></li><li><a href="#pick-by-project-goal">Pick By Project Goal</a></li><li><a href="#choose-agentseek-wrapped-or-framework-native">Choose AgentSeek-Wrapped Or Framework-Native</a></li><li><a href="#check-full-details">Check Full Details</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+    
+    
+    
+    
+    
+
+<section id="mkdocs-terminal-content">
+    <h1 id="choose-a-template">Choose a Template<a class="headerlink" href="#choose-a-template" title="Permanent link">&para;</a></h1>
+<p>Use this guide before you create a project.</p>
+<h2 id="choose-the-runtime-family">Choose The Runtime Family<a class="headerlink" href="#choose-the-runtime-family" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Start with</th>
+<th>When you need</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bub</code></td>
+<td>A lightweight Bub app, AG-UI gateway, and AgentSeek lifecycle commands.</td>
+</tr>
+<tr>
+<td><code>deepagents</code></td>
+<td>Planning, tool use, sub-agent workflows, sandbox-backed coding agents, or DeepAgents examples with local development.</td>
+</tr>
+<tr>
+<td><code>langchain</code></td>
+<td>LangChain or LangGraph app patterns, including RAG, markdown chat, or AG-UI integration.</td>
+</tr>
+</tbody>
+</table>
+<p>Every maintained template exposes AgentSeek lifecycle commands through
+<code>.agentseek/lifecycle.toml</code>. The runtime choice still matters because the
+generated app code is Bub, DeepAgents, LangChain, or LangGraph shaped.</p>
+<h2 id="pick-by-project-goal">Pick By Project Goal<a class="headerlink" href="#pick-by-project-goal" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Choose</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build the smallest Bub AG-UI app</td>
+<td><code>bub/default</code></td>
+<td>It starts a Bub gateway and Vite frontend with the least extra runtime surface.</td>
+</tr>
+<tr>
+<td>Wrap a minimal DeepAgents runnable for AgentSeek</td>
+<td><code>deepagents/default</code></td>
+<td>It binds <code>create_deep_agent(...)</code> through <code>agentseek-langchain</code>.</td>
+</tr>
+<tr>
+<td>Run a DeepAgents research workflow</td>
+<td><code>deepagents/research</code></td>
+<td>It includes search, tool streaming, sub-agent progress, and a React frontend.</td>
+</tr>
+<tr>
+<td>Run a DeepAgents content workflow</td>
+<td><code>deepagents/content-builder</code></td>
+<td>It includes brand memory, skills, subagents, image generation, and streamed UI.</td>
+</tr>
+<tr>
+<td>Build a sandbox-backed coding agent</td>
+<td><code>deepagents/sandbox</code></td>
+<td>It uses <code>create_deep_agent(...)</code> with Daytona by default and keeps the charged LangSmith Sandbox as an alternative.</td>
+</tr>
+<tr>
+<td>Build a LangChain AG-UI app</td>
+<td><code>langchain/default</code></td>
+<td>It keeps the LangChain <code>create_agent(...)</code> shape and binds it through AgentSeek.</td>
+</tr>
+<tr>
+<td>Start with a pure LangGraph-style chat UI</td>
+<td><code>langchain/markdown-messages</code></td>
+<td>It uses <code>langgraph dev</code>, <code>@langchain/react</code>, and markdown message rendering.</td>
+</tr>
+<tr>
+<td>Build RAG over OceanBase seekdb</td>
+<td><code>langchain/agentic-rag</code></td>
+<td>It includes an agentic retrieval tool, ingest command, frontend, and OceanBase seekdb setup.</td>
+</tr>
+<tr>
+<td>Learn and inspect hybrid retrieval behavior</td>
+<td><code>langchain/agentic-rag-hybrid</code></td>
+<td>It includes image ingestion, vector/sparse/full-text/metadata modes, a guided starter pack, visual compare UI, and optional Phoenix traces.</td>
+</tr>
+<tr>
+<td>Connect to a remote LangGraph service</td>
+<td><code>langchain/cli-remote</code></td>
+<td>It bridges a remote LangGraph agent through <code>LangGraphClientRunnable</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="choose-agentseek-wrapped-or-framework-native">Choose AgentSeek-Wrapped Or Framework-Native<a class="headerlink" href="#choose-agentseek-wrapped-or-framework-native" title="Permanent link">&para;</a></h2>
+<p>Use <code>bub/default</code>, <code>deepagents/default</code>, or <code>langchain/default</code> when you want
+the generated app to run through the
+AgentSeek/Bub gateway path.</p>
+<p>Use <code>deepagents/research</code>, <code>deepagents/content-builder</code>, <code>deepagents/sandbox</code>,
+<code>langchain/markdown-messages</code>, <code>langchain/agentic-rag</code>, or
+<code>langchain/agentic-rag-hybrid</code>
+when you want a framework-native backend such as <code>langgraph dev</code>, still managed
+by AgentSeek lifecycle commands.</p>
+<p>Choose <code>langchain/agentic-rag-hybrid</code> when you need developers to learn and inspect hybrid retrieval behavior, especially for image-backed knowledge bases where visual similarity, captions, labels, and metadata all affect recall.</p>
+<p>Use <code>langchain/cli-remote</code> when the generated project should talk to an
+already running LangGraph service instead of owning the graph process.</p>
+<h2 id="check-full-details">Check Full Details<a class="headerlink" href="#check-full-details" title="Permanent link">&para;</a></h2>
+<p>After you choose a starting point, use the template reference for exact paths
+and supported create forms.</p>
+<ul>
+<li><a href="../create-project/">Create a Project</a></li>
+<li><a href="../../reference/templates/">Templates reference</a></li>
+<li><a href="../../reference/lifecycle-spec/">Lifecycle Spec reference</a></li>
+</ul>
+</section>
+
+<section id="mkdocs-terminal-after-content">
+    
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

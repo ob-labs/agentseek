@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+    
+    <meta name="description" content="Application development lifecycle toolkit for AI ecosystem apps."> 
+     
+    
+    <link rel="canonical" href="https://ob-labs.github.io/agentseek/"><link rel="icon" type="image/png" sizes="192x192" href="img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Home - agentseek</title>
+
+
+<link href="css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="css/normalize.css" rel="stylesheet">
+<link href="css/terminal.css" rel="stylesheet">
+<link href="css/theme.css" rel="stylesheet">
+<link href="css/theme.tile_grid.css" rel="stylesheet">
+<link href="css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = ".",
+    shortcuts = "{}";
+</script>
+<script src="js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="js/bootstrap/bootstrap.min.js" defer></script>
+<script src="js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://ob-labs.github.io/agentseek/" class="no-style">agentseek</a></div>
+        </header>
+        
+
+
+
+    
+    
+    
+
+
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="." class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Home</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="get-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Get Started</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="guides/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Guides</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="reference/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Reference</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="concepts/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Concepts</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                <li>
+                    <a href="./zh/" class="menu-item language-toggle" lang="zh">
+                        <span>中文</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Home</span>
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Get Started</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="get-started/">Overview</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Guides</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/choose-template/">Choose a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/create-project/">Create a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/create-template/">Create a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/inspect-project/">Inspect a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/check-project/">Check a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/run-local-development/">Run Local Development</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/local-execution-modes/">Local Execution Modes</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/observability-tracing/">Observability and Tracing</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="guides/run-project-tasks/">Run Project Tasks</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Reference</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="reference/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="reference/cli/">CLI</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="reference/lifecycle-spec/">Lifecycle Spec</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="reference/templates/">Templates</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="reference/template-authoring-contract/">Template Authoring Contract</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Concepts</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="concepts/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="concepts/lifecycle-toolkit/">Lifecycle Toolkit</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#agentseek-lifecycle-toolkit">AgentSeek Lifecycle Toolkit</a></li>
+        <li><a href="#read-this-first">Read This First</a></li><li><a href="#try-one-template-path">Try One Template Path</a></li><li><a href="#lifecycle-commands">Lifecycle Commands</a></li><li><a href="#understand-the-workflow">Understand The Workflow</a></li><li><a href="#current-focus">Current Focus</a></li><li><a href="#next-reads">Next Reads</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+    
+    
+    
+    
+    
+
+<section id="mkdocs-terminal-content">
+    <h1 id="agentseek-lifecycle-toolkit">AgentSeek Lifecycle Toolkit<a class="headerlink" href="#agentseek-lifecycle-toolkit" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>In short:</strong> AgentSeek helps you move from an app template to a running local
+AI application through a small lifecycle command set.</p>
+</blockquote>
+<h2 id="read-this-first">Read This First<a class="headerlink" href="#read-this-first" title="Permanent link">&para;</a></h2>
+<p>AgentSeek gives generated apps a consistent local development workflow.</p>
+<p>It creates the app, checks whether it is ready, and starts the services needed
+for local development.</p>
+<div class="highlight"><pre><span></span><code>AgentSeek CLI
+  -&gt; app template
+    -&gt; editable generated app
+      -&gt; lifecycle tasks
+      -&gt; local development stack
+</code></pre></div>
+<h2 id="try-one-template-path">Try One Template Path<a class="headerlink" href="#try-one-template-path" title="Permanent link">&para;</a></h2>
+<p>Install the CLI for daily use.</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>agentseek
+</code></pre></div>
+<p>The command below uses one Bub template. DeepAgents and LangChain templates use
+the same lifecycle command shape.
+Fill <code>.env</code> before running <code>agentseek doctor</code>; otherwise the readiness check
+reports the missing credentials.</p>
+<div class="highlight"><pre><span></span><code>agentseek<span class="w"> </span>create<span class="w"> </span>bub/default<span class="w"> </span>--no-input
+<span class="nb">cd</span><span class="w"> </span>my_bub_agent
+cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="nv">$EDITOR</span><span class="w"> </span>.env
+agentseek<span class="w"> </span>task<span class="w"> </span>--list
+agentseek<span class="w"> </span>task<span class="w"> </span>frontend
+agentseek<span class="w"> </span>doctor
+agentseek<span class="w"> </span>dev
+</code></pre></div>
+<h2 id="lifecycle-commands">Lifecycle Commands<a class="headerlink" href="#lifecycle-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Use it when you want to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentseek create</code></td>
+<td>Create a project from a template.</td>
+</tr>
+<tr>
+<td><code>agentseek doctor</code></td>
+<td>Check files, environment, dependencies, and ports.</td>
+</tr>
+<tr>
+<td><code>agentseek dev</code></td>
+<td>Start the generated project's local development stack.</td>
+</tr>
+<tr>
+<td><code>agentseek info</code></td>
+<td>Inspect project metadata and local entry points.</td>
+</tr>
+<tr>
+<td><code>agentseek task</code></td>
+<td>Run project-defined tasks directly.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="understand-the-workflow">Understand The Workflow<a class="headerlink" href="#understand-the-workflow" title="Permanent link">&para;</a></h2>
+<p>A generated project carries its own lifecycle tasks.</p>
+<p>AgentSeek exposes the common tasks as first-class commands. It also lets you
+run project-specific tasks through <code>agentseek task</code>.</p>
+<p>This keeps the workflow predictable while leaving app behavior in the generated
+project.</p>
+<h2 id="current-focus">Current Focus<a class="headerlink" href="#current-focus" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Create editable apps from templates.</li>
+<li>Check local readiness before development.</li>
+<li>Run the local development stack.</li>
+<li>Inspect project metadata and entry points.</li>
+<li>Extend the app workflow with project tasks.</li>
+</ul>
+<h2 id="next-reads">Next Reads<a class="headerlink" href="#next-reads" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="get-started/">Get started</a></li>
+<li><a href="guides/create-project/">Create a project</a></li>
+<li><a href="reference/cli/">Review the CLI</a></li>
+</ul>
+</section>
+
+<section id="mkdocs-terminal-after-content">
+    
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

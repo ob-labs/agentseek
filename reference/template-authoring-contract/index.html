@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+    
+    <meta name="description" content="Application development lifecycle toolkit for AI ecosystem apps."> 
+     
+    
+    <link rel="canonical" href="https://ob-labs.github.io/agentseek/reference/template-authoring-contract/"><link rel="icon" type="image/png" sizes="192x192" href="../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Template Authoring Contract - agentseek</title>
+
+
+<link href="../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../css/normalize.css" rel="stylesheet">
+<link href="../../css/terminal.css" rel="stylesheet">
+<link href="../../css/theme.css" rel="stylesheet">
+<link href="../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../..",
+    shortcuts = "{}";
+</script>
+<script src="../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://ob-labs.github.io/agentseek/" class="no-style">agentseek</a></div>
+        </header>
+        
+
+
+
+    
+    
+    
+
+
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Home</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../get-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Get Started</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../guides/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Guides</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Reference</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../concepts/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Concepts</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                <li>
+                    <a href="../../zh/reference/template-authoring-contract/" class="menu-item language-toggle" lang="zh">
+                        <span>中文</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../..">Home</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Get Started</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../get-started/">Overview</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Guides</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/choose-template/">Choose a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/create-project/">Create a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/create-template/">Create a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/inspect-project/">Inspect a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/check-project/">Check a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/run-local-development/">Run Local Development</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/local-execution-modes/">Local Execution Modes</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/observability-tracing/">Observability and Tracing</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/run-project-tasks/">Run Project Tasks</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">Reference</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../cli/">CLI</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../lifecycle-spec/">Lifecycle Spec</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../templates/">Templates</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Template Authoring Contract</span>
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Concepts</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/lifecycle-toolkit/">Lifecycle Toolkit</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#template-authoring-contract">Template Authoring Contract</a></li>
+        <li><a href="#required-structure">Required Structure</a></li><li><a href="#registry">Registry</a></li><li><a href="#provider-configuration">Provider Configuration</a></li><li><a href="#lifecycle-declaration">Lifecycle Declaration</a></li><li><a href="#task-names">Task Names</a></li><li><a href="#local-services-and-networking">Local Services And Networking</a></li><li><a href="#optional-capabilities">Optional Capabilities</a></li><li><a href="#readme-contract">README Contract</a></li><li><a href="#exceptions">Exceptions</a></li><li><a href="#verification">Verification</a></li><li><a href="#related">Related</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+    
+    
+    
+    
+    
+
+<section id="mkdocs-terminal-content">
+    <h1 id="template-authoring-contract">Template Authoring Contract<a class="headerlink" href="#template-authoring-contract" title="Permanent link">&para;</a></h1>
+<p>Requirements for new or substantially revised templates. Framework-specific
+implementations may differ, but the generated project must preserve this
+AgentSeek-facing contract.</p>
+<h2 id="required-structure">Required Structure<a class="headerlink" href="#required-structure" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Requirement</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>templates/&lt;type&gt;/&lt;name&gt;/cookiecutter.json</code></td>
+<td>Always. Defines render inputs and defaults.</td>
+<td>Template discovery in <code>test_templates_render.py</code>.</td>
+</tr>
+<tr>
+<td><code>templates/&lt;type&gt;/&lt;name&gt;/README.md</code></td>
+<td>Always. Describes the source template and its render inputs.</td>
+<td><code>test_registered_templates_have_readme</code>.</td>
+</tr>
+<tr>
+<td><code>templates/&lt;type&gt;/&lt;name&gt;/{{cookiecutter.project_slug}}/</code></td>
+<td>Always. Contains the generated project.</td>
+<td>Cookiecutter render test.</td>
+</tr>
+<tr>
+<td>Generated <code>pyproject.toml</code></td>
+<td>Always for bundled Python templates. Must contain a non-empty project name and valid dependency list.</td>
+<td><code>test_template_renders_without_unrendered_jinja</code>.</td>
+</tr>
+<tr>
+<td>Generated <code>.agentseek/lifecycle.toml</code></td>
+<td>Always. Declares template identity and local lifecycle behavior.</td>
+<td>Render and lifecycle smoke tests.</td>
+</tr>
+<tr>
+<td>Generated <code>.env.example</code></td>
+<td>Required when runtime configuration is read from environment variables.</td>
+<td>Generated README and lifecycle declarations.</td>
+</tr>
+<tr>
+<td>Generated <code>README.md</code></td>
+<td>Always. Provides the complete first successful run path.</td>
+<td>Render review and template smoke coverage.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="registry">Registry<a class="headerlink" href="#registry" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Key</td>
+<td><code>type/name</code>, matching the template directory and lifecycle <code>template</code> value.</td>
+</tr>
+<tr>
+<td>Description</td>
+<td>One sentence describing the generated app and its distinguishing capability.</td>
+</tr>
+<tr>
+<td>Source of truth</td>
+<td><code>templates/index.json</code>. Every non-quarantined Cookiecutter template must be registered.</td>
+</tr>
+<tr>
+<td>New type</td>
+<td>Requires explicit CLI and test review; adding a directory alone is insufficient.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="provider-configuration">Provider Configuration<a class="headerlink" href="#provider-configuration" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>When required</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTSEEK_MODEL</code></td>
+<td>Any template that selects a hosted chat model.</td>
+<td>Primary template-facing model setting. Compatibility aliases may be accepted.</td>
+</tr>
+<tr>
+<td><code>AGENTSEEK_API_KEY</code></td>
+<td>A single OpenAI-compatible credential can configure the runtime.</td>
+<td>Primary portable credential. Runtime code may adapt it to the SDK variable.</td>
+</tr>
+<tr>
+<td><code>AGENTSEEK_API_BASE</code></td>
+<td>A custom OpenAI-compatible endpoint is supported.</td>
+<td>Primary portable endpoint setting. Empty means the provider default.</td>
+</tr>
+<tr>
+<td><code>AGENTSEEK_MODEL_PROVIDER</code></td>
+<td>Multiple native providers are supported.</td>
+<td>Selects the provider adapter. The model value must match the selected provider.</td>
+</tr>
+<tr>
+<td>Provider-native keys</td>
+<td>The selected SDK requires a distinct credential, such as <code>ANTHROPIC_API_KEY</code> or <code>GOOGLE_API_KEY</code>.</td>
+<td>Allowed conditionally. <code>.env.example</code>, lifecycle checks, runtime code, and README must use the same name and precedence.</td>
+</tr>
+</tbody>
+</table>
+<p>Canonical <code>AGENTSEEK_*</code> settings are the public template interface when the
+concept applies. Framework-native variables remain adapters or compatibility
+aliases; they do not create a second undocumented configuration path.</p>
+<h2 id="lifecycle-declaration">Lifecycle Declaration<a class="headerlink" href="#lifecycle-declaration" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Root fields</td>
+<td><code>version = 1</code>, exact <code>template = "type/name"</code>, human-readable <code>name</code>, and <code>env_file = ".env"</code> when environment checks are declared.</td>
+</tr>
+<tr>
+<td><code>[tools]</code></td>
+<td>Every executable required before setup or local development.</td>
+</tr>
+<tr>
+<td><code>[paths]</code></td>
+<td>Generated files or installed directories required by <code>agentseek doctor</code>.</td>
+</tr>
+<tr>
+<td><code>[env.&lt;name&gt;]</code></td>
+<td>Configuration that <code>agentseek doctor</code> must check. Aliases must match runtime aliases.</td>
+</tr>
+<tr>
+<td><code>[services.&lt;name&gt;]</code></td>
+<td>Every stable user-facing local endpoint shown by <code>agentseek info</code>.</td>
+</tr>
+<tr>
+<td><code>[processes.&lt;name&gt;]</code></td>
+<td>Every long-running process started by <code>agentseek dev</code>. At least one process is required.</td>
+</tr>
+<tr>
+<td><code>[checks.&lt;name&gt;]</code></td>
+<td>HTTP readiness check for each service with a stable health or application endpoint.</td>
+</tr>
+<tr>
+<td><code>[tasks.&lt;name&gt;]</code></td>
+<td>One-shot setup, preparation, or maintenance action exposed by <code>agentseek task</code>. Each task has a description.</td>
+</tr>
+</tbody>
+</table>
+<p>Environment resolution for lifecycle checks:</p>
+<div class="highlight"><pre><span></span><code>lifecycle default &lt; env_file &lt; shell environment
+</code></pre></div>
+<p>Lifecycle defaults and <code>.env</code> values validate readiness. AgentSeek does not
+inject them into child processes. Process commands must load their runtime
+environment themselves.</p>
+<h2 id="task-names">Task Names<a class="headerlink" href="#task-names" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sync</code></td>
+<td>Installs Python or backend dependencies when a separate install step is required. New templates use <code>sync</code>, not framework-specific alternatives such as <code>backend</code>.</td>
+</tr>
+<tr>
+<td><code>frontend</code></td>
+<td>Installs frontend dependencies when the project contains a separate frontend dependency tree.</td>
+</tr>
+<tr>
+<td><code>models</code></td>
+<td>Downloads or converts local model artifacts when required before development.</td>
+</tr>
+<tr>
+<td><code>&lt;service&gt;</code></td>
+<td>Prepares or starts an optional dependency that is not fully owned by <code>agentseek dev</code>, for example <code>seekdb</code>.</td>
+</tr>
+<tr>
+<td><code>ingest-sample</code></td>
+<td>Loads deterministic sample content when the template demonstrates an ingestion workflow.</td>
+</tr>
+<tr>
+<td><code>&lt;integration&gt;-skills</code></td>
+<td>Installs an optional external skill pack. The task remains discoverable through <code>agentseek task --list</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Generated READMEs use <code>agentseek task &lt;name&gt;</code> for setup. Raw package-manager
+commands may explain the implementation, but they are not a parallel primary
+workflow.</p>
+<h2 id="local-services-and-networking">Local Services And Networking<a class="headerlink" href="#local-services-and-networking" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Development stack</td>
+<td><code>agentseek dev</code> starts all long-running processes needed for the documented local experience.</td>
+</tr>
+<tr>
+<td>Default binding</td>
+<td>Backend and frontend servers bind to loopback by default.</td>
+</tr>
+<tr>
+<td>Remote development</td>
+<td>Host overrides are available and documented when remote access is supported.</td>
+</tr>
+<tr>
+<td>Browser API URL</td>
+<td>A frontend derives the backend host from the browser location or accepts an explicit public API URL. It does not hard-code a loopback backend for remote clients.</td>
+</tr>
+<tr>
+<td>No frontend</td>
+<td>Backend-only templates state that no frontend is provided and identify the supported entry point.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="optional-capabilities">Optional Capabilities<a class="headerlink" href="#optional-capabilities" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Required disclosure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Knowledge base</td>
+<td>State whether ingestion runs from local files, a server endpoint, a UI, or a lifecycle task. Include one supported sample.</td>
+</tr>
+<tr>
+<td>Observability</td>
+<td>State whether tracing is available, how it is enabled, and which backend receives it. Do not imply that every template supports LangSmith.</td>
+</tr>
+<tr>
+<td>Local models</td>
+<td>Document artifact preparation, supported device settings, and the lifecycle task that prepares models.</td>
+</tr>
+<tr>
+<td>Conversational response</td>
+<td>Default prompts include <code>Answer in the same language as the user's question.</code> unless a documented product requirement overrides it.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="readme-contract">README Contract<a class="headerlink" href="#readme-contract" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Required contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source template README</td>
+<td>Purpose, architecture summary, Cookiecutter inputs, generated layout, and contributor-facing implementation notes.</td>
+</tr>
+<tr>
+<td>Generated README</td>
+<td>Prerequisites, <code>.env</code> configuration, ordered lifecycle tasks, <code>agentseek doctor</code>, <code>agentseek dev</code>, service entry points, optional capabilities, and remote binding when supported.</td>
+</tr>
+<tr>
+<td>Missing capability</td>
+<td>State explicitly when a commonly expected capability is absent, such as a frontend or observability integration.</td>
+</tr>
+<tr>
+<td>Deviations</td>
+<td>Add <code>Deviations from the template contract</code> only when an exception exists. Name the rule, reason, user impact, and substitute validation.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="exceptions">Exceptions<a class="headerlink" href="#exceptions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Justification</td>
+<td>Framework or runtime constraint, not contributor preference.</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>Generated README records the deviation.</td>
+</tr>
+<tr>
+<td>Pull request</td>
+<td>PR description repeats the deviation and its user impact.</td>
+</tr>
+<tr>
+<td>Evidence</td>
+<td>Tests or smoke checks demonstrate the supported alternative.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Command or evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Registry consistency</td>
+<td><code>uv run python -m pytest tests/cli_commands/test_templates_registry.py -q</code></td>
+</tr>
+<tr>
+<td>Default render and lifecycle smoke</td>
+<td><code>uv run python -m pytest tests/cli_commands/test_templates_render.py -q</code></td>
+</tr>
+<tr>
+<td>Generated project inspection</td>
+<td>Render the local template with <code>agentseek create &lt;absolute-template-path&gt; --no-input</code>.</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td><code>make docs-test</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../guides/create-template/">Create a Template</a></li>
+<li><a href="../lifecycle-spec/">Lifecycle Spec</a></li>
+<li><a href="../templates/">Templates</a></li>
+</ul>
+</section>
+
+<section id="mkdocs-terminal-after-content">
+    
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

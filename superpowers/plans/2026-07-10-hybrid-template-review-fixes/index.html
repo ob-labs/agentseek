@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+    
+    <meta name="description" content="Application development lifecycle toolkit for AI ecosystem apps."> 
+     
+    
+    <link rel="canonical" href="https://ob-labs.github.io/agentseek/superpowers/plans/2026-07-10-hybrid-template-review-fixes/"><link rel="icon" type="image/png" sizes="192x192" href="../../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Hybrid Template Review Fixes Implementation Plan - agentseek</title>
+
+
+<link href="../../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../../css/normalize.css" rel="stylesheet">
+<link href="../../../css/terminal.css" rel="stylesheet">
+<link href="../../../css/theme.css" rel="stylesheet">
+<link href="../../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../../..",
+    shortcuts = "{}";
+</script>
+<script src="../../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://ob-labs.github.io/agentseek/" class="no-style">agentseek</a></div>
+        </header>
+        
+
+
+
+    
+    
+    
+
+
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Home</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../../get-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Get Started</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../../guides/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Guides</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../../reference/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Reference</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../../concepts/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Concepts</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                <li>
+                    <a href="../../../zh/superpowers/plans/2026-07-10-hybrid-template-review-fixes/" class="menu-item language-toggle" lang="zh">
+                        <span>中文</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../..">Home</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Get Started</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../get-started/">Overview</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Guides</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/choose-template/">Choose a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/create-project/">Create a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/create-template/">Create a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/inspect-project/">Inspect a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/check-project/">Check a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/run-local-development/">Run Local Development</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/local-execution-modes/">Local Execution Modes</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/observability-tracing/">Observability and Tracing</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../guides/run-project-tasks/">Run Project Tasks</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Reference</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../reference/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../reference/cli/">CLI</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../reference/lifecycle-spec/">Lifecycle Spec</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../reference/templates/">Templates</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../reference/template-authoring-contract/">Template Authoring Contract</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Concepts</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../concepts/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../../concepts/lifecycle-toolkit/">Lifecycle Toolkit</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#hybrid-template-review-fixes-implementation-plan">Hybrid Template Review Fixes Implementation Plan</a></li>
+        <li><a href="#global-constraints">Global Constraints</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+<section id="mkdocs-terminal-content">
+    <h1 id="hybrid-template-review-fixes-implementation-plan">Hybrid Template Review Fixes Implementation Plan<a class="headerlink" href="#hybrid-template-review-fixes-implementation-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Make PR #123 mergeable and ensure the generated hybrid RAG template's documented setup, provider switching, remote access, user-image ingestion, comparison behavior, and smoke proof work as described.</p>
+<p><strong>Architecture:</strong> Keep <code>langchain-oceanbase</code> as the only seekdb integration and preserve LangChain instrumentation for Phoenix. Repair configuration at the template boundary, persist user images under managed media storage, retrieve one candidate set for all comparison modes, and expand rendered-project smoke coverage without requiring hosted-provider secrets.</p>
+<p><strong>Tech Stack:</strong> Cookiecutter, AgentSeek lifecycle TOML, Python 3.12+, LangChain/LangGraph, <code>langchain-oceanbase</code>, FastAPI, React/Vite/TypeScript, pytest, GitHub Actions.</p>
+<h2 id="global-constraints">Global Constraints<a class="headerlink" href="#global-constraints" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Public provider configuration uses <code>AGENTSEEK_MODEL_PROVIDER</code>, <code>AGENTSEEK_MODEL</code>, <code>AGENTSEEK_API_KEY</code>, and <code>AGENTSEEK_API_BASE</code>.</li>
+<li>SiliconFlow remains the default OpenAI-compatible endpoint for chat, text/image embeddings, and VLM captions.</li>
+<li>Persistence and vector retrieval continue through <code>langchain-oceanbase</code> <code>OceanbaseVectorStore</code>; do not import or call <code>pyseekdb</code> directly.</li>
+<li>Lab, Compare, and Ask remain LangChain/LangGraph-instrumented for Phoenix.</li>
+<li>Default servers bind to loopback; documented <code>LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0</code> remote development must work.</li>
+<li>Preserve the user's untracked <code>artifacts/</code> directory.</li>
+</ul>
+<hr />
+<h3 id="task-1-integrate-current-main">Task 1: Integrate Current Main<a class="headerlink" href="#task-1-integrate-current-main" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>tests/cli_commands/test_templates_render.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: upstream <code>f23416d</code> dependency task normalization.
+- Produces: a conflict-free branch containing both <code>language_instruction_templates</code> and <code>dependency_sync_templates</code> assertions.</p>
+<ul>
+<li>[ ] <strong>Step 1: Merge <code>origin/main</code></strong></li>
+</ul>
+<p>Run: <code>git merge --no-edit origin/main</code></p>
+<p>Expected: one conflict in <code>tests/cli_commands/test_templates_render.py</code>.</p>
+<ul>
+<li>[ ] <strong>Step 2: Resolve the conflict</strong></li>
+</ul>
+<p>Keep both collections and both helper-based content-builder checks. Include <code>langchain/agentic-rag-hybrid</code> in the sync-task verification set.</p>
+<ul>
+<li>[ ] <strong>Step 3: Verify the merged baseline</strong></li>
+</ul>
+<p>Run: <code>uv run python -m pytest tests/cli_commands/test_templates_render.py -q</code></p>
+<p>Expected: all render and lifecycle cases pass.</p>
+<h3 id="task-2-repair-configuration-networking-and-prompt-contract">Task 2: Repair Configuration, Networking, and Prompt Contract<a class="headerlink" href="#task-2-repair-configuration-networking-and-prompt-contract" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>tests/cli_commands/test_agentic_rag_hybrid_template.py</code>
+- Modify: <code>tests/cli_commands/test_templates_render.py</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/tests/test_agent_tool.py</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/frontend/package.json</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/langgraph.json</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/src/{{cookiecutter.project_slug}}/agent.py</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/cookiecutter.json</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: lifecycle alias resolution and Vite <code>server.host</code> from <code>vite.config.ts</code>.
+- Produces: canonical-key readiness, native-provider credential precedence, working remote binding/CORS, and a same-language default prompt.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong></li>
+</ul>
+<p>Add assertions that <code>SILICONFLOW_API_KEY</code> is not a separate lifecycle requirement, <code>AGENTSEEK_API_KEY</code> alone satisfies environment checks, the Vite script has no hard-coded host, CORS accepts the documented development origins, native provider keys win for native adapters, and the hybrid prompt includes <code>Answer in the same language as the user's question.</code></p>
+<ul>
+<li>[ ] <strong>Step 2: Run tests and verify RED</strong></li>
+</ul>
+<p>Run: <code>uv run python -m pytest tests/cli_commands/test_agentic_rag_hybrid_template.py tests/cli_commands/test_templates_render.py -q</code></p>
+<p>Run from a rendered project: <code>uv run python -m pytest tests/test_agent_tool.py -q</code></p>
+<p>Expected: failures identify the duplicate key, host override, CORS restriction, provider precedence, and missing prompt sentence.</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement minimal fixes</strong></li>
+</ul>
+<p>Remove the duplicate lifecycle requirement, let Vite use <code>FRONTEND_HOST</code>, allow development CORS origins required by remote binding, prefer <code>ANTHROPIC_API_KEY</code> and <code>GOOGLE_API_KEY</code> for native adapters, and append the same-language instruction to the default prompt.</p>
+<ul>
+<li>[ ] <strong>Step 4: Run tests and verify GREEN</strong></li>
+</ul>
+<p>Repeat the focused commands; expected: pass.</p>
+<h3 id="task-3-make-user-images-servable-and-upload-ingestion-non-blocking">Task 3: Make User Images Servable and Upload Ingestion Non-Blocking<a class="headerlink" href="#task-3-make-user-images-servable-and-upload-ingestion-non-blocking" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/src/{{cookiecutter.project_slug}}/store.py</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/src/{{cookiecutter.project_slug}}/routes.py</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/tests/test_hybrid.py</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/tests/test_routes.py</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>Settings.media_data_dir</code> and <code>_servable_image_path</code> managed-root validation.
+- Produces: <code>_managed_image_path(image_path, image_id) -&gt; Path</code> behavior and a synchronous upload endpoint.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing tests</strong></li>
+</ul>
+<p>Assert that directory ingestion copies each source image to <code>MEDIA_DATA_DIR/images/&lt;image-id&gt;.&lt;suffix&gt;</code>, stores that managed path in metadata, and that <code>upload_archive</code> is not a coroutine function.</p>
+<ul>
+<li>[ ] <strong>Step 2: Run tests and verify RED</strong></li>
+</ul>
+<p>Run: <code>uv run python -m pytest tests/test_hybrid.py tests/test_routes.py -q</code></p>
+<p>Expected: managed-path and synchronous-route assertions fail.</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement minimal fixes</strong></li>
+</ul>
+<p>Copy source images with <code>shutil.copy2</code> into the managed image directory before embedding and persistence. Change <code>async def upload_archive</code> to <code>def upload_archive</code> so FastAPI executes blocking ingestion in its worker threadpool.</p>
+<ul>
+<li>[ ] <strong>Step 4: Run tests and verify GREEN</strong></li>
+</ul>
+<p>Repeat the focused test command; expected: pass.</p>
+<h3 id="task-4-share-retrieval-candidates-across-compare-modes">Task 4: Share Retrieval Candidates Across Compare Modes<a class="headerlink" href="#task-4-share-retrieval-candidates-across-compare-modes" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/src/{{cookiecutter.project_slug}}/store.py</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/tests/test_hybrid.py</code></p>
+<p><strong>Interfaces:</strong>
+- Produces: one query embedding and one vector/sparse/full-text/metadata candidate retrieval per <code>compare_modes</code> call; each mode still returns a <code>SearchTrace</code> with its own weights and fused ranking.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write a failing call-count test</strong></li>
+</ul>
+<p>Use a recording embedding engine/vector store and assert one embedding call, one vector query, one sparse query, one full-text query, and one auxiliary ID load for all four mode traces.</p>
+<ul>
+<li>[ ] <strong>Step 2: Run the test and verify RED</strong></li>
+</ul>
+<p>Run: <code>uv run python -m pytest tests/test_hybrid.py -q</code></p>
+<p>Expected: current implementation reports four calls.</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement shared candidate retrieval</strong></li>
+</ul>
+<p>Extract route retrieval from formatting, call it once in <code>compare_modes</code>, and invoke <code>_format_trace</code> for <code>balanced</code>, <code>semantic</code>, <code>keyword</code>, and <code>exact</code> using the same hit lists.</p>
+<ul>
+<li>[ ] <strong>Step 4: Run tests and verify GREEN</strong></li>
+</ul>
+<p>Repeat the focused test command; expected: pass.</p>
+<h3 id="task-5-strengthen-rendered-project-smoke-proof">Task 5: Strengthen Rendered-Project Smoke Proof<a class="headerlink" href="#task-5-strengthen-rendered-project-smoke-proof" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>.github/workflows/main.yml</code>
+- Modify: <code>tests/test_github_workflows.py</code>
+- Create: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/tests/test_seekdb_integration.py</code>
+- Modify: <code>templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/README.md</code></p>
+<p><strong>Interfaces:</strong>
+- Produces: a rendered frontend production build and a real embedded-seekdb integration test using deterministic local embeddings, while hosted-model live proof remains documented/manual unless CI credentials are present.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write failing workflow and integration assertions</strong></li>
+</ul>
+<p>Require <code>npm run build</code> in the hybrid smoke job. Add an integration test that constructs the real <code>OceanbaseVectorStore</code>, ingests deterministic image fixtures through <code>HybridImageStore</code>, and retrieves them without a network model call.</p>
+<ul>
+<li>[ ] <strong>Step 2: Run tests and verify RED</strong></li>
+</ul>
+<p>Run: <code>uv run python -m pytest tests/test_github_workflows.py -q</code></p>
+<p>Run in a rendered project: <code>uv run python -m pytest tests/test_seekdb_integration.py -q</code></p>
+<p>Expected: workflow assertion fails before the build step is added; integration test drives real embedded seekdb.</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement the smoke workflow and documentation</strong></li>
+</ul>
+<p>Run frontend installation/build in CI after rendering. Document the distinction between deterministic CI infrastructure proof and credentialed live-model proof.</p>
+<ul>
+<li>[ ] <strong>Step 4: Verify GREEN</strong></li>
+</ul>
+<p>Repeat both tests; expected: pass.</p>
+<h3 id="task-6-whole-branch-verification-and-pr-update">Task 6: Whole-Branch Verification and PR Update<a class="headerlink" href="#task-6-whole-branch-verification-and-pr-update" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Review all files changed since <code>origin/main</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Run complete focused verification</strong></li>
+</ul>
+<p>Run: <code>uv run python -m pytest tests/cli_commands/test_agentic_rag_hybrid_template.py tests/cli_commands/test_templates_registry.py tests/cli_commands/test_templates_render.py tests/test_docs_lifecycle.py tests/test_github_workflows.py -q</code></p>
+<p>Run: <code>make lint typecheck</code></p>
+<p>Run: <code>make docs-test</code></p>
+<p>Render the template, run generated Python tests, install frontend dependencies, run <code>npm run build</code>, and run <code>agentseek doctor</code> with only <code>AGENTSEEK_API_KEY</code> supplied.</p>
+<ul>
+<li>[ ] <strong>Step 2: Request whole-branch code review</strong></li>
+</ul>
+<p>Review <code>origin/main..HEAD</code>; fix all Critical and Important findings and re-run their covering tests.</p>
+<ul>
+<li>[ ] <strong>Step 3: Commit and push</strong></li>
+</ul>
+<p>Commit the reviewed repairs and push <code>codex/agentic-rag-hybrid-template</code>.</p>
+<ul>
+<li>[ ] <strong>Step 4: Verify hosted PR state</strong></li>
+</ul>
+<p>Confirm PR #123 points to the pushed SHA, is mergeable, and all required checks pass.</p>
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

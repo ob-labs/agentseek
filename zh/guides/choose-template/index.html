@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+    
+    <meta name="description" content="面向 AI 生态应用的开发生命周期工具包。"> 
+     
+    
+    <link rel="canonical" href="https://ob-labs.github.io/agentseek/zh/guides/choose-template/"><link rel="icon" type="image/png" sizes="192x192" href="../../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>选择模板 - agentseek</title>
+
+
+<link href="../../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../../css/normalize.css" rel="stylesheet">
+<link href="../../../css/terminal.css" rel="stylesheet">
+<link href="../../../css/theme.css" rel="stylesheet">
+<link href="../../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../../..",
+    shortcuts = "{}";
+</script>
+<script src="../../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://ob-labs.github.io/agentseek/" class="no-style">agentseek</a></div>
+        </header>
+        
+
+
+
+    
+    
+    
+
+
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">首页</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../get-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">快速开始</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">指南</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../reference/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">参考</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../concepts/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">概念</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                <li>
+                    <a href="../../../guides/choose-template/" class="menu-item language-toggle" lang="en">
+                        <span>English</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">搜索</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../">首页</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">快速开始</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../get-started/">概览</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">指南</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../">概览</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">选择模板</span>
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../create-project/">创建项目</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../create-template/">创建模板</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../inspect-project/">查看项目</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../check-project/">检查项目</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../run-local-development/">运行本地开发</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../local-execution-modes/">本地执行模式</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../observability-tracing/">可观测性和追踪</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../run-project-tasks/">运行项目任务</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">参考</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/">概览</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/cli/">CLI</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/lifecycle-spec/">生命周期规范</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/templates/">模板</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/template-authoring-contract/">模板编写规范</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">概念</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/">概览</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/lifecycle-toolkit/">生命周期工具包</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#_1">选择模板</a></li>
+        <li><a href="#_2">选择运行时族</a></li><li><a href="#_3">按项目目标选择</a></li><li><a href="#agentseek">选择 AgentSeek 包装形态或框架原生形态</a></li><li><a href="#_4">查看完整细节</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+    
+    
+    
+    
+    
+
+<section id="mkdocs-terminal-content">
+    <h1 id="_1">选择模板<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>创建项目前，先用这个指南选择起点。</p>
+<h2 id="_2">选择运行时族<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>从这里开始</th>
+<th>适合场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bub</code></td>
+<td>轻量 Bub 应用、AG-UI gateway 和 AgentSeek 生命周期命令。</td>
+</tr>
+<tr>
+<td><code>deepagents</code></td>
+<td>需要规划、工具调用、sub-agent 工作流、sandbox coding agent，或 DeepAgents 本地开发示例。</td>
+</tr>
+<tr>
+<td><code>langchain</code></td>
+<td>需要 LangChain 或 LangGraph 应用形态，包括 RAG、Markdown chat 或 AG-UI 集成。</td>
+</tr>
+</tbody>
+</table>
+<p>所有维护中的模板都会通过 <code>.agentseek/lifecycle.toml</code> 暴露 AgentSeek
+生命周期命令。运行时选择仍然重要，因为生成的应用代码会保持 Bub、
+DeepAgents、LangChain 或 LangGraph 的形态。</p>
+<h2 id="_3">按项目目标选择<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>目标</th>
+<th>选择</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>构建最小 Bub AG-UI 应用</td>
+<td><code>bub/default</code></td>
+<td>它启动 Bub gateway 和 Vite frontend，额外运行时表面积最小。</td>
+</tr>
+<tr>
+<td>将最小 DeepAgents runnable 接入 AgentSeek</td>
+<td><code>deepagents/default</code></td>
+<td>它通过 <code>agentseek-langchain</code> 绑定 <code>create_deep_agent(...)</code>。</td>
+</tr>
+<tr>
+<td>运行 DeepAgents research 工作流</td>
+<td><code>deepagents/research</code></td>
+<td>它包含搜索、工具流式事件、sub-agent 进度和 React frontend。</td>
+</tr>
+<tr>
+<td>运行 DeepAgents 内容工作流</td>
+<td><code>deepagents/content-builder</code></td>
+<td>它包含品牌记忆、skills、subagents、图像生成和 streamed UI。</td>
+</tr>
+<tr>
+<td>构建 sandbox coding agent</td>
+<td><code>deepagents/sandbox</code></td>
+<td>它使用 <code>create_deep_agent(...)</code>，默认接入 Daytona，并保留收费的 LangSmith Sandbox 作为备选。</td>
+</tr>
+<tr>
+<td>构建 LangChain AG-UI 应用</td>
+<td><code>langchain/default</code></td>
+<td>它保留 LangChain <code>create_agent(...)</code> 形态，并通过 AgentSeek 接入。</td>
+</tr>
+<tr>
+<td>从纯 LangGraph 风格 chat UI 开始</td>
+<td><code>langchain/markdown-messages</code></td>
+<td>它使用 <code>langgraph dev</code>、<code>@langchain/react</code> 和 Markdown 消息渲染。</td>
+</tr>
+<tr>
+<td>基于 OceanBase seekdb 构建 RAG</td>
+<td><code>langchain/agentic-rag</code></td>
+<td>它包含 agentic retrieval tool、ingest command、frontend 和 OceanBase seekdb 设置。</td>
+</tr>
+<tr>
+<td>学习并观察混合检索效果</td>
+<td><code>langchain/agentic-rag-hybrid</code></td>
+<td>它包含图片导入、向量/稀疏/全文/元数据模式、内置 starter pack、可视化对比 UI 和可选 Phoenix traces。</td>
+</tr>
+<tr>
+<td>连接远程 LangGraph 服务</td>
+<td><code>langchain/cli-remote</code></td>
+<td>它通过 <code>LangGraphClientRunnable</code> 桥接远程 LangGraph agent。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="agentseek">选择 AgentSeek 包装形态或框架原生形态<a class="headerlink" href="#agentseek" title="Permanent link">&para;</a></h2>
+<p>如果你希望生成应用走 AgentSeek/Bub gateway 路径，选择
+<code>bub/default</code>、<code>deepagents/default</code> 或 <code>langchain/default</code>。</p>
+<p>如果你希望保留 <code>langgraph dev</code> 等框架原生 backend，同时仍由 AgentSeek
+生命周期命令管理本地开发，选择 <code>deepagents/research</code>、
+<code>deepagents/content-builder</code>、<code>deepagents/sandbox</code>、
+<code>langchain/markdown-messages</code>、<code>langchain/agentic-rag</code> 或
+<code>langchain/agentic-rag-hybrid</code>。</p>
+<p>如果生成项目应该连接一个已经运行的 LangGraph 服务，而不是自己管理图进程，
+选择 <code>langchain/cli-remote</code>。</p>
+<p>当你希望开发者能够观察和理解混合检索效果，尤其是图片知识库同时依赖视觉相似度、caption、标签和元数据召回时，选择 <code>langchain/agentic-rag-hybrid</code>。</p>
+<h2 id="_4">查看完整细节<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>选定起点后，用模板参考页查看准确路径和支持的 create 形式。</p>
+<ul>
+<li><a href="../create-project/">创建项目</a></li>
+<li><a href="../../reference/templates/">模板参考</a></li>
+<li><a href="../../reference/lifecycle-spec/">生命周期规范参考</a></li>
+</ul>
+</section>
+
+<section id="mkdocs-terminal-after-content">
+    
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

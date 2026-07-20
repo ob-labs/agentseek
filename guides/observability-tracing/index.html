@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+    
+    <meta name="description" content="Application development lifecycle toolkit for AI ecosystem apps."> 
+     
+    
+    <link rel="canonical" href="https://ob-labs.github.io/agentseek/guides/observability-tracing/"><link rel="icon" type="image/png" sizes="192x192" href="../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>Observability and Tracing - agentseek</title>
+
+
+<link href="../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../css/normalize.css" rel="stylesheet">
+<link href="../../css/terminal.css" rel="stylesheet">
+<link href="../../css/theme.css" rel="stylesheet">
+<link href="../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../..",
+    shortcuts = "{}";
+</script>
+<script src="../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://ob-labs.github.io/agentseek/" class="no-style">agentseek</a></div>
+        </header>
+        
+
+
+
+    
+    
+    
+
+
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Home</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../get-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Get Started</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Guides</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../reference/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Reference</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../concepts/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Concepts</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                <li>
+                    <a href="../../zh/guides/observability-tracing/" class="menu-item language-toggle" lang="zh">
+                        <span>中文</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../..">Home</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Get Started</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../get-started/">Overview</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">Guides</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../choose-template/">Choose a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../create-project/">Create a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../create-template/">Create a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../inspect-project/">Inspect a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../check-project/">Check a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../run-local-development/">Run Local Development</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../local-execution-modes/">Local Execution Modes</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">Observability and Tracing</span>
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../run-project-tasks/">Run Project Tasks</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Reference</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/cli/">CLI</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/lifecycle-spec/">Lifecycle Spec</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/templates/">Templates</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/template-authoring-contract/">Template Authoring Contract</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Concepts</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/lifecycle-toolkit/">Lifecycle Toolkit</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#observability-and-tracing">Observability and Tracing</a></li>
+        <li><a href="#choose-the-trace-target">Choose The Trace Target</a></li><li><a href="#configure-langsmith-cloud-tracing">Configure LangSmith Cloud Tracing</a></li><li><a href="#diagnose-local-studio-without-cloud-traces">Diagnose Local Studio Without Cloud Traces</a></li><li><a href="#enable-agentseek-console-output">Enable AgentSeek Console Output</a></li><li><a href="#use-phoenix-in-langchaindefault">Use Phoenix In langchain/default</a></li><li><a href="#use-phoenix-in-langchainagentic-rag-hybrid">Use Phoenix In langchain/agentic-rag-hybrid</a></li><li><a href="#related">Related</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+    
+    
+    
+    
+    
+
+<section id="mkdocs-terminal-content">
+    <h1 id="observability-and-tracing">Observability and Tracing<a class="headerlink" href="#observability-and-tracing" title="Permanent link">&para;</a></h1>
+<p>Use this guide when local runs work, but traces or diagnostic output are not
+showing up where you expect them.</p>
+<h2 id="choose-the-trace-target">Choose The Trace Target<a class="headerlink" href="#choose-the-trace-target" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Use when</th>
+<th>Configuration surface</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LangSmith cloud</td>
+<td>You want hosted LangChain or LangGraph traces.</td>
+<td><code>LANGSMITH_*</code> variables in <code>.env</code> or the shell.</td>
+</tr>
+<tr>
+<td>AgentSeek console</td>
+<td>You want local CLI diagnostic spans and events.</td>
+<td><code>AGENTSEEK_CONSOLE=true</code>.</td>
+</tr>
+<tr>
+<td>Phoenix</td>
+<td>You use <code>langchain/default</code> or <code>langchain/agentic-rag-hybrid</code> and want local OpenTelemetry traces.</td>
+<td><code>AGENTSEEK_OTEL_*</code> variables and the template compose stack.</td>
+</tr>
+</tbody>
+</table>
+<p>These targets are independent. Enabling one does not send data to the others.</p>
+<p>For <code>deepagents/sandbox</code>, tracing is also independent of the sandbox provider.
+Daytona is the default sandbox backend. LangSmith Sandbox remains a charged
+alternative. A Daytona-backed agent can set <code>LANGSMITH_TRACING=true</code> and a
+<code>LANGSMITH_API_KEY</code> to send traces without switching
+<code>AGENTSEEK_SANDBOX_PROVIDER</code>. A LangSmith Sandbox user can leave tracing
+disabled.</p>
+<h2 id="configure-langsmith-cloud-tracing">Configure LangSmith Cloud Tracing<a class="headerlink" href="#configure-langsmith-cloud-tracing" title="Permanent link">&para;</a></h2>
+<p>Set the LangSmith variables used by LangChain and LangGraph templates.</p>
+<div class="highlight"><pre><span></span><code>LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=&lt;your-langsmith-api-key&gt;
+LANGSMITH_PROJECT=&lt;your-project-name&gt;
+</code></pre></div>
+<p>Use <code>LANGSMITH_ENDPOINT</code> when your API key belongs to a non-default region.
+For APAC keys, configure the APAC endpoint.</p>
+<div class="highlight"><pre><span></span><code>LANGSMITH_ENDPOINT=https://apac.api.smith.langchain.com
+</code></pre></div>
+<p>The LangSmith observability quickstart documents the same regional endpoint
+behavior: non-US regions need <code>LANGSMITH_ENDPOINT</code>, or the API key may not
+authenticate against the default endpoint.</p>
+<p>See the report in
+<a href="https://github.com/ob-labs/agentseek/issues/83">ob-labs/agentseek#83</a> for the
+APAC failure mode that motivated this guide.</p>
+<h2 id="diagnose-local-studio-without-cloud-traces">Diagnose Local Studio Without Cloud Traces<a class="headerlink" href="#diagnose-local-studio-without-cloud-traces" title="Permanent link">&para;</a></h2>
+<p>Local Studio or a local thread page can show runs from your local development
+server even when cloud trace ingestion is failing.</p>
+<p>Use this checklist when Studio is visible but LangSmith cloud traces are
+missing.</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>What to fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LANGSMITH_TRACING</code> is not <code>true</code></td>
+<td>Enable tracing in the same environment that starts the app.</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_API_KEY</code> is empty or from another region</td>
+<td>Use a key from the target LangSmith region.</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_ENDPOINT</code> is missing for APAC or another non-default region</td>
+<td>Set the regional endpoint explicitly.</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_PROJECT</code> is different from the dashboard project you opened</td>
+<td>Open the configured project or change the variable.</td>
+</tr>
+<tr>
+<td>The app process does not load <code>.env</code></td>
+<td>Export the variables in the shell that starts the app.</td>
+</tr>
+</tbody>
+</table>
+<p>Treat local Studio visibility as a local runtime signal. Treat cloud traces as
+a separate ingestion signal.</p>
+<h2 id="enable-agentseek-console-output">Enable AgentSeek Console Output<a class="headerlink" href="#enable-agentseek-console-output" title="Permanent link">&para;</a></h2>
+<p>Set <code>AGENTSEEK_CONSOLE=true</code> when you want AgentSeek CLI spans and events
+rendered locally through Logfire console output.</p>
+<div class="highlight"><pre><span></span><code>AGENTSEEK_CONSOLE=true
+</code></pre></div>
+<p>AgentSeek configures Logfire with <code>send_to_logfire=False</code>, so this does not
+upload data to Logfire cloud. It only changes local console rendering for the
+AgentSeek CLI process.</p>
+<h2 id="use-phoenix-in-langchaindefault">Use Phoenix In <code>langchain/default</code><a class="headerlink" href="#use-phoenix-in-langchaindefault" title="Permanent link">&para;</a></h2>
+<p>The <code>langchain/default</code> template includes local OpenTelemetry export to
+Phoenix. The generated app registers tracing in the LangChain application
+process. Bub and the gateway only forward messages.</p>
+<p>The compose stack sends spans to Phoenix from inside the app container.</p>
+<div class="highlight"><pre><span></span><code>AGENTSEEK_OTEL_ENABLED=true
+AGENTSEEK_OTEL_SERVICE_NAME=&lt;project-slug&gt;
+AGENTSEEK_OTEL_PROJECT_NAME=&lt;project-slug&gt;
+AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://phoenix:6006/v1/traces
+</code></pre></div>
+<p>For non-compose runs, point the endpoint at localhost instead.</p>
+<div class="highlight"><pre><span></span><code>AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
+</code></pre></div>
+<p>The template compose stack uses <code>ghcr.io/agentseek-ai/agentseek-phoenix:main</code>
+for Phoenix and persists Phoenix data through OceanBase seekdb
+(<code>quay.io/oceanbase/seekdb:latest</code>). Override the images with
+<code>AGENTSEEK_PHOENIX_IMAGE</code> and <code>OCEANBASE_SEEKDB_IMAGE</code>.</p>
+<h2 id="use-phoenix-in-langchainagentic-rag-hybrid">Use Phoenix In <code>langchain/agentic-rag-hybrid</code><a class="headerlink" href="#use-phoenix-in-langchainagentic-rag-hybrid" title="Permanent link">&para;</a></h2>
+<p>The hybrid template keeps <code>agentseek dev</code> lightweight with <code>uv</code>, <code>langgraph
+dev</code>, and the Vite frontend. Phoenix is opt-in:</p>
+<div class="highlight"><pre><span></span><code>agentseek<span class="w"> </span>task<span class="w"> </span>phoenix
+</code></pre></div>
+<p>Then set OTEL in <code>.env</code> before starting <code>agentseek dev</code>.</p>
+<div class="highlight"><pre><span></span><code>AGENTSEEK_OTEL_ENABLED=true
+AGENTSEEK_OTEL_SERVICE_NAME=&lt;project-slug&gt;
+AGENTSEEK_OTEL_PROJECT_NAME=&lt;project-slug&gt;
+AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
+</code></pre></div>
+<p>The generated custom route <code>/custom/observability</code> reports the active OTEL
+endpoint, Phoenix URL, and Phoenix OceanBase seekdb URL. Phoenix trace storage
+uses the compose stack, while hybrid retrieval remains on embedded SeekDB
+through <code>langchain-oceanbase</code>.</p>
+<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../reference/lifecycle-spec/">Lifecycle Spec reference</a></li>
+<li><a href="../../reference/templates/">Templates reference</a></li>
+<li><a href="../run-local-development/">Run Local Development</a></li>
+<li><a href="https://docs.langchain.com/langsmith/observability-quickstart">LangSmith observability quickstart</a></li>
+</ul>
+</section>
+
+<section id="mkdocs-terminal-after-content">
+    
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>

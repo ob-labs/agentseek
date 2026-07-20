@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+    
+    <meta name="description" content="面向 AI 生态应用的开发生命周期工具包。"> 
+     
+    
+    <link rel="canonical" href="https://ob-labs.github.io/agentseek/zh/guides/observability-tracing/"><link rel="icon" type="image/png" sizes="192x192" href="../../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>可观测性和追踪 - agentseek</title>
+
+
+<link href="../../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../../css/normalize.css" rel="stylesheet">
+<link href="../../../css/terminal.css" rel="stylesheet">
+<link href="../../../css/theme.css" rel="stylesheet">
+<link href="../../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../../..",
+    shortcuts = "{}";
+</script>
+<script src="../../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://ob-labs.github.io/agentseek/" class="no-style">agentseek</a></div>
+        </header>
+        
+
+
+
+    
+    
+    
+
+
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">首页</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../get-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">快速开始</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">指南</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../reference/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">参考</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../concepts/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">概念</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                <li>
+                    <a href="../../../guides/observability-tracing/" class="menu-item language-toggle" lang="en">
+                        <span>English</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">搜索</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../">首页</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">快速开始</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../get-started/">概览</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">指南</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../">概览</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../choose-template/">选择模板</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../create-project/">创建项目</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../create-template/">创建模板</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../inspect-project/">查看项目</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../check-project/">检查项目</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../run-local-development/">运行本地开发</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../local-execution-modes/">本地执行模式</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">可观测性和追踪</span>
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../run-project-tasks/">运行项目任务</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">参考</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/">概览</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/cli/">CLI</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/lifecycle-spec/">生命周期规范</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/templates/">模板</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/template-authoring-contract/">模板编写规范</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">概念</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/">概览</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/lifecycle-toolkit/">生命周期工具包</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#_1">可观测性和追踪</a></li>
+        <li><a href="#trace">选择 trace 目标</a></li><li><a href="#langsmith-cloud-tracing">配置 LangSmith cloud tracing</a></li><li><a href="#studio-cloud-traces">排查本地 Studio 可见但 cloud traces 缺失</a></li><li><a href="#agentseek-console">启用 AgentSeek console 输出</a></li><li><a href="#langchaindefault-phoenix">在 langchain/default 中使用 Phoenix</a></li><li><a href="#langchainagentic-rag-hybrid-phoenix">在 langchain/agentic-rag-hybrid 中使用 Phoenix</a></li><li><a href="#_2">相关内容</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+    
+    
+    
+    
+    
+
+<section id="mkdocs-terminal-content">
+    <h1 id="_1">可观测性和追踪<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>当本地运行正常，但 trace 或诊断输出没有出现在预期位置时，使用这个指南。</p>
+<h2 id="trace">选择 trace 目标<a class="headerlink" href="#trace" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>目标</th>
+<th>适合场景</th>
+<th>配置入口</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LangSmith cloud</td>
+<td>需要托管的 LangChain 或 LangGraph traces。</td>
+<td><code>.env</code> 或 shell 中的 <code>LANGSMITH_*</code> 变量。</td>
+</tr>
+<tr>
+<td>AgentSeek console</td>
+<td>需要本地 CLI 诊断 spans 和 events。</td>
+<td><code>AGENTSEEK_CONSOLE=true</code>。</td>
+</tr>
+<tr>
+<td>Phoenix</td>
+<td>使用 <code>langchain/default</code> 或 <code>langchain/agentic-rag-hybrid</code> 并需要本地 OpenTelemetry traces。</td>
+<td><code>AGENTSEEK_OTEL_*</code> 变量和模板 compose stack。</td>
+</tr>
+</tbody>
+</table>
+<p>这些目标彼此独立。启用其中一个不会把数据发送到另一个。</p>
+<p>对于 <code>deepagents/sandbox</code>，tracing 与 sandbox provider 也相互独立。Daytona
+是默认 sandbox backend，LangSmith Sandbox 是收费的备选。使用 Daytona 时，
+设置 <code>LANGSMITH_TRACING=true</code> 和 <code>LANGSMITH_API_KEY</code> 即可发送 traces，
+不需要切换 <code>AGENTSEEK_SANDBOX_PROVIDER</code>。使用 LangSmith Sandbox 时也可以
+保持 tracing 关闭。</p>
+<h2 id="langsmith-cloud-tracing">配置 LangSmith cloud tracing<a class="headerlink" href="#langsmith-cloud-tracing" title="Permanent link">&para;</a></h2>
+<p>设置 LangChain 和 LangGraph 模板会读取的 LangSmith 变量。</p>
+<div class="highlight"><pre><span></span><code>LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=&lt;your-langsmith-api-key&gt;
+LANGSMITH_PROJECT=&lt;your-project-name&gt;
+</code></pre></div>
+<p>当 API key 属于非默认区域时，设置 <code>LANGSMITH_ENDPOINT</code>。APAC key 使用
+APAC endpoint。</p>
+<div class="highlight"><pre><span></span><code>LANGSMITH_ENDPOINT=https://apac.api.smith.langchain.com
+</code></pre></div>
+<p>LangSmith observability quickstart 也说明了同一类区域 endpoint 行为：
+非 US 区域需要 <code>LANGSMITH_ENDPOINT</code>，否则 API key 可能无法通过默认
+endpoint 认证。</p>
+<p><a href="https://github.com/ob-labs/agentseek/issues/83">ob-labs/agentseek#83</a>
+记录了促成本指南的 APAC 故障模式。</p>
+<h2 id="studio-cloud-traces">排查本地 Studio 可见但 cloud traces 缺失<a class="headerlink" href="#studio-cloud-traces" title="Permanent link">&para;</a></h2>
+<p>本地 Studio 或本地 thread 页面能显示来自本地开发服务的运行，即使 cloud
+trace ingestion 正在失败。</p>
+<p>当 Studio 可见但 LangSmith cloud traces 缺失时，按这个表排查。</p>
+<table>
+<thead>
+<tr>
+<th>检查项</th>
+<th>修复方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LANGSMITH_TRACING</code> 不是 <code>true</code></td>
+<td>在启动应用的同一个环境中启用 tracing。</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_API_KEY</code> 为空或来自其他区域</td>
+<td>使用目标 LangSmith 区域的 API key。</td>
+</tr>
+<tr>
+<td>APAC 或其他非默认区域缺少 <code>LANGSMITH_ENDPOINT</code></td>
+<td>显式设置区域 endpoint。</td>
+</tr>
+<tr>
+<td><code>LANGSMITH_PROJECT</code> 和打开的 dashboard project 不一致</td>
+<td>打开已配置的 project，或修改变量。</td>
+</tr>
+<tr>
+<td>应用进程没有加载 <code>.env</code></td>
+<td>在启动应用的 shell 中导出这些变量。</td>
+</tr>
+</tbody>
+</table>
+<p>把本地 Studio 可见视为本地运行时信号。把 cloud traces 视为单独的
+ingestion 信号。</p>
+<h2 id="agentseek-console">启用 AgentSeek console 输出<a class="headerlink" href="#agentseek-console" title="Permanent link">&para;</a></h2>
+<p>当你希望 AgentSeek CLI spans 和 events 通过 Logfire console 在本地渲染时，
+设置 <code>AGENTSEEK_CONSOLE=true</code>。</p>
+<div class="highlight"><pre><span></span><code>AGENTSEEK_CONSOLE=true
+</code></pre></div>
+<p>AgentSeek 使用 <code>send_to_logfire=False</code> 配置 Logfire，所以这不会上传数据到
+Logfire cloud。它只改变 AgentSeek CLI 进程的本地 console 渲染。</p>
+<h2 id="langchaindefault-phoenix">在 <code>langchain/default</code> 中使用 Phoenix<a class="headerlink" href="#langchaindefault-phoenix" title="Permanent link">&para;</a></h2>
+<p><code>langchain/default</code> 模板包含导出到本地 Phoenix 的 OpenTelemetry tracing。
+生成应用会在 LangChain application process 中注册 tracing。Bub 和 gateway
+只转发消息。</p>
+<p>compose stack 会从 app container 内部把 spans 发送到 Phoenix。</p>
+<div class="highlight"><pre><span></span><code>AGENTSEEK_OTEL_ENABLED=true
+AGENTSEEK_OTEL_SERVICE_NAME=&lt;project-slug&gt;
+AGENTSEEK_OTEL_PROJECT_NAME=&lt;project-slug&gt;
+AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://phoenix:6006/v1/traces
+</code></pre></div>
+<p>非 compose 运行时，把 endpoint 指向 localhost。</p>
+<div class="highlight"><pre><span></span><code>AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
+</code></pre></div>
+<p>模板 compose stack 使用 <code>ghcr.io/agentseek-ai/agentseek-phoenix:main</code>
+运行 Phoenix，并通过 OceanBase seekdb（<code>quay.io/oceanbase/seekdb:latest</code>）
+持久化 Phoenix 数据。可以用 <code>.env</code> 中的 <code>AGENTSEEK_PHOENIX_IMAGE</code> 和
+<code>OCEANBASE_SEEKDB_IMAGE</code> 覆盖默认镜像。</p>
+<h2 id="langchainagentic-rag-hybrid-phoenix">在 <code>langchain/agentic-rag-hybrid</code> 中使用 Phoenix<a class="headerlink" href="#langchainagentic-rag-hybrid-phoenix" title="Permanent link">&para;</a></h2>
+<p>Hybrid 模板默认保持 <code>agentseek dev</code> 轻量，只启动 <code>uv</code>、<code>langgraph dev</code>
+和 Vite frontend。Phoenix 是可选 tracing stack：</p>
+<div class="highlight"><pre><span></span><code>agentseek<span class="w"> </span>task<span class="w"> </span>phoenix
+</code></pre></div>
+<p>然后在 <code>.env</code> 中启用 OTEL，再启动 <code>agentseek dev</code>。</p>
+<div class="highlight"><pre><span></span><code>AGENTSEEK_OTEL_ENABLED=true
+AGENTSEEK_OTEL_SERVICE_NAME=&lt;project-slug&gt;
+AGENTSEEK_OTEL_PROJECT_NAME=&lt;project-slug&gt;
+AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
+</code></pre></div>
+<p>生成项目的 <code>/custom/observability</code> 路由会返回当前 OTEL endpoint、
+Phoenix URL 和 Phoenix 使用的 OceanBase seekdb URL。Phoenix trace 存储
+使用 compose stack；hybrid retrieval 仍然通过 <code>langchain-oceanbase</code> 使用
+embedded SeekDB。</p>
+<h2 id="_2">相关内容<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../reference/lifecycle-spec/">生命周期规范参考</a></li>
+<li><a href="../../reference/templates/">模板参考</a></li>
+<li><a href="../run-local-development/">运行本地开发</a></li>
+<li><a href="https://docs.langchain.com/langsmith/observability-quickstart">LangSmith observability quickstart</a></li>
+</ul>
+</section>
+
+<section id="mkdocs-terminal-after-content">
+    
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
