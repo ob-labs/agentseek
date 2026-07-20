@@ -258,7 +258,7 @@ def _load_template_descriptions(templates_root: Path | None = None) -> dict[str,
         return {}
     try:
         data = json.loads(index.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return {}
     if not isinstance(data, dict):
         return {}

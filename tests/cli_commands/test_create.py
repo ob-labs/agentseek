@@ -440,6 +440,61 @@ def test_incomplete_clone_is_not_reused_on_retry(
     assert "deepagents/default" in second_result.output
 
 
+def test_invalid_utf8_template_index_is_not_reused_on_retry(monkeypatch, tmp_path: Path) -> None:
+    """A clone with an unreadable registry must be replaceable on the next attempt."""
+    cookiecutters_dir = tmp_path / "cookiecutters"
+    repo_root = cookiecutters_dir / "agentseek"
+    clone_calls: list[tuple[str, str | None, str, bool]] = []
+
+    def fake_get_user_config() -> dict[str, str]:
+        return {"cookiecutters_dir": str(cookiecutters_dir)}
+
+    def fake_clone(
+        repo_url: str,
+        *,
+        checkout: str | None = None,
+        clone_to_dir: Path | str = ".",
+        no_input: bool = False,
+    ) -> str:
+        clone_calls.append((repo_url, checkout, str(clone_to_dir), no_input))
+        if repo_root.exists():
+            shutil.rmtree(repo_root)
+        template_dir = repo_root / "templates" / "deepagents" / "default"
+        template_dir.mkdir(parents=True)
+        index = repo_root / "templates" / "index.json"
+        if len(clone_calls) == 1:
+            index.write_bytes(b"\xff")
+        else:
+            index.write_text(
+                json.dumps({"deepagents/default": "Default DeepAgents template."}),
+                encoding="utf-8",
+            )
+        (template_dir / "cookiecutter.json").write_text(
+            json.dumps({"project_slug": "demo"}),
+            encoding="utf-8",
+        )
+        project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
+        project_file.parent.mkdir()
+        project_file.write_text("# Demo\n", encoding="utf-8")
+        return str(repo_root)
+
+    monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
+    monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
+    monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
+
+    first_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert first_result.exit_code == 1
+    assert "Template cache is missing or incomplete" in first_result.output
+    assert len(clone_calls) == 1
+
+    second_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert second_result.exit_code == 0, second_result.output
+    assert len(clone_calls) == 2
+    assert "deepagents/default" in second_result.output
+
+
 # -- template resolution ---------------------------------------------------
 
 
