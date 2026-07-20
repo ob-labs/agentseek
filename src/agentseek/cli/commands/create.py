@@ -202,6 +202,24 @@ def _list_templates(project_type: str, templates_root: Path | None = None) -> li
     return [name for name in templates if name in public]
 
 
+def _cookiecutter_template_is_complete(template_dir: Path) -> bool:
+    context = _load_cookiecutter_context(template_dir)
+    project_root = template_dir / "{{cookiecutter.project_slug}}"
+    if not context or "project_slug" not in context or not project_root.is_dir():
+        return False
+    try:
+        return any(path.is_file() for path in project_root.rglob("*"))
+    except OSError:
+        return False
+
+
+def _templates_root_is_complete(templates_root: Path) -> bool:
+    descriptions = _load_template_descriptions(templates_root)
+    return bool(descriptions) and all(
+        _cookiecutter_template_is_complete(templates_root / template) for template in descriptions
+    )
+
+
 def _prepare_templates_root(checkout: str | None = None) -> Path:
     local_root = _local_templates_root()
     if local_root is not None:
@@ -212,8 +230,9 @@ def _prepare_templates_root(checkout: str | None = None) -> Path:
 
     cookiecutters_dir = Path(get_user_config()["cookiecutters_dir"]).expanduser()
     cached_repo = cookiecutters_dir / TEMPLATE_REPO_CACHE_DIR
-    if checkout is None and cached_repo.is_dir():
-        templates_root = cached_repo / TEMPLATES_DIR
+    cached_templates_root = cached_repo / TEMPLATES_DIR
+    if checkout is None and _templates_root_is_complete(cached_templates_root):
+        templates_root = cached_templates_root
     else:
         repo_root = clone(
             REPO_URL,
@@ -223,8 +242,8 @@ def _prepare_templates_root(checkout: str | None = None) -> Path:
         )
         templates_root = Path(repo_root) / TEMPLATES_DIR
 
-    if not templates_root.is_dir():
-        typer.echo(f"Templates directory not found at {templates_root}.", err=True)
+    if not _templates_root_is_complete(templates_root):
+        typer.echo(f"Template cache is missing or incomplete at {templates_root}.", err=True)
         raise typer.Exit(1)
     return templates_root
 
@@ -239,7 +258,7 @@ def _load_template_descriptions(templates_root: Path | None = None) -> dict[str,
         return {}
     try:
         data = json.loads(index.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return {}
     if not isinstance(data, dict):
         return {}
@@ -503,7 +522,7 @@ def _load_cookiecutter_context(template_dir: Path) -> dict[str, object] | None:
         return None
     try:
         data = json.loads(cookiecutter_json.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return None
     if not isinstance(data, dict):
         return None

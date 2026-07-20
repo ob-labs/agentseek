@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -32,7 +33,13 @@ def _mock_remote_template_repo(
     for template in index:
         template_dir = templates_root / template
         template_dir.mkdir(parents=True)
-        (template_dir / "cookiecutter.json").write_text("{}", encoding="utf-8")
+        (template_dir / "cookiecutter.json").write_text(
+            json.dumps({"project_slug": "demo"}),
+            encoding="utf-8",
+        )
+        project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
+        project_file.parent.mkdir()
+        project_file.write_text("# Demo\n", encoding="utf-8")
     clone_calls: list[tuple[str, str | None, str, bool]] = []
 
     def fake_get_user_config() -> dict[str, str]:
@@ -319,6 +326,173 @@ def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path:
     assert clone_calls == []
     assert "bub/cached" in result.output
     assert "Cached Bub template." in result.output
+
+
+@pytest.mark.parametrize("partial_path", [Path("."), Path("templates")])
+def test_template_flag_refetches_incomplete_cached_remote_repo(
+    monkeypatch,
+    tmp_path: Path,
+    partial_path: Path,
+) -> None:
+    """Installed CLI should not treat an incomplete cache as a checkout."""
+    clone_calls = _mock_remote_template_repo(
+        monkeypatch,
+        tmp_path,
+        {"deepagents/default": "Default DeepAgents template."},
+    )
+    incomplete_cache = tmp_path / "cookiecutters" / "agentseek" / partial_path
+    incomplete_cache.mkdir(parents=True)
+
+    result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert result.exit_code == 0, result.output
+    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
+    assert "deepagents/default" in result.output
+    assert "Default DeepAgents template." in result.output
+
+
+def test_template_flag_refetches_cache_with_missing_registered_template(monkeypatch, tmp_path: Path) -> None:
+    """A cache index is incomplete when one of its registered templates is absent."""
+    clone_calls = _mock_remote_template_repo(
+        monkeypatch,
+        tmp_path,
+        {"deepagents/default": "Default DeepAgents template."},
+    )
+    incomplete_templates = tmp_path / "cookiecutters" / "agentseek" / "templates"
+    incomplete_templates.mkdir(parents=True)
+    (incomplete_templates / "index.json").write_text(
+        json.dumps({"deepagents/default": "Default DeepAgents template."}),
+        encoding="utf-8",
+    )
+
+    result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert result.exit_code == 0, result.output
+    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
+    assert "deepagents/default" in result.output
+    assert "Default DeepAgents template." in result.output
+
+
+@pytest.mark.parametrize(
+    ("broken_config", "first_clone_has_body"),
+    [
+        (b"{", True),
+        (b"\xff", True),
+        (json.dumps({"project_slug": "demo"}).encode(), False),
+    ],
+    ids=["truncated-json", "invalid-utf8", "missing-template-body"],
+)
+def test_incomplete_clone_is_not_reused_on_retry(
+    monkeypatch,
+    tmp_path: Path,
+    broken_config: bytes,
+    first_clone_has_body: bool,
+) -> None:
+    """A clone that returns corrupt template state must not poison later retries."""
+    cookiecutters_dir = tmp_path / "cookiecutters"
+    repo_root = cookiecutters_dir / "agentseek"
+    clone_calls: list[tuple[str, str | None, str, bool]] = []
+
+    def fake_get_user_config() -> dict[str, str]:
+        return {"cookiecutters_dir": str(cookiecutters_dir)}
+
+    def fake_clone(
+        repo_url: str,
+        *,
+        checkout: str | None = None,
+        clone_to_dir: Path | str = ".",
+        no_input: bool = False,
+    ) -> str:
+        clone_calls.append((repo_url, checkout, str(clone_to_dir), no_input))
+        if repo_root.exists():
+            shutil.rmtree(repo_root)
+        template_dir = repo_root / "templates" / "deepagents" / "default"
+        template_dir.mkdir(parents=True)
+        (repo_root / "templates" / "index.json").write_text(
+            json.dumps({"deepagents/default": "Default DeepAgents template."}),
+            encoding="utf-8",
+        )
+        cookiecutter_json = template_dir / "cookiecutter.json"
+        if len(clone_calls) == 1:
+            cookiecutter_json.write_bytes(broken_config)
+        else:
+            cookiecutter_json.write_text(json.dumps({"project_slug": "demo"}), encoding="utf-8")
+        if len(clone_calls) > 1 or first_clone_has_body:
+            project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
+            project_file.parent.mkdir()
+            project_file.write_text("# Demo\n", encoding="utf-8")
+        return str(repo_root)
+
+    monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
+    monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
+    monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
+
+    first_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert first_result.exit_code == 1
+    assert "Template cache is missing or incomplete" in first_result.output
+    assert len(clone_calls) == 1
+
+    second_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert second_result.exit_code == 0, second_result.output
+    assert len(clone_calls) == 2
+    assert "deepagents/default" in second_result.output
+
+
+def test_invalid_utf8_template_index_is_not_reused_on_retry(monkeypatch, tmp_path: Path) -> None:
+    """A clone with an unreadable registry must be replaceable on the next attempt."""
+    cookiecutters_dir = tmp_path / "cookiecutters"
+    repo_root = cookiecutters_dir / "agentseek"
+    clone_calls: list[tuple[str, str | None, str, bool]] = []
+
+    def fake_get_user_config() -> dict[str, str]:
+        return {"cookiecutters_dir": str(cookiecutters_dir)}
+
+    def fake_clone(
+        repo_url: str,
+        *,
+        checkout: str | None = None,
+        clone_to_dir: Path | str = ".",
+        no_input: bool = False,
+    ) -> str:
+        clone_calls.append((repo_url, checkout, str(clone_to_dir), no_input))
+        if repo_root.exists():
+            shutil.rmtree(repo_root)
+        template_dir = repo_root / "templates" / "deepagents" / "default"
+        template_dir.mkdir(parents=True)
+        index = repo_root / "templates" / "index.json"
+        if len(clone_calls) == 1:
+            index.write_bytes(b"\xff")
+        else:
+            index.write_text(
+                json.dumps({"deepagents/default": "Default DeepAgents template."}),
+                encoding="utf-8",
+            )
+        (template_dir / "cookiecutter.json").write_text(
+            json.dumps({"project_slug": "demo"}),
+            encoding="utf-8",
+        )
+        project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
+        project_file.parent.mkdir()
+        project_file.write_text("# Demo\n", encoding="utf-8")
+        return str(repo_root)
+
+    monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
+    monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
+    monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
+
+    first_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert first_result.exit_code == 1
+    assert "Template cache is missing or incomplete" in first_result.output
+    assert len(clone_calls) == 1
+
+    second_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert second_result.exit_code == 0, second_result.output
+    assert len(clone_calls) == 2
+    assert "deepagents/default" in second_result.output
 
 
 # -- template resolution ---------------------------------------------------
