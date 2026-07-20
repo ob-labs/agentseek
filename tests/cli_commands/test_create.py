@@ -321,6 +321,51 @@ def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path:
     assert "Cached Bub template." in result.output
 
 
+@pytest.mark.parametrize("partial_path", [Path("."), Path("templates")])
+def test_template_flag_refetches_incomplete_cached_remote_repo(
+    monkeypatch,
+    tmp_path: Path,
+    partial_path: Path,
+) -> None:
+    """Installed CLI should not treat an incomplete cache as a checkout."""
+    clone_calls = _mock_remote_template_repo(
+        monkeypatch,
+        tmp_path,
+        {"deepagents/default": "Default DeepAgents template."},
+    )
+    incomplete_cache = tmp_path / "cookiecutters" / "agentseek" / partial_path
+    incomplete_cache.mkdir(parents=True)
+
+    result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert result.exit_code == 0, result.output
+    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
+    assert "deepagents/default" in result.output
+    assert "Default DeepAgents template." in result.output
+
+
+def test_template_flag_refetches_cache_with_missing_registered_template(monkeypatch, tmp_path: Path) -> None:
+    """A cache index is incomplete when one of its registered templates is absent."""
+    clone_calls = _mock_remote_template_repo(
+        monkeypatch,
+        tmp_path,
+        {"deepagents/default": "Default DeepAgents template."},
+    )
+    incomplete_templates = tmp_path / "cookiecutters" / "agentseek" / "templates"
+    incomplete_templates.mkdir(parents=True)
+    (incomplete_templates / "index.json").write_text(
+        json.dumps({"deepagents/default": "Default DeepAgents template."}),
+        encoding="utf-8",
+    )
+
+    result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+
+    assert result.exit_code == 0, result.output
+    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
+    assert "deepagents/default" in result.output
+    assert "Default DeepAgents template." in result.output
+
+
 # -- template resolution ---------------------------------------------------
 
 
