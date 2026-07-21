@@ -30,6 +30,7 @@ from agentseek.cli.lifecycle.errors import (
     LifecycleVersionUnsupportedError,
     exit_project_error,
 )
+from agentseek.cli.lifecycle.safety import UnsafeProjectPathError, resolve_confined_project_path
 from agentseek.cli.lifecycle.spec import (
     LIFECYCLE_SPEC_FILE,
     REQUIRED_COMMANDS,
@@ -37,8 +38,11 @@ from agentseek.cli.lifecycle.spec import (
     AuthoredLifecycleSpec,
     Check,
     EnvRequirement,
-    Process,
-    Task,
+    LifecycleSpecV2,
+    ProcessV1,
+    ProcessV2,
+    TaskV1,
+    TaskV2,
     read_lifecycle_spec,
 )
 
@@ -59,6 +63,14 @@ class CheckResult:
     name: str
     detail: str
     fix: str = ""
+
+
+class _UnsafeOperationalPathError(UnsafeProjectPathError):
+    """A runtime confinement failure tagged only with its lifecycle field."""
+
+    def __init__(self, field: str) -> None:
+        super().__init__()
+        self.field = field
 
 
 def discover_lifecycle_project(root: Path | None = None) -> LifecycleProject:
@@ -106,7 +118,13 @@ def run_lifecycle_task(project: LifecycleProject, name: str, **kwargs: object) -
             f"Unknown AgentSeek lifecycle command: {name}.",
             f"Expected one of: {', '.join(REQUIRED_COMMANDS)}.",
         )
-    task.run(**kwargs)
+    try:
+        task.run(**kwargs)
+    except _UnsafeOperationalPathError as exc:
+        exit_project_error(
+            f"Invalid lifecycle {exc.field} path.",
+            f"Update {exc.field} in {LIFECYCLE_SPEC_FILE}.",
+        )
 
 
 def run_task_cli(project: LifecycleProject, args: list[str]) -> int:
@@ -131,6 +149,11 @@ def run_task_cli(project: LifecycleProject, args: list[str]) -> int:
         return 1
     try:
         task.run()
+    except _UnsafeOperationalPathError as exc:
+        exit_project_error(
+            f"Invalid lifecycle {exc.field} path.",
+            f"Update {exc.field} in {LIFECYCLE_SPEC_FILE}.",
+        )
     except SystemExit as exc:
         return int(exc.code or 0)
     return 0
@@ -169,15 +192,15 @@ def _task_collection(project: LifecycleProject) -> Collection:
     return collection
 
 
-def _task_function(project: LifecycleProject, name: str, task: Task):
+def _task_function(project: LifecycleProject, name: str, task: TaskV1 | TaskV2):
     def run_task(_ctx: object) -> None:
-        cwd = project.root / task.cwd
+        cwd = _operational_path(project, task.cwd, allow_dot=True, field=f"tasks.{name}.cwd")
         if not cwd.is_dir():
             exit_project_error(
                 f"Lifecycle task {name!r} cwd is missing: {task.cwd}.",
                 f"Create {task.cwd} or update [tasks.{name}].cwd in {LIFECYCLE_SPEC_FILE}.",
             )
-        code = _run_command(task.command, cwd=cwd)
+        code = _run_command(task.command, project=project, cwd=task.cwd)
         if code:
             raise SystemExit(code)
 
@@ -207,8 +230,9 @@ def print_info(project: LifecycleProject, *, verbose: bool) -> None:
     print()
     print("Environment")
     if spec.env_file:
-        env_file = project.root / spec.env_file
-        print(f"  Env file: {spec.env_file} ({'present' if env_file.is_file() else 'missing'})")
+        env_file = _operational_path(project, spec.env_file, allow_dot=False, field="env_file")
+        present = env_file.is_file()
+        print(f"  Env file: {spec.env_file} ({'present' if present else 'missing'})")
     for name, requirement in spec.env.items():
         source = _env_requirement_source(project, name, requirement)
         print(f"  {name}: {f'set ({source})' if source else 'missing'}")
@@ -250,7 +274,9 @@ def dev(project: LifecycleProject, *, dry_run: bool) -> None:
         return
 
     _ensure_required_inputs(project)
-    processes = [_spawn_process(process, root=project.root) for process in project.spec.processes.values()]
+    for name, process in project.spec.processes.items():
+        _operational_path(project, process.cwd, allow_dot=True, field=f"processes.{name}.cwd")
+    processes = [_spawn_process(process, project=project) for process in project.spec.processes.values()]
     _wait_for_processes(processes)
 
 
@@ -292,7 +318,8 @@ def _tool_checks(tools: Sequence[str]) -> list[CheckResult]:
 def _path_checks(project: LifecycleProject) -> list[CheckResult]:
     results: list[CheckResult] = []
     for path in project.spec.required_paths:
-        found = (project.root / path).exists()
+        operational_path = _operational_path(project, path, allow_dot=False, field="paths.required")
+        found = operational_path.exists()
         results.append(
             _check(
                 "ok" if found else "fail",
@@ -307,12 +334,13 @@ def _path_checks(project: LifecycleProject) -> list[CheckResult]:
 def _env_file_checks(project: LifecycleProject) -> list[CheckResult]:
     if project.spec.env_file is None:
         return []
-    env_file = project.root / project.spec.env_file
+    env_file = _operational_path(project, project.spec.env_file, allow_dot=False, field="env_file")
+    present = env_file.is_file()
     return [
         _check(
-            "ok" if env_file.is_file() else "fail",
+            "ok" if present else "fail",
             project.spec.env_file,
-            f"{project.spec.env_file} is present." if env_file.is_file() else f"{project.spec.env_file} is missing.",
+            f"{project.spec.env_file} is present." if present else f"{project.spec.env_file} is missing.",
             f"Create {project.spec.env_file} or remove env_file from the lifecycle spec.",
         )
     ]
@@ -346,12 +374,13 @@ def _env_fix(project: LifecycleProject, keys: str) -> str:
 def _process_cwd_checks(project: LifecycleProject) -> list[CheckResult]:
     results: list[CheckResult] = []
     for name, process in project.spec.processes.items():
-        cwd = project.root / process.cwd
+        cwd = _operational_path(project, process.cwd, allow_dot=True, field=f"processes.{name}.cwd")
+        present = cwd.is_dir()
         results.append(
             _check(
-                "ok" if cwd.is_dir() else "fail",
+                "ok" if present else "fail",
                 f"{name} cwd",
-                f"{process.cwd} is present." if cwd.is_dir() else f"{process.cwd} is missing.",
+                f"{process.cwd} is present." if present else f"{process.cwd} is missing.",
             )
         )
     return results
@@ -431,14 +460,48 @@ def _env_validation_alias(name: str, requirement: EnvRequirement) -> str | Alias
 def _env_file_path(project: LifecycleProject) -> Path | None:
     if project.spec.env_file is None:
         return None
-    return project.root / project.spec.env_file
+    return _operational_path(project, project.spec.env_file, allow_dot=False, field="env_file")
+
+
+def _resolve_operational_path(project: LifecycleProject, value: str, *, allow_dot: bool) -> Path:
+    """Resolve a runtime lifecycle path while preserving v1 joins."""
+    if isinstance(project.spec, LifecycleSpecV2):
+        return resolve_confined_project_path(project.root, value, allow_dot=allow_dot)
+    return project.root / value
+
+
+def _operational_path(project: LifecycleProject, value: str, *, allow_dot: bool, field: str) -> Path:
+    try:
+        return _resolve_operational_path(project, value, allow_dot=allow_dot)
+    except UnsafeProjectPathError:
+        raise _UnsafeOperationalPathError(field) from None
+
+
+def _process_cwd_field(project: LifecycleProject, process: ProcessV1 | ProcessV2) -> str:
+    for name, candidate in project.spec.processes.items():
+        if candidate is process:
+            return f"processes.{name}.cwd"
+    for name, candidate in project.spec.processes.items():
+        if candidate == process:
+            return f"processes.{name}.cwd"
+    return "process cwd"
+
+
+def _task_cwd_field(project: LifecycleProject, command: Sequence[str], cwd: str) -> str:
+    for name, task in project.spec.tasks.items():
+        if task.command is command and task.cwd == cwd:
+            return f"tasks.{name}.cwd"
+    for name, task in project.spec.tasks.items():
+        if task.command == tuple(command) and task.cwd == cwd:
+            return f"tasks.{name}.cwd"
+    return "task cwd"
 
 
 def _render_command(command: Sequence[str]) -> str:
     return " ".join(shlex.quote(part) for part in command)
 
 
-def _spawn_process(process: Process, *, root: Path) -> subprocess.Popen[bytes]:
+def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject) -> subprocess.Popen[bytes]:
     executable = shutil.which(process.command[0])
     if executable is None:
         exit_project_error(
@@ -447,21 +510,28 @@ def _spawn_process(process: Process, *, root: Path) -> subprocess.Popen[bytes]:
         )
     command = (executable, *process.command[1:])
     print(f"$ {_render_command(command)}")
+    cwd = _operational_path(project, process.cwd, allow_dot=True, field=_process_cwd_field(project, process))
     return subprocess.Popen(  # noqa: S603
         command,
-        cwd=str(root / process.cwd),
+        cwd=str(cwd),
         start_new_session=True,
     )
 
 
-def _run_command(command: Sequence[str], *, cwd: Path) -> int:
+def _run_command(command: Sequence[str], *, project: LifecycleProject, cwd: str) -> int:
     executable = shutil.which(command[0])
     if executable is None:
         exit_project_error(
             f"Missing executable: {command[0]}.",
             f"Install {command[0]} and make sure it is on PATH.",
         )
-    return subprocess.call((executable, *command[1:]), cwd=cwd)  # noqa: S603
+    operational_cwd = _operational_path(
+        project,
+        cwd,
+        allow_dot=True,
+        field=_task_cwd_field(project, command, cwd),
+    )
+    return subprocess.call((executable, *command[1:]), cwd=operational_cwd)  # noqa: S603
 
 
 def _wait_for_processes(processes: list[subprocess.Popen[bytes]]) -> None:

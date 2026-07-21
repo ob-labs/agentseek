@@ -351,8 +351,8 @@ def test_template_lifecycle_commands_smoke(
     if (type_name, template_name) in dependency_sync_templates:
         task_calls: list[tuple[list[str], Path]] = []
 
-        def record_task(command: Sequence[str], *, cwd: Path) -> int:
-            task_calls.append((list(command), cwd))
+        def record_task(command: Sequence[str], *, project, cwd: str) -> int:
+            task_calls.append((list(command), project.root / cwd))
             return 0
 
         monkeypatch.setattr("agentseek.cli.lifecycle.core._run_command", record_task)
