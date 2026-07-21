@@ -651,6 +651,60 @@ cwd = "second"
     assert calls == []
 
 
+def test_v2_dev_terminates_started_child_when_later_process_cwd_swap_is_rejected(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _write_v2_lifecycle_spec(tmp_path, process_cwd="first")
+    spec_path = tmp_path / ".agentseek" / "lifecycle.toml"
+    spec_path.write_text(
+        spec_path.read_text(encoding="utf-8")
+        + f'''\
+[processes.worker]
+command = ["{sys.executable}", "-c", "print('unreachable')"]
+cwd = "second"
+''',
+        encoding="utf-8",
+    )
+    (tmp_path / "first").mkdir()
+    second = tmp_path / "second"
+    second.mkdir()
+    outside = tmp_path.parent / f"{tmp_path.name}-outside-partial-startup"
+    outside.mkdir()
+    started_process = object()
+    popen_calls: list[object] = []
+    terminated: list[object] = []
+    wait_entered = False
+
+    def start_first_process(*args: object, **kwargs: object) -> object:
+        del args, kwargs
+        popen_calls.append(started_process)
+        _swap_with_outside_symlink(second, outside)
+        return started_process
+
+    def record_terminate(process: object) -> None:
+        terminated.append(process)
+
+    def fail_wait(processes: list[object]) -> None:
+        nonlocal wait_entered
+        del processes
+        wait_entered = True
+        raise AssertionError
+
+    monkeypatch.setattr(lifecycle_core.subprocess, "Popen", start_first_process)
+    monkeypatch.setattr(lifecycle_core, "_terminate", record_terminate)
+    monkeypatch.setattr(lifecycle_core, "_wait_for_processes", fail_wait)
+    monkeypatch.setenv("API_KEY", "inside")
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["dev", "--skip-check"])
+
+    _assert_confined_rejection(result, outside, "processes.worker.cwd")
+    assert popen_calls == [started_process]
+    assert terminated == [started_process]
+    assert not wait_entered
+
+
 def test_v1_path_compatibility_keeps_runtime_joins_and_symlinks(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
     _write_project_inputs(tmp_path)

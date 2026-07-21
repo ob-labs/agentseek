@@ -277,7 +277,14 @@ def dev(project: LifecycleProject, *, dry_run: bool) -> None:
     _ensure_required_inputs(project)
     for name, process in project.spec.processes.items():
         _operational_path(project, process.cwd, allow_dot=True, field=f"processes.{name}.cwd")
-    processes = [_spawn_process(process, project=project) for process in project.spec.processes.values()]
+    processes: list[subprocess.Popen[bytes]] = []
+    try:
+        for process in project.spec.processes.values():
+            processes.append(_spawn_process(process, project=project))
+    except Exception:
+        for started_process in processes:
+            _terminate(started_process)
+        raise
     _wait_for_processes(processes)
 
 
