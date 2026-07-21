@@ -23,7 +23,13 @@ from duty._internal.collection import Duty
 from pydantic import AliasChoices, Field, create_model
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from agentseek.cli.lifecycle.errors import exit_project_error
+from agentseek.cli.lifecycle.errors import (
+    LifecycleNotFoundError,
+    LifecycleTomlError,
+    LifecycleValidationError,
+    LifecycleVersionUnsupportedError,
+    exit_project_error,
+)
 from agentseek.cli.lifecycle.spec import (
     LIFECYCLE_SPEC_FILE,
     REQUIRED_COMMANDS,
@@ -33,7 +39,7 @@ from agentseek.cli.lifecycle.spec import (
     LifecycleSpec,
     Process,
     Task,
-    load_lifecycle_spec,
+    read_lifecycle_spec,
 )
 
 
@@ -55,23 +61,33 @@ class CheckResult:
     fix: str = ""
 
 
-def load_lifecycle_project(root: Path | None = None) -> LifecycleProject:
-    """Discover and load a lifecycle spec from *root* or its parents."""
+def discover_lifecycle_project(root: Path | None = None) -> LifecycleProject:
+    """Discover and load a lifecycle spec without producing CLI output."""
     project_root = (root or Path.cwd()).resolve()
     discovered = _discover_spec(project_root)
     if discovered is None:
-        exit_project_error(
-            f"Missing AgentSeek lifecycle spec from {project_root} upward.",
-            f"Add {LIFECYCLE_SPEC_FILE}.",
-        )
+        raise LifecycleNotFoundError(f"Add {LIFECYCLE_SPEC_FILE}.")  # noqa: TRY003
     lifecycle_root, spec_path = discovered
-    spec = load_lifecycle_spec(spec_path)
+    spec = read_lifecycle_spec(spec_path, project_root=lifecycle_root)
     return LifecycleProject(
         root=lifecycle_root,
         path=spec_path,
         metadata={"version": spec.version, "template": spec.template},
         spec=spec,
     )
+
+
+def load_lifecycle_project(root: Path | None = None) -> LifecycleProject:
+    """Discover and load a lifecycle spec, preserving legacy CLI errors."""
+    project_root = (root or Path.cwd()).resolve()
+    try:
+        return discover_lifecycle_project(project_root)
+    except LifecycleNotFoundError as exc:
+        exit_project_error(f"Missing AgentSeek lifecycle spec from {project_root} upward.", exc.legacy_detail)
+    except LifecycleTomlError as exc:
+        exit_project_error("Invalid AgentSeek lifecycle TOML.", exc.legacy_detail)
+    except (LifecycleValidationError, LifecycleVersionUnsupportedError) as exc:
+        exit_project_error("Invalid AgentSeek lifecycle spec.", exc.legacy_detail)
 
 
 def lifecycle_spec_exists(root: Path | None = None) -> bool:
@@ -523,6 +539,7 @@ __all__ = [
     "REQUIRED_COMMANDS",
     "SUPPORTED_LIFECYCLE_VERSION",
     "LifecycleProject",
+    "discover_lifecycle_project",
     "lifecycle_spec_exists",
     "load_lifecycle_project",
     "run_lifecycle_task",
