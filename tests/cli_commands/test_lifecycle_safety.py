@@ -201,6 +201,21 @@ def test_validate_service_url_rejects_unsafe_literal_forms(url: str) -> None:
         validate_service_url(url, "web")
 
 
+@pytest.mark.parametrize("control", ["\u0085", "\u009f"])
+def test_url_validators_reject_unicode_c1_controls(control: str) -> None:
+    service_url = f"https://service.test/{control}"
+    check_url = f"https://check.test/{control}"
+    docs_url = f"https://docs.example.test/{control}"
+
+    with pytest.raises(ValueError):
+        validate_service_url(service_url, "web")
+    with pytest.raises(ValueError):
+        validate_check_target(check_url)
+    with pytest.raises(ValueError):
+        validate_reference_url("docs", docs_url)
+    assert safe_v1_endpoint(service_url) is None
+
+
 @pytest.mark.parametrize("url", ["http://check.test", "https://check.test:443/health"])
 def test_validate_check_target_accepts_absolute_http_urls(url: str) -> None:
     assert validate_check_target(url) == url
@@ -304,6 +319,7 @@ def test_validate_reference_url_accepts_studio_without_query_or_one_safe_base_ur
         "https://studio.example.test/?baseUrl=https%3A%2F%2Fapi.example.test%3Ainvalid",
         "https://studio.example.test/?baseUrl=https%3A%2F%2Fapi.example.test%3A65536",
         "https://studio.example.test/?baseUrl=https%3A%2F%2Fapi.example.test%2F%24%7BHOST%7D",
+        "https://studio.example.test/?baseUrl=https%3A%2F%2Fapi.example.test%2F%C2%85",
         "https://studio.example.test/?baseUrl=%ZZ",
     ],
 )

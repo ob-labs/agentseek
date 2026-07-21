@@ -27,6 +27,7 @@ from agentseek.cli.lifecycle.safety import (
     ReferenceRel,
     ServiceKind,
     UnsafeProjectPathError,
+    _contains_url_control,
     resolve_confined_project_path,
     validate_bare_executable,
     validate_check_target,
@@ -164,7 +165,7 @@ def _project_path(value: str, info: ValidationInfo, *, allow_dot: bool = False) 
 def _url_error(value: str, *, allowed_schemes: frozenset[str], reference: bool = False) -> PydanticCustomError:
     if _PLACEHOLDER_PATTERN.search(value):
         return PydanticCustomError("unresolved_placeholder", "url contains unresolved placeholder")
-    if any(ord(char) <= 0x1F or ord(char) == 0x7F for char in value):
+    if _contains_url_control(value):
         return PydanticCustomError("url_control_forbidden", "url contains control characters")
     try:
         parsed = urlsplit(value)
@@ -214,7 +215,7 @@ def _reference_parse_error(value: str) -> PydanticCustomError | None:
     """Return the first generic reference safety failure, if any."""
     if _PLACEHOLDER_PATTERN.search(value):
         return PydanticCustomError("unresolved_placeholder", "url contains unresolved placeholder")
-    if any(ord(char) <= 0x1F or ord(char) == 0x7F for char in value):
+    if _contains_url_control(value):
         return PydanticCustomError("url_control_forbidden", "url contains control characters")
     try:
         parsed = urlsplit(value)

@@ -342,6 +342,40 @@ def test_v2_authored_models_translate_every_url_safety_category(
 
 
 @pytest.mark.parametrize(
+    ("surface", "kind", "rel", "value"),
+    [
+        ("service", "web", None, "http://service.test{control_0085}"),
+        ("check", None, None, "http://service.test{control_009f}"),
+        ("reference", "web", "docs", "https://docs.test{control_0085}"),
+    ],
+)
+def test_v2_authored_models_classify_unicode_c1_url_controls(
+    surface: str, kind: str | None, rel: str | None, value: str
+) -> None:
+    value = value.replace("{control_0085}", "\u0085").replace("{control_009f}", "\u009f")
+    if surface == "check":
+        model = CheckV2.model_validate
+        data = {"target": value}
+    else:
+        data: dict[str, object] = {
+            "name": "Service",
+            "kind": kind,
+            "url": "http://service.test",
+            "description": "Service description.",
+        }
+        if surface == "service":
+            data["url"] = value
+        else:
+            data["links"] = {rel: value}
+        model = ServiceV2.model_validate
+
+    with pytest.raises(ValidationError) as exc_info:
+        model(data)
+
+    assert exc_info.value.errors()[0]["type"] == "url_control_forbidden"
+
+
+@pytest.mark.parametrize(
     ("original", "revised", "path", "code"),
     [
         ('template = "bub/default"', 'template = "   "', "template", "value_blank"),
@@ -505,6 +539,41 @@ def test_v2_url_and_reference_failures_use_exact_owned_errors(
         read_lifecycle_spec(lifecycle, project_root=tmp_path)
 
     assert LifecycleValidationIssue(path, code, _message_for_code(code)) in exc_info.value.issues
+
+
+@pytest.mark.parametrize(
+    ("original", "revised", "path"),
+    [
+        (
+            'url = "http://127.0.0.1:5173"',
+            'url = "http://127.0.0.1:5173\\u0085"',
+            "services.app.url",
+        ),
+        (
+            'target = "http://127.0.0.1:5173"',
+            'target = "http://127.0.0.1:5173\\u009f"',
+            "checks.frontend.target",
+        ),
+        (
+            'docs = "https://docs.ag-ui.com/introduction"',
+            'docs = "https://docs.ag-ui.com/introduction\\u0085"',
+            "services.gateway.links.docs",
+        ),
+    ],
+)
+def test_v2_unicode_c1_url_controls_use_exact_owned_errors(
+    tmp_path: Path, original: str, revised: str, path: str
+) -> None:
+    source = (FIXTURES / "v2-bub-explicit.toml").read_text(encoding="utf-8")
+    lifecycle = tmp_path / "lifecycle.toml"
+    lifecycle.write_text(source.replace(original, revised, 1), encoding="utf-8")
+
+    with pytest.raises(LifecycleValidationError) as exc_info:
+        read_lifecycle_spec(lifecycle, project_root=tmp_path)
+
+    assert exc_info.value.issues == (
+        LifecycleValidationIssue(path, "url_component_forbidden", "URL contains a forbidden component."),
+    )
 
 
 def test_v2_rejects_multiple_primary_services_and_missing_check_association(tmp_path: Path) -> None:

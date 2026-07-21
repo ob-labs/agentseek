@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ntpath
 import re
+import unicodedata
 from pathlib import Path
 from typing import Literal
 from urllib.parse import SplitResult, parse_qsl, urlsplit
@@ -120,9 +121,11 @@ def _validate_absolute_url(
 
 
 def _contains_unsafe_url_literal(value: str) -> bool:
-    return _PLACEHOLDER_PATTERN.search(value) is not None or any(
-        ord(char) <= 0x1F or ord(char) == 0x7F for char in value
-    )
+    return _PLACEHOLDER_PATTERN.search(value) is not None or _contains_url_control(value)
+
+
+def _contains_url_control(value: str) -> bool:
+    return any(unicodedata.category(char) == "Cc" for char in value)
 
 
 def _has_empty_port(parsed: SplitResult) -> bool:
