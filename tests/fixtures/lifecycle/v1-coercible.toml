@@ -1,0 +1,26 @@
+version = "1"
+name = "Coercible Project"
+
+[tools]
+required = ["python"]
+
+[paths]
+required = ["pyproject.toml"]
+
+[env.API_KEY]
+required = "true"
+aliases = ["LEGACY_API_KEY"]
+
+[services.app]
+url = "http://127.0.0.1:8000"
+
+[processes.app]
+command = ["python", "-m", "http.server"]
+
+[checks.app]
+target = "http://127.0.0.1:8000"
+timeout = "2.5"
+attempts = 2.0
+
+[tasks.print]
+command = ["python", "-c", "print('ok')"]
