@@ -6,6 +6,8 @@ import pytest
 
 import agentseek.cli.lifecycle.safety as safety
 from agentseek.cli.lifecycle.safety import (
+    ReferenceRel,
+    ServiceKind,
     UnsafeProjectPathError,
     resolve_confined_project_path,
     safe_v1_endpoint,
@@ -148,7 +150,7 @@ def test_resolve_confined_project_path_rejects_intermediate_symlink_escape(tmp_p
         ("other", "mysql://service.test"),
     ],
 )
-def test_validate_service_url_accepts_every_allowed_kind_scheme_pair(kind: str, url: str) -> None:
+def test_validate_service_url_accepts_every_allowed_kind_scheme_pair(kind: ServiceKind, url: str) -> None:
     assert validate_service_url(url, kind) == url
 
 
@@ -167,7 +169,7 @@ def test_validate_service_url_accepts_every_allowed_kind_scheme_pair(kind: str, 
         ("other", "ftp://service.test"),
     ],
 )
-def test_validate_service_url_rejects_every_disallowed_kind_scheme_pair(kind: str, url: str) -> None:
+def test_validate_service_url_rejects_every_disallowed_kind_scheme_pair(kind: ServiceKind, url: str) -> None:
     with pytest.raises(ValueError):
         validate_service_url(url, kind)
 
@@ -385,7 +387,9 @@ def test_validate_check_target_rejects_explicit_empty_query_or_fragment_delimite
         ("studio", "https://studio.test?baseUrl=https%3A%2F%2Fapi.test#"),
     ],
 )
-def test_validate_reference_url_rejects_explicit_empty_query_or_fragment_delimiters(rel: str, url: str) -> None:
+def test_validate_reference_url_rejects_explicit_empty_query_or_fragment_delimiters(
+    rel: ReferenceRel, url: str
+) -> None:
     with pytest.raises(ValueError):
         validate_reference_url(rel, url)
 

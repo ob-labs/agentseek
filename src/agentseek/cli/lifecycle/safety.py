@@ -130,6 +130,8 @@ def _has_empty_port(parsed: SplitResult) -> bool:
 
 
 def _is_api_docs_loopback(hostname: str | None) -> bool:
+    if hostname is None:
+        return False
     if hostname == "localhost":
         return True
     if hostname == "::1":

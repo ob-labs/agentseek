@@ -128,8 +128,8 @@ def _remove_tree(path: Path) -> None:
 def _swap_after_lifecycle_load(monkeypatch, path: Path, outside: Path) -> None:
     original = lifecycle_core.load_lifecycle_project
 
-    def load_and_swap(*args: object, **kwargs: object):
-        project = original(*args, **kwargs)
+    def load_and_swap(root: Path | None = None):
+        project = original(root)
         _swap_with_outside_symlink(path, outside)
         return project
 
@@ -227,6 +227,52 @@ def test_doctor_live_accepts_2xx_and_3xx_statuses(tmp_path: Path, monkeypatch) -
 
         assert result.exit_code == 0, result.stdout + result.stderr
         assert "ok   app: http://127.0.0.1:5173 is reachable." in result.stdout
+
+
+def test_doctor_live_runs_v2_check_through_the_shared_http_path(tmp_path: Path, monkeypatch) -> None:
+    spec_dir = tmp_path / ".agentseek"
+    spec_dir.mkdir()
+    (spec_dir / "lifecycle.toml").write_text(
+        f'''\
+version = 2
+template = "test/live-check"
+name = "V2 Live Check"
+
+[services.app]
+name = "App"
+kind = "web"
+url = "http://127.0.0.1:8080"
+primary = true
+description = "Application."
+
+[processes.app]
+command = ["{sys.executable}", "-c", "print('unreachable')"]
+provides = ["app"]
+
+[checks.app]
+target = "http://127.0.0.1:8080/health"
+service = "app"
+''',
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    class FakeResponse:
+        status_code = 204
+
+    requested: list[tuple[str, float]] = []
+
+    def get(url: str, *, timeout: float) -> FakeResponse:
+        requested.append((url, timeout))
+        return FakeResponse()
+
+    monkeypatch.setattr("agentseek.cli.lifecycle.core.httpx.get", get)
+
+    result = CliRunner().invoke(build_command_app(), ["doctor", "--live"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert requested == [("http://127.0.0.1:8080/health", 2.0)]
+    assert "ok   app: http://127.0.0.1:8080/health is reachable." in result.stdout
 
 
 def test_doctor_live_rejects_4xx_and_5xx_statuses(tmp_path: Path, monkeypatch) -> None:

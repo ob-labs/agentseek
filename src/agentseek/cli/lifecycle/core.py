@@ -36,7 +36,8 @@ from agentseek.cli.lifecycle.spec import (
     REQUIRED_COMMANDS,
     SUPPORTED_LIFECYCLE_VERSION,
     AuthoredLifecycleSpec,
-    Check,
+    CheckV1,
+    CheckV2,
     EnvRequirement,
     LifecycleSpecV2,
     ProcessV1,
@@ -390,7 +391,7 @@ def _live_checks(project: LifecycleProject) -> list[CheckResult]:
     return [_run_check(name, check) for name, check in project.spec.checks.items()]
 
 
-def _run_check(name: str, check: Check) -> CheckResult:
+def _run_check(name: str, check: CheckV1 | CheckV2) -> CheckResult:
     for _attempt in range(max(check.attempts, 1)):
         ok = _check_target(check)
         if ok:
@@ -399,7 +400,7 @@ def _run_check(name: str, check: Check) -> CheckResult:
     return _check("fail", name, f"{check.target} is not reachable.", "Start the local app with `agentseek dev`.")
 
 
-def _check_target(check: Check) -> bool:
+def _check_target(check: CheckV1 | CheckV2) -> bool:
     try:
         response = httpx.get(check.target, timeout=check.timeout)
     except httpx.HTTPError:

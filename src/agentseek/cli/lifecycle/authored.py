@@ -21,6 +21,8 @@ from pydantic import (
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
 from agentseek.cli.lifecycle.safety import (
+    ReferenceRel,
+    ServiceKind,
     UnsafeProjectPathError,
     resolve_confined_project_path,
     validate_bare_executable,
@@ -180,9 +182,9 @@ def _url_error(value: str, *, allowed_schemes: frozenset[str], reference: bool =
     return PydanticCustomError("url_fragment_forbidden", "url fragment is forbidden")
 
 
-def _validate_service_endpoint(value: str, kind: str) -> str:
+def _validate_service_endpoint(value: str, kind: ServiceKind) -> str:
     try:
-        return validate_service_url(value, kind)  # type: ignore[arg-type]
+        return validate_service_url(value, kind)
     except ValueError:
         schemes = {
             "web": frozenset({"http", "https"}),
@@ -224,9 +226,9 @@ def _reference_parse_error(value: str) -> PydanticCustomError | None:
     return None
 
 
-def _validate_reference(value: str, rel: str) -> str:
+def _validate_reference(value: str, rel: ReferenceRel) -> str:
     try:
-        return validate_reference_url(rel, value)  # type: ignore[arg-type]
+        return validate_reference_url(rel, value)
     except ValueError:
         error = _reference_parse_error(value)
         if error is not None:
@@ -246,13 +248,13 @@ def _validate_reference(value: str, rel: str) -> str:
 
 class ServiceV2(SpecModel):
     name: str
-    kind: Literal["web", "api", "protocol", "database", "other"]
+    kind: ServiceKind
     url: str
     display: Literal["default", "advanced", "hidden"] = "default"
     primary: bool = False
     description: str
     tech: str | None = None
-    links: dict[Literal["docs", "api_docs", "studio"], str] = Field(default_factory=dict)
+    links: dict[ReferenceRel, str] = Field(default_factory=dict)
 
     @field_validator("name", "description")
     @classmethod
@@ -269,7 +271,7 @@ class ServiceV2(SpecModel):
 
     @field_validator("links")
     @classmethod
-    def _safe_links(cls, value: dict[str, str]) -> dict[str, str]:
+    def _safe_links(cls, value: dict[ReferenceRel, str]) -> dict[ReferenceRel, str]:
         errors: list[InitErrorDetails] = []
         for rel, url in value.items():
             try:

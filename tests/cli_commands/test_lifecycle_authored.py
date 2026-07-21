@@ -135,6 +135,7 @@ def test_v2_distinguishes_absent_and_explicit_process_provides() -> None:
     assert same_id.processes["app"].provides is None
     assert isinstance(service_free, LifecycleSpecV2)
     assert service_free.processes["worker"].provides == ()
+    assert isinstance(explicit, LifecycleSpecV2)
     assert explicit.processes["frontend"].provides == ("app", "copilotkit")
 
 
@@ -252,6 +253,7 @@ def test_v2_reference_ports_are_host_errors_for_every_relation(rel: str, port: s
         "type": "reference_host_invalid",
         "loc": ("services", "gateway", "links", rel),
         "msg": "",
+        "input": f"https://docs.example.test{port}",
     }) == LifecycleValidationIssue(f"services.gateway.links.{rel}", "url_invalid", "URL is invalid.")
 
 
@@ -321,7 +323,7 @@ def test_v2_authored_models_translate_every_url_safety_category(
         model = CheckV2.model_validate
         data = {"target": value}
     else:
-        data = {
+        data: dict[str, object] = {
             "name": "Service",
             "kind": kind,
             "url": "http://service.test",
@@ -709,7 +711,10 @@ def test_v2_allows_an_empty_optional_root_description(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    assert read_lifecycle_spec(path, project_root=tmp_path).description == ""
+    spec = read_lifecycle_spec(path, project_root=tmp_path)
+
+    assert isinstance(spec, LifecycleSpecV2)
+    assert spec.description == ""
 
 
 @pytest.mark.parametrize(
@@ -960,7 +965,12 @@ def test_non_emitting_read_raises_typed_validation_error_for_selected_model_fiel
     ],
 )
 def test_typed_error_mapping_is_application_owned(error_type: str, code: str, message: str) -> None:
-    issue = _validation_issue({"type": error_type, "loc": ("services", "app", "url"), "msg": "rejected input"})
+    issue = _validation_issue({
+        "type": error_type,
+        "loc": ("services", "app", "url"),
+        "msg": "rejected input",
+        "input": "rejected input",
+    })
 
     assert issue == LifecycleValidationIssue("services.app.url", code, message)
 
