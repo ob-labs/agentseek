@@ -48,11 +48,12 @@ def resolve_confined_project_path(project_root: Path, value: str, *, allow_dot: 
 def _path_is_lexically_unsafe(value: str, *, allow_dot: bool) -> bool:
     if not value.strip() or "\x00" in value:
         return True
-    if value == ".":
-        return not allow_dot
     if Path(value).is_absolute() or ntpath.isabs(value) or ntpath.splitdrive(value)[0]:
         return True
-    return ".." in re.split(r"[/\\]", value)
+    segments = re.split(r"[/\\]", value)
+    if all(segment in {"", "."} for segment in segments):
+        return not allow_dot
+    return ".." in segments
 
 
 __all__ = [

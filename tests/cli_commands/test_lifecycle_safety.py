@@ -51,6 +51,14 @@ def test_resolve_confined_project_path_accepts_dot_only_when_allowed(tmp_path: P
         resolve_confined_project_path(tmp_path, ".")
 
 
+@pytest.mark.parametrize("value", ["./", "././", ".\\", ".\\.\\"])
+def test_resolve_confined_project_path_rejects_root_equivalent_non_cwd_paths(tmp_path: Path, value: str) -> None:
+    with pytest.raises(UnsafeProjectPathError) as exc_info:
+        resolve_confined_project_path(tmp_path, value)
+
+    assert str(exc_info.value) == "project path is unsafe"
+
+
 @pytest.mark.parametrize("value", ["", "   ", "\t"])
 def test_resolve_confined_project_path_rejects_blank_non_cwd_values(tmp_path: Path, value: str) -> None:
     with pytest.raises(UnsafeProjectPathError) as exc_info:
