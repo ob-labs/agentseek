@@ -7,22 +7,29 @@ from pathlib import Path
 from re import fullmatch
 from typing import Final
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from pydantic_core import ErrorDetails
 
 from agentseek.cli.lifecycle.authored import (
     SUPPORTED_LIFECYCLE_VERSION,
+    SUPPORTED_LIFECYCLE_VERSIONS,
+    AuthoredLifecycleSpec,
     Check,
     CheckV1,
+    CheckV2,
     EnvRequirement,
     LifecycleSpec,
     LifecycleSpecV1,
+    LifecycleSpecV2,
     Process,
     ProcessV1,
+    ProcessV2,
     Service,
     ServiceV1,
+    ServiceV2,
     Task,
     TaskV1,
+    TaskV2,
 )
 from agentseek.cli.lifecycle.errors import (
     LifecycleTomlError,
@@ -34,7 +41,7 @@ from agentseek.cli.lifecycle.errors import (
 
 LIFECYCLE_SPEC_FILE = ".agentseek/lifecycle.toml"
 REQUIRED_COMMANDS: tuple[str, ...] = ("dev", "info", "doctor")
-SUPPORTED_DISCOVERY_LIFECYCLE_VERSIONS: tuple[int, ...] = (1, 2)
+SUPPORTED_DISCOVERY_LIFECYCLE_VERSIONS = SUPPORTED_LIFECYCLE_VERSIONS
 
 _VALID_IDENTIFIER = r"[A-Za-z0-9][A-Za-z0-9_-]*"
 _ISSUE_MAPPING: Final[dict[str, tuple[str, str]]] = {
@@ -103,14 +110,14 @@ def _validation_issue(error: ErrorDetails) -> LifecycleValidationIssue:
     return LifecycleValidationIssue(_validation_issue_path(error["loc"]), code, message)
 
 
-def _lifecycle_version(data: dict[str, object]) -> int | None:
-    version = data.get("version")
-    return version if isinstance(version, int) and not isinstance(version, bool) else None
+class _LifecycleVersionProbe(BaseModel):
+    """Coerce only the selector before choosing an authored model."""
+
+    version: int
 
 
-def read_lifecycle_spec(path: Path, *, project_root: Path) -> LifecycleSpecV1:
+def read_lifecycle_spec(path: Path, *, project_root: Path) -> AuthoredLifecycleSpec:
     """Read and validate lifecycle TOML without producing CLI output."""
-    del project_root
     try:
         with path.open("rb") as file:
             data = tomllib.load(file)
@@ -122,25 +129,36 @@ def read_lifecycle_spec(path: Path, *, project_root: Path) -> LifecycleSpecV1:
         ) from exc
 
     try:
-        return LifecycleSpecV1.model_validate({**data, "path": path})
+        found = _LifecycleVersionProbe.model_validate(data).version
+    except ValidationError as exc:
+        raise LifecycleVersionUnsupportedError(
+            found=None,
+            supported=SUPPORTED_LIFECYCLE_VERSIONS,
+            legacy_detail=str(exc),
+        ) from exc
+
+    model = {1: LifecycleSpecV1, 2: LifecycleSpecV2}.get(found)
+    if model is None:
+        raise LifecycleVersionUnsupportedError(
+            found=found,
+            supported=SUPPORTED_LIFECYCLE_VERSIONS,
+            legacy_detail=f"unsupported lifecycle version: {found}",
+        )
+
+    payload = {**data, "path": path} if model is LifecycleSpecV1 else data
+    try:
+        return model.model_validate(payload, context={"project_root": project_root, "loader_path": path})
     except ValidationError as exc:
         errors = exc.errors(include_url=False, include_context=False, include_input=False)
-        unsupported = next((error for error in errors if error["type"] == "unsupported_version"), None)
-        if unsupported is not None:
-            raise LifecycleVersionUnsupportedError(
-                found=_lifecycle_version(data),
-                supported=SUPPORTED_DISCOVERY_LIFECYCLE_VERSIONS,
-                legacy_detail=str(exc),
-            ) from exc
         issues = tuple(sorted((_validation_issue(error) for error in errors), key=lambda issue: (issue.path, issue.code, issue.message)))
         raise LifecycleValidationError(
-            lifecycle_version=_lifecycle_version(data),
+            lifecycle_version=found,
             issues=issues,
             legacy_detail=str(exc),
         ) from exc
 
 
-def load_lifecycle_spec(path: Path) -> LifecycleSpec:
+def load_lifecycle_spec(path: Path) -> AuthoredLifecycleSpec:
     """Load and validate a lifecycle spec from TOML."""
     try:
         return read_lifecycle_spec(path, project_root=path.parent.parent)
@@ -154,17 +172,24 @@ __all__ = [
     "LIFECYCLE_SPEC_FILE",
     "REQUIRED_COMMANDS",
     "SUPPORTED_LIFECYCLE_VERSION",
+    "SUPPORTED_LIFECYCLE_VERSIONS",
+    "AuthoredLifecycleSpec",
     "Check",
     "CheckV1",
+    "CheckV2",
     "EnvRequirement",
     "LifecycleSpec",
     "LifecycleSpecV1",
+    "LifecycleSpecV2",
     "Process",
     "ProcessV1",
+    "ProcessV2",
     "Service",
     "ServiceV1",
+    "ServiceV2",
     "Task",
     "TaskV1",
+    "TaskV2",
     "_validation_issue",
     "_validation_issue_path",
     "load_lifecycle_spec",

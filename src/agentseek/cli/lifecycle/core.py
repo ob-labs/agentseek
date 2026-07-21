@@ -34,9 +34,9 @@ from agentseek.cli.lifecycle.spec import (
     LIFECYCLE_SPEC_FILE,
     REQUIRED_COMMANDS,
     SUPPORTED_LIFECYCLE_VERSION,
+    AuthoredLifecycleSpec,
     Check,
     EnvRequirement,
-    LifecycleSpec,
     Process,
     Task,
     read_lifecycle_spec,
@@ -50,7 +50,7 @@ class LifecycleProject:
     root: Path
     path: Path
     metadata: dict[str, object]
-    spec: LifecycleSpec
+    spec: AuthoredLifecycleSpec
 
 
 @dataclass(frozen=True)

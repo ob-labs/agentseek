@@ -1,0 +1,26 @@
+version = 2
+template = "example/service-free"
+name = "Service-free Project"
+description = "A project with no declared services."
+env_file = ".env"
+guide = "README.md"
+
+[tools]
+required = ["python"]
+
+[paths]
+required = ["pyproject.toml"]
+
+[env.API_KEY]
+required = true
+description = "Key for the local application."
+
+[processes.worker]
+command = ["python", "worker.py"]
+cwd = "."
+provides = []
+
+[tasks.seed]
+command = ["python", "seed.py"]
+cwd = "tasks"
+description = "Seed local data."
