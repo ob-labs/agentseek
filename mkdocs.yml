@@ -24,11 +24,15 @@ nav:
       - Overview: reference/index.md
       - CLI: reference/cli.md
       - Lifecycle Spec: reference/lifecycle-spec.md
+      - Lifecycle v2 Service Discovery: reference/lifecycle-v2-service-discovery.md
       - Templates: reference/templates.md
       - Template Authoring Contract: reference/template-authoring-contract.md
   - Concepts:
       - Overview: concepts/index.md
       - Lifecycle Toolkit: concepts/lifecycle-toolkit.md
+  - Architecture Decisions:
+      - Overview: adr/index.md
+      - "ADR 0001: Versioned Template Catalog": adr/0001-versioned-template-catalog-boundary.md
 
 theme:
   name: terminal
@@ -66,11 +70,15 @@ plugins:
                 - 概览: reference/index.md
                 - CLI: reference/cli.md
                 - 生命周期规范: reference/lifecycle-spec.md
+                - Lifecycle v2 服务发现: reference/lifecycle-v2-service-discovery.md
                 - 模板: reference/templates.md
                 - 模板编写规范: reference/template-authoring-contract.md
             - 概念:
                 - 概览: concepts/index.md
                 - 生命周期工具包: concepts/lifecycle-toolkit.md
+            - 架构决策:
+                - 概览: adr/index.md
+                - "ADR 0001：版本化模板目录（英文）": adr/0001-versioned-template-catalog-boundary.md
 
 markdown_extensions:
   - toc:

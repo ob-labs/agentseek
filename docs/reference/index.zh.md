@@ -15,5 +15,6 @@ sources:
 | --- | --- |
 | [CLI](cli.md) | 命令和选项查阅。 |
 | [生命周期规范](lifecycle-spec.md) | 生成项目生命周期契约。 |
+| [Lifecycle v2 服务发现](lifecycle-v2-service-discovery.md) | 面向 Desktop 的已接受服务元数据、归一化模型和确定性 JSON 契约。 |
 | [模板](templates.md) | 可用模板路径。 |
 | [模板编写规范](template-authoring-contract.md) | 贡献模板需要遵守的文件、配置、生命周期行为和验证要求。 |

@@ -164,6 +164,9 @@ venv.bak/
 docs/hub.md
 docs/hub.zh.md
 
+# Local agent planning artifacts
+/docs/superpowers/
+
 # mypy
 .mypy_cache/
 .dmypy.json
