@@ -3,7 +3,7 @@ title: Desktop Service Discovery and Lifecycle v2
 type: explanation
 audience: [A2, A3]
 runs: no
-verified_on: 2026-07-17
+verified_on: 2026-07-21
 sources:
   - src/agentseek/cli/lifecycle/spec.py
   - src/agentseek/cli/lifecycle/core.py
@@ -38,8 +38,9 @@ sources:
 
 ## Status
 
-This document is a design proposal. It defines the contract to implement after
-review; it does not change current CLI or template behavior by itself.
+This document is the accepted design contract for AgentSeek 0.1.0. It does not
+change current CLI or template behavior by itself; implementation and release
+verification remain separate work.
 
 The design discussion is
 [GitHub Discussion #133](https://github.com/ob-labs/agentseek/discussions/133).
@@ -239,6 +240,10 @@ service. The primary service:
 A browser-based template normally marks its `web` service as primary. An
 API-only template marks the endpoint that best represents successful startup.
 
+A v2 project that declares no services is valid and has no primary service. It
+may contain processes and tasks, but `provides`, check-to-service associations,
+`starts`, and `stops` cannot name services that do not exist.
+
 ### Compact relationship conventions
 
 Most templates already use the same identifier for a service and its process or
@@ -364,8 +369,8 @@ and checks, no relationship annotations are needed.
 Lifecycle v2 is rejected if any of these conditions hold:
 
 - `template` or `name` is blank;
-- there is no primary service or more than one primary service;
-- the primary service is hidden;
+- services are declared and zero or more than one service has `primary = true`;
+- the single primary service, when present, is hidden;
 - a service name is blank after trimming;
 - a required description is blank after trimming;
 - an identifier violates the v2 grammar;
@@ -415,8 +420,17 @@ before release. V1 input remains loadable. During v1 projection, AgentSeek emits
 a service URL only when it is absolute, uses `http`, `https`, `ws`, `wss`, or
 `mysql`, and has no user information, query, fragment, or unresolved
 placeholder. A v1 HTTP check target additionally must use `http` or `https`.
-Any other v1 endpoint or target is omitted in full with an
-`unsafe_endpoint_omitted` warning; AgentSeek never attempts partial redaction.
+Any unsafe v1 service URL or check target value is omitted in full: the owning
+service or check remains in normalized output, its `url` or `target` is null,
+and AgentSeek emits an `unsafe_endpoint_omitted` warning. AgentSeek never
+attempts partial redaction.
+
+An unsafe v1 HTTP check remains represented in `CheckDefinitionDTO` with a
+null target. Without `--live`, its doctor result is `not_run`. With `--live`,
+AgentSeek never sends the request and returns a project-scoped result with ID
+`service-check:<check-id>`, type `http`, state `fail`, message
+`Unsafe endpoint was not checked.`, and target null. This failed result makes
+`doctor --live --json` exit with status 1 while keeping `ok: true`.
 
 JSON-mode v1 path projection applies the same root-confinement check as v2.
 Unsafe path values are never accessed or serialized and produce an
@@ -875,15 +889,21 @@ required.
 
 ## Compatibility and delivery sequence
 
-The implementation should be delivered in these contract-preserving slices:
+The implementation should be delivered in these contract-preserving slices.
+Repository ownership, catalog resolution, and cross-repository release order
+remain governed by
+[ADR 0001](../docs/adr/0001-versioned-template-catalog-boundary.md):
 
 1. Add separate v1 and v2 authored models plus normalized internal DTOs.
 2. Add v2 validation, safe projection, relationship normalization, and action
    derivation without changing human output.
 3. Add versioned `info --json` and `doctor [--live] --json` DTOs.
-4. Batch-migrate registered templates, then validate the quarantined template
-   independently.
-5. Update human next-step output only in a separate reviewed change, using the
+4. Establish the standalone template catalog, copy and migrate registered
+   templates there, retain the core templates as the lifecycle-v1 compatibility
+   mirror, then validate the quarantined template independently.
+5. Add the immutable catalog lock and standalone-catalog resolver defined by
+   [ADR 0001](../docs/adr/0001-versioned-template-catalog-boundary.md).
+6. Update human next-step output only in a separate reviewed change, using the
    same normalized model rather than a second set of rules.
 
 Lifecycle v1 remains readable. V1 JSON is deliberately conservative and marked
@@ -896,6 +916,8 @@ Implementation is not complete without tests proving:
 
 - v1 loads through the distinct v1 model and retains current human output;
 - valid v2 files normalize same-ID and explicit relationships correctly;
+- a service-free v2 project is valid with no primary, while every nonempty
+  service map requires exactly one non-hidden primary;
 - zero, multiple, and task-only providers are represented;
 - services with no check are not reported healthy;
 - invalid primary, relationship, identifier, path, and URL cases fail with
@@ -911,7 +933,9 @@ Implementation is not complete without tests proving:
 - v2 rejects duplicate tool/path requirements; v1 collapses them with unique
   diagnostic IDs and canonical warnings;
 - blank service names and non-HTTP check targets fail v2 validation;
-- v1 unsafe endpoints are omitted with warnings;
+- v1 unsafe endpoints are omitted with warnings; unsafe live-check targets
+  produce a null-target `not_run` result without `--live`, are never requested
+  with `--live`, and then produce the specified failed doctor result;
 - v1 service names and check associations remain null rather than inferred;
 - environment values/defaults and raw commands never appear in JSON;
 - hidden services produce no actions and `display` affects no execution path;
@@ -923,7 +947,9 @@ Implementation is not complete without tests proving:
 - doctor check failures use exit status 1 with `ok: true`;
 - static and live doctor results use the normative IDs and scopes;
 - repeated `info --json` output is byte-for-byte identical;
-- all registered templates validate after batch migration;
+- every registered standalone template renders and validates as lifecycle v2;
+- every registered core compatibility template still renders and loads as
+  lifecycle v1, while quarantined sources retain their quarantine behavior;
 - rendered-template tests cover relationship integrity after Cookiecutter
   rendering and prove that lifecycle loading performs no environment
   interpolation.
@@ -944,6 +970,7 @@ is explicitly incomplete until they adopt v2.
 
 ## Related
 
+- [ADR 0001: Versioned Standalone Template Catalog](../docs/adr/0001-versioned-template-catalog-boundary.md)
 - [AG-UI introduction](https://docs.ag-ui.com/introduction)
 - [CopilotKit architecture](https://docs.copilotkit.ai/concepts/architecture)
 - [LangGraph documentation](https://docs.langchain.com/oss/python/langgraph/overview)
