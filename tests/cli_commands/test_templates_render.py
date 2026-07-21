@@ -278,6 +278,7 @@ def test_template_renders_without_unrendered_jinja(
         "variable was referenced but not substituted."
     )
     lifecycle_data = tomllib.loads(lifecycle_text)
+    assert lifecycle_data["version"] == 1, f"{type_name}/{template_name} must retain lifecycle version 1"
     assert lifecycle_data["template"] == f"{type_name}/{template_name}"
     assert lifecycle_data["processes"]
     assert not (generated / "duties.py").exists()
