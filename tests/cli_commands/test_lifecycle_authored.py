@@ -341,6 +341,23 @@ def test_v2_authored_models_translate_every_url_safety_category(
     assert exc_info.value.errors()[0]["type"] == error_type
 
 
+@pytest.mark.parametrize("encoded_control", ["%C2%85", "%C2%9F"])
+def test_direct_v2_studio_decoded_url_controls_keep_the_control_error(encoded_control: str) -> None:
+    reference = f"https://studio.test/?baseUrl=http%3A%2F%2Fapi.test{encoded_control}"
+
+    with pytest.raises(ValidationError) as exc_info:
+        ServiceV2.model_validate({
+            "name": "Gateway",
+            "kind": "web",
+            "url": "http://gateway.test",
+            "description": "Gateway service.",
+            "links": {"studio": reference},
+        })
+
+    assert exc_info.value.errors()[0]["type"] == "url_control_forbidden"
+    assert exc_info.value.errors()[0]["loc"] == ("links", "studio")
+
+
 @pytest.mark.parametrize(
     ("surface", "kind", "rel", "value"),
     [
@@ -574,6 +591,37 @@ def test_v2_unicode_c1_url_controls_use_exact_owned_errors(
     assert exc_info.value.issues == (
         LifecycleValidationIssue(path, "url_component_forbidden", "URL contains a forbidden component."),
     )
+
+
+@pytest.mark.parametrize(
+    ("encoded_control", "control"),
+    [("%C2%85", "\u0085"), ("%C2%9F", "\u009f")],
+)
+def test_v2_studio_decoded_url_controls_are_redacted_owned_errors(
+    tmp_path: Path, encoded_control: str, control: str
+) -> None:
+    source = (FIXTURES / "v2-bub-explicit.toml").read_text(encoding="utf-8")
+    reference = f"https://studio.test/?baseUrl=http%3A%2F%2Fapi.test{encoded_control}"
+    lifecycle = tmp_path / "lifecycle.toml"
+    lifecycle.write_text(
+        source.replace('docs = "https://docs.ag-ui.com/introduction"', f'studio = "{reference}"', 1),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(LifecycleValidationError) as exc_info:
+        read_lifecycle_spec(lifecycle, project_root=tmp_path)
+
+    assert exc_info.value.issues == (
+        LifecycleValidationIssue(
+            "services.gateway.links.studio", "url_component_forbidden", "URL contains a forbidden component."
+        ),
+    )
+    for issue in exc_info.value.issues:
+        for public_field in (issue.path, issue.code, issue.message, repr(issue)):
+            assert reference not in public_field
+            assert control not in public_field
+    assert reference not in repr(exc_info.value.issues)
+    assert control not in repr(exc_info.value.issues)
 
 
 def test_v2_rejects_multiple_primary_services_and_missing_check_association(tmp_path: Path) -> None:

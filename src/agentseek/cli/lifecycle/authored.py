@@ -28,6 +28,7 @@ from agentseek.cli.lifecycle.safety import (
     ServiceKind,
     UnsafeProjectPathError,
     _contains_url_control,
+    _URLControlCharacterError,
     resolve_confined_project_path,
     validate_bare_executable,
     validate_check_target,
@@ -193,6 +194,8 @@ def _url_error(value: str, *, allowed_schemes: frozenset[str], reference: bool =
 def _validate_service_endpoint(value: str, kind: ServiceKind) -> str:
     try:
         return validate_service_url(value, kind)
+    except _URLControlCharacterError:
+        raise PydanticCustomError("url_control_forbidden", "url contains control characters") from None
     except ValueError:
         schemes = {
             "web": frozenset({"http", "https"}),
@@ -207,6 +210,8 @@ def _validate_service_endpoint(value: str, kind: ServiceKind) -> str:
 def _validate_check_endpoint(value: str) -> str:
     try:
         return validate_check_target(value)
+    except _URLControlCharacterError:
+        raise PydanticCustomError("url_control_forbidden", "url contains control characters") from None
     except ValueError:
         raise _url_error(value, allowed_schemes=frozenset({"http", "https"})) from None
 
@@ -237,6 +242,8 @@ def _reference_parse_error(value: str) -> PydanticCustomError | None:
 def _validate_reference(value: str, rel: ReferenceRel) -> str:
     try:
         return validate_reference_url(rel, value)
+    except _URLControlCharacterError:
+        raise PydanticCustomError("url_control_forbidden", "url contains control characters") from None
     except ValueError:
         error = _reference_parse_error(value)
         if error is not None:

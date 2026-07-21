@@ -34,6 +34,10 @@ class UnsafeProjectPathError(ValueError):
         super().__init__("project path is unsafe")
 
 
+class _URLControlCharacterError(ValueError):
+    """A URL contains a control character without retaining the URL value."""
+
+
 def validate_identifier(value: str) -> str:
     """Return a lifecycle identifier after enforcing its safe grammar."""
     if _IDENTIFIER_PATTERN.fullmatch(value) is None:
@@ -100,8 +104,10 @@ def _validate_absolute_url(
     allowed_schemes: frozenset[str],
     allow_query: bool = False,
 ) -> SplitResult:
-    if not isinstance(value, str) or _contains_unsafe_url_literal(value):
+    if not isinstance(value, str) or _PLACEHOLDER_PATTERN.search(value) is not None:
         raise ValueError
+    if _contains_url_control(value):
+        raise _URLControlCharacterError
     try:
         parsed = urlsplit(value)
         hostname = parsed.hostname
@@ -118,10 +124,6 @@ def _validate_absolute_url(
     if ("?" in value and not allow_query) or "#" in value:
         raise ValueError
     return parsed
-
-
-def _contains_unsafe_url_literal(value: str) -> bool:
-    return _PLACEHOLDER_PATTERN.search(value) is not None or _contains_url_control(value)
 
 
 def _contains_url_control(value: str) -> bool:
