@@ -3,10 +3,16 @@ title: 生命周期规范
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-06-26
+verified_on: 2026-07-21
 sources:
   - src/agentseek/cli/lifecycle/spec.py
   - src/agentseek/cli/lifecycle/core.py
+  - src/agentseek/cli/lifecycle/authored.py
+  - src/agentseek/cli/lifecycle/safety.py
+  - specs/lifecycle-v2-service-discovery.md
+  - docs/adr/0001-versioned-template-catalog-boundary.md
+  - templates/index.json
+  - tests/cli_commands/test_templates_render.py
   - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
 ---
 
@@ -22,7 +28,24 @@ AgentSeek 从当前目录向上查找生命周期规范：
 
 其他项目文件不参与生命周期发现。
 
-## 形状
+## 编写版本与 catalog 边界
+
+AgentSeek 当前加载并验证编写的生命周期版本 `1` 和 `2`。现有的人工使用命令及其 v1
+行为保持兼容。
+
+| 编写版本或位置 | 当前边界 |
+| --- | --- |
+| `1`, `2` | 编写的生命周期文件会被加载和验证。 |
+| `templates/` | core 仍是 `version = 1` 兼容镜像。 |
+| `agentseek-ai/agentseek-templates` | 后续进行的 `version = 2` catalog 迁移。 |
+| 此切片 | 仅实现编写文件的加载和验证；normalization、JSON 与 catalog 交付仍是独立后续工作。 |
+
+完整的编写契约见已发布的 [lifecycle v2 概览
+(`lifecycle-v2-service-discovery.md`)](lifecycle-v2-service-discovery.md)。
+精确的规范源地址为
+<https://github.com/ob-labs/agentseek/blob/main/specs/lifecycle-v2-service-discovery.md>。
+
+## 生命周期 v1 形状
 
 ```toml
 version = 1
@@ -87,10 +110,29 @@ lifecycle default < env_file < shell environment
 模板不需要声明项目可能使用的每一个运行时变量。AgentSeek 不会把 env 文件或
 生命周期默认值传给子进程。
 
-## 第一阶段范围
+## 生命周期 v1 第一阶段范围
 
 Version 1 支持必需工具、必需路径、项目环境需求、HTTP live 检查、长运行进程和一次性任务。
 它不支持可选 tool/path 检查、TCP 检查、进程级环境覆盖、多个 env 文件或 env 插值。
+
+## 生命周期 v2 编写字段
+
+V2 保留 v1 的 `tools`、`paths` 与 `env` 段，并仍要求至少声明一个 process。根字段为
+`version`、`template` 和 `name`；可选字段为 `description`、`env_file` 与 `guide`；
+`template` 和 `name` 必须非空。`guide`、`env_file`、`paths.required` 以及 process/task 的
+`cwd` 必须是项目相对路径，且解析后仍受限于项目根目录。
+
+每个 `services.<id>` 条目包含 `name`、`url`、`kind`、`display`、`primary`、
+`description`、可选 `tech` 与有类型的 `links`。`kind` 只能是 `web`、`api`、`protocol`、
+`database` 或 `other`；`display` 只能是 `default`、`advanced` 或 `hidden`。`display`
+只是展示提示：它绝不控制认证、授权、网络暴露或 process 启动。
+
+V2 默认使用同 ID 关系：同名 process 提供 service，同名 check 检查 service。需要显式关系时，
+使用 `processes.<id>.provides`、`checks.<id>.service` 以及 `tasks.<id>.starts` 或
+`tasks.<id>.stops`。标识符必须符合 v2 标识符语法，引用的每个 service 都必须存在。声明
+service 的项目必须恰有一个非隐藏的 `primary = true` service；check 必须有同 ID 或显式
+service。验证还会拒绝未知字段、空 command、重复的 `tools.required` 或 `paths.required`
+值、不安全的可执行文件名、路径、端点及有类型的引用 URL。
 
 ## 公开命令
 
