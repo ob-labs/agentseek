@@ -646,6 +646,13 @@ def test_version_probe_coerces_before_selecting_the_authored_model(
         encoding="utf-8",
     )
 
+    if model is LifecycleSpecV2:
+        with pytest.raises(LifecycleValidationError) as exc_info:
+            read_lifecycle_spec(path, project_root=tmp_path)
+
+        assert exc_info.value.lifecycle_version == 2
+        return
+
     assert isinstance(read_lifecycle_spec(path, project_root=tmp_path), model)
 
 
@@ -700,6 +707,48 @@ def test_selected_model_errors_report_the_coerced_version(
     assert any(
         issue.code == "value_blank" and issue.message == "Value must not be blank." for issue in exc_info.value.issues
     )
+
+
+@pytest.mark.parametrize(
+    ("original", "revised", "path"),
+    [
+        ("version = 2", 'version = "2"', "version"),
+        ("version = 2", "version = 2.0", "version"),
+        ("primary = true", 'primary = "true"', "services.app.primary"),
+        (
+            'target = "http://127.0.0.1:5173"\nservice = "app"',
+            'target = "http://127.0.0.1:5173"\nservice = "app"\nattempts = "2"',
+            "checks.frontend.attempts",
+        ),
+        (
+            'target = "http://127.0.0.1:5173"\nservice = "app"',
+            'target = "http://127.0.0.1:5173"\nservice = "app"\nattempts = 2.0',
+            "checks.frontend.attempts",
+        ),
+        (
+            'target = "http://127.0.0.1:5173"\nservice = "app"',
+            'target = "http://127.0.0.1:5173"\nservice = "app"\ntimeout = "2.5"',
+            "checks.frontend.timeout",
+        ),
+        (
+            "[services.app]",
+            '[env.API_KEY]\nrequired = "true"\n\n[services.app]',
+            "env.API_KEY.required",
+        ),
+    ],
+)
+def test_selected_v2_model_rejects_coerced_scalar_fields(
+    tmp_path: Path, original: str, revised: str, path: str
+) -> None:
+    source = (FIXTURES / "v2-bub-explicit.toml").read_text(encoding="utf-8")
+    lifecycle = tmp_path / "lifecycle.toml"
+    lifecycle.write_text(source.replace(original, revised, 1), encoding="utf-8")
+
+    with pytest.raises(LifecycleValidationError) as exc_info:
+        read_lifecycle_spec(lifecycle, project_root=tmp_path)
+
+    assert exc_info.value.lifecycle_version == 2
+    assert exc_info.value.issues == (LifecycleValidationIssue(path, "type_invalid", "Value has an invalid type."),)
 
 
 def test_v2_allows_an_empty_optional_root_description(tmp_path: Path) -> None:

@@ -13,6 +13,9 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
     ValidationError,
     ValidationInfo,
     field_validator,
@@ -56,6 +59,10 @@ class EnvRequirement(SpecModel):
 
     def keys(self, name: str) -> tuple[str, ...]:
         return (name, *self.aliases)
+
+
+class _EnvRequirementV2(EnvRequirement):
+    required: StrictBool = False
 
 
 class ServiceV1(SpecModel):
@@ -251,7 +258,7 @@ class ServiceV2(SpecModel):
     kind: ServiceKind
     url: str
     display: Literal["default", "advanced", "hidden"] = "default"
-    primary: bool = False
+    primary: StrictBool = False
     description: str
     tech: str | None = None
     links: dict[ReferenceRel, str] = Field(default_factory=dict)
@@ -304,8 +311,8 @@ class ProcessV2(SpecModel):
 class CheckV2(SpecModel):
     type: Literal["http"] = "http"
     target: str
-    timeout: float = 2.0
-    attempts: int = Field(default=1, gt=0)
+    timeout: StrictFloat = 2.0
+    attempts: StrictInt = Field(default=1, gt=0)
     service: Identifier | None = None
 
     @field_validator("target")
@@ -365,7 +372,7 @@ class PathsV2(SpecModel):
 
 class LifecycleSpecV2(SpecModel):
     _loader_path: Path = PrivateAttr(default=Path("."))
-    version: int
+    version: StrictInt
     template: str
     name: str
     description: str | None = None
@@ -373,7 +380,7 @@ class LifecycleSpecV2(SpecModel):
     guide: str | None = None
     tools: ToolsV2 = Field(default_factory=ToolsV2)
     paths: PathsV2 = Field(default_factory=PathsV2)
-    env: dict[Identifier, EnvRequirement] = Field(default_factory=dict)
+    env: dict[Identifier, _EnvRequirementV2] = Field(default_factory=dict)
     services: dict[Identifier, ServiceV2] = Field(default_factory=dict)
     processes: dict[Identifier, ProcessV2] = Field(default_factory=dict)
     checks: dict[Identifier, CheckV2] = Field(default_factory=dict)
