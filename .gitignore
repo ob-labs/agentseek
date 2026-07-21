@@ -166,6 +166,8 @@ docs/hub.zh.md
 
 # Local agent planning artifacts
 /docs/superpowers/
+/.superpowers/
+/specs/plans/
 
 # mypy
 .mypy_cache/
