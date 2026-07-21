@@ -13,11 +13,12 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
+    ValidationError,
     ValidationInfo,
     field_validator,
     model_validator,
 )
-from pydantic_core import PydanticCustomError
+from pydantic_core import InitErrorDetails, PydanticCustomError
 
 from agentseek.cli.lifecycle.safety import (
     UnsafeProjectPathError,
@@ -205,11 +206,12 @@ def _reference_parse_error(value: str) -> PydanticCustomError | None:
     try:
         parsed = urlsplit(value)
         hostname = parsed.hostname
+        port = parsed.port
     except ValueError:
         return PydanticCustomError("reference_host_invalid", "reference host is invalid")
     if not parsed.scheme:
         return PydanticCustomError("url_absolute_required", "url must be absolute")
-    if not hostname:
+    if not hostname or parsed.netloc.rsplit("@", 1)[-1].endswith(":") or (port is not None and not 0 <= port <= 65535):
         return PydanticCustomError("reference_host_invalid", "reference host is invalid")
     if parsed.username is not None or parsed.password is not None:
         return PydanticCustomError("url_userinfo_forbidden", "url userinfo is forbidden")
@@ -238,19 +240,6 @@ def _validate_reference(value: str, rel: str) -> str:
         raise PydanticCustomError("reference_query_invalid", "reference query is invalid") from None
 
 
-class LinksV2(SpecModel):
-    docs: str | None = None
-    api_docs: str | None = None
-    studio: str | None = None
-
-    @field_validator("docs", "api_docs", "studio")
-    @classmethod
-    def _safe_link(cls, value: str | None, info: ValidationInfo) -> str | None:
-        if value is None:
-            return None
-        return _validate_reference(value, info.field_name)
-
-
 class ServiceV2(SpecModel):
     name: str
     kind: Literal["web", "api", "protocol", "database", "other"]
@@ -259,7 +248,7 @@ class ServiceV2(SpecModel):
     primary: bool = False
     description: str
     tech: str | None = None
-    links: LinksV2 = Field(default_factory=LinksV2)
+    links: dict[Literal["docs", "api_docs", "studio"], str] = Field(default_factory=dict)
 
     @field_validator("name", "description")
     @classmethod
@@ -273,6 +262,19 @@ class ServiceV2(SpecModel):
         if kind is None:
             return value
         return _validate_service_endpoint(value, kind)
+
+    @field_validator("links")
+    @classmethod
+    def _safe_links(cls, value: dict[str, str]) -> dict[str, str]:
+        errors: list[InitErrorDetails] = []
+        for rel, url in value.items():
+            try:
+                _validate_reference(url, rel)
+            except PydanticCustomError as exc:
+                errors.append(InitErrorDetails(type=exc, loc=(rel,), input=url))
+        if errors:
+            raise ValidationError.from_exception_data(cls.__name__, errors)
+        return value
 
 class ProcessV2(SpecModel):
     command: tuple[str, ...]
@@ -388,7 +390,7 @@ class LifecycleSpecV2(SpecModel):
         if not isinstance(loader_path, Path):
             raise PydanticCustomError("unsafe_project_path", "project path is unsafe")
         if self.version != 2:
-            raise PydanticCustomError("unsupported_version", "unsupported version {version}", {"version": self.version})
+            raise PydanticCustomError("unsupported_version", "unsupported version")
         if not self.processes:
             raise PydanticCustomError("missing_processes", "at least one process must be declared")
         primaries = [service for service in self.services.values() if service.primary]
@@ -451,8 +453,6 @@ __all__ = [
     "LifecycleSpec",
     "LifecycleSpecV1",
     "LifecycleSpecV2",
-    "LinksV2",
-    "PathsV2",
     "Process",
     "ProcessV1",
     "ProcessV2",
@@ -464,5 +464,4 @@ __all__ = [
     "Task",
     "TaskV1",
     "TaskV2",
-    "ToolsV2",
 ]

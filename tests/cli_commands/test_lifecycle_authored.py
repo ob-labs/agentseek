@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -155,7 +156,7 @@ def test_v2_preserves_service_literals_and_task_effects() -> None:
 
     assert isinstance(explicit, LifecycleSpecV2)
     assert explicit.services["gateway"].url == "http://127.0.0.1:8088/agent"
-    assert explicit.services["gateway"].links.model_dump(exclude_none=True) == {"docs": "https://docs.ag-ui.com/introduction"}
+    assert explicit.services["gateway"].links == {"docs": "https://docs.ag-ui.com/introduction"}
     assert isinstance(tasks, LifecycleSpecV2)
     assert tasks.tasks["stack"].starts == ("app", "database")
     assert tasks.tasks["stack-stop"].stops == ("app", "database")
@@ -187,7 +188,7 @@ def test_v2_models_expose_exhaustive_defaults_and_immutable_authored_fields(tmp_
     assert spec.description is None and spec.env_file is None and spec.guide is None
     assert spec.tools.required == () and spec.paths.required == () and spec.env == {}
     assert spec.services["app"].display == "default" and spec.services["app"].tech is None
-    assert spec.services["app"].links.model_dump(exclude_none=True) == {}
+    assert spec.services["app"].links == {}
     assert spec.processes["app"].cwd == "." and spec.processes["app"].provides is None
     assert spec.checks["app"].type == "http" and spec.checks["app"].timeout == 2.0 and spec.checks["app"].attempts == 1
     assert spec.checks["app"].service is None
@@ -195,6 +196,96 @@ def test_v2_models_expose_exhaustive_defaults_and_immutable_authored_fields(tmp_
     assert spec.tasks["build"].starts == () and spec.tasks["build"].stops == ()
     with pytest.raises(ValidationError):
         spec.name = "Changed"
+
+
+def test_v2_service_links_are_a_compact_relation_map() -> None:
+    service = ServiceV2.model_validate(
+        {
+            "name": "Gateway",
+            "kind": "protocol",
+            "url": "http://127.0.0.1:8088",
+            "description": "Protocol gateway.",
+            "links": {"docs": "https://docs.example.test"},
+        }
+    )
+    absent = ServiceV2.model_validate(
+        {
+            "name": "Gateway",
+            "kind": "protocol",
+            "url": "http://127.0.0.1:8088",
+            "description": "Protocol gateway.",
+        }
+    )
+
+    assert isinstance(service.links, Mapping)
+    assert service.links == {"docs": "https://docs.example.test"}
+    assert absent.links == {}
+    assert "api_docs" not in absent.links and "studio" not in absent.links
+
+
+@pytest.mark.parametrize("value", [None, 1])
+def test_v2_service_links_reject_null_and_non_string_values(value: object) -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ServiceV2.model_validate(
+            {
+                "name": "Gateway",
+                "kind": "protocol",
+                "url": "http://127.0.0.1:8088",
+                "description": "Protocol gateway.",
+                "links": {"docs": value},
+            }
+        )
+
+    assert exc_info.value.errors()[0]["loc"] == ("links", "docs")
+    assert exc_info.value.errors()[0]["type"] == "string_type"
+
+
+@pytest.mark.parametrize("rel", ["docs", "api_docs", "studio"])
+@pytest.mark.parametrize("port", [":invalid", ":", ":65536"])
+def test_v2_reference_ports_are_host_errors_for_every_relation(rel: str, port: str) -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        ServiceV2.model_validate(
+            {
+                "name": "Gateway",
+                "kind": "protocol",
+                "url": "http://127.0.0.1:8088",
+                "description": "Protocol gateway.",
+                "links": {rel: f"https://docs.example.test{port}"},
+            }
+        )
+
+    assert exc_info.value.errors()[0]["loc"] == ("links", rel)
+    assert exc_info.value.errors()[0]["type"] == "reference_host_invalid"
+    assert _validation_issue({"type": "reference_host_invalid", "loc": ("services", "gateway", "links", rel), "msg": ""}) == LifecycleValidationIssue(
+        f"services.gateway.links.{rel}", "url_invalid", "URL is invalid."
+    )
+
+
+def test_direct_v2_unsupported_version_error_is_value_free(tmp_path: Path) -> None:
+    rejected = 987
+    with pytest.raises(ValidationError) as exc_info:
+        LifecycleSpecV2.model_validate(
+            {
+                "version": rejected,
+                "template": "example/direct",
+                "name": "Direct",
+                "processes": {"worker": {"command": ["python", "worker.py"]}},
+            },
+            context={"project_root": tmp_path, "loader_path": tmp_path / "lifecycle.toml"},
+        )
+
+    error = exc_info.value.errors()[0]
+    assert error["type"] == "unsupported_version"
+    assert str(rejected) not in error["msg"]
+    assert error.get("ctx") in (None, {})
+
+
+def test_authored_public_exports_exclude_internal_v2_section_helpers() -> None:
+    import agentseek.cli.lifecycle.authored as authored
+
+    assert "LinksV2" not in authored.__all__
+    assert "PathsV2" not in authored.__all__
+    assert "ToolsV2" not in authored.__all__
 
 
 @pytest.mark.parametrize(
