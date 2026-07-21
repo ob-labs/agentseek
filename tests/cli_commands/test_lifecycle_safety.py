@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+import agentseek.cli.lifecycle.safety as safety
 from agentseek.cli.lifecycle.safety import (
     UnsafeProjectPathError,
     resolve_confined_project_path,
@@ -353,3 +354,75 @@ def test_safe_v1_endpoint_returns_none_for_http_only_or_unsafe_values(value: str
 )
 def test_safe_v1_endpoint_returns_none_without_partial_redaction(value: str) -> None:
     assert safe_v1_endpoint(value) is None
+
+
+@pytest.mark.parametrize("url", ["https://service.test?", "https://service.test#"])
+def test_validate_service_url_rejects_explicit_empty_query_or_fragment_delimiters(url: str) -> None:
+    with pytest.raises(ValueError):
+        validate_service_url(url, "web")
+
+
+@pytest.mark.parametrize("url", ["https://check.test?", "https://check.test#"])
+def test_validate_check_target_rejects_explicit_empty_query_or_fragment_delimiters(url: str) -> None:
+    with pytest.raises(ValueError):
+        validate_check_target(url)
+
+
+@pytest.mark.parametrize(
+    ("rel", "url"),
+    [
+        ("docs", "https://docs.test?"),
+        ("docs", "https://docs.test#"),
+        ("api_docs", "http://127.0.0.1/openapi?"),
+        ("api_docs", "http://127.0.0.1/openapi#"),
+        ("studio", "https://studio.test?"),
+        ("studio", "https://studio.test#"),
+        ("studio", "https://studio.test?baseUrl=https%3A%2F%2Fapi.test#"),
+    ],
+)
+def test_validate_reference_url_rejects_explicit_empty_query_or_fragment_delimiters(rel: str, url: str) -> None:
+    with pytest.raises(ValueError):
+        validate_reference_url(rel, url)
+
+
+@pytest.mark.parametrize("value", ["https://service.test?", "https://service.test#"])
+def test_safe_v1_endpoint_omits_explicit_empty_query_or_fragment_delimiters(value: str) -> None:
+    assert safe_v1_endpoint(value) is None
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://studio.test?baseUrl=https%3A%2F%2Fapi.test%3F",
+        "https://studio.test?baseUrl=https%3A%2F%2Fapi.test%23",
+    ],
+)
+def test_validate_reference_url_rejects_studio_nested_endpoint_with_empty_delimiter(url: str) -> None:
+    with pytest.raises(ValueError):
+        validate_reference_url("studio", url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://[::1%25lo0]/openapi",
+        "http://[::1%lo0]/openapi",
+        "http://[0:0:0:0:0:0:0:1]/openapi",
+        "http://[::01]/openapi",
+        "http://[::ffff:127.0.0.1]/openapi",
+    ],
+)
+def test_validate_reference_url_rejects_noncanonical_ipv6_api_docs_loopback_hosts(url: str) -> None:
+    with pytest.raises(ValueError):
+        validate_reference_url("api_docs", url)
+
+
+def test_lifecycle_endpoint_interfaces_are_publicly_exported() -> None:
+    assert {
+        "ServiceKind",
+        "ReferenceRel",
+        "validate_service_url",
+        "validate_check_target",
+        "validate_reference_url",
+        "safe_v1_endpoint",
+    }.issubset(safety.__all__)

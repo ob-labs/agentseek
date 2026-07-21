@@ -73,6 +73,8 @@ def validate_reference_url(rel: ReferenceRel, value: str) -> str:
             allowed_schemes=frozenset({"https"}),
             allow_query=True,
         )
+        if "?" in value and not parsed.query:
+            raise ValueError
         _validate_studio_query(parsed.query)
     else:
         raise ValueError
@@ -112,7 +114,7 @@ def _validate_absolute_url(
         raise ValueError
     if _has_empty_port(parsed) or (port is not None and not 0 <= port <= 65535):
         raise ValueError
-    if (parsed.query and not allow_query) or parsed.fragment:
+    if ("?" in value and not allow_query) or "#" in value:
         raise ValueError
     return parsed
 
@@ -128,12 +130,16 @@ def _has_empty_port(parsed: SplitResult) -> bool:
 def _is_api_docs_loopback(hostname: str | None) -> bool:
     if hostname == "localhost":
         return True
+    if hostname == "::1":
+        return True
     try:
         import ipaddress
 
-        return ipaddress.ip_address(hostname).is_loopback
+        address = ipaddress.ip_address(hostname)
     except ValueError:
         return False
+    else:
+        return address.version == 4 and address.is_loopback
 
 
 def _validate_studio_query(query: str) -> None:
@@ -182,8 +188,14 @@ def _path_is_lexically_unsafe(value: str, *, allow_dot: bool) -> bool:
 
 
 __all__ = [
+    "ReferenceRel",
+    "ServiceKind",
     "UnsafeProjectPathError",
     "resolve_confined_project_path",
+    "safe_v1_endpoint",
     "validate_bare_executable",
+    "validate_check_target",
     "validate_identifier",
+    "validate_reference_url",
+    "validate_service_url",
 ]
