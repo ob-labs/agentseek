@@ -199,23 +199,19 @@ def test_v2_models_expose_exhaustive_defaults_and_immutable_authored_fields(tmp_
 
 
 def test_v2_service_links_are_a_compact_relation_map() -> None:
-    service = ServiceV2.model_validate(
-        {
-            "name": "Gateway",
-            "kind": "protocol",
-            "url": "http://127.0.0.1:8088",
-            "description": "Protocol gateway.",
-            "links": {"docs": "https://docs.example.test"},
-        }
-    )
-    absent = ServiceV2.model_validate(
-        {
-            "name": "Gateway",
-            "kind": "protocol",
-            "url": "http://127.0.0.1:8088",
-            "description": "Protocol gateway.",
-        }
-    )
+    service = ServiceV2.model_validate({
+        "name": "Gateway",
+        "kind": "protocol",
+        "url": "http://127.0.0.1:8088",
+        "description": "Protocol gateway.",
+        "links": {"docs": "https://docs.example.test"},
+    })
+    absent = ServiceV2.model_validate({
+        "name": "Gateway",
+        "kind": "protocol",
+        "url": "http://127.0.0.1:8088",
+        "description": "Protocol gateway.",
+    })
 
     assert isinstance(service.links, Mapping)
     assert service.links == {"docs": "https://docs.example.test"}
@@ -226,15 +222,13 @@ def test_v2_service_links_are_a_compact_relation_map() -> None:
 @pytest.mark.parametrize("value", [None, 1])
 def test_v2_service_links_reject_null_and_non_string_values(value: object) -> None:
     with pytest.raises(ValidationError) as exc_info:
-        ServiceV2.model_validate(
-            {
-                "name": "Gateway",
-                "kind": "protocol",
-                "url": "http://127.0.0.1:8088",
-                "description": "Protocol gateway.",
-                "links": {"docs": value},
-            }
-        )
+        ServiceV2.model_validate({
+            "name": "Gateway",
+            "kind": "protocol",
+            "url": "http://127.0.0.1:8088",
+            "description": "Protocol gateway.",
+            "links": {"docs": value},
+        })
 
     assert exc_info.value.errors()[0]["loc"] == ("links", "docs")
     assert exc_info.value.errors()[0]["type"] == "string_type"
@@ -244,21 +238,21 @@ def test_v2_service_links_reject_null_and_non_string_values(value: object) -> No
 @pytest.mark.parametrize("port", [":invalid", ":", ":65536"])
 def test_v2_reference_ports_are_host_errors_for_every_relation(rel: str, port: str) -> None:
     with pytest.raises(ValidationError) as exc_info:
-        ServiceV2.model_validate(
-            {
-                "name": "Gateway",
-                "kind": "protocol",
-                "url": "http://127.0.0.1:8088",
-                "description": "Protocol gateway.",
-                "links": {rel: f"https://docs.example.test{port}"},
-            }
-        )
+        ServiceV2.model_validate({
+            "name": "Gateway",
+            "kind": "protocol",
+            "url": "http://127.0.0.1:8088",
+            "description": "Protocol gateway.",
+            "links": {rel: f"https://docs.example.test{port}"},
+        })
 
     assert exc_info.value.errors()[0]["loc"] == ("links", rel)
     assert exc_info.value.errors()[0]["type"] == "reference_host_invalid"
-    assert _validation_issue({"type": "reference_host_invalid", "loc": ("services", "gateway", "links", rel), "msg": ""}) == LifecycleValidationIssue(
-        f"services.gateway.links.{rel}", "url_invalid", "URL is invalid."
-    )
+    assert _validation_issue({
+        "type": "reference_host_invalid",
+        "loc": ("services", "gateway", "links", rel),
+        "msg": "",
+    }) == LifecycleValidationIssue(f"services.gateway.links.{rel}", "url_invalid", "URL is invalid.")
 
 
 def test_direct_v2_unsupported_version_error_is_value_free(tmp_path: Path) -> None:
@@ -310,7 +304,13 @@ def test_authored_public_exports_exclude_internal_v2_section_helpers() -> None:
         ("reference", "web", "docs", "https://docs.test#", "url_fragment_forbidden"),
         ("reference", "web", "api_docs", "http://public.test/openapi", "reference_host_invalid"),
         ("reference", "web", "studio", "https://studio.test/?view=graph", "reference_query_invalid"),
-        ("reference", "web", "studio", "https://studio.test/?baseUrl=https%3A%2F%2Fapi.test%3Ftoken%3Dsecret", "reference_query_invalid"),
+        (
+            "reference",
+            "web",
+            "studio",
+            "https://studio.test/?baseUrl=https%3A%2F%2Fapi.test%3Ftoken%3Dsecret",
+            "reference_query_invalid",
+        ),
     ],
 )
 def test_v2_authored_models_translate_every_url_safety_category(
@@ -345,22 +345,52 @@ def test_v2_authored_models_translate_every_url_safety_category(
         ('template = "bub/default"', 'template = "   "', "template", "value_blank"),
         ('name = "Bub Agent"', 'name = "   "', "name", "value_blank"),
         ('name = "Application"', 'name = "   "', "services.app.name", "value_blank"),
-        ('description = "Browser application for this template."', 'description = "   "', "services.app.description", "value_blank"),
-        ('primary = true', 'primary = false', "$", "primary_required"),
+        (
+            'description = "Browser application for this template."',
+            'description = "   "',
+            "services.app.description",
+            "value_blank",
+        ),
+        ("primary = true", "primary = false", "$", "primary_required"),
         ('display = "default"', 'display = "hidden"', "$", "primary_hidden"),
-        ('command = ["npm", "run", "dev"]', 'command = []', "processes.frontend.command", "command_empty"),
-        ('target = "http://127.0.0.1:5173"', 'target = "http://127.0.0.1:5173"\nattempts = 0', "checks.frontend.attempts", "number_not_positive"),
+        ('command = ["npm", "run", "dev"]', "command = []", "processes.frontend.command", "command_empty"),
+        (
+            'target = "http://127.0.0.1:5173"',
+            'target = "http://127.0.0.1:5173"\nattempts = 0',
+            "checks.frontend.attempts",
+            "number_not_positive",
+        ),
         ('provides = ["app", "copilotkit"]', 'provides = ["missing"]', "$", "service_reference_unknown"),
         ('service = "app"', 'service = "missing"', "$", "service_reference_unknown"),
-        ('command = ["python", "gateway.py"]', 'command = ["python", "gateway.py"]\nprovides = ["missing"]', "$", "service_reference_unknown"),
+        (
+            'command = ["python", "gateway.py"]',
+            'command = ["python", "gateway.py"]\nprovides = ["missing"]',
+            "$",
+            "service_reference_unknown",
+        ),
         ('provides = ["app", "copilotkit"]', 'provides = ["missing"]', "$", "service_reference_unknown"),
         ('guide = "README.md"', 'guide = "../README.md"', "guide", "path_unsafe"),
         ('url = "http://127.0.0.1:5173"', 'url = "${APP_URL}"', "services.app.url", "placeholder_unresolved"),
         ('url = "http://127.0.0.1:5173"', 'url = "/relative"', "services.app.url", "url_invalid"),
         ('url = "http://127.0.0.1:5173"', 'url = "ftp://127.0.0.1"', "services.app.url", "url_scheme_invalid"),
-        ('url = "http://127.0.0.1:5173"', 'url = "http://user@127.0.0.1:5173"', "services.app.url", "url_component_forbidden"),
-        ('url = "http://127.0.0.1:5173"', 'url = "http://127.0.0.1:5173?token=secret"', "services.app.url", "url_component_forbidden"),
-        ('url = "http://127.0.0.1:5173"', 'url = "http://127.0.0.1:5173#fragment"', "services.app.url", "url_component_forbidden"),
+        (
+            'url = "http://127.0.0.1:5173"',
+            'url = "http://user@127.0.0.1:5173"',
+            "services.app.url",
+            "url_component_forbidden",
+        ),
+        (
+            'url = "http://127.0.0.1:5173"',
+            'url = "http://127.0.0.1:5173?token=secret"',
+            "services.app.url",
+            "url_component_forbidden",
+        ),
+        (
+            'url = "http://127.0.0.1:5173"',
+            'url = "http://127.0.0.1:5173#fragment"',
+            "services.app.url",
+            "url_component_forbidden",
+        ),
     ],
 )
 def test_v2_invalid_authored_values_have_owned_issue_paths(
@@ -381,7 +411,12 @@ def test_v2_invalid_authored_values_have_owned_issue_paths(
     [
         ('required = ["python"]', 'required = ["python", "python"]', "tools.required", "requirement_duplicate"),
         ('required = ["python"]', 'required = ["../python"]', "tools.required", "tool_invalid"),
-        ('required = ["pyproject.toml"]', 'required = ["pyproject.toml", "pyproject.toml"]', "paths.required", "requirement_duplicate"),
+        (
+            'required = ["pyproject.toml"]',
+            'required = ["pyproject.toml", "pyproject.toml"]',
+            "paths.required",
+            "requirement_duplicate",
+        ),
         ('required = ["pyproject.toml"]', 'required = ["../pyproject.toml"]', "paths.required", "path_unsafe"),
         ('cwd = "."', 'cwd = "../outside"', "processes.worker.cwd", "path_unsafe"),
         ('cwd = "tasks"', 'cwd = "../outside"', "tasks.seed.cwd", "path_unsafe"),
@@ -407,14 +442,54 @@ def test_v2_rejects_unsafe_requirements_paths_and_task_relationships(
     ("original", "revised", "path", "code"),
     [
         ('url = "http://127.0.0.1:5173"', 'url = "http://"', "services.app.url", "url_invalid"),
-        ('url = "http://127.0.0.1:5173"', 'url = "http://\\u001f127.0.0.1"', "services.app.url", "url_component_forbidden"),
-        ('docs = "https://docs.ag-ui.com/introduction"', 'docs = "https://"', "services.gateway.links.docs", "url_invalid"),
-        ('docs = "https://docs.ag-ui.com/introduction"', 'docs = "http://docs.ag-ui.com"', "services.gateway.links.docs", "url_scheme_invalid"),
-        ('docs = "https://docs.ag-ui.com/introduction"', 'docs = "https://docs.ag-ui.com?token=secret"', "services.gateway.links.docs", "url_component_forbidden"),
-        ('docs = "https://docs.ag-ui.com/introduction"', 'docs = "https://docs.ag-ui.com#fragment"', "services.gateway.links.docs", "url_component_forbidden"),
-        ('docs = "https://docs.ag-ui.com/introduction"', 'docs = "https://user@docs.ag-ui.com"', "services.gateway.links.docs", "url_component_forbidden"),
-        ('docs = "https://docs.ag-ui.com/introduction"', 'docs = "${DOCS_URL}"', "services.gateway.links.docs", "placeholder_unresolved"),
-        ('docs = "https://docs.ag-ui.com/introduction"', 'studio = "https://studio.test/?view=graph"', "services.gateway.links.studio", "reference_query_invalid"),
+        (
+            'url = "http://127.0.0.1:5173"',
+            'url = "http://\\u001f127.0.0.1"',
+            "services.app.url",
+            "url_component_forbidden",
+        ),
+        (
+            'docs = "https://docs.ag-ui.com/introduction"',
+            'docs = "https://"',
+            "services.gateway.links.docs",
+            "url_invalid",
+        ),
+        (
+            'docs = "https://docs.ag-ui.com/introduction"',
+            'docs = "http://docs.ag-ui.com"',
+            "services.gateway.links.docs",
+            "url_scheme_invalid",
+        ),
+        (
+            'docs = "https://docs.ag-ui.com/introduction"',
+            'docs = "https://docs.ag-ui.com?token=secret"',
+            "services.gateway.links.docs",
+            "url_component_forbidden",
+        ),
+        (
+            'docs = "https://docs.ag-ui.com/introduction"',
+            'docs = "https://docs.ag-ui.com#fragment"',
+            "services.gateway.links.docs",
+            "url_component_forbidden",
+        ),
+        (
+            'docs = "https://docs.ag-ui.com/introduction"',
+            'docs = "https://user@docs.ag-ui.com"',
+            "services.gateway.links.docs",
+            "url_component_forbidden",
+        ),
+        (
+            'docs = "https://docs.ag-ui.com/introduction"',
+            'docs = "${DOCS_URL}"',
+            "services.gateway.links.docs",
+            "placeholder_unresolved",
+        ),
+        (
+            'docs = "https://docs.ag-ui.com/introduction"',
+            'studio = "https://studio.test/?view=graph"',
+            "services.gateway.links.studio",
+            "reference_query_invalid",
+        ),
     ],
 )
 def test_v2_url_and_reference_failures_use_exact_owned_errors(
@@ -444,7 +519,10 @@ def test_v2_rejects_multiple_primary_services_and_missing_check_association(tmp_
     with pytest.raises(LifecycleValidationError) as exc_info:
         read_lifecycle_spec(lifecycle, project_root=tmp_path)
 
-    assert LifecycleValidationIssue("$", "primary_multiple", "Only one primary service is allowed.") in exc_info.value.issues
+    assert (
+        LifecycleValidationIssue("$", "primary_multiple", "Only one primary service is allowed.")
+        in exc_info.value.issues
+    )
 
     lifecycle.write_text(
         source.replace(
@@ -455,7 +533,10 @@ def test_v2_rejects_multiple_primary_services_and_missing_check_association(tmp_
     )
     with pytest.raises(LifecycleValidationError) as missing_service:
         read_lifecycle_spec(lifecycle, project_root=tmp_path)
-    assert LifecycleValidationIssue("$", "check_service_missing", "Check must be associated with a service.") in missing_service.value.issues
+    assert (
+        LifecycleValidationIssue("$", "check_service_missing", "Check must be associated with a service.")
+        in missing_service.value.issues
+    )
 
 
 def test_v2_rejects_invalid_map_identifier_at_the_exact_safe_path(tmp_path: Path) -> None:
@@ -466,9 +547,12 @@ def test_v2_rejects_invalid_map_identifier_at_the_exact_safe_path(tmp_path: Path
     with pytest.raises(LifecycleValidationError) as exc_info:
         read_lifecycle_spec(lifecycle, project_root=tmp_path)
 
-    assert LifecycleValidationIssue(
-        "services.<invalid-id>.<invalid-id>", "identifier_invalid", "Identifier has an invalid format."
-    ) in exc_info.value.issues
+    assert (
+        LifecycleValidationIssue(
+            "services.<invalid-id>.<invalid-id>", "identifier_invalid", "Identifier has an invalid format."
+        )
+        in exc_info.value.issues
+    )
 
 
 @pytest.mark.parametrize(
@@ -490,13 +574,18 @@ def test_v2_rejects_invalid_keys_under_every_authored_map(
     with pytest.raises(LifecycleValidationError) as exc_info:
         read_lifecycle_spec(lifecycle, project_root=tmp_path)
 
-    assert LifecycleValidationIssue(path, "identifier_invalid", "Identifier has an invalid format.") in exc_info.value.issues
+    assert (
+        LifecycleValidationIssue(path, "identifier_invalid", "Identifier has an invalid format.")
+        in exc_info.value.issues
+    )
 
 
 def test_v2_rejects_authored_loader_path_but_v1_keeps_its_ignored_override(tmp_path: Path) -> None:
     v2 = tmp_path / "v2.toml"
     v2.write_text(
-        (FIXTURES / "v2-same-id.toml").read_text(encoding="utf-8").replace('name = "Same Identifier Project"', 'path = "authored.toml"\nname = "Same Identifier Project"'),
+        (FIXTURES / "v2-same-id.toml")
+        .read_text(encoding="utf-8")
+        .replace('name = "Same Identifier Project"', 'path = "authored.toml"\nname = "Same Identifier Project"'),
         encoding="utf-8",
     )
     with pytest.raises(LifecycleValidationError) as v2_error:
@@ -504,7 +593,10 @@ def test_v2_rejects_authored_loader_path_but_v1_keeps_its_ignored_override(tmp_p
     assert LifecycleValidationIssue("path", "field_forbidden", "Field is not allowed.") in v2_error.value.issues
 
     v1 = tmp_path / "v1.toml"
-    v1.write_text(_coercible_text().replace('name = "Coercible Project"', 'path = "authored.toml"\nname = "Coercible Project"'), encoding="utf-8")
+    v1.write_text(
+        _coercible_text().replace('name = "Coercible Project"', 'path = "authored.toml"\nname = "Coercible Project"'),
+        encoding="utf-8",
+    )
     loaded_v1 = read_lifecycle_spec(v1, project_root=tmp_path)
     assert loaded_v1.path == v1
 
@@ -518,9 +610,9 @@ def test_v2_rejects_authored_loader_fields_without_overriding_loader_path(
 ) -> None:
     lifecycle = tmp_path / "lifecycle.toml"
     lifecycle.write_text(
-        (FIXTURES / "v2-same-id.toml").read_text(encoding="utf-8").replace(
-            'name = "Same Identifier Project"', f'{field} = "authored.toml"\nname = "Same Identifier Project"'
-        ),
+        (FIXTURES / "v2-same-id.toml")
+        .read_text(encoding="utf-8")
+        .replace('name = "Same Identifier Project"', f'{field} = "authored.toml"\nname = "Same Identifier Project"'),
         encoding="utf-8",
     )
 
@@ -532,12 +624,25 @@ def test_v2_rejects_authored_loader_fields_without_overriding_loader_path(
 
 @pytest.mark.parametrize(
     ("version", "model"),
-    [("\"2\"", LifecycleSpecV2), ("2.0", LifecycleSpecV2), ("\"1\"", LifecycleSpecV1), ("1.0", LifecycleSpecV1), ("true", LifecycleSpecV1)],
+    [
+        ('"2"', LifecycleSpecV2),
+        ("2.0", LifecycleSpecV2),
+        ('"1"', LifecycleSpecV1),
+        ("1.0", LifecycleSpecV1),
+        ("true", LifecycleSpecV1),
+    ],
 )
-def test_version_probe_coerces_before_selecting_the_authored_model(tmp_path: Path, version: str, model: type[object]) -> None:
-    source = (FIXTURES / ("v2-same-id.toml" if model is LifecycleSpecV2 else "v1-coercible.toml")).read_text(encoding="utf-8")
+def test_version_probe_coerces_before_selecting_the_authored_model(
+    tmp_path: Path, version: str, model: type[object]
+) -> None:
+    source = (FIXTURES / ("v2-same-id.toml" if model is LifecycleSpecV2 else "v1-coercible.toml")).read_text(
+        encoding="utf-8"
+    )
     path = tmp_path / "lifecycle.toml"
-    path.write_text(source.replace('version = 2' if model is LifecycleSpecV2 else 'version = "1"', f"version = {version}"), encoding="utf-8")
+    path.write_text(
+        source.replace("version = 2" if model is LifecycleSpecV2 else 'version = "1"', f"version = {version}"),
+        encoding="utf-8",
+    )
 
     assert isinstance(read_lifecycle_spec(path, project_root=tmp_path), model)
 
@@ -579,7 +684,10 @@ def test_selected_model_errors_report_the_coerced_version(
 ) -> None:
     path = tmp_path / "lifecycle.toml"
     path.write_text(
-        (FIXTURES / fixture).read_text(encoding="utf-8").replace(original_version, f"version = {version}").replace(authored_name, 'name = ""'),
+        (FIXTURES / fixture)
+        .read_text(encoding="utf-8")
+        .replace(original_version, f"version = {version}")
+        .replace(authored_name, 'name = ""'),
         encoding="utf-8",
     )
 
@@ -587,15 +695,17 @@ def test_selected_model_errors_report_the_coerced_version(
         read_lifecycle_spec(path, project_root=tmp_path)
 
     assert exc_info.value.lifecycle_version == expected_version
-    assert any(issue.code == "value_blank" and issue.message == "Value must not be blank." for issue in exc_info.value.issues)
+    assert any(
+        issue.code == "value_blank" and issue.message == "Value must not be blank." for issue in exc_info.value.issues
+    )
 
 
 def test_v2_allows_an_empty_optional_root_description(tmp_path: Path) -> None:
     path = tmp_path / "lifecycle.toml"
     path.write_text(
-        (FIXTURES / "v2-same-id.toml").read_text(encoding="utf-8").replace(
-            'description = "Uses the same identifier relationship convention."', 'description = ""'
-        ),
+        (FIXTURES / "v2-same-id.toml")
+        .read_text(encoding="utf-8")
+        .replace('description = "Uses the same identifier relationship convention."', 'description = ""'),
         encoding="utf-8",
     )
 
@@ -614,14 +724,23 @@ def test_v2_allows_an_empty_optional_root_description(tmp_path: Path) -> None:
 def test_v2_rejects_malformed_relationship_identifiers_before_unknown_reference(
     tmp_path: Path, original: str, revised: str, path: str
 ) -> None:
-    fixture = "v2-bub-explicit.toml" if "processes.frontend" in path or "checks.frontend" in path else "v2-task-providers.toml"
+    fixture = (
+        "v2-bub-explicit.toml"
+        if "processes.frontend" in path or "checks.frontend" in path
+        else "v2-task-providers.toml"
+    )
     lifecycle = tmp_path / "lifecycle.toml"
-    lifecycle.write_text((FIXTURES / fixture).read_text(encoding="utf-8").replace(original, revised, 1), encoding="utf-8")
+    lifecycle.write_text(
+        (FIXTURES / fixture).read_text(encoding="utf-8").replace(original, revised, 1), encoding="utf-8"
+    )
 
     with pytest.raises(LifecycleValidationError) as exc_info:
         read_lifecycle_spec(lifecycle, project_root=tmp_path)
 
-    assert LifecycleValidationIssue(path, "identifier_invalid", "Identifier has an invalid format.") in exc_info.value.issues
+    assert (
+        LifecycleValidationIssue(path, "identifier_invalid", "Identifier has an invalid format.")
+        in exc_info.value.issues
+    )
 
 
 def _message_for_code(code: str) -> str:
@@ -734,7 +853,9 @@ def test_loader_owned_path_cannot_be_overridden_by_authored_toml(tmp_path: Path)
     assert spec.path == path
 
 
-def test_non_emitting_discovery_raises_typed_not_found_error(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_non_emitting_discovery_raises_typed_not_found_error(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     with pytest.raises(LifecycleNotFoundError) as exc_info:
         discover_lifecycle_project(tmp_path)
 
@@ -777,9 +898,7 @@ def test_non_emitting_read_raises_typed_validation_error_for_selected_model_fiel
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     path = tmp_path / "lifecycle.toml"
-    path.write_text(
-        'version = 1\nname = ""\nunexpected = "value"\n[processes.app]\ncommand = []\n', encoding="utf-8"
-    )
+    path.write_text('version = 1\nname = ""\nunexpected = "value"\n[processes.app]\ncommand = []\n', encoding="utf-8")
 
     with pytest.raises(LifecycleValidationError) as exc_info:
         read_lifecycle_spec(path, project_root=tmp_path)
@@ -865,19 +984,17 @@ def test_typed_error_issues_redact_rejected_input_literals(tmp_path: Path) -> No
     secret = "UNIQUE_SECRET_MARKER_4e2b9b"  # noqa: S105
     path = tmp_path / "lifecycle.toml"
     path.write_text(
-        "\n".join(
-            [
-                "version = 1",
-                'name = ""',
-                f'credential = "https://user:password@example.test/{secret}"',
-                'host_path = "/Users/private-host-path"',
-                'raw_command = "curl --header secret"',
-                'placeholder = "${UNRESOLVED_VALUE}"',
-                'control_identifier = "bad\\u001fidentifier"',
-                "[processes.app]",
-                "command = []",
-            ]
-        ),
+        "\n".join([
+            "version = 1",
+            'name = ""',
+            f'credential = "https://user:password@example.test/{secret}"',
+            'host_path = "/Users/private-host-path"',
+            'raw_command = "curl --header secret"',
+            'placeholder = "${UNRESOLVED_VALUE}"',
+            'control_identifier = "bad\\u001fidentifier"',
+            "[processes.app]",
+            "command = []",
+        ]),
         encoding="utf-8",
     )
 

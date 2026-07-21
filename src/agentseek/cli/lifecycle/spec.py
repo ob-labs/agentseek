@@ -150,7 +150,12 @@ def read_lifecycle_spec(path: Path, *, project_root: Path) -> AuthoredLifecycleS
         return model.model_validate(payload, context={"project_root": project_root, "loader_path": path})
     except ValidationError as exc:
         errors = exc.errors(include_url=False, include_context=False, include_input=False)
-        issues = tuple(sorted((_validation_issue(error) for error in errors), key=lambda issue: (issue.path, issue.code, issue.message)))
+        issues = tuple(
+            sorted(
+                (_validation_issue(error) for error in errors),
+                key=lambda issue: (issue.path, issue.code, issue.message),
+            )
+        )
         raise LifecycleValidationError(
             lifecycle_version=found,
             issues=issues,

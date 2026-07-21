@@ -120,7 +120,9 @@ def _validate_absolute_url(
 
 
 def _contains_unsafe_url_literal(value: str) -> bool:
-    return _PLACEHOLDER_PATTERN.search(value) is not None or any(ord(char) <= 0x1F or ord(char) == 0x7F for char in value)
+    return _PLACEHOLDER_PATTERN.search(value) is not None or any(
+        ord(char) <= 0x1F or ord(char) == 0x7F for char in value
+    )
 
 
 def _has_empty_port(parsed: SplitResult) -> bool:
@@ -158,7 +160,10 @@ def _validate_studio_query(query: str) -> None:
 
 def _reject_invalid_percent_escapes(value: str) -> None:
     for index, char in enumerate(value):
-        if char == "%" and (index + 2 >= len(value) or not all(part in "0123456789abcdefABCDEF" for part in value[index + 1 : index + 3])):
+        if char == "%" and (
+            index + 2 >= len(value)
+            or not all(part in "0123456789abcdefABCDEF" for part in value[index + 1 : index + 3])
+        ):
             raise ValueError
 
 

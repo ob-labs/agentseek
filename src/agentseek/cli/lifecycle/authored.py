@@ -162,13 +162,17 @@ def _url_error(value: str, *, allowed_schemes: frozenset[str], reference: bool =
         hostname = parsed.hostname
         port = parsed.port
     except ValueError:
-        return PydanticCustomError("reference_host_invalid" if reference else "url_host_required", "url host is invalid")
+        return PydanticCustomError(
+            "reference_host_invalid" if reference else "url_host_required", "url host is invalid"
+        )
     if not parsed.scheme:
         return PydanticCustomError("url_absolute_required", "url must be absolute")
     if parsed.scheme not in allowed_schemes:
         return PydanticCustomError("url_scheme_invalid", "url scheme is invalid")
     if not hostname or parsed.netloc.rsplit("@", 1)[-1].endswith(":") or (port is not None and not 0 <= port <= 65535):
-        return PydanticCustomError("reference_host_invalid" if reference else "url_host_required", "url host is invalid")
+        return PydanticCustomError(
+            "reference_host_invalid" if reference else "url_host_required", "url host is invalid"
+        )
     if parsed.username is not None or parsed.password is not None:
         return PydanticCustomError("url_userinfo_forbidden", "url userinfo is forbidden")
     if "?" in value:
@@ -275,6 +279,7 @@ class ServiceV2(SpecModel):
         if errors:
             raise ValidationError.from_exception_data(cls.__name__, errors)
         return value
+
 
 class ProcessV2(SpecModel):
     command: tuple[str, ...]

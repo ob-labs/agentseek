@@ -228,7 +228,12 @@ def test_validate_reference_url_accepts_docs_https_without_query(url: str) -> No
 
 @pytest.mark.parametrize(
     "url",
-    ["http://docs.example.test", "https://user@docs.example.test", "https://docs.example.test?a=b", "https://docs.example.test#top"],
+    [
+        "http://docs.example.test",
+        "https://user@docs.example.test",
+        "https://docs.example.test?a=b",
+        "https://docs.example.test#top",
+    ],
 )
 def test_validate_reference_url_rejects_unsafe_docs_urls(url: str) -> None:
     with pytest.raises(ValueError):
