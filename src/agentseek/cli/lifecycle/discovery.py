@@ -109,15 +109,45 @@ class NormalizedAction(SafeModel):
     @model_validator(mode="after")
     def _validate_relationship(self) -> NormalizedAction:
         if self.type == "open_url":
-            is_valid = self.service_id is not None and self.url is not None and self.reference_rel is None and self.task_id is None and self.id == f"service:{self.service_id}:open"
+            is_valid = (
+                self.service_id is not None
+                and self.url is not None
+                and self.reference_rel is None
+                and self.task_id is None
+                and self.id == f"service:{self.service_id}:open"
+            )
         elif self.type == "copy_endpoint":
-            is_valid = self.service_id is not None and self.url is not None and self.reference_rel is None and self.task_id is None and self.id == f"service:{self.service_id}:copy"
+            is_valid = (
+                self.service_id is not None
+                and self.url is not None
+                and self.reference_rel is None
+                and self.task_id is None
+                and self.id == f"service:{self.service_id}:copy"
+            )
         elif self.type == "open_reference":
-            is_valid = self.service_id is not None and self.url is not None and self.reference_rel is not None and self.task_id is None and self.id == f"service:{self.service_id}:reference:{self.reference_rel}"
+            is_valid = (
+                self.service_id is not None
+                and self.url is not None
+                and self.reference_rel is not None
+                and self.task_id is None
+                and self.id == f"service:{self.service_id}:reference:{self.reference_rel}"
+            )
         elif self.type == "start_dev":
-            is_valid = self.service_id is None and self.url is None and self.reference_rel is None and self.task_id is None and self.id == "project:start_dev"
+            is_valid = (
+                self.service_id is None
+                and self.url is None
+                and self.reference_rel is None
+                and self.task_id is None
+                and self.id == "project:start_dev"
+            )
         else:
-            is_valid = self.service_id is None and self.url is None and self.reference_rel is None and self.task_id is not None and self.id == f"task:{self.task_id}"
+            is_valid = (
+                self.service_id is None
+                and self.url is None
+                and self.reference_rel is None
+                and self.task_id is not None
+                and self.id == f"task:{self.task_id}"
+            )
         if not is_valid:
             raise PydanticCustomError("invalid_action_relationship", "action relationship is invalid")
         return self
@@ -127,7 +157,10 @@ _WARNING_CONTRACTS: dict[WarningCode, tuple[str, tuple[str, ...]]] = {
     "lifecycle_v1_metadata_incomplete": ("Lifecycle v1 metadata is incomplete.", ()),
     "unsafe_endpoint_omitted": ("Unsafe endpoint was omitted.", ("owner_type", "owner_id", "field")),
     "unsafe_path_omitted": ("Unsafe project path was omitted.", ("owner_type", "owner_id", "index", "field")),
-    "duplicate_requirement_collapsed": ("Duplicate requirement was collapsed.", ("requirement_type", "first_index", "duplicate_index")),
+    "duplicate_requirement_collapsed": (
+        "Duplicate requirement was collapsed.",
+        ("requirement_type", "first_index", "duplicate_index"),
+    ),
 }
 
 

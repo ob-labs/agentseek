@@ -8,6 +8,7 @@ import typer
 from pydantic import ValidationError
 
 from agentseek.cli.lifecycle.core import discover_lifecycle_project
+from agentseek.cli.lifecycle.discovery import NormalizationWarning, NormalizedLifecycleProject
 from agentseek.cli.lifecycle.errors import (
     LifecycleNotFoundError,
     LifecycleTomlError,
@@ -15,6 +16,7 @@ from agentseek.cli.lifecycle.errors import (
     LifecycleValidationIssue,
     LifecycleVersionUnsupportedError,
 )
+from agentseek.cli.lifecycle.normalize import normalize_lifecycle
 from agentseek.cli.lifecycle.spec import (
     SUPPORTED_LIFECYCLE_VERSION,
     SUPPORTED_LIFECYCLE_VERSIONS,
@@ -149,6 +151,29 @@ def test_v2_constants_and_public_exports_are_versioned_and_typed() -> None:
     assert package_versions == (1, 2)
     assert package_version == 2
     assert package_spec is AuthoredLifecycleSpec
+
+
+def test_lifecycle_package_exports_only_the_safe_normalization_boundary() -> None:
+    import agentseek.cli.lifecycle as lifecycle
+
+    assert lifecycle.NormalizedLifecycleProject is NormalizedLifecycleProject
+    assert lifecycle.NormalizationWarning is NormalizationWarning
+    assert lifecycle.normalize_lifecycle is normalize_lifecycle
+    assert lifecycle.__all__ == [
+        "LIFECYCLE_SPEC_FILE",
+        "REQUIRED_COMMANDS",
+        "SUPPORTED_LIFECYCLE_VERSION",
+        "SUPPORTED_LIFECYCLE_VERSIONS",
+        "AuthoredLifecycleSpec",
+        "LifecycleProject",
+        "NormalizationWarning",
+        "NormalizedLifecycleProject",
+        "lifecycle_spec_exists",
+        "load_lifecycle_project",
+        "normalize_lifecycle",
+        "run_lifecycle_task",
+        "run_task_cli",
+    ]
 
 
 def test_v2_preserves_service_literals_and_task_effects() -> None:

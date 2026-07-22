@@ -52,7 +52,9 @@ def _first_occurrences(values: Iterable[str]) -> tuple[tuple[str, int], ...]:
     return tuple(collapsed)
 
 
-def _duplicate_requirement_warnings(values: Iterable[str], *, requirement_type: str) -> tuple[NormalizationWarning, ...]:
+def _duplicate_requirement_warnings(
+    values: Iterable[str], *, requirement_type: str
+) -> tuple[NormalizationWarning, ...]:
     """Describe repeated requirement literals without retaining those literals."""
     first_indices: dict[str, int] = {}
     warnings: list[NormalizationWarning] = []
@@ -215,19 +217,33 @@ def _v1_requirement_sources(
         if _is_safe_executable(tool):
             tools.append(ToolDiagnosticSource(id=f"tool:{tool}", tool=SafeExecutableName(name=tool)))
         else:
-            warnings.append(_unsafe_path_warning(owner_type="required_tool", owner_id=None, index=authored_index, field="tool"))
-            tools.append(ToolDiagnosticSource(id=f"unsafe-path:required-tool:{authored_index}", source_index=authored_index, tool=None))
+            warnings.append(
+                _unsafe_path_warning(owner_type="required_tool", owner_id=None, index=authored_index, field="tool")
+            )
+            tools.append(
+                ToolDiagnosticSource(
+                    id=f"unsafe-path:required-tool:{authored_index}", source_index=authored_index, tool=None
+                )
+            )
 
     required_paths: list[PathDiagnosticSource] = []
     warnings.extend(_duplicate_requirement_warnings(spec.required_paths, requirement_type="path"))
     for value, authored_index in _first_occurrences(spec.required_paths):
         path = _safe_project_path(project_root, value)
         if path is None:
-            warnings.append(_unsafe_path_warning(owner_type="required_path", owner_id=None, index=authored_index, field="path"))
-            required_paths.append(PathDiagnosticSource(id=f"unsafe-path:required:{authored_index}", source_index=authored_index, path=None))
+            warnings.append(
+                _unsafe_path_warning(owner_type="required_path", owner_id=None, index=authored_index, field="path")
+            )
+            required_paths.append(
+                PathDiagnosticSource(
+                    id=f"unsafe-path:required:{authored_index}", source_index=authored_index, path=None
+                )
+            )
         else:
             required_paths.append(PathDiagnosticSource(id=f"path:{value}", path=path))
-    return tuple(sorted(tools, key=lambda source: source.id)), tuple(sorted(required_paths, key=lambda source: source.id))
+    return tuple(sorted(tools, key=lambda source: source.id)), tuple(
+        sorted(required_paths, key=lambda source: source.id)
+    )
 
 
 def _v1_diagnostic_inputs(
@@ -393,7 +409,10 @@ def _v2_actions(
             )
             for reference in service.links
         )
-    if any(service.display != "hidden" and any(provider.type == "dev" for provider in service.providers) for service in services):
+    if any(
+        service.display != "hidden" and any(provider.type == "dev" for provider in service.providers)
+        for service in services
+    ):
         actions.append(NormalizedAction(id="project:start_dev", type="start_dev", label="Start development"))
     non_hidden_service_ids = {service.id for service in services if service.display != "hidden"}
     for task in tasks:
@@ -432,12 +451,11 @@ def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLif
             display=service.display,
             primary=service.primary,
             tech=service.tech,
-            providers=tuple(sorted(providers_by_service[service_id].values(), key=lambda provider: (provider.type, provider.id))),
-            check_ids=tuple(sorted(check_ids_by_service[service_id])),
-            links=tuple(
-                NormalizedReference(rel=rel, url=url)
-                for rel, url in sorted(service.links.items())
+            providers=tuple(
+                sorted(providers_by_service[service_id].values(), key=lambda provider: (provider.type, provider.id))
             ),
+            check_ids=tuple(sorted(check_ids_by_service[service_id])),
+            links=tuple(NormalizedReference(rel=rel, url=url) for rel, url in sorted(service.links.items())),
         )
         for service_id, service in sorted(spec.services.items())
     )
