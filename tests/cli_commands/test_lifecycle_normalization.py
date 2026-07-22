@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
+from agentseek.cli.lifecycle.authored import LifecycleSpecV1
 from agentseek.cli.lifecycle.discovery import (
     DiagnosticInputs,
     EnvironmentDiagnosticSource,
@@ -26,6 +28,7 @@ from agentseek.cli.lifecycle.discovery import (
     SafeProjectPath,
     ToolDiagnosticSource,
 )
+from agentseek.cli.lifecycle.normalize import normalize_lifecycle
 
 
 @pytest.mark.parametrize(
@@ -193,3 +196,133 @@ def test_model_shape_rejects_unexpected_fields(model_and_data: tuple[type[SafeMo
     model, data = model_and_data
     with pytest.raises(ValidationError):
         model.model_validate(data)
+
+
+def test_normalize_lifecycle_minimal_valid_v1_is_conservative_and_redacts_command(tmp_path: Path) -> None:
+    spec = LifecycleSpecV1.model_validate(
+        {
+            "path": tmp_path / ".agentseek" / "lifecycle.toml",
+            "version": 1,
+            "name": "Example",
+            "processes": {"app": {"command": ["python", "never-retain-this-command"]}},
+        }
+    )
+
+    normalized = normalize_lifecycle(spec, project_root=tmp_path)
+
+    assert normalized.lifecycle_version == 1
+    assert normalized.project == NormalizedProject(template=None, name="Example", description=None, guide=None)
+    assert normalized.metadata_complete is False
+    assert normalized.environment == ()
+    assert normalized.services == ()
+    assert normalized.checks == ()
+    assert normalized.tasks == ()
+    assert normalized.actions == ()
+    assert normalized.warnings == (
+        NormalizationWarning(
+            code="lifecycle_v1_metadata_incomplete",
+            message="Lifecycle v1 metadata is incomplete.",
+            details={},
+        ),
+    )
+    assert normalized.diagnostic_inputs.process_cwds == (
+        PathDiagnosticSource(
+            id="process-cwd:app",
+            owner_id="app",
+            path=SafeProjectPath(path="."),
+        ),
+    )
+    assert "never-retain-this-command" not in normalized.model_dump_json()
+
+
+def test_normalize_lifecycle_v1_projection_is_sorted_safe_and_keeps_no_inferred_relationships(tmp_path: Path) -> None:
+    spec = LifecycleSpecV1.model_validate(
+        {
+            "path": tmp_path / ".agentseek" / "lifecycle.toml",
+            "version": 1,
+            "template": "example/template",
+            "name": "Example",
+            "env_file": ".env",
+            "tools": {"required": ["zsh", "python"]},
+            "paths": {"required": ["frontend/package.json", "README.md"]},
+            "env": {
+                "Z_KEY": {
+                    "required": True,
+                    "default": "never-retain-this-default",
+                    "description": "Z description",
+                    "aliases": ["Z_ALIAS", "A_ALIAS"],
+                },
+                "A_KEY": {
+                    "default": "",
+                    "description": "",
+                    "aliases": ["B_ALIAS", "A_ALIAS"],
+                },
+            },
+            "services": {
+                "web": {"url": "http://127.0.0.1:3000"},
+                "api": {"url": "http://127.0.0.1:8000"},
+            },
+            "processes": {
+                "worker": {
+                    "command": ["python", "never-retain-this-command"],
+                    "cwd": "backend",
+                },
+            },
+            "checks": {
+                "probe": {
+                    "target": "http://127.0.0.1:8000/health",
+                    "timeout": "2.5",
+                    "attempts": "3",
+                },
+            },
+            "tasks": {
+                "z-task": {"command": ["python", "never-retain-this-command"], "description": ""},
+                "build": {"command": ["python", "never-retain-this-command"], "description": "Build."},
+            },
+        }
+    )
+
+    normalized = normalize_lifecycle(spec, project_root=tmp_path)
+
+    assert normalized.environment == (
+        NormalizedEnvironmentRequirement(name="A_KEY", required=False, description=None, aliases=("A_ALIAS", "B_ALIAS")),
+        NormalizedEnvironmentRequirement(name="Z_KEY", required=True, description="Z description", aliases=("A_ALIAS", "Z_ALIAS")),
+    )
+    assert normalized.services == (
+        NormalizedService(id="api", name=None, description=None, url="http://127.0.0.1:8000", kind=None, display=None, primary=None, tech=None),
+        NormalizedService(id="web", name=None, description=None, url="http://127.0.0.1:3000", kind=None, display=None, primary=None, tech=None),
+    )
+    assert normalized.checks == (
+        NormalizedCheckDefinition(id="probe", service_id=None, target="http://127.0.0.1:8000/health"),
+    )
+    assert normalized.tasks == (
+        NormalizedTask(id="build", description="Build."),
+        NormalizedTask(id="z-task", description=None),
+    )
+    assert normalized.actions == ()
+    assert normalized.services[0].providers == () and normalized.services[0].check_ids == ()
+    assert normalized.checks[0].service_id is None
+    assert normalized.diagnostic_inputs == DiagnosticInputs(
+        env_file=PathDiagnosticSource(id="env-file:.env", path=SafeProjectPath(path=".env")),
+        tools=(
+            ToolDiagnosticSource(id="tool:python", tool=SafeExecutableName(name="python")),
+            ToolDiagnosticSource(id="tool:zsh", tool=SafeExecutableName(name="zsh")),
+        ),
+        required_paths=(
+            PathDiagnosticSource(id="path:README.md", path=SafeProjectPath(path="README.md")),
+            PathDiagnosticSource(id="path:frontend/package.json", path=SafeProjectPath(path="frontend/package.json")),
+        ),
+        process_cwds=(
+            PathDiagnosticSource(id="process-cwd:worker", owner_id="worker", path=SafeProjectPath(path="backend")),
+        ),
+        environment=(
+            EnvironmentDiagnosticSource(id="env:A_KEY", name="A_KEY", aliases=("A_ALIAS", "B_ALIAS"), required=False, has_usable_default=False),
+            EnvironmentDiagnosticSource(id="env:Z_KEY", name="Z_KEY", aliases=("A_ALIAS", "Z_ALIAS"), required=True, has_usable_default=True),
+        ),
+        http_checks=(
+            HttpDiagnosticSource(id="service-check:probe", service_id=None, target="http://127.0.0.1:8000/health", timeout=2.5, attempts=3),
+        ),
+    )
+    dump = normalized.model_dump_json()
+    assert "never-retain-this-command" not in dump
+    assert "never-retain-this-default" not in dump
