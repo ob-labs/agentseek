@@ -176,8 +176,10 @@ def _reject_invalid_percent_escapes(value: str) -> None:
 
 def resolve_confined_project_path(project_root: Path, value: str, *, allow_dot: bool = False) -> Path:
     """Resolve a project-relative path only when it remains confined to the root."""
-    if _path_is_lexically_unsafe(value, allow_dot=allow_dot):
-        raise UnsafeProjectPathError()
+    try:
+        validate_project_relative_path(value, allow_dot=allow_dot)
+    except ValueError:
+        raise UnsafeProjectPathError() from None
 
     try:
         root = project_root.resolve(strict=False)
@@ -186,6 +188,13 @@ def resolve_confined_project_path(project_root: Path, value: str, *, allow_dot: 
     except (OSError, RuntimeError, ValueError):
         raise UnsafeProjectPathError() from None
     return candidate
+
+
+def validate_project_relative_path(value: str, *, allow_dot: bool = False) -> str:
+    """Validate a project-relative path lexically without filesystem access."""
+    if _path_is_lexically_unsafe(value, allow_dot=allow_dot):
+        raise ValueError
+    return value
 
 
 def _path_is_lexically_unsafe(value: str, *, allow_dot: bool) -> bool:
@@ -208,6 +217,7 @@ __all__ = [
     "validate_bare_executable",
     "validate_check_target",
     "validate_identifier",
+    "validate_project_relative_path",
     "validate_reference_url",
     "validate_service_url",
 ]

@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import copy
 import json
+import pickle
 import shutil
 import socket
 import subprocess
 import tomllib
 import urllib.request
+from collections import UserDict
 from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
+from typing import Any
 
 import pytest
-from pydantic import ValidationError
+from pydantic import PrivateAttr, ValidationError
 
 from agentseek.cli.lifecycle.authored import LifecycleSpecV1, LifecycleSpecV2
 from agentseek.cli.lifecycle.discovery import (
@@ -36,6 +41,7 @@ from agentseek.cli.lifecycle.discovery import (
     WarningCode,
 )
 from agentseek.cli.lifecycle.normalize import normalize_lifecycle
+from agentseek.cli.lifecycle.safety import UnsafeProjectPathError
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "lifecycle"
 
@@ -210,7 +216,18 @@ def _v2_topology_spec(project_root: Path, *, reverse: bool = False) -> Lifecycle
         (ToolDiagnosticSource, ("id", "source_index", "tool")),
         (EnvironmentDiagnosticSource, ("id", "name", "aliases", "required", "has_usable_default")),
         (HttpDiagnosticSource, ("id", "service_id", "target", "timeout", "attempts")),
-        (DiagnosticInputs, ("env_file", "tools", "required_paths", "process_cwds", "environment", "http_checks")),
+        (
+            DiagnosticInputs,
+            (
+                "env_file",
+                "tools",
+                "required_paths",
+                "process_cwds",
+                "unsafe_task_cwd_ids",
+                "environment",
+                "http_checks",
+            ),
+        ),
         (
             NormalizedLifecycleProject,
             (
@@ -235,11 +252,14 @@ def test_model_shape_field_order_and_configuration(model: type[SafeModel], field
 
 
 def test_model_shape_defaults_are_immutable_tuples_and_factory_created() -> None:
+    process_cwds = (PathDiagnosticSource(id="process-cwd:app", owner_id="app", path=SafeProjectPath(path=".")),)
     project = NormalizedLifecycleProject(
         lifecycle_version=2,
-        project=NormalizedProject(template=None, name="Example", description=None, guide=None),
+        project=NormalizedProject(template="example/default", name="Example", description=None, guide=None),
         metadata_complete=True,
+        diagnostic_inputs=DiagnosticInputs(process_cwds=process_cwds),
     )
+    default_inputs = DiagnosticInputs()
 
     assert project.environment == ()
     assert project.services == ()
@@ -247,7 +267,14 @@ def test_model_shape_defaults_are_immutable_tuples_and_factory_created() -> None
     assert project.tasks == ()
     assert project.actions == ()
     assert project.warnings == ()
-    assert project.diagnostic_inputs == DiagnosticInputs()
+    assert project.diagnostic_inputs.process_cwds == process_cwds
+    assert default_inputs.env_file is None
+    assert default_inputs.tools == ()
+    assert default_inputs.required_paths == ()
+    assert default_inputs.process_cwds == ()
+    assert default_inputs.unsafe_task_cwd_ids == ()
+    assert default_inputs.environment == ()
+    assert default_inputs.http_checks == ()
     assert NormalizedEnvironmentRequirement(name="TOKEN", required=True, description=None).aliases == ()
     assert (
         NormalizedService(
@@ -350,6 +377,11 @@ def test_model_shape_http_diagnostic_id_is_canonical() -> None:
     with pytest.raises(ValidationError):
         HttpDiagnosticSource(id="service-check:", service_id="api", target="http://127.0.0.1", timeout=1.0, attempts=1)
 
+    legacy = HttpDiagnosticSource(
+        id="service-check:", service_id=None, target="http://127.0.0.1", timeout=1.0, attempts=1
+    )
+    assert legacy.id == "service-check:"
+
 
 @pytest.mark.parametrize(
     ("code", "details", "message"),
@@ -362,7 +394,7 @@ def test_model_shape_http_diagnostic_id_is_canonical() -> None:
         ),
         (
             "unsafe_path_omitted",
-            {"owner_type": "process", "owner_id": "app", "index": 0, "field": "cwd"},
+            {"owner_type": "process", "owner_id": "app", "index": None, "field": "cwd"},
             "Unsafe project path was omitted.",
         ),
         (
@@ -386,7 +418,213 @@ def test_model_shape_warning_has_fixed_message_and_copied_ordered_details(
         "duplicate_requirement_collapsed": ("requirement_type", "first_index", "duplicate_index"),
     }
     assert tuple(warning.details) == expected_keys[code]
+    assert type(warning.details) is MappingProxyType
+    assert not isinstance(warning.details, dict)
     assert "changed" not in warning.details
+    assert warning.details == {key: warning.details[key] for key in expected_keys[code]}
+    copied_details = warning.details.copy()
+    assert type(copied_details) is dict
+    copied_details["changed"] = "copy only"
+    assert "changed" not in warning.details
+    dumped_details = warning.model_dump()["details"]
+    assert type(dumped_details) is dict
+    assert tuple(dumped_details) == expected_keys[code]
+    assert tuple(json.loads(warning.model_dump_json())["details"]) == expected_keys[code]
+
+
+@pytest.mark.parametrize(
+    "method",
+    ["setitem", "delitem", "ior"],
+)
+def test_model_shape_warning_details_reject_ordinary_mutation_paths(method: str) -> None:
+    warning = NormalizationWarning(
+        code="unsafe_endpoint_omitted",
+        message="Unsafe endpoint was omitted.",
+        details={"owner_type": "service", "owner_id": "app", "field": "url"},
+    )
+    details = warning.details
+
+    with pytest.raises(TypeError):
+        if method == "setitem":
+            details["owner_id"] = "changed"  # ty: ignore[invalid-assignment]
+        elif method == "delitem":
+            del details["owner_id"]  # ty: ignore[not-subscriptable]
+        else:
+            details |= {"owner_id": "changed"}  # ty: ignore[unsupported-operator]
+
+    assert details == {"owner_type": "service", "owner_id": "app", "field": "url"}
+
+
+@pytest.mark.parametrize("method", ["clear", "pop", "popitem", "setdefault", "update"])
+def test_model_shape_warning_details_do_not_expose_mutating_dict_methods(method: str) -> None:
+    details = NormalizationWarning(
+        code="unsafe_endpoint_omitted",
+        message="Unsafe endpoint was omitted.",
+        details={"owner_type": "service", "owner_id": "app", "field": "url"},
+    ).details
+
+    with pytest.raises(AttributeError):
+        getattr(details, method)
+
+
+@pytest.mark.parametrize("method", ["setitem", "update", "delitem", "clear"])
+def test_model_shape_warning_details_reject_dict_base_class_mutation_bypasses(method: str) -> None:
+    details = NormalizationWarning(
+        code="unsafe_endpoint_omitted",
+        message="Unsafe endpoint was omitted.",
+        details={"owner_type": "service", "owner_id": "app", "field": "url"},
+    ).details
+
+    with pytest.raises(TypeError):
+        if method == "setitem":
+            dict.__setitem__(details, "owner_id", "changed")  # ty: ignore[invalid-argument-type]
+        elif method == "update":
+            replacement: dict[str, str | int | None] = {"owner_id": "changed"}
+            dict.update(details, replacement)  # ty: ignore[no-matching-overload]
+        elif method == "delitem":
+            dict.__delitem__(details, "owner_id")  # ty: ignore[invalid-argument-type]
+        else:
+            dict.clear(details)  # ty: ignore[invalid-argument-type]
+
+    assert details == {"owner_type": "service", "owner_id": "app", "field": "url"}
+
+
+@pytest.mark.parametrize(
+    ("code", "message", "details"),
+    [
+        (
+            "unsafe_path_omitted",
+            "Unsafe project path was omitted.",
+            MappingProxyType({"owner_type": "required_tool", "owner_id": None, "index": True, "field": "tool"}),
+        ),
+        (
+            "duplicate_requirement_collapsed",
+            "Duplicate requirement was collapsed.",
+            UserDict({"requirement_type": "path", "first_index": 0.0, "duplicate_index": 1}),
+        ),
+    ],
+)
+def test_model_shape_warning_rejects_mapping_wrapped_bool_and_float_indices(
+    code: WarningCode,
+    message: str,
+    details: Mapping[str, object],
+) -> None:
+    with pytest.raises(ValidationError):
+        NormalizationWarning.model_validate({"code": code, "message": message, "details": details})
+
+
+@pytest.mark.parametrize(
+    ("code", "details", "message"),
+    [
+        ("lifecycle_v1_metadata_incomplete", {}, "Lifecycle v1 metadata is incomplete."),
+        (
+            "unsafe_endpoint_omitted",
+            {"owner_type": "service", "owner_id": "", "field": "url"},
+            "Unsafe endpoint was omitted.",
+        ),
+        (
+            "unsafe_endpoint_omitted",
+            {"owner_type": "check", "owner_id": "", "field": "target"},
+            "Unsafe endpoint was omitted.",
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "env_file", "owner_id": None, "index": None, "field": "env_file"},
+            "Unsafe project path was omitted.",
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "required_path", "owner_id": None, "index": 0, "field": "path"},
+            "Unsafe project path was omitted.",
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "required_tool", "owner_id": None, "index": 1, "field": "tool"},
+            "Unsafe project path was omitted.",
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "process", "owner_id": "", "index": None, "field": "cwd"},
+            "Unsafe project path was omitted.",
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "task", "owner_id": "", "index": None, "field": "cwd"},
+            "Unsafe project path was omitted.",
+        ),
+        (
+            "duplicate_requirement_collapsed",
+            {"requirement_type": "path", "first_index": 0, "duplicate_index": 2},
+            "Duplicate requirement was collapsed.",
+        ),
+    ],
+)
+def test_model_shape_warning_accepts_exact_domain_contract(
+    code: WarningCode, details: dict[str, str | int | None], message: str
+) -> None:
+    assert NormalizationWarning(code=code, message=message, details=details).details == details
+
+
+@pytest.mark.parametrize(
+    ("code", "message", "details"),
+    [
+        (
+            "unsafe_endpoint_omitted",
+            "Unsafe endpoint was omitted.",
+            {"owner_type": "service", "owner_id": "app", "field": "target"},
+        ),
+        (
+            "unsafe_endpoint_omitted",
+            "Unsafe endpoint was omitted.",
+            {"owner_type": "check", "owner_id": None, "field": "target"},
+        ),
+        (
+            "unsafe_path_omitted",
+            "Unsafe project path was omitted.",
+            {"owner_type": "env_file", "owner_id": "env", "index": None, "field": "env_file"},
+        ),
+        (
+            "unsafe_path_omitted",
+            "Unsafe project path was omitted.",
+            {"owner_type": "required_path", "owner_id": None, "index": -1, "field": "path"},
+        ),
+        (
+            "unsafe_path_omitted",
+            "Unsafe project path was omitted.",
+            {"owner_type": "required_tool", "owner_id": None, "index": True, "field": "tool"},
+        ),
+        (
+            "unsafe_path_omitted",
+            "Unsafe project path was omitted.",
+            {"owner_type": "process", "owner_id": "app", "index": 0, "field": "cwd"},
+        ),
+        (
+            "unsafe_path_omitted",
+            "Unsafe project path was omitted.",
+            {"owner_type": "task", "owner_id": "task", "index": None, "field": "path"},
+        ),
+        (
+            "duplicate_requirement_collapsed",
+            "Duplicate requirement was collapsed.",
+            {"requirement_type": "service", "first_index": 0, "duplicate_index": 1},
+        ),
+        (
+            "duplicate_requirement_collapsed",
+            "Duplicate requirement was collapsed.",
+            {"requirement_type": "tool", "first_index": 1, "duplicate_index": 1},
+        ),
+        (
+            "duplicate_requirement_collapsed",
+            "Duplicate requirement was collapsed.",
+            {"requirement_type": "path", "first_index": 2, "duplicate_index": 1},
+        ),
+    ],
+)
+def test_model_shape_warning_rejects_invalid_domain_values(
+    code: WarningCode, message: str, details: dict[str, str | int | bool | None]
+) -> None:
+    with pytest.raises(ValidationError):
+        NormalizationWarning.model_validate({"code": code, "message": message, "details": details})
 
 
 @pytest.mark.parametrize(
@@ -464,6 +702,50 @@ def test_normalize_lifecycle_minimal_valid_v1_is_conservative_and_redacts_comman
         ),
     )
     assert "never-retain-this-command" not in normalized.model_dump_json()
+
+
+def test_normalize_lifecycle_valid_v1_empty_identifiers_preserve_authored_identity(tmp_path: Path) -> None:
+    authored = tomllib.loads(
+        """\
+version = 1
+name = "Legacy blank IDs"
+
+[env.""]
+aliases = ["", ""]
+
+[services.""]
+url = "http://127.0.0.1:8000"
+
+[processes.""]
+command = ["python", "app.py"]
+
+[checks.""]
+target = "http://127.0.0.1:8000/health"
+
+[tasks.""]
+command = ["python", "task.py"]
+"""
+    )
+    spec = LifecycleSpecV1.model_validate({**authored, "path": tmp_path / ".agentseek" / "lifecycle.toml"})
+
+    normalized = normalize_lifecycle(spec, project_root=tmp_path)
+
+    assert tuple(requirement.name for requirement in normalized.environment) == ("",)
+    assert normalized.environment[0].aliases == ("", "")
+    assert tuple(service.id for service in normalized.services) == ("",)
+    assert tuple(check.id for check in normalized.checks) == ("",)
+    assert tuple(task.id for task in normalized.tasks) == ("",)
+    assert normalized.diagnostic_inputs.process_cwds[0].id == "process-cwd:"
+    assert normalized.diagnostic_inputs.http_checks == (
+        HttpDiagnosticSource(
+            id="service-check:",
+            service_id=None,
+            target="http://127.0.0.1:8000/health",
+            timeout=2.0,
+            attempts=1,
+        ),
+    )
+    assert NormalizedLifecycleProject.model_validate(normalized.model_dump()) == normalized
 
 
 def test_normalize_lifecycle_v1_projection_is_sorted_safe_and_keeps_no_inferred_relationships(tmp_path: Path) -> None:
@@ -637,6 +919,7 @@ def test_normalize_lifecycle_unsafe_v1_omits_literals_and_keeps_safe_diagnostic_
             PathDiagnosticSource(id="process-cwd:z-safe", owner_id="z-safe", path=SafeProjectPath(path="safe-cwd")),
             PathDiagnosticSource(id="unsafe-path:process-cwd:0", owner_id="a-unsafe", source_index=0, path=None),
         ),
+        unsafe_task_cwd_ids=("unsafe-task",),
         environment=(EnvironmentDiagnosticSource(id="env:API_KEY", name="API_KEY", has_usable_default=True),),
         http_checks=(
             HttpDiagnosticSource(id="service-check:probe", service_id=None, target=None, timeout=2.0, attempts=1),
@@ -714,7 +997,11 @@ def test_normalize_lifecycle_unsafe_v1_omits_literals_and_keeps_safe_diagnostic_
         tuple(
             sorted(
                 normalized.warnings,
-                key=lambda warning: (warning.code, warning.message, json.dumps(warning.details, separators=(",", ":"))),
+                key=lambda warning: (
+                    warning.code,
+                    warning.message,
+                    json.dumps(dict(warning.details), separators=(",", ":")),
+                ),
             )
         )
         == expected_warnings
@@ -923,6 +1210,102 @@ def test_normalize_lifecycle_v2_safe_diagnostic_inputs_are_relative_and_sorted(t
                 attempts=6,
             ),
         ),
+    )
+
+
+@pytest.mark.parametrize("path_field", ["guide", "env_file", "required_path", "process_cwd", "task_cwd"])
+def test_normalize_lifecycle_v2_reconfines_every_path_against_supplied_root(tmp_path: Path, path_field: str) -> None:
+    authored_root = tmp_path / "authored-root"
+    normalization_root = tmp_path / "normalization-root"
+    outside_root = tmp_path / "outside-root"
+    authored_root.mkdir()
+    normalization_root.mkdir()
+    outside_root.mkdir()
+    (authored_root / "escape").mkdir()
+    (normalization_root / "escape").symlink_to(outside_root, target_is_directory=True)
+    data: dict[str, object] = {
+        "version": 2,
+        "template": "example/path-revalidation",
+        "name": "Path Revalidation",
+        "processes": {"app": {"command": ["python", "app.py"]}},
+        "tasks": {},
+    }
+    if path_field in {"guide", "env_file"}:
+        data[path_field] = "escape"
+    elif path_field == "required_path":
+        data["paths"] = {"required": ["escape"]}
+    elif path_field == "process_cwd":
+        data["processes"] = {"app": {"command": ["python", "app.py"], "cwd": "escape"}}
+    else:
+        data["tasks"] = {"run": {"command": ["python", "task.py"], "cwd": "escape"}}
+    spec = LifecycleSpecV2.model_validate(
+        data,
+        context={
+            "project_root": authored_root,
+            "loader_path": authored_root / ".agentseek" / "lifecycle.toml",
+        },
+    )
+
+    with pytest.raises(UnsafeProjectPathError) as exc_info:
+        normalize_lifecycle(spec, project_root=normalization_root)
+
+    assert str(exc_info.value) == "project path is unsafe"
+    rendered = str(exc_info.value)
+    assert "escape" not in rendered
+    assert str(authored_root.resolve()) not in rendered
+    assert str(normalization_root.resolve()) not in rendered
+    assert str(outside_root.resolve()) not in rendered
+
+
+def test_normalize_lifecycle_v2_explicit_relationships_suppress_same_id_inference(tmp_path: Path) -> None:
+    spec = LifecycleSpecV2.model_validate(
+        {
+            "version": 2,
+            "template": "example/explicit-precedence",
+            "name": "Explicit Precedence",
+            "services": {
+                "app": {
+                    "name": "Application",
+                    "url": "http://127.0.0.1:8000",
+                    "kind": "web",
+                    "primary": True,
+                    "description": "Application.",
+                },
+                "other": {
+                    "name": "Other API",
+                    "url": "http://127.0.0.1:8100",
+                    "kind": "api",
+                    "description": "Other service.",
+                },
+                "empty": {
+                    "name": "Unprovided service",
+                    "url": "http://127.0.0.1:8200",
+                    "kind": "api",
+                    "description": "Explicitly unprovided.",
+                },
+            },
+            "processes": {
+                "app": {"command": ["python", "app.py"], "provides": ["other"]},
+                "empty": {"command": ["python", "empty.py"], "provides": []},
+            },
+            "checks": {"app": {"target": "http://127.0.0.1:8100/health", "service": "other"}},
+        },
+        context={
+            "project_root": tmp_path,
+            "loader_path": tmp_path / ".agentseek" / "lifecycle.toml",
+        },
+    )
+
+    normalized = normalize_lifecycle(spec, project_root=tmp_path)
+
+    services = {service.id: service for service in normalized.services}
+    assert services["app"].providers == ()
+    assert services["app"].check_ids == ()
+    assert services["empty"].providers == ()
+    assert services["other"].providers == (NormalizedProvider(type="dev", id="process:app", process_id="app"),)
+    assert services["other"].check_ids == ("app",)
+    assert normalized.checks == (
+        NormalizedCheckDefinition(id="app", service_id="other", target="http://127.0.0.1:8100/health"),
     )
 
 
@@ -1320,3 +1703,640 @@ def test_normalize_lifecycle_is_independent_of_environment_and_env_file_secrets(
         str(project_root.resolve()),
     ):
         assert sentinel not in recursive_dump
+
+
+def _normalized_v1_dump(project_root: Path) -> dict[str, Any]:
+    spec = LifecycleSpecV1.model_validate({
+        "path": project_root / ".agentseek" / "lifecycle.toml",
+        "version": 1,
+        "name": "Legacy Project",
+        "processes": {"app": {"command": ["python", "app.py"]}},
+    })
+    return normalize_lifecycle(spec, project_root=project_root).model_dump()
+
+
+def _normalized_v2_dump(project_root: Path) -> dict[str, Any]:
+    return normalize_lifecycle(_normalized_v2_projection_fixture(project_root), project_root=project_root).model_dump()
+
+
+def _normalized_unsafe_v1_dump(project_root: Path) -> dict[str, Any]:
+    (project_root / "symlink-out").symlink_to(project_root.parent / "outside", target_is_directory=True)
+    spec = LifecycleSpecV1.model_validate({
+        **tomllib.loads((FIXTURES / "v1-unsafe-projection.toml").read_text(encoding="utf-8")),
+        "path": project_root / ".agentseek" / "lifecycle.toml",
+    })
+    return normalize_lifecycle(spec, project_root=project_root).model_dump()
+
+
+def _warning_payload_sort_key(warning: Mapping[str, Any]) -> tuple[str, str, str]:
+    return (
+        warning["code"],
+        warning["message"],
+        json.dumps(dict(warning["details"]), ensure_ascii=False, separators=(",", ":")),
+    )
+
+
+def _warning_payload(code: WarningCode, details: dict[str, str | int | None]) -> dict[str, object]:
+    messages = {
+        "lifecycle_v1_metadata_incomplete": "Lifecycle v1 metadata is incomplete.",
+        "unsafe_endpoint_omitted": "Unsafe endpoint was omitted.",
+        "unsafe_path_omitted": "Unsafe project path was omitted.",
+        "duplicate_requirement_collapsed": "Duplicate requirement was collapsed.",
+    }
+    return {"code": code, "message": messages[code], "details": details}
+
+
+def _payload_matches_warning(
+    warning: Mapping[str, Any], code: WarningCode, details: Mapping[str, str | int | None]
+) -> bool:
+    return warning["code"] == code and warning["details"] == details
+
+
+def test_exported_root_rejects_v1_without_process_diagnostic_sources(tmp_path: Path) -> None:
+    data = _normalized_v1_dump(tmp_path)
+    data["diagnostic_inputs"]["process_cwds"] = []
+
+    with pytest.raises(ValidationError):
+        NormalizedLifecycleProject.model_validate(data)
+
+
+def test_exported_root_rejects_service_free_v2_without_process_diagnostic_sources(tmp_path: Path) -> None:
+    project_root = tmp_path / "service-free"
+    project_root.mkdir()
+    spec = LifecycleSpecV2.model_validate(
+        tomllib.loads((FIXTURES / "v2-service-free.toml").read_text(encoding="utf-8")),
+        context={
+            "project_root": project_root,
+            "loader_path": project_root / ".agentseek" / "lifecycle.toml",
+        },
+    )
+    data = normalize_lifecycle(spec, project_root=project_root).model_dump()
+    data["diagnostic_inputs"]["process_cwds"] = []
+
+    with pytest.raises(ValidationError):
+        NormalizedLifecycleProject.model_validate(data)
+
+
+def test_exported_root_rejects_v1_unsafe_process_source_with_noncanonical_sorted_owner_index(
+    tmp_path: Path,
+) -> None:
+    spec = LifecycleSpecV1.model_validate({
+        "path": tmp_path / ".agentseek" / "lifecycle.toml",
+        "version": 1,
+        "name": "Unsafe process",
+        "processes": {"app": {"command": ["python", "app.py"], "cwd": "../outside"}},
+    })
+    data = normalize_lifecycle(spec, project_root=tmp_path).model_dump()
+    source = data["diagnostic_inputs"]["process_cwds"][0]
+    source["id"] = "unsafe-path:process-cwd:99"
+    source["source_index"] = 99
+
+    with pytest.raises(ValidationError):
+        NormalizedLifecycleProject.model_validate(data)
+
+
+@pytest.mark.parametrize(
+    "invalid_state",
+    [
+        "missing_service_warning",
+        "ghost_service_warning",
+        "warning_for_present_service",
+        "missing_check_warning",
+        "ghost_check_warning",
+        "warning_for_present_check",
+        "missing_env_file_warning",
+        "warning_for_present_env_file",
+        "missing_required_path_warning",
+        "missing_required_tool_warning",
+        "missing_process_warning",
+        "ghost_required_path_warning",
+        "ghost_process_warning",
+        "ghost_task_warning",
+    ],
+)
+def test_exported_root_rejects_v1_omission_warning_reciprocity_violations(
+    tmp_path: Path,
+    invalid_state: str,
+) -> None:
+    project_root = tmp_path / "unsafe-v1"
+    project_root.mkdir()
+    data = _normalized_unsafe_v1_dump(project_root)
+    warning_targets: dict[str, tuple[WarningCode, dict[str, str | int | None]]] = {
+        "service": (
+            "unsafe_endpoint_omitted",
+            {"owner_type": "service", "owner_id": "api", "field": "url"},
+        ),
+        "check": (
+            "unsafe_endpoint_omitted",
+            {"owner_type": "check", "owner_id": "probe", "field": "target"},
+        ),
+        "env_file": (
+            "unsafe_path_omitted",
+            {"owner_type": "env_file", "owner_id": None, "index": None, "field": "env_file"},
+        ),
+        "required_path": (
+            "unsafe_path_omitted",
+            {"owner_type": "required_path", "owner_id": None, "index": 1, "field": "path"},
+        ),
+        "required_tool": (
+            "unsafe_path_omitted",
+            {"owner_type": "required_tool", "owner_id": None, "index": 1, "field": "tool"},
+        ),
+        "process": (
+            "unsafe_path_omitted",
+            {"owner_type": "process", "owner_id": "a-unsafe", "index": None, "field": "cwd"},
+        ),
+        "task": (
+            "unsafe_path_omitted",
+            {"owner_type": "task", "owner_id": "unsafe-task", "index": None, "field": "cwd"},
+        ),
+    }
+    warnings = data["warnings"]
+
+    if invalid_state.startswith("missing_"):
+        owner = invalid_state.removeprefix("missing_").removesuffix("_warning")
+        code, details = warning_targets[owner]
+        data["warnings"] = [warning for warning in warnings if not _payload_matches_warning(warning, code, details)]
+    elif invalid_state == "ghost_service_warning":
+        data["warnings"] = [
+            *warnings,
+            _warning_payload(
+                "unsafe_endpoint_omitted",
+                {"owner_type": "service", "owner_id": "missing-service", "field": "url"},
+            ),
+        ]
+    elif invalid_state == "ghost_check_warning":
+        data["warnings"] = [
+            *warnings,
+            _warning_payload(
+                "unsafe_endpoint_omitted",
+                {"owner_type": "check", "owner_id": "missing-check", "field": "target"},
+            ),
+        ]
+    elif invalid_state == "ghost_required_path_warning":
+        data["warnings"] = [
+            *warnings,
+            _warning_payload(
+                "unsafe_path_omitted",
+                {"owner_type": "required_path", "owner_id": None, "index": 99, "field": "path"},
+            ),
+        ]
+    elif invalid_state == "ghost_process_warning":
+        data["warnings"] = [
+            *warnings,
+            _warning_payload(
+                "unsafe_path_omitted",
+                {"owner_type": "process", "owner_id": "missing-process", "index": None, "field": "cwd"},
+            ),
+        ]
+    elif invalid_state == "ghost_task_warning":
+        data["warnings"] = [
+            *warnings,
+            _warning_payload(
+                "unsafe_path_omitted",
+                {"owner_type": "task", "owner_id": "missing-task", "index": None, "field": "cwd"},
+            ),
+        ]
+    elif invalid_state == "warning_for_present_service":
+        data["services"][0]["url"] = "http://127.0.0.1:8000"
+    elif invalid_state == "warning_for_present_check":
+        data["checks"][0]["target"] = "http://127.0.0.1:8000/health"
+        data["diagnostic_inputs"]["http_checks"][0]["target"] = data["checks"][0]["target"]
+    else:
+        data["diagnostic_inputs"]["env_file"] = {
+            "id": "env-file:.env",
+            "owner_id": None,
+            "source_index": None,
+            "path": {"path": ".env"},
+        }
+
+    data["warnings"] = sorted(data["warnings"], key=_warning_payload_sort_key)
+    with pytest.raises(ValidationError):
+        NormalizedLifecycleProject.model_validate(data)
+
+
+@pytest.mark.parametrize(
+    ("code", "details"),
+    [
+        ("unsafe_endpoint_omitted", {"owner_type": "service", "owner_id": "api", "field": "url"}),
+        ("unsafe_endpoint_omitted", {"owner_type": "check", "owner_id": "probe", "field": "target"}),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "env_file", "owner_id": None, "index": None, "field": "env_file"},
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "required_path", "owner_id": None, "index": 1, "field": "path"},
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "required_tool", "owner_id": None, "index": 1, "field": "tool"},
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "process", "owner_id": "a-unsafe", "index": None, "field": "cwd"},
+        ),
+        (
+            "unsafe_path_omitted",
+            {"owner_type": "task", "owner_id": "unsafe-task", "index": None, "field": "cwd"},
+        ),
+    ],
+)
+def test_exported_root_preserves_duplicate_matching_v1_omission_warnings(
+    tmp_path: Path,
+    code: WarningCode,
+    details: dict[str, str | int | None],
+) -> None:
+    project_root = tmp_path / "unsafe-v1"
+    project_root.mkdir()
+    data = _normalized_unsafe_v1_dump(project_root)
+    duplicate = next(warning.copy() for warning in data["warnings"] if _payload_matches_warning(warning, code, details))
+    data["warnings"] = sorted([*data["warnings"], duplicate], key=_warning_payload_sort_key)
+
+    validated = NormalizedLifecycleProject.model_validate(data)
+
+    expected = NormalizationWarning.model_validate(duplicate)
+    assert validated.warnings.count(expected) == 2
+
+
+def test_exported_root_still_rejects_duplicate_v1_metadata_warning(tmp_path: Path) -> None:
+    data = _normalized_v1_dump(tmp_path)
+    duplicate = next(
+        warning.copy() for warning in data["warnings"] if warning["code"] == "lifecycle_v1_metadata_incomplete"
+    )
+    data["warnings"] = sorted([*data["warnings"], duplicate], key=_warning_payload_sort_key)
+
+    with pytest.raises(ValidationError):
+        NormalizedLifecycleProject.model_validate(data)
+
+
+@pytest.mark.parametrize("copy_method", ["model_copy", "deepcopy", "pickle"])
+def test_exported_v1_root_supports_deep_copy_and_pickle(tmp_path: Path, copy_method: str) -> None:
+    project = NormalizedLifecycleProject.model_validate(_normalized_v1_dump(tmp_path))
+
+    if copy_method == "model_copy":
+        copied = project.model_copy(deep=True)
+    elif copy_method == "deepcopy":
+        copied = copy.deepcopy(project)
+    else:
+        copied = pickle.loads(pickle.dumps(project))  # noqa: S301 - round-trip trusted in-memory bytes
+
+    assert copied == project
+    assert copied is not project
+    assert type(copied.warnings[0].details) is MappingProxyType
+
+
+@pytest.mark.parametrize("copy_method", ["model_copy", "deepcopy"])
+def test_warning_deep_copy_recursively_copies_subclass_state(copy_method: str) -> None:
+    class ExtendedWarning(NormalizationWarning):
+        tags: list[str]
+        _private_tags: list[str] = PrivateAttr(default_factory=list)
+
+    warning = ExtendedWarning(
+        code="lifecycle_v1_metadata_incomplete",
+        message="Lifecycle v1 metadata is incomplete.",
+        details={},
+        tags=["public"],
+    )
+    warning._private_tags.append("private")
+
+    copied = warning.model_copy(deep=True) if copy_method == "model_copy" else copy.deepcopy(warning)
+    copied.tags.append("copied")
+    copied._private_tags.append("copied")
+
+    assert warning.tags == ["public"]
+    assert warning._private_tags == ["private"]
+    assert type(copied.details) is MappingProxyType
+
+
+@pytest.mark.parametrize("invalid_state", ["missing_unsafe_warning", "warning_for_safe_task"])
+def test_exported_root_rejects_v1_task_warning_provenance_mismatch(
+    tmp_path: Path,
+    invalid_state: str,
+) -> None:
+    spec = LifecycleSpecV1.model_validate({
+        "path": tmp_path / ".agentseek" / "lifecycle.toml",
+        "version": 1,
+        "name": "Task warning provenance",
+        "processes": {"app": {"command": ["python", "app.py"]}},
+        "tasks": {
+            "safe-task": {"command": ["python", "safe.py"], "cwd": "."},
+            "unsafe-task": {"command": ["python", "unsafe.py"], "cwd": "../outside"},
+        },
+    })
+    data = normalize_lifecycle(spec, project_root=tmp_path).model_dump()
+    unsafe_details = {"owner_type": "task", "owner_id": "unsafe-task", "index": None, "field": "cwd"}
+    if invalid_state == "missing_unsafe_warning":
+        data["warnings"] = [
+            warning
+            for warning in data["warnings"]
+            if not _payload_matches_warning(warning, "unsafe_path_omitted", unsafe_details)
+        ]
+    else:
+        data["warnings"] = sorted(
+            [
+                *data["warnings"],
+                _warning_payload(
+                    "unsafe_path_omitted",
+                    {"owner_type": "task", "owner_id": "safe-task", "index": None, "field": "cwd"},
+                ),
+            ],
+            key=_warning_payload_sort_key,
+        )
+
+    with pytest.raises(ValidationError):
+        NormalizedLifecycleProject.model_validate(data)
+
+
+@pytest.mark.parametrize("invalid_state", ["metadata_complete", "actions"])
+def test_exported_root_rejects_v1_complete_metadata_or_actions(tmp_path: Path, invalid_state: str) -> None:
+    data = _normalized_v1_dump(tmp_path)
+    if invalid_state == "metadata_complete":
+        data["metadata_complete"] = True
+    else:
+        data["actions"] = [
+            {
+                "id": "project:start_dev",
+                "type": "start_dev",
+                "label": "Start development",
+                "service_id": None,
+                "url": None,
+                "reference_rel": None,
+                "task_id": None,
+            }
+        ]
+
+    with pytest.raises(ValidationError):
+        NormalizedLifecycleProject.model_validate(data)
+
+
+@pytest.mark.parametrize(
+    "invalid_state",
+    [
+        "absolute_guide",
+        "traversing_diagnostic_path",
+        "dot_env_file",
+        "dot_required_path",
+        "unsafe_executable",
+        "unsafe_service_url",
+        "unsafe_reference_url",
+        "unsafe_check_url",
+        "duplicate_service_ids",
+        "unsorted_service_ids",
+        "invalid_v2_identifier",
+        "duplicate_environment_names",
+        "unsorted_environment_names",
+        "duplicate_action_ids",
+        "unsorted_action_ids",
+        "duplicate_providers",
+        "unsorted_providers",
+        "duplicate_link_relations",
+        "unsorted_links",
+        "unsorted_aliases",
+        "unsorted_warnings",
+        "duplicate_diagnostic_ids",
+        "unsorted_diagnostics",
+        "http_diagnostic_mismatch",
+        "nonpositive_http_attempts",
+        "dangling_check",
+        "check_reciprocity_mismatch",
+        "dangling_task_effect",
+        "dangling_dev_provider",
+        "dangling_task_provider",
+        "noncanonical_action_label",
+        "hidden_service_action",
+        "missing_primary",
+        "metadata_incomplete",
+        "v2_warning",
+        "missing_template",
+    ],
+)
+def test_exported_root_rejects_unsafe_or_noncanonical_v2_states(tmp_path: Path, invalid_state: str) -> None:  # noqa: C901
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    data = _normalized_v2_dump(project_root)
+    if invalid_state == "absolute_guide":
+        data["project"]["guide"]["path"] = "/private/unsafe-guide"
+    elif invalid_state == "traversing_diagnostic_path":
+        data["diagnostic_inputs"]["required_paths"][0]["path"]["path"] = "../unsafe"
+    elif invalid_state == "dot_env_file":
+        data["diagnostic_inputs"]["env_file"] = {
+            "id": "env-file:.",
+            "owner_id": None,
+            "source_index": None,
+            "path": {"path": "."},
+        }
+    elif invalid_state == "dot_required_path":
+        data["diagnostic_inputs"]["required_paths"] = [
+            {
+                "id": "path:.",
+                "owner_id": None,
+                "source_index": None,
+                "path": {"path": "."},
+            }
+        ]
+    elif invalid_state == "unsafe_executable":
+        data["diagnostic_inputs"]["tools"][0]["tool"]["name"] = "../python"
+    elif invalid_state == "unsafe_service_url":
+        data["services"][0]["url"] = "http://user:secret@127.0.0.1:8000"
+    elif invalid_state == "unsafe_reference_url":
+        data["services"][0]["links"][0]["url"] = "https://user:secret@example.test/docs"
+    elif invalid_state == "unsafe_check_url":
+        data["checks"][0]["target"] = "http://127.0.0.1:5173?secret=true"
+        data["diagnostic_inputs"]["http_checks"][0]["target"] = data["checks"][0]["target"]
+    elif invalid_state == "duplicate_service_ids":
+        data["services"] = [data["services"][0].copy(), *data["services"]]
+    elif invalid_state == "unsorted_service_ids":
+        data["services"] = list(reversed(data["services"]))
+    elif invalid_state == "invalid_v2_identifier":
+        data["services"][0]["id"] = "invalid.id"
+    elif invalid_state == "duplicate_environment_names":
+        data["environment"] = [data["environment"][0].copy(), *data["environment"]]
+    elif invalid_state == "unsorted_environment_names":
+        data["environment"] = list(reversed(data["environment"]))
+    elif invalid_state == "duplicate_action_ids":
+        data["actions"] = [data["actions"][0].copy(), *data["actions"]]
+    elif invalid_state == "unsorted_action_ids":
+        data["actions"] = list(reversed(data["actions"]))
+    elif invalid_state == "duplicate_providers":
+        providers = data["services"][0]["providers"]
+        data["services"][0]["providers"] = [providers[0].copy(), *providers]
+    elif invalid_state == "unsorted_providers":
+        data["services"][0]["providers"] = list(reversed(data["services"][0]["providers"]))
+    elif invalid_state == "duplicate_link_relations":
+        links = data["services"][0]["links"]
+        data["services"][0]["links"] = [links[0].copy(), *links]
+    elif invalid_state == "unsorted_links":
+        data["services"][0]["links"] = list(reversed(data["services"][0]["links"]))
+    elif invalid_state == "unsorted_aliases":
+        data["environment"][0]["aliases"] = ["z", "a"]
+    elif invalid_state == "unsorted_warnings":
+        data["warnings"] = [
+            {
+                "code": "unsafe_path_omitted",
+                "message": "Unsafe project path was omitted.",
+                "details": {
+                    "owner_type": "process",
+                    "owner_id": "z",
+                    "index": None,
+                    "field": "cwd",
+                },
+            },
+            {
+                "code": "unsafe_endpoint_omitted",
+                "message": "Unsafe endpoint was omitted.",
+                "details": {"owner_type": "service", "owner_id": "a", "field": "url"},
+            },
+        ]
+    elif invalid_state == "duplicate_diagnostic_ids":
+        tools = data["diagnostic_inputs"]["tools"]
+        data["diagnostic_inputs"]["tools"] = [tools[0].copy(), *tools]
+    elif invalid_state == "unsorted_diagnostics":
+        data["diagnostic_inputs"]["process_cwds"] = list(reversed(data["diagnostic_inputs"]["process_cwds"]))
+    elif invalid_state == "http_diagnostic_mismatch":
+        data["diagnostic_inputs"]["http_checks"][0]["target"] = "http://127.0.0.1:9999"
+    elif invalid_state == "nonpositive_http_attempts":
+        data["diagnostic_inputs"]["http_checks"][0]["attempts"] = 0
+    elif invalid_state == "dangling_check":
+        data["checks"][0]["service_id"] = "missing"
+        data["diagnostic_inputs"]["http_checks"][0]["service_id"] = "missing"
+    elif invalid_state == "check_reciprocity_mismatch":
+        data["services"][0]["check_ids"] = []
+    elif invalid_state == "dangling_task_effect":
+        data["tasks"][0]["starts"] = ["missing"]
+    elif invalid_state == "dangling_dev_provider":
+        provider = data["services"][0]["providers"][0]
+        provider["id"] = "process:missing"
+        provider["process_id"] = "missing"
+    elif invalid_state == "dangling_task_provider":
+        provider = data["services"][0]["providers"][1]
+        provider["id"] = "task:missing"
+        provider["task_id"] = "missing"
+    elif invalid_state == "noncanonical_action_label":
+        data["actions"][0]["label"] = "Start things"
+    elif invalid_state == "hidden_service_action":
+        data["services"][0]["display"] = "hidden"
+    elif invalid_state == "missing_primary":
+        for service in data["services"]:
+            service["primary"] = False
+    elif invalid_state == "metadata_incomplete":
+        data["metadata_complete"] = False
+    elif invalid_state == "v2_warning":
+        data["warnings"] = [
+            {
+                "code": "unsafe_endpoint_omitted",
+                "message": "Unsafe endpoint was omitted.",
+                "details": {"owner_type": "service", "owner_id": "api", "field": "url"},
+            }
+        ]
+    else:
+        data["project"]["template"] = None
+
+    with pytest.raises(ValidationError):
+        NormalizedLifecycleProject.model_validate(data)
+
+
+def test_exported_root_preserves_duplicate_aliases_and_duplicate_requirement_warnings(tmp_path: Path) -> None:
+    project_root = tmp_path / "unsafe-v1"
+    project_root.mkdir()
+    data = _normalized_unsafe_v1_dump(project_root)
+    data["environment"][0]["aliases"] = ["", "", "a"]
+    data["diagnostic_inputs"]["environment"][0]["aliases"] = ["", "", "a"]
+    duplicate_warning = next(
+        warning.copy() for warning in data["warnings"] if warning["code"] == "duplicate_requirement_collapsed"
+    )
+    data["warnings"] = sorted([*data["warnings"], duplicate_warning], key=_warning_payload_sort_key)
+
+    validated = NormalizedLifecycleProject.model_validate(data)
+
+    assert validated.environment[0].aliases == ("", "", "a")
+    duplicate = NormalizationWarning.model_validate(duplicate_warning)
+    assert validated.warnings.count(duplicate) == 2
+    assert (
+        len({
+            warning.details["owner_id"] for warning in validated.warnings if warning.code == "unsafe_endpoint_omitted"
+        })
+        == 2
+    )
+
+
+def test_exported_root_preserves_legacy_v1_nonpositive_http_attempts(tmp_path: Path) -> None:
+    spec = LifecycleSpecV1.model_validate({
+        "path": tmp_path / ".agentseek" / "lifecycle.toml",
+        "version": 1,
+        "name": "Legacy Attempts",
+        "processes": {"app": {"command": ["python", "app.py"]}},
+        "checks": {
+            "legacy": {
+                "target": "http://127.0.0.1:8000/health",
+                "attempts": -1,
+            }
+        },
+    })
+
+    normalized = normalize_lifecycle(spec, project_root=tmp_path)
+    validated = NormalizedLifecycleProject.model_validate(normalized.model_dump())
+
+    assert validated.diagnostic_inputs.http_checks[0].attempts == -1
+
+
+def test_normalize_lifecycle_v2_allows_task_start_stop_overlap_and_extra_process_cwd(tmp_path: Path) -> None:
+    spec = LifecycleSpecV2.model_validate(
+        {
+            "version": 2,
+            "template": "example/overlap",
+            "name": "Overlap",
+            "services": {
+                "app": {
+                    "name": "Application",
+                    "url": "http://127.0.0.1:8000",
+                    "kind": "web",
+                    "primary": True,
+                    "description": "Application.",
+                }
+            },
+            "processes": {
+                "app": {"command": ["python", "app.py"], "provides": []},
+                "extra": {"command": ["python", "extra.py"], "provides": []},
+            },
+            "tasks": {
+                "restart": {
+                    "command": ["python", "restart.py"],
+                    "starts": ["app"],
+                    "stops": ["app"],
+                }
+            },
+        },
+        context={
+            "project_root": tmp_path,
+            "loader_path": tmp_path / ".agentseek" / "lifecycle.toml",
+        },
+    )
+
+    normalized = normalize_lifecycle(spec, project_root=tmp_path)
+
+    assert normalized.services[0].providers == (NormalizedProvider(type="task", id="task:restart", task_id="restart"),)
+    assert normalized.tasks[0].starts == ("app",)
+    assert normalized.tasks[0].stops == ("app",)
+    assert tuple(source.owner_id for source in normalized.diagnostic_inputs.process_cwds) == ("app", "extra")
+    assert NormalizedLifecycleProject.model_validate(normalized.model_dump()) == normalized
+
+
+def test_exported_root_round_trips_real_normalized_v1_v2_and_unsafe_v1(tmp_path: Path) -> None:
+    safe_v1 = NormalizedLifecycleProject.model_validate(_normalized_v1_dump(tmp_path))
+    assert NormalizedLifecycleProject.model_validate(safe_v1.model_dump()) == safe_v1
+
+    v2_root = tmp_path / "v2"
+    v2_root.mkdir()
+    v2 = normalize_lifecycle(_normalized_v2_projection_fixture(v2_root), project_root=v2_root)
+    assert NormalizedLifecycleProject.model_validate(v2.model_dump()) == v2
+
+    unsafe_root = tmp_path / "unsafe-v1"
+    unsafe_root.mkdir()
+    (unsafe_root / "symlink-out").symlink_to(tmp_path / "outside", target_is_directory=True)
+    unsafe_spec = LifecycleSpecV1.model_validate({
+        **tomllib.loads((FIXTURES / "v1-unsafe-projection.toml").read_text(encoding="utf-8")),
+        "path": unsafe_root / ".agentseek" / "lifecycle.toml",
+    })
+    unsafe_v1 = normalize_lifecycle(unsafe_spec, project_root=unsafe_root)
+    assert NormalizedLifecycleProject.model_validate(unsafe_v1.model_dump()) == unsafe_v1

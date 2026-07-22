@@ -12,7 +12,6 @@ from agentseek.cli.lifecycle.discovery import (
     EnvironmentDiagnosticSource,
     HttpDiagnosticSource,
     NormalizationWarning,
-    NormalizedAction,
     NormalizedCheckDefinition,
     NormalizedEnvironmentRequirement,
     NormalizedLifecycleProject,
@@ -26,6 +25,7 @@ from agentseek.cli.lifecycle.discovery import (
     SafeExecutableName,
     SafeProjectPath,
     ToolDiagnosticSource,
+    _derive_v2_actions,
 )
 from agentseek.cli.lifecycle.safety import (
     UnsafeProjectPathError,
@@ -97,7 +97,7 @@ def _warning_sort_key(warning: NormalizationWarning) -> tuple[str, str, str]:
     return (
         warning.code,
         warning.message,
-        json.dumps(warning.details, ensure_ascii=False, separators=(",", ":")),
+        json.dumps(dict(warning.details), ensure_ascii=False, separators=(",", ":")),
     )
 
 
@@ -165,6 +165,7 @@ def _v1_path_diagnostic_sources(
     tuple[ToolDiagnosticSource, ...],
     tuple[PathDiagnosticSource, ...],
     tuple[PathDiagnosticSource, ...],
+    tuple[str, ...],
 ]:
     env_file: PathDiagnosticSource | None = None
     if spec.env_file is not None:
@@ -193,15 +194,18 @@ def _v1_path_diagnostic_sources(
 
     tools, required_paths = _v1_requirement_sources(spec, project_root=project_root, warnings=warnings)
 
+    unsafe_task_cwd_ids: list[str] = []
     for task_id, task in sorted(spec.tasks.items()):
         if _safe_project_path(project_root, task.cwd, allow_dot=True) is None:
             warnings.append(_unsafe_path_warning(owner_type="task", owner_id=task_id, index=None, field="cwd"))
+            unsafe_task_cwd_ids.append(task_id)
 
     return (
         env_file,
         tuple(sorted(tools, key=lambda source: source.id)),
         tuple(sorted(required_paths, key=lambda source: source.id)),
         tuple(sorted(process_cwds, key=lambda source: source.id)),
+        tuple(unsafe_task_cwd_ids),
     )
 
 
@@ -253,7 +257,7 @@ def _v1_diagnostic_inputs(
     check_targets: dict[str, str | None],
     warnings: list[NormalizationWarning],
 ) -> DiagnosticInputs:
-    env_file, tools, required_paths, process_cwds = _v1_path_diagnostic_sources(
+    env_file, tools, required_paths, process_cwds, unsafe_task_cwd_ids = _v1_path_diagnostic_sources(
         spec,
         project_root=project_root,
         warnings=warnings,
@@ -263,6 +267,7 @@ def _v1_diagnostic_inputs(
         tools=tools,
         required_paths=required_paths,
         process_cwds=process_cwds,
+        unsafe_task_cwd_ids=unsafe_task_cwd_ids,
         environment=tuple(
             EnvironmentDiagnosticSource(
                 id=f"env:{name}",
@@ -369,67 +374,22 @@ def _v2_topology(
     return tasks, providers_by_service, check_ids_by_service, check_service_ids
 
 
-def _v2_actions(
-    services: tuple[NormalizedService, ...],
-    tasks: tuple[NormalizedTask, ...],
-) -> tuple[NormalizedAction, ...]:
-    """Derive presentation-safe actions from the normalized v2 graph."""
-    actions: list[NormalizedAction] = []
-    for service in services:
-        if service.display == "hidden":
-            continue
-        if service.kind == "web":
-            actions.append(
-                NormalizedAction(
-                    id=f"service:{service.id}:open",
-                    type="open_url",
-                    label=f"Open {service.name}",
-                    service_id=service.id,
-                    url=service.url,
-                )
-            )
-        elif service.kind in {"api", "protocol", "database"}:
-            actions.append(
-                NormalizedAction(
-                    id=f"service:{service.id}:copy",
-                    type="copy_endpoint",
-                    label=f"Copy {service.name} endpoint",
-                    service_id=service.id,
-                    url=service.url,
-                )
-            )
-        actions.extend(
-            NormalizedAction(
-                id=f"service:{service.id}:reference:{reference.rel}",
-                type="open_reference",
-                label=f"Open {service.name} {reference.rel}",
-                service_id=service.id,
-                url=reference.url,
-                reference_rel=reference.rel,
-            )
-            for reference in service.links
-        )
-    if any(
-        service.display != "hidden" and any(provider.type == "dev" for provider in service.providers)
-        for service in services
-    ):
-        actions.append(NormalizedAction(id="project:start_dev", type="start_dev", label="Start development"))
-    non_hidden_service_ids = {service.id for service in services if service.display != "hidden"}
-    for task in tasks:
-        if set(task.starts).union(task.stops).intersection(non_hidden_service_ids):
-            actions.append(
-                NormalizedAction(
-                    id=f"task:{task.id}",
-                    type="run_task",
-                    label=f"Run task {task.id}",
-                    task_id=task.id,
-                )
-            )
-    return tuple(sorted(actions, key=lambda action: action.id))
+def _revalidate_v2_paths(spec: LifecycleSpecV2, *, project_root: Path) -> None:
+    """Re-confine every authored v2 path against the normalization root."""
+    for value in (spec.guide, spec.env_file):
+        if value is not None:
+            resolve_confined_project_path(project_root, value)
+    for value in spec.required_paths:
+        resolve_confined_project_path(project_root, value)
+    for process in spec.processes.values():
+        resolve_confined_project_path(project_root, process.cwd, allow_dot=True)
+    for task in spec.tasks.values():
+        resolve_confined_project_path(project_root, task.cwd, allow_dot=True)
 
 
 def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLifecycleProject:
     """Project validated v2 metadata and explicit topology without commands."""
+    _revalidate_v2_paths(spec, project_root=project_root)
     tasks, providers_by_service, check_ids_by_service, check_service_ids = _v2_topology(spec)
 
     environment = tuple(
@@ -528,7 +488,7 @@ def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLif
         services=services,
         checks=checks,
         tasks=tasks,
-        actions=_v2_actions(services, tasks),
+        actions=_derive_v2_actions(services, tasks),
         warnings=(),
         diagnostic_inputs=diagnostic_inputs,
     )

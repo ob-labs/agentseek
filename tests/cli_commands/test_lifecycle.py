@@ -339,6 +339,14 @@ def test_task_lists_spec_tasks(tmp_path: Path, monkeypatch) -> None:
     assert "Write a task marker." in result.stdout
 
 
+def test_human_command_modules_do_not_bind_the_normalization_function() -> None:
+    from agentseek.cli.lifecycle.normalize import normalize_lifecycle
+
+    for command in ("info", "doctor", "dev", "task"):
+        module = __import__(f"agentseek.cli.commands.{command}", fromlist=[command])
+        assert all(value is not normalize_lifecycle for value in vars(module).values())
+
+
 @pytest.mark.parametrize(
     ("args", "expected_output"),
     [
