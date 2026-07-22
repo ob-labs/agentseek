@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import json
+import shutil
+import socket
+import subprocess
+import tomllib
+import urllib.request
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -29,6 +35,12 @@ from agentseek.cli.lifecycle.discovery import (
     ToolDiagnosticSource,
 )
 from agentseek.cli.lifecycle.normalize import normalize_lifecycle
+
+FIXTURES = Path(__file__).parent.parent / "fixtures" / "lifecycle"
+
+
+class _ExternalStateAccessed(AssertionError):
+    pass
 
 
 @pytest.mark.parametrize(
@@ -326,3 +338,164 @@ def test_normalize_lifecycle_v1_projection_is_sorted_safe_and_keeps_no_inferred_
     dump = normalized.model_dump_json()
     assert "never-retain-this-command" not in dump
     assert "never-retain-this-default" not in dump
+
+
+def test_normalize_lifecycle_unsafe_v1_omits_literals_and_keeps_safe_diagnostic_provenance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_root = tmp_path / "project-root-sentinel"
+    project_root.mkdir()
+    (project_root / "symlink-out").symlink_to(tmp_path / "outside", target_is_directory=True)
+    spec = LifecycleSpecV1.model_validate(
+        {
+            **tomllib.loads((FIXTURES / "v1-unsafe-projection.toml").read_text(encoding="utf-8")),
+            "path": project_root / ".agentseek" / "lifecycle.toml",
+        }
+    )
+
+    def forbidden(*_: object, **__: object) -> None:
+        raise _ExternalStateAccessed
+
+    with monkeypatch.context() as sentinels:
+        sentinels.setattr(socket, "create_connection", forbidden)
+        sentinels.setattr(urllib.request, "urlopen", forbidden)
+        sentinels.setattr(shutil, "which", forbidden)
+        sentinels.setattr(subprocess, "call", forbidden)
+        sentinels.setattr(subprocess, "Popen", forbidden)
+        sentinels.setattr(subprocess, "run", forbidden)
+        sentinels.setattr(Path, "exists", forbidden)
+        sentinels.setattr(Path, "is_file", forbidden)
+
+        normalized = normalize_lifecycle(spec, project_root=project_root)
+
+    assert normalized.services == (
+        NormalizedService(id="api", name=None, description=None, url=None, kind=None, display=None, primary=None, tech=None),
+    )
+    assert normalized.checks == (
+        NormalizedCheckDefinition(id="probe", service_id=None, target=None),
+    )
+    assert normalized.diagnostic_inputs == DiagnosticInputs(
+        env_file=PathDiagnosticSource(id="unsafe-path:env-file", path=None),
+        tools=(
+            ToolDiagnosticSource(id="tool:python", tool=SafeExecutableName(name="python")),
+            ToolDiagnosticSource(id="unsafe-path:required-tool:1", source_index=1, tool=None),
+        ),
+        required_paths=(
+            PathDiagnosticSource(id="path:safe-path.txt", path=SafeProjectPath(path="safe-path.txt")),
+            PathDiagnosticSource(id="unsafe-path:required:1", source_index=1, path=None),
+            PathDiagnosticSource(id="unsafe-path:required:3", source_index=3, path=None),
+        ),
+        process_cwds=(
+            PathDiagnosticSource(id="process-cwd:z-safe", owner_id="z-safe", path=SafeProjectPath(path="safe-cwd")),
+            PathDiagnosticSource(id="unsafe-path:process-cwd:0", owner_id="a-unsafe", source_index=0, path=None),
+        ),
+        environment=(
+            EnvironmentDiagnosticSource(id="env:API_KEY", name="API_KEY", has_usable_default=True),
+        ),
+        http_checks=(
+            HttpDiagnosticSource(id="service-check:probe", service_id=None, target=None, timeout=2.0, attempts=1),
+        ),
+    )
+    expected_warnings = (
+        NormalizationWarning(
+            code="duplicate_requirement_collapsed",
+            message="Duplicate requirement was collapsed.",
+            details={"requirement_type": "path", "first_index": 0, "duplicate_index": 4},
+        ),
+        NormalizationWarning(
+            code="duplicate_requirement_collapsed",
+            message="Duplicate requirement was collapsed.",
+            details={"requirement_type": "path", "first_index": 1, "duplicate_index": 2},
+        ),
+        NormalizationWarning(
+            code="duplicate_requirement_collapsed",
+            message="Duplicate requirement was collapsed.",
+            details={"requirement_type": "tool", "first_index": 0, "duplicate_index": 3},
+        ),
+        NormalizationWarning(
+            code="duplicate_requirement_collapsed",
+            message="Duplicate requirement was collapsed.",
+            details={"requirement_type": "tool", "first_index": 1, "duplicate_index": 2},
+        ),
+        NormalizationWarning(
+            code="lifecycle_v1_metadata_incomplete",
+            message="Lifecycle v1 metadata is incomplete.",
+            details={},
+        ),
+        NormalizationWarning(
+            code="unsafe_endpoint_omitted",
+            message="Unsafe endpoint was omitted.",
+            details={"owner_type": "check", "owner_id": "probe", "field": "target"},
+        ),
+        NormalizationWarning(
+            code="unsafe_endpoint_omitted",
+            message="Unsafe endpoint was omitted.",
+            details={"owner_type": "service", "owner_id": "api", "field": "url"},
+        ),
+        NormalizationWarning(
+            code="unsafe_path_omitted",
+            message="Unsafe project path was omitted.",
+            details={"owner_type": "env_file", "owner_id": None, "index": None, "field": "env_file"},
+        ),
+        NormalizationWarning(
+            code="unsafe_path_omitted",
+            message="Unsafe project path was omitted.",
+            details={"owner_type": "process", "owner_id": "a-unsafe", "index": None, "field": "cwd"},
+        ),
+        NormalizationWarning(
+            code="unsafe_path_omitted",
+            message="Unsafe project path was omitted.",
+            details={"owner_type": "required_path", "owner_id": None, "index": 1, "field": "path"},
+        ),
+        NormalizationWarning(
+            code="unsafe_path_omitted",
+            message="Unsafe project path was omitted.",
+            details={"owner_type": "required_path", "owner_id": None, "index": 3, "field": "path"},
+        ),
+        NormalizationWarning(
+            code="unsafe_path_omitted",
+            message="Unsafe project path was omitted.",
+            details={"owner_type": "required_tool", "owner_id": None, "index": 1, "field": "tool"},
+        ),
+        NormalizationWarning(
+            code="unsafe_path_omitted",
+            message="Unsafe project path was omitted.",
+            details={"owner_type": "task", "owner_id": "unsafe-task", "index": None, "field": "cwd"},
+        ),
+    )
+    assert normalized.warnings == expected_warnings
+    assert tuple(sorted(normalized.warnings, key=lambda warning: (warning.code, warning.message, json.dumps(warning.details, separators=(",", ":"))))) == expected_warnings
+
+    all_source_ids = [
+        source.id
+        for sources in (
+            normalized.diagnostic_inputs.tools,
+            normalized.diagnostic_inputs.required_paths,
+            normalized.diagnostic_inputs.process_cwds,
+            normalized.diagnostic_inputs.environment,
+            normalized.diagnostic_inputs.http_checks,
+        )
+        for source in sources
+    ]
+    assert normalized.diagnostic_inputs.env_file is not None
+    all_source_ids.append(normalized.diagnostic_inputs.env_file.id)
+    assert len(all_source_ids) == len(set(all_source_ids))
+
+    dump = normalized.model_dump_json()
+    for rejected_literal in (
+        "service-user",
+        "service-password",
+        "query-secret",
+        "env-file-secret",
+        "unsafe-tool-secret",
+        "unsafe-path-secret",
+        "escaped-path-secret",
+        "process-cwd-secret",
+        "task-cwd-secret",
+        "process-command-secret",
+        "task-command-secret",
+        "environment-default-secret",
+        "project-root-sentinel",
+    ):
+        assert rejected_literal not in dump
