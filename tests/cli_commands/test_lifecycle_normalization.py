@@ -818,6 +818,45 @@ def test_normalize_lifecycle_v2_action_fields_are_normative_for_same_id_fixture(
     )
 
 
+def test_normalize_lifecycle_v2_hidden_only_process_provider_does_not_start_dev(tmp_path: Path) -> None:
+    project_root = tmp_path / "project-root-sentinel"
+    project_root.mkdir()
+    spec = LifecycleSpecV2.model_validate(
+        {
+            "version": 2,
+            "template": "example/hidden-provider",
+            "name": "Hidden Provider Project",
+            "services": {
+                "app": {
+                    "name": "Application",
+                    "url": "http://127.0.0.1:8000",
+                    "kind": "web",
+                    "primary": True,
+                    "description": "Visible application.",
+                },
+                "internal": {
+                    "name": "Internal API",
+                    "url": "http://127.0.0.1:8100",
+                    "kind": "api",
+                    "display": "hidden",
+                    "description": "Hidden implementation service.",
+                },
+            },
+            "processes": {"internal": {"command": ["python", "internal.py"]}},
+        },
+        context={"project_root": project_root, "loader_path": project_root / ".agentseek" / "loader-path-sentinel.toml"},
+    )
+
+    normalized = normalize_lifecycle(spec, project_root=project_root)
+
+    assert normalized.services[0].providers == ()
+    assert normalized.services[1].providers == (NormalizedProvider(type="dev", id="process:internal", process_id="internal"),)
+    assert normalized.actions == (
+        NormalizedAction(id="service:app:open", type="open_url", label="Open Application", service_id="app", url="http://127.0.0.1:8000"),
+    )
+    assert "project:start_dev" not in {action.id for action in normalized.actions}
+
+
 def test_normalize_lifecycle_v2_topology_deduplicates_edges_and_actions_stably(tmp_path: Path) -> None:
     project_root = tmp_path / "project-root-sentinel"
     project_root.mkdir()
