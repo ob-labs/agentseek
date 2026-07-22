@@ -24,6 +24,9 @@ from cookiecutter.main import cookiecutter
 from typer.testing import CliRunner
 
 from agentseek.cli.commands import create as create_module
+from agentseek.cli.lifecycle import normalize_lifecycle
+from agentseek.cli.lifecycle.authored import LifecycleSpecV1
+from agentseek.cli.lifecycle.spec import read_lifecycle_spec
 from tests.cli_commands.helpers import build_command_app
 
 
@@ -314,6 +317,77 @@ def test_template_renders_without_unrendered_jinja(
         _assert_agentic_rag_hybrid_template(generated, lifecycle_data)
 
     _assert_frontend_package_json(generated)
+
+
+@pytest.mark.parametrize(
+    ("type_name", "template_name", "template_dir"),
+    TEMPLATES,
+    ids=[f"{t}/{n}" for t, n, _ in TEMPLATES],
+)
+def test_rendered_v1_template_normalizes_conservatively(
+    type_name: str,
+    template_name: str,
+    template_dir: Path,
+    tmp_path: Path,
+) -> None:
+    patched = _patch_template_for_test(template_dir, tmp_path)
+    out_dir = tmp_path / "output"
+    out_dir.mkdir()
+    cookiecutter(template=str(patched), output_dir=str(out_dir), no_input=True)
+    generated = next(path for path in out_dir.iterdir() if path.is_dir())
+
+    spec = read_lifecycle_spec(generated / ".agentseek" / "lifecycle.toml", project_root=generated)
+    assert isinstance(spec, LifecycleSpecV1), f"{type_name}/{template_name} must remain a lifecycle v1 template"
+    normalized = normalize_lifecycle(spec, project_root=generated)
+
+    assert normalized.lifecycle_version == 1
+    assert normalized.metadata_complete is False
+    assert normalized.actions == ()
+    assert all(
+        service.name is None
+        and service.description is None
+        and service.kind is None
+        and service.display is None
+        and service.primary is None
+        and service.tech is None
+        and service.providers == ()
+        and service.check_ids == ()
+        and service.links == ()
+        for service in normalized.services
+    )
+    assert all(check.service_id is None for check in normalized.checks)
+    assert all(task.starts == () and task.stops == () for task in normalized.tasks)
+    normalized_dump = normalized.model_dump_json()
+    assert str(generated.resolve()) not in normalized_dump
+    for process in spec.processes.values():
+        assert json.dumps(list(process.command), separators=(",", ":")) not in normalized_dump
+    for task in spec.tasks.values():
+        assert json.dumps(list(task.command), separators=(",", ":")) not in normalized_dump
+    projected_authored_literals = {
+        spec.template,
+        spec.name,
+        *(requirement.description for requirement in spec.env.values()),
+        *(alias for requirement in spec.env.values() for alias in requirement.aliases),
+        *(service.url for service in spec.services.values()),
+        *(check.target for check in spec.checks.values()),
+        *(task.description for task in spec.tasks.values()),
+    }
+    normalized_scalars: set[object] = set()
+
+    def collect_scalars(value: object) -> None:
+        if isinstance(value, dict):
+            for item in value.values():
+                collect_scalars(item)
+        elif isinstance(value, list):
+            for item in value:
+                collect_scalars(item)
+        else:
+            normalized_scalars.add(value)
+
+    collect_scalars(normalized.model_dump(mode="json"))
+    for requirement in spec.env.values():
+        if requirement.default and requirement.default not in projected_authored_literals:
+            assert requirement.default not in normalized_scalars
 
 
 @pytest.mark.parametrize(

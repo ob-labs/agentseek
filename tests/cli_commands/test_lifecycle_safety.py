@@ -51,6 +51,49 @@ def test_resolve_confined_project_path_accepts_missing_descendant(tmp_path: Path
     assert resolve_confined_project_path(tmp_path, "missing/nested") == (tmp_path / "missing" / "nested").resolve()
 
 
+@pytest.mark.parametrize("value", ["README.md", "nested/path", r"nested\path", "./nested"])
+def test_validate_project_relative_path_accepts_safe_lexical_paths_without_io(
+    value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def forbidden(*_: object, **__: object) -> None:
+        raise AssertionError
+
+    monkeypatch.setattr(safety, "resolve_confined_project_path", forbidden)
+
+    assert safety.validate_project_relative_path(value) == value
+
+
+def test_validate_project_relative_path_accepts_dot_only_when_allowed() -> None:
+    assert safety.validate_project_relative_path(".", allow_dot=True) == "."
+
+    with pytest.raises(ValueError):
+        safety.validate_project_relative_path(".")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "",
+        "   ",
+        "safe\x00path",
+        "/absolute/path",
+        r"C:\absolute\path",
+        "C:/absolute/path",
+        r"C:relative\path",
+        r"\\server\share",
+        "//server/share",
+        "..",
+        "../escape",
+        r"..\escape",
+        "safe/../escape",
+        r"safe\..\escape",
+    ],
+)
+def test_validate_project_relative_path_rejects_unsafe_lexical_values(value: str) -> None:
+    with pytest.raises(ValueError):
+        safety.validate_project_relative_path(value)
+
+
 def test_resolve_confined_project_path_accepts_dot_only_when_allowed(tmp_path: Path) -> None:
     assert resolve_confined_project_path(tmp_path, ".", allow_dot=True) == tmp_path.resolve()
 
@@ -449,5 +492,6 @@ def test_lifecycle_endpoint_interfaces_are_publicly_exported() -> None:
         "validate_service_url",
         "validate_check_target",
         "validate_reference_url",
+        "validate_project_relative_path",
         "safe_v1_endpoint",
     }.issubset(safety.__all__)

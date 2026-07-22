@@ -1,0 +1,30 @@
+version = 1
+name = "Unsafe Projection"
+env_file = "../env-file-secret"
+
+[tools]
+required = ["python", "../unsafe-tool-secret", "../unsafe-tool-secret", "python"]
+
+[paths]
+required = ["safe-path.txt", "../unsafe-path-secret", "../unsafe-path-secret", "symlink-out/escaped-path-secret", "safe-path.txt"]
+
+[env.API_KEY]
+default = "environment-default-secret"
+
+[services.api]
+url = "http://service-user:service-password@127.0.0.1:8000"
+
+[checks.probe]
+target = "http://127.0.0.1:8000/health?query-secret=yes"
+
+[processes.z-safe]
+command = ["python", "process-command-secret"]
+cwd = "safe-cwd"
+
+[processes.a-unsafe]
+command = ["python", "process-command-secret"]
+cwd = "../process-cwd-secret"
+
+[tasks.unsafe-task]
+command = ["python", "task-command-secret"]
+cwd = "../task-cwd-secret"

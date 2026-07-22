@@ -339,6 +339,50 @@ def test_task_lists_spec_tasks(tmp_path: Path, monkeypatch) -> None:
     assert "Write a task marker." in result.stdout
 
 
+def test_human_command_modules_do_not_bind_the_normalization_function() -> None:
+    from agentseek.cli.lifecycle.normalize import normalize_lifecycle
+
+    for command in ("info", "doctor", "dev", "task"):
+        module = __import__(f"agentseek.cli.commands.{command}", fromlist=[command])
+        assert all(value is not normalize_lifecycle for value in vars(module).values())
+
+
+@pytest.mark.parametrize(
+    ("args", "expected_output"),
+    [
+        (["info"], "Name: Spec Project"),
+        (["doctor"], "ok   lifecycle.toml: Lifecycle spec is present."),
+        (["doctor", "--live"], "ok   app: http://127.0.0.1:5173 is reachable."),
+        (["dev", "--dry-run", "--skip-check"], "Startup plan"),
+        (["task", "--list"], "version"),
+    ],
+)
+def test_human_lifecycle_commands_remain_lazy_about_normalization(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    args: list[str],
+    expected_output: str,
+) -> None:
+    _write_lifecycle_spec(tmp_path)
+    _write_project_inputs(tmp_path)
+
+    def normalization_must_not_run(*_: object, **__: object) -> None:
+        raise AssertionError
+
+    class FakeResponse:
+        status_code = 200
+
+    monkeypatch.setattr("agentseek.cli.lifecycle.normalize.normalize_lifecycle", normalization_must_not_run)
+    monkeypatch.setattr("agentseek.cli.lifecycle.normalize_lifecycle", normalization_must_not_run)
+    monkeypatch.setattr("agentseek.cli.lifecycle.core.httpx.get", lambda *_args, **_kwargs: FakeResponse())
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), args)
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert expected_output in result.stdout
+
+
 def test_task_runs_declared_command(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
     monkeypatch.chdir(tmp_path)
