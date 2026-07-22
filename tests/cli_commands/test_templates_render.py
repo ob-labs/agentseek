@@ -278,6 +278,7 @@ def test_template_renders_without_unrendered_jinja(
         "variable was referenced but not substituted."
     )
     lifecycle_data = tomllib.loads(lifecycle_text)
+    assert lifecycle_data["version"] == 1, f"{type_name}/{template_name} must retain lifecycle version 1"
     assert lifecycle_data["template"] == f"{type_name}/{template_name}"
     assert lifecycle_data["processes"]
     assert not (generated / "duties.py").exists()
@@ -351,8 +352,8 @@ def test_template_lifecycle_commands_smoke(
     if (type_name, template_name) in dependency_sync_templates:
         task_calls: list[tuple[list[str], Path]] = []
 
-        def record_task(command: Sequence[str], *, cwd: Path) -> int:
-            task_calls.append((list(command), cwd))
+        def record_task(command: Sequence[str], *, project, cwd: str) -> int:
+            task_calls.append((list(command), project.root / cwd))
             return 0
 
         monkeypatch.setattr("agentseek.cli.lifecycle.core._run_command", record_task)

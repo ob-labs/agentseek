@@ -786,6 +786,38 @@ and detail shapes are:
 
 Validation issues are sorted by `path`, then `code`, then `message`. Issue
 messages identify the violated rule but never echo the rejected input value.
+Paths are application-owned: an empty location is `$`; integer segments append
+`[<index>]`; string segments matching `^[A-Za-z0-9][A-Za-z0-9_-]*$` are joined
+with `.`; every other string segment becomes `<invalid-id>`; and synthetic
+Pydantic `__root__` segments are omitted. Raw Pydantic messages and rejected
+input are not part of the public contract.
+
+| Pydantic or custom error type | Public issue code | Fixed public message |
+| --- | --- | --- |
+| `missing` | `field_required` | `Required field is missing.` |
+| `extra_forbidden` | `field_forbidden` | `Field is not allowed.` |
+| `string_type`, `bool_type`, `bool_parsing`, `int_type`, `int_parsing`, `int_from_float`, `float_type`, `float_parsing`, `finite_number`, `tuple_type`, `list_type`, `dict_type`, `model_type` | `type_invalid` | `Value has an invalid type.` |
+| `literal_error` | `literal_invalid` | `Value is not an allowed choice.` |
+| `greater_than` | `number_not_positive` | `Value must be greater than zero.` |
+| `empty_command` | `command_empty` | `Command must not be empty.` |
+| `missing_name`, `blank_value` | `value_blank` | `Value must not be blank.` |
+| `missing_processes` | `process_required` | `At least one process must be declared.` |
+| `invalid_identifier` | `identifier_invalid` | `Identifier has an invalid format.` |
+| `invalid_executable` | `tool_invalid` | `Required tool is not a safe executable name.` |
+| `unsafe_project_path` | `path_unsafe` | `Project path is unsafe.` |
+| `unresolved_placeholder` | `placeholder_unresolved` | `Value contains an unresolved placeholder.` |
+| `url_absolute_required`, `url_host_required`, `reference_host_invalid` | `url_invalid` | `URL is invalid.` |
+| `url_scheme_invalid` | `url_scheme_invalid` | `URL scheme is not allowed.` |
+| `url_control_forbidden`, `url_userinfo_forbidden`, `url_query_forbidden`, `url_fragment_forbidden` | `url_component_forbidden` | `URL contains a forbidden component.` |
+| `reference_query_invalid` | `reference_query_invalid` | `Reference query is not allowed.` |
+| `requirement_duplicate` | `requirement_duplicate` | `Requirement is duplicated.` |
+| `primary_required` | `primary_required` | `Exactly one primary service is required.` |
+| `primary_multiple` | `primary_multiple` | `Only one primary service is allowed.` |
+| `primary_hidden` | `primary_hidden` | `Primary service must not be hidden.` |
+| `service_reference_unknown` | `service_reference_unknown` | `Referenced service does not exist.` |
+| `check_service_required` | `check_service_missing` | `Check must be associated with a service.` |
+| Any unmapped Pydantic type | `value_invalid` | `Value is invalid.` |
+
 No error message or details may include exception text, raw commands,
 environment values, credentials, absolute host paths, or unsafe URLs.
 
