@@ -16,6 +16,8 @@ from agentseek.cli.lifecycle.discovery import (
     NormalizedEnvironmentRequirement,
     NormalizedLifecycleProject,
     NormalizedProject,
+    NormalizedProjectFile,
+    NormalizedReference,
     NormalizedService,
     NormalizedTask,
     PathDiagnosticSource,
@@ -307,6 +309,113 @@ def _normalize_v1(spec: LifecycleSpecV1, *, project_root: Path) -> NormalizedLif
     )
 
 
+def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLifecycleProject:
+    """Project validated v2 metadata without evaluating topology or commands."""
+    environment = tuple(
+        NormalizedEnvironmentRequirement(
+            name=name,
+            required=requirement.required,
+            description=_nullable_string(requirement.description),
+            aliases=tuple(sorted(requirement.aliases)),
+        )
+        for name, requirement in sorted(spec.env.items())
+    )
+    services = tuple(
+        NormalizedService(
+            id=service_id,
+            name=service.name,
+            description=service.description,
+            url=service.url,
+            kind=service.kind,
+            display=service.display,
+            primary=service.primary,
+            tech=service.tech,
+            links=tuple(
+                NormalizedReference(rel=rel, url=url)
+                for rel, url in sorted(service.links.items())
+            ),
+        )
+        for service_id, service in sorted(spec.services.items())
+    )
+    checks = tuple(
+        NormalizedCheckDefinition(
+            id=check_id,
+            service_id=None,
+            type=check.type,
+            target=check.target,
+            state="not_run",
+        )
+        for check_id, check in sorted(spec.checks.items())
+    )
+    tasks = tuple(
+        NormalizedTask(id=task_id, description=_nullable_string(task.description))
+        for task_id, task in sorted(spec.tasks.items())
+    )
+    diagnostic_inputs = DiagnosticInputs(
+        env_file=(
+            PathDiagnosticSource(
+                id=f"env-file:{spec.env_file}",
+                path=SafeProjectPath(path=spec.env_file),
+            )
+            if spec.env_file is not None
+            else None
+        ),
+        tools=tuple(
+            ToolDiagnosticSource(id=f"tool:{tool}", tool=SafeExecutableName(name=tool))
+            for tool in sorted(spec.required_tools)
+        ),
+        required_paths=tuple(
+            PathDiagnosticSource(id=f"path:{path}", path=SafeProjectPath(path=path))
+            for path in sorted(spec.required_paths)
+        ),
+        process_cwds=tuple(
+            PathDiagnosticSource(
+                id=f"process-cwd:{process_id}",
+                owner_id=process_id,
+                path=SafeProjectPath(path=process.cwd),
+            )
+            for process_id, process in sorted(spec.processes.items())
+        ),
+        environment=tuple(
+            EnvironmentDiagnosticSource(
+                id=f"env:{name}",
+                name=name,
+                aliases=tuple(sorted(requirement.aliases)),
+                required=requirement.required,
+                has_usable_default=bool(requirement.default),
+            )
+            for name, requirement in sorted(spec.env.items())
+        ),
+        http_checks=tuple(
+            HttpDiagnosticSource(
+                id=f"service-check:{check_id}",
+                service_id=None,
+                target=check.target,
+                timeout=check.timeout,
+                attempts=check.attempts,
+            )
+            for check_id, check in sorted(spec.checks.items())
+        ),
+    )
+    return NormalizedLifecycleProject(
+        lifecycle_version=2,
+        project=NormalizedProject(
+            template=spec.template,
+            name=spec.name,
+            description=spec.description,
+            guide=(NormalizedProjectFile(path=spec.guide) if spec.guide is not None else None),
+        ),
+        metadata_complete=True,
+        environment=environment,
+        services=services,
+        checks=checks,
+        tasks=tasks,
+        actions=(),
+        warnings=(),
+        diagnostic_inputs=diagnostic_inputs,
+    )
+
+
 def _is_safe_executable(value: str) -> bool:
     try:
         validate_bare_executable(value)
@@ -324,7 +433,7 @@ def normalize_lifecycle(
     if isinstance(spec, LifecycleSpecV1):
         return _normalize_v1(spec, project_root=project_root)
     if isinstance(spec, LifecycleSpecV2):
-        raise NotImplementedError
+        return _normalize_v2(spec, project_root=project_root)
     raise TypeError
 
 

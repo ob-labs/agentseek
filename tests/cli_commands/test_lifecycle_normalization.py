@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from agentseek.cli.lifecycle.authored import LifecycleSpecV1
+from agentseek.cli.lifecycle.authored import LifecycleSpecV1, LifecycleSpecV2
 from agentseek.cli.lifecycle.discovery import (
     DiagnosticInputs,
     EnvironmentDiagnosticSource,
@@ -41,6 +41,13 @@ FIXTURES = Path(__file__).parent.parent / "fixtures" / "lifecycle"
 
 class _ExternalStateAccessed(AssertionError):
     pass
+
+
+def _normalized_v2_projection_fixture(project_root: Path) -> LifecycleSpecV2:
+    return LifecycleSpecV2.model_validate(
+        tomllib.loads((FIXTURES / "v2-normalization-projection.toml").read_text(encoding="utf-8")),
+        context={"project_root": project_root, "loader_path": project_root / ".agentseek" / "loader-path-sentinel.toml"},
+    )
 
 
 @pytest.mark.parametrize(
@@ -499,3 +506,108 @@ def test_normalize_lifecycle_unsafe_v1_omits_literals_and_keeps_safe_diagnostic_
         "project-root-sentinel",
     ):
         assert rejected_literal not in dump
+
+
+def test_normalize_lifecycle_v2_scalar_reference_projection_is_sorted_and_secret_free(tmp_path: Path) -> None:
+    project_root = tmp_path / "project-root-sentinel"
+    project_root.mkdir()
+    normalized = normalize_lifecycle(_normalized_v2_projection_fixture(project_root), project_root=project_root)
+
+    assert normalized.lifecycle_version == 2
+    assert normalized.project == NormalizedProject(
+        template="example/normalization",
+        name="Projection Project",
+        description="",
+        guide=NormalizedProjectFile(path="docs/Guide.md"),
+    )
+    assert normalized.metadata_complete is True
+    assert normalized.warnings == ()
+    assert normalized.environment == (
+        NormalizedEnvironmentRequirement(name="A_KEY", required=False, description=None, aliases=("A-other", "z-other")),
+        NormalizedEnvironmentRequirement(name="Z_KEY", required=True, description=" Z description ", aliases=("A-alias", "z-alias")),
+    )
+    assert normalized.services == (
+        NormalizedService(
+            id="api",
+            name=" API Service ",
+            description=" API description ",
+            url="http://127.0.0.1:8000",
+            kind="api",
+            display="advanced",
+            primary=False,
+            tech="",
+            links=(
+                NormalizedReference(rel="api_docs", url="http://127.0.0.1:8000/docs"),
+                NormalizedReference(rel="docs", url="https://docs.example.test/guide"),
+                NormalizedReference(
+                    rel="studio",
+                    url="https://studio.example.test/?baseUrl=https%3A%2F%2F127.0.0.1%3A8000",
+                ),
+            ),
+        ),
+        NormalizedService(
+            id="web",
+            name=" Web Application ",
+            description=" Web description ",
+            url="http://127.0.0.1:5173",
+            kind="web",
+            display="default",
+            primary=True,
+            tech=None,
+        ),
+    )
+    assert normalized.checks == (
+        NormalizedCheckDefinition(id="web", service_id=None, target="http://127.0.0.1:5173/health"),
+        NormalizedCheckDefinition(id="z-api", service_id=None, target="http://127.0.0.1:8000/health"),
+    )
+    assert normalized.tasks == (
+        NormalizedTask(id="build", description=" Build description "),
+        NormalizedTask(id="z-task", description=None),
+    )
+    assert normalized.actions == ()
+    assert all(service.providers == () and service.check_ids == () for service in normalized.services)
+    assert all(check.service_id is None for check in normalized.checks)
+    assert all(task.starts == () and task.stops == () for task in normalized.tasks)
+
+    dump = normalized.model_dump_json()
+    for forbidden_literal in (
+        "process-command-sentinel",
+        "another-process-command-sentinel",
+        "task-command-sentinel",
+        "another-task-command-sentinel",
+        "task-cwd-sentinel",
+        "environment-default-sentinel",
+        "loader-path-sentinel",
+        "project-root-sentinel",
+    ):
+        assert forbidden_literal not in dump
+
+
+def test_normalize_lifecycle_v2_safe_diagnostic_inputs_are_relative_and_sorted(tmp_path: Path) -> None:
+    project_root = tmp_path / "project-root-sentinel"
+    project_root.mkdir()
+    normalized = normalize_lifecycle(_normalized_v2_projection_fixture(project_root), project_root=project_root)
+
+    assert normalized.diagnostic_inputs == DiagnosticInputs(
+        env_file=PathDiagnosticSource(id="env-file:.env", path=SafeProjectPath(path=".env")),
+        tools=(
+            ToolDiagnosticSource(id="tool:python", tool=SafeExecutableName(name="python")),
+            ToolDiagnosticSource(id="tool:zsh", tool=SafeExecutableName(name="zsh")),
+        ),
+        required_paths=(
+            PathDiagnosticSource(id="path:README.md", path=SafeProjectPath(path="README.md")),
+            PathDiagnosticSource(id="path:z/path", path=SafeProjectPath(path="z/path")),
+        ),
+        process_cwds=(
+            PathDiagnosticSource(id="process-cwd:a-process", owner_id="a-process", path=SafeProjectPath(path="backend")),
+            PathDiagnosticSource(id="process-cwd:z-process", owner_id="z-process", path=SafeProjectPath(path=".")),
+        ),
+        environment=(
+            EnvironmentDiagnosticSource(id="env:A_KEY", name="A_KEY", aliases=("A-other", "z-other"), required=False, has_usable_default=False),
+            EnvironmentDiagnosticSource(id="env:Z_KEY", name="Z_KEY", aliases=("A-alias", "z-alias"), required=True, has_usable_default=True),
+        ),
+        http_checks=(
+            HttpDiagnosticSource(id="service-check:web", service_id=None, target="http://127.0.0.1:5173/health", timeout=3.5, attempts=5),
+            HttpDiagnosticSource(id="service-check:z-api", service_id=None, target="http://127.0.0.1:8000/health", timeout=4.5, attempts=6),
+        ),
+    )

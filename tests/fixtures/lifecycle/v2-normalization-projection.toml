@@ -1,0 +1,75 @@
+version = 2
+template = "example/normalization"
+name = "Projection Project"
+description = ""
+env_file = ".env"
+guide = "docs/Guide.md"
+
+[tools]
+required = ["zsh", "python"]
+
+[paths]
+required = ["z/path", "README.md"]
+
+[env.Z_KEY]
+required = true
+default = "environment-default-sentinel"
+description = " Z description "
+aliases = ["z-alias", "A-alias"]
+
+[env.A_KEY]
+required = false
+default = ""
+description = ""
+aliases = ["z-other", "A-other"]
+
+[services.web]
+name = " Web Application "
+url = "http://127.0.0.1:5173"
+kind = "web"
+display = "default"
+primary = true
+description = " Web description "
+
+[services.api]
+name = " API Service "
+url = "http://127.0.0.1:8000"
+kind = "api"
+display = "advanced"
+primary = false
+description = " API description "
+tech = ""
+links = { studio = "https://studio.example.test/?baseUrl=https%3A%2F%2F127.0.0.1%3A8000", docs = "https://docs.example.test/guide", api_docs = "http://127.0.0.1:8000/docs" }
+
+[processes.z-process]
+command = ["python", "process-command-sentinel"]
+cwd = "."
+provides = ["web"]
+
+[processes.a-process]
+command = ["python", "another-process-command-sentinel"]
+cwd = "backend"
+provides = ["api"]
+
+[checks.z-api]
+target = "http://127.0.0.1:8000/health"
+timeout = 4.5
+attempts = 6
+service = "api"
+
+[checks.web]
+target = "http://127.0.0.1:5173/health"
+timeout = 3.5
+attempts = 5
+
+[tasks.z-task]
+command = ["python", "task-command-sentinel"]
+cwd = "task-cwd-sentinel"
+description = ""
+starts = ["web"]
+stops = ["api"]
+
+[tasks.build]
+command = ["python", "another-task-command-sentinel"]
+description = " Build description "
+starts = ["api"]
