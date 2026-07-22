@@ -12,11 +12,13 @@ from agentseek.cli.lifecycle.discovery import (
     EnvironmentDiagnosticSource,
     HttpDiagnosticSource,
     NormalizationWarning,
+    NormalizedAction,
     NormalizedCheckDefinition,
     NormalizedEnvironmentRequirement,
     NormalizedLifecycleProject,
     NormalizedProject,
     NormalizedProjectFile,
+    NormalizedProvider,
     NormalizedReference,
     NormalizedService,
     NormalizedTask,
@@ -309,8 +311,108 @@ def _normalize_v1(spec: LifecycleSpecV1, *, project_root: Path) -> NormalizedLif
     )
 
 
+def _v2_topology(
+    spec: LifecycleSpecV2,
+) -> tuple[
+    tuple[NormalizedTask, ...],
+    dict[str, dict[str, NormalizedProvider]],
+    dict[str, set[str]],
+    dict[str, str],
+]:
+    """Resolve only the explicit authored v2 relationship graph."""
+    providers_by_service: dict[str, dict[str, NormalizedProvider]] = {service_id: {} for service_id in spec.services}
+    check_ids_by_service: dict[str, set[str]] = {service_id: set() for service_id in spec.services}
+    check_service_ids: dict[str, str] = {}
+
+    for process_id, process in spec.processes.items():
+        provided_service_ids = process.provides
+        if provided_service_ids is None:
+            provided_service_ids = (process_id,) if process_id in spec.services else ()
+        provider = NormalizedProvider(type="dev", id=f"process:{process_id}", process_id=process_id)
+        for service_id in provided_service_ids:
+            providers_by_service[service_id][provider.id] = provider
+
+    for check_id, check in spec.checks.items():
+        service_id = check.service if check.service is not None else check_id
+        check_service_ids[check_id] = service_id
+        check_ids_by_service[service_id].add(check_id)
+
+    tasks = tuple(
+        NormalizedTask(
+            id=task_id,
+            description=_nullable_string(task.description),
+            starts=tuple(sorted(set(task.starts))),
+            stops=tuple(sorted(set(task.stops))),
+        )
+        for task_id, task in sorted(spec.tasks.items())
+    )
+    for task in tasks:
+        provider = NormalizedProvider(type="task", id=f"task:{task.id}", task_id=task.id)
+        for service_id in task.starts:
+            providers_by_service[service_id][provider.id] = provider
+    return tasks, providers_by_service, check_ids_by_service, check_service_ids
+
+
+def _v2_actions(
+    services: tuple[NormalizedService, ...],
+    tasks: tuple[NormalizedTask, ...],
+) -> tuple[NormalizedAction, ...]:
+    """Derive presentation-safe actions from the normalized v2 graph."""
+    actions: list[NormalizedAction] = []
+    for service in services:
+        if service.display == "hidden":
+            continue
+        if service.kind == "web":
+            actions.append(
+                NormalizedAction(
+                    id=f"service:{service.id}:open",
+                    type="open_url",
+                    label=f"Open {service.name}",
+                    service_id=service.id,
+                    url=service.url,
+                )
+            )
+        elif service.kind in {"api", "protocol", "database"}:
+            actions.append(
+                NormalizedAction(
+                    id=f"service:{service.id}:copy",
+                    type="copy_endpoint",
+                    label=f"Copy {service.name} endpoint",
+                    service_id=service.id,
+                    url=service.url,
+                )
+            )
+        actions.extend(
+            NormalizedAction(
+                id=f"service:{service.id}:reference:{reference.rel}",
+                type="open_reference",
+                label=f"Open {service.name} {reference.rel}",
+                service_id=service.id,
+                url=reference.url,
+                reference_rel=reference.rel,
+            )
+            for reference in service.links
+        )
+    if any(service.display != "hidden" and any(provider.type == "dev" for provider in service.providers) for service in services):
+        actions.append(NormalizedAction(id="project:start_dev", type="start_dev", label="Start development"))
+    non_hidden_service_ids = {service.id for service in services if service.display != "hidden"}
+    for task in tasks:
+        if set(task.starts).union(task.stops).intersection(non_hidden_service_ids):
+            actions.append(
+                NormalizedAction(
+                    id=f"task:{task.id}",
+                    type="run_task",
+                    label=f"Run task {task.id}",
+                    task_id=task.id,
+                )
+            )
+    return tuple(sorted(actions, key=lambda action: action.id))
+
+
 def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLifecycleProject:
-    """Project validated v2 metadata without evaluating topology or commands."""
+    """Project validated v2 metadata and explicit topology without commands."""
+    tasks, providers_by_service, check_ids_by_service, check_service_ids = _v2_topology(spec)
+
     environment = tuple(
         NormalizedEnvironmentRequirement(
             name=name,
@@ -330,6 +432,8 @@ def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLif
             display=service.display,
             primary=service.primary,
             tech=service.tech,
+            providers=tuple(sorted(providers_by_service[service_id].values(), key=lambda provider: (provider.type, provider.id))),
+            check_ids=tuple(sorted(check_ids_by_service[service_id])),
             links=tuple(
                 NormalizedReference(rel=rel, url=url)
                 for rel, url in sorted(service.links.items())
@@ -340,16 +444,12 @@ def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLif
     checks = tuple(
         NormalizedCheckDefinition(
             id=check_id,
-            service_id=None,
+            service_id=check_service_ids[check_id],
             type=check.type,
             target=check.target,
             state="not_run",
         )
         for check_id, check in sorted(spec.checks.items())
-    )
-    tasks = tuple(
-        NormalizedTask(id=task_id, description=_nullable_string(task.description))
-        for task_id, task in sorted(spec.tasks.items())
     )
     diagnostic_inputs = DiagnosticInputs(
         env_file=(
@@ -389,7 +489,7 @@ def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLif
         http_checks=tuple(
             HttpDiagnosticSource(
                 id=f"service-check:{check_id}",
-                service_id=None,
+                service_id=check_service_ids[check_id],
                 target=check.target,
                 timeout=check.timeout,
                 attempts=check.attempts,
@@ -410,7 +510,7 @@ def _normalize_v2(spec: LifecycleSpecV2, *, project_root: Path) -> NormalizedLif
         services=services,
         checks=checks,
         tasks=tasks,
-        actions=(),
+        actions=_v2_actions(services, tasks),
         warnings=(),
         diagnostic_inputs=diagnostic_inputs,
     )

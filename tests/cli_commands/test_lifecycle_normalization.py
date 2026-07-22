@@ -50,6 +50,118 @@ def _normalized_v2_projection_fixture(project_root: Path) -> LifecycleSpecV2:
     )
 
 
+def _v2_topology_spec(project_root: Path, *, reverse: bool = False) -> LifecycleSpecV2:
+    """Build equivalent v2 topology inputs with deliberately varied ordering."""
+    services = [
+        (
+            "app",
+            {
+                "name": "Application",
+                "url": "http://127.0.0.1:8000",
+                "kind": "web",
+                "primary": True,
+                "description": "Browser application.",
+            },
+        ),
+        (
+            "api",
+            {
+                "name": "API",
+                "url": "http://127.0.0.1:8100",
+                "kind": "api",
+                "display": "advanced",
+                "description": "Application API.",
+                "links": {
+                    "docs": "https://docs.example.test/api",
+                    "api_docs": "https://docs.example.test/api/openapi",
+                    "studio": "https://studio.example.test/?baseUrl=https%3A%2F%2F127.0.0.1%3A8100",
+                },
+            },
+        ),
+        (
+            "database",
+            {
+                "name": "Database",
+                "url": "mysql://127.0.0.1:3306/app",
+                "kind": "database",
+                "description": "Application database.",
+            },
+        ),
+        (
+            "other",
+            {
+                "name": "Other service",
+                "url": "http://127.0.0.1:8200",
+                "kind": "other",
+                "display": "advanced",
+                "description": "No endpoint action.",
+            },
+        ),
+        (
+            "protocol",
+            {
+                "name": "Hidden protocol",
+                "url": "http://127.0.0.1:8300",
+                "kind": "protocol",
+                "display": "hidden",
+                "description": "Internal protocol service.",
+            },
+        ),
+    ]
+    processes = [
+        ("alpha", {"command": ["python", "alpha.py"], "provides": ["app", "app", "api"]}),
+        ("bravo", {"command": ["python", "bravo.py"], "provides": ["app"]}),
+        ("hidden", {"command": ["python", "hidden.py"], "provides": ["protocol", "protocol"]}),
+    ]
+    checks = [
+        ("app", {"target": "http://127.0.0.1:8000/health"}),
+        ("api-probe", {"target": "http://127.0.0.1:8100/health", "service": "api"}),
+    ]
+    tasks = [
+        (
+            "multi",
+            {
+                "command": ["python", "multi.py"],
+                "starts": ["app", "app", "api"],
+                "stops": ["database", "database"],
+            },
+        ),
+        (
+            "hidden-only",
+            {
+                "command": ["python", "hidden.py"],
+                "starts": ["protocol", "protocol"],
+                "stops": ["protocol"],
+            },
+        ),
+    ]
+    if reverse:
+        services.reverse()
+        processes.reverse()
+        checks.reverse()
+        tasks.reverse()
+        for _, process in processes:
+            process["provides"] = list(reversed(process["provides"]))
+        for _, task in tasks:
+            for effect in ("starts", "stops"):
+                if effect in task:
+                    task[effect] = list(reversed(task[effect]))
+        api_service = dict(services)["api"]
+        api_service["links"] = dict(reversed(tuple(api_service["links"].items())))
+    return LifecycleSpecV2.model_validate(
+        {
+            "version": 2,
+            "template": "example/topology",
+            "name": "Topology Project",
+            "services": dict(services),
+            "processes": dict(processes),
+            "checks": dict(checks),
+            "tasks": dict(tasks),
+        },
+        context={"project_root": project_root, "loader_path": project_root / ".agentseek" / "loader-path-sentinel.toml"},
+    )
+
+
 @pytest.mark.parametrize(
     ("model", "fields"),
     [
@@ -536,6 +648,11 @@ def test_normalize_lifecycle_v2_scalar_reference_projection_is_sorted_and_secret
             display="advanced",
             primary=False,
             tech="",
+            providers=(
+                NormalizedProvider(type="dev", id="process:a-process", process_id="a-process"),
+                NormalizedProvider(type="task", id="task:build", task_id="build"),
+            ),
+            check_ids=("z-api",),
             links=(
                 NormalizedReference(rel="api_docs", url="http://127.0.0.1:8000/docs"),
                 NormalizedReference(rel="docs", url="https://docs.example.test/guide"),
@@ -554,20 +671,31 @@ def test_normalize_lifecycle_v2_scalar_reference_projection_is_sorted_and_secret
             display="default",
             primary=True,
             tech=None,
+            providers=(
+                NormalizedProvider(type="dev", id="process:z-process", process_id="z-process"),
+                NormalizedProvider(type="task", id="task:z-task", task_id="z-task"),
+            ),
+            check_ids=("web",),
         ),
     )
     assert normalized.checks == (
-        NormalizedCheckDefinition(id="web", service_id=None, target="http://127.0.0.1:5173/health"),
-        NormalizedCheckDefinition(id="z-api", service_id=None, target="http://127.0.0.1:8000/health"),
+        NormalizedCheckDefinition(id="web", service_id="web", target="http://127.0.0.1:5173/health"),
+        NormalizedCheckDefinition(id="z-api", service_id="api", target="http://127.0.0.1:8000/health"),
     )
     assert normalized.tasks == (
-        NormalizedTask(id="build", description=" Build description "),
-        NormalizedTask(id="z-task", description=None),
+        NormalizedTask(id="build", description=" Build description ", starts=("api",)),
+        NormalizedTask(id="z-task", description=None, starts=("web",), stops=("api",)),
     )
-    assert normalized.actions == ()
-    assert all(service.providers == () and service.check_ids == () for service in normalized.services)
-    assert all(check.service_id is None for check in normalized.checks)
-    assert all(task.starts == () and task.stops == () for task in normalized.tasks)
+    assert normalized.actions == (
+        NormalizedAction(id="project:start_dev", type="start_dev", label="Start development"),
+        NormalizedAction(id="service:api:copy", type="copy_endpoint", label="Copy  API Service  endpoint", service_id="api", url="http://127.0.0.1:8000"),
+        NormalizedAction(id="service:api:reference:api_docs", type="open_reference", label="Open  API Service  api_docs", service_id="api", url="http://127.0.0.1:8000/docs", reference_rel="api_docs"),
+        NormalizedAction(id="service:api:reference:docs", type="open_reference", label="Open  API Service  docs", service_id="api", url="https://docs.example.test/guide", reference_rel="docs"),
+        NormalizedAction(id="service:api:reference:studio", type="open_reference", label="Open  API Service  studio", service_id="api", url="https://studio.example.test/?baseUrl=https%3A%2F%2F127.0.0.1%3A8000", reference_rel="studio"),
+        NormalizedAction(id="service:web:open", type="open_url", label="Open  Web Application ", service_id="web", url="http://127.0.0.1:5173"),
+        NormalizedAction(id="task:build", type="run_task", label="Run task build", task_id="build"),
+        NormalizedAction(id="task:z-task", type="run_task", label="Run task z-task", task_id="z-task"),
+    )
 
     dump = normalized.model_dump_json()
     for forbidden_literal in (
@@ -607,7 +735,119 @@ def test_normalize_lifecycle_v2_safe_diagnostic_inputs_are_relative_and_sorted(t
             EnvironmentDiagnosticSource(id="env:Z_KEY", name="Z_KEY", aliases=("A-alias", "z-alias"), required=True, has_usable_default=True),
         ),
         http_checks=(
-            HttpDiagnosticSource(id="service-check:web", service_id=None, target="http://127.0.0.1:5173/health", timeout=3.5, attempts=5),
-            HttpDiagnosticSource(id="service-check:z-api", service_id=None, target="http://127.0.0.1:8000/health", timeout=4.5, attempts=6),
+            HttpDiagnosticSource(id="service-check:web", service_id="web", target="http://127.0.0.1:5173/health", timeout=3.5, attempts=5),
+            HttpDiagnosticSource(id="service-check:z-api", service_id="api", target="http://127.0.0.1:8000/health", timeout=4.5, attempts=6),
         ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("fixture_name", "expected_provider_ids", "expected_check_ids", "expected_task_effects", "expected_action_ids"),
+    [
+        (
+            "v2-same-id.toml",
+            {"app": ("process:app",)},
+            {"app": ("app",)},
+            {},
+            ("project:start_dev", "service:app:open"),
+        ),
+        (
+            "v2-bub-explicit.toml",
+            {"app": ("process:frontend",), "copilotkit": ("process:frontend",), "gateway": ("process:gateway",)},
+            {"app": ("frontend",), "copilotkit": (), "gateway": ("gateway",)},
+            {},
+            ("project:start_dev", "service:app:open", "service:gateway:copy", "service:gateway:reference:docs"),
+        ),
+        (
+            "v2-service-free.toml",
+            {},
+            {},
+            {"seed": ((), ())},
+            (),
+        ),
+        (
+            "v2-task-providers.toml",
+            {"app": ("process:app", "task:stack"), "database": ("task:stack",)},
+            {"app": (), "database": ()},
+            {"stack": (("app", "database"), ()), "stack-stop": ((), ("app", "database"))},
+            ("project:start_dev", "service:app:open", "service:database:copy", "task:stack", "task:stack-stop"),
+        ),
+    ],
+)
+def test_normalize_lifecycle_v2_topology_fixture_relationships_and_actions(
+    tmp_path: Path,
+    fixture_name: str,
+    expected_provider_ids: dict[str, tuple[str, ...]],
+    expected_check_ids: dict[str, tuple[str, ...]],
+    expected_task_effects: dict[str, tuple[tuple[str, ...], tuple[str, ...]]],
+    expected_action_ids: tuple[str, ...],
+) -> None:
+    project_root = tmp_path / "project-root-sentinel"
+    project_root.mkdir()
+    spec = LifecycleSpecV2.model_validate(
+        tomllib.loads((FIXTURES / fixture_name).read_text(encoding="utf-8")),
+        context={"project_root": project_root, "loader_path": project_root / ".agentseek" / "loader-path-sentinel.toml"},
+    )
+
+    normalized = normalize_lifecycle(spec, project_root=project_root)
+
+    assert {service.id: tuple(provider.id for provider in service.providers) for service in normalized.services} == expected_provider_ids
+    assert {service.id: service.check_ids for service in normalized.services} == expected_check_ids
+    assert {task.id: (task.starts, task.stops) for task in normalized.tasks} == expected_task_effects
+    assert tuple(action.id for action in normalized.actions) == expected_action_ids
+    assert tuple(action.id for action in normalized.actions) == tuple(sorted(action.id for action in normalized.actions))
+
+
+def test_normalize_lifecycle_v2_action_fields_are_normative_for_same_id_fixture(tmp_path: Path) -> None:
+    project_root = tmp_path / "project-root-sentinel"
+    project_root.mkdir()
+    spec = LifecycleSpecV2.model_validate(
+        tomllib.loads((FIXTURES / "v2-same-id.toml").read_text(encoding="utf-8")),
+        context={"project_root": project_root, "loader_path": project_root / ".agentseek" / "loader-path-sentinel.toml"},
+    )
+
+    normalized = normalize_lifecycle(spec, project_root=project_root)
+
+    assert normalized.services[0].providers == (NormalizedProvider(type="dev", id="process:app", process_id="app"),)
+    assert normalized.services[0].check_ids == ("app",)
+    assert normalized.checks == (NormalizedCheckDefinition(id="app", service_id="app", target="http://127.0.0.1:8000/health"),)
+    assert normalized.diagnostic_inputs.http_checks[0].service_id == "app"
+    assert normalized.actions == (
+        NormalizedAction(id="project:start_dev", type="start_dev", label="Start development"),
+        NormalizedAction(id="service:app:open", type="open_url", label="Open Application", service_id="app", url="http://127.0.0.1:8000"),
+    )
+
+
+def test_normalize_lifecycle_v2_topology_deduplicates_edges_and_actions_stably(tmp_path: Path) -> None:
+    project_root = tmp_path / "project-root-sentinel"
+    project_root.mkdir()
+
+    normalized = normalize_lifecycle(_v2_topology_spec(project_root), project_root=project_root)
+    reversed_normalized = normalize_lifecycle(_v2_topology_spec(project_root, reverse=True), project_root=project_root)
+
+    assert normalized.model_dump_json() == reversed_normalized.model_dump_json()
+    assert normalized.services == (
+        NormalizedService(id="api", name="API", description="Application API.", url="http://127.0.0.1:8100", kind="api", display="advanced", primary=False, tech=None, providers=(NormalizedProvider(type="dev", id="process:alpha", process_id="alpha"), NormalizedProvider(type="task", id="task:multi", task_id="multi")), check_ids=("api-probe",), links=(NormalizedReference(rel="api_docs", url="https://docs.example.test/api/openapi"), NormalizedReference(rel="docs", url="https://docs.example.test/api"), NormalizedReference(rel="studio", url="https://studio.example.test/?baseUrl=https%3A%2F%2F127.0.0.1%3A8100"))),
+        NormalizedService(id="app", name="Application", description="Browser application.", url="http://127.0.0.1:8000", kind="web", display="default", primary=True, tech=None, providers=(NormalizedProvider(type="dev", id="process:alpha", process_id="alpha"), NormalizedProvider(type="dev", id="process:bravo", process_id="bravo"), NormalizedProvider(type="task", id="task:multi", task_id="multi")), check_ids=("app",)),
+        NormalizedService(id="database", name="Database", description="Application database.", url="mysql://127.0.0.1:3306/app", kind="database", display="default", primary=False, tech=None),
+        NormalizedService(id="other", name="Other service", description="No endpoint action.", url="http://127.0.0.1:8200", kind="other", display="advanced", primary=False, tech=None),
+        NormalizedService(id="protocol", name="Hidden protocol", description="Internal protocol service.", url="http://127.0.0.1:8300", kind="protocol", display="hidden", primary=False, tech=None, providers=(NormalizedProvider(type="dev", id="process:hidden", process_id="hidden"), NormalizedProvider(type="task", id="task:hidden-only", task_id="hidden-only"))),
+    )
+    assert normalized.checks == (
+        NormalizedCheckDefinition(id="api-probe", service_id="api", target="http://127.0.0.1:8100/health"),
+        NormalizedCheckDefinition(id="app", service_id="app", target="http://127.0.0.1:8000/health"),
+    )
+    assert normalized.tasks == (
+        NormalizedTask(id="hidden-only", description=None, starts=("protocol",), stops=("protocol",)),
+        NormalizedTask(id="multi", description=None, starts=("api", "app"), stops=("database",)),
+    )
+    assert normalized.actions == (
+        NormalizedAction(id="project:start_dev", type="start_dev", label="Start development"),
+        NormalizedAction(id="service:api:copy", type="copy_endpoint", label="Copy API endpoint", service_id="api", url="http://127.0.0.1:8100"),
+        NormalizedAction(id="service:api:reference:api_docs", type="open_reference", label="Open API api_docs", service_id="api", url="https://docs.example.test/api/openapi", reference_rel="api_docs"),
+        NormalizedAction(id="service:api:reference:docs", type="open_reference", label="Open API docs", service_id="api", url="https://docs.example.test/api", reference_rel="docs"),
+        NormalizedAction(id="service:api:reference:studio", type="open_reference", label="Open API studio", service_id="api", url="https://studio.example.test/?baseUrl=https%3A%2F%2F127.0.0.1%3A8100", reference_rel="studio"),
+        NormalizedAction(id="service:app:open", type="open_url", label="Open Application", service_id="app", url="http://127.0.0.1:8000"),
+        NormalizedAction(id="service:database:copy", type="copy_endpoint", label="Copy Database endpoint", service_id="database", url="mysql://127.0.0.1:3306/app"),
+        NormalizedAction(id="task:multi", type="run_task", label="Run task multi", task_id="multi"),
     )
