@@ -30,14 +30,15 @@ Spec resolution:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import shlex
 import shutil
 import subprocess
 import tarfile
 import tempfile
-from dataclasses import dataclass
-from pathlib import Path
+from dataclasses import asdict, dataclass
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
 import httpx
@@ -88,6 +89,13 @@ REPO_GIT_URL = f"{REPO_URL}.git"
 # The directory inside the repo that holds all cookiecutter templates.
 TEMPLATES_DIR = "templates"
 TEMPLATE_REPO_CACHE_DIR = "agentseek"
+PARTIAL_CACHE_DIR = f"{TEMPLATE_REPO_CACHE_DIR}-partial"
+CACHE_METADATA_SCHEMA_VERSION = 1
+CACHE_METADATA_FILENAME = ".agentseek-cache.json"
+MAX_ARCHIVE_DOWNLOAD_BYTES = 64 * 1024 * 1024
+MAX_ARCHIVE_MEMBERS = 10_000
+MAX_ARCHIVE_MEMBER_BYTES = 32 * 1024 * 1024
+MAX_ARCHIVE_UNCOMPRESSED_BYTES = 256 * 1024 * 1024
 QUARANTINED_TEMPLATE_KEYS: frozenset[str] = frozenset({"bub/contextseek"})
 
 
@@ -105,6 +113,92 @@ class TemplateSource:
     checkout: str | None = None  # cookiecutter ``checkout`` kwarg (branch / tag)
     install_source_path: str | None = None  # local monorepo path for generated project deps
     install_source_url: str | None = None  # remote repo URL for generated project deps
+
+
+@dataclass(frozen=True)
+class TemplateCacheMetadata:
+    """Identity data required before a template cache can be reused."""
+
+    schema_version: int
+    repository: str
+    ref: str
+    catalog_digest: str
+    template_key: str | None = None
+
+
+class _TemplateFetchError(Exception):
+    """Expected optimized-fetch rejection that should trigger clone fallback."""
+
+
+class _ArchiveLimitError(_TemplateFetchError):
+    """Archive input exceeded one of the configured resource limits."""
+
+
+class _UnsafeArchiveError(_TemplateFetchError):
+    """Archive input contained an unsafe path or entry type."""
+
+
+def _embedded_catalogue_digest() -> str:
+    """Return the SHA-256 digest of the exact packaged catalogue bytes."""
+    catalogue = files("agentseek").joinpath("data/templates_index.json").read_bytes()
+    return hashlib.sha256(catalogue).hexdigest()
+
+
+def _expected_cache_metadata(
+    *,
+    repository: str,
+    ref: str,
+    template_key: str | None = None,
+) -> TemplateCacheMetadata:
+    return TemplateCacheMetadata(
+        schema_version=CACHE_METADATA_SCHEMA_VERSION,
+        repository=repository,
+        ref=ref,
+        catalog_digest=_embedded_catalogue_digest(),
+        template_key=template_key,
+    )
+
+
+def _read_cache_metadata(metadata_path: Path) -> TemplateCacheMetadata | None:
+    try:
+        data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+
+    schema_version = data.get("schema_version")
+    repository = data.get("repository")
+    ref = data.get("ref")
+    catalog_digest = data.get("catalog_digest")
+    template_key = data.get("template_key")
+    if (
+        not isinstance(schema_version, int)
+        or isinstance(schema_version, bool)
+        or not isinstance(repository, str)
+        or not isinstance(ref, str)
+        or not isinstance(catalog_digest, str)
+        or (template_key is not None and not isinstance(template_key, str))
+    ):
+        return None
+    return TemplateCacheMetadata(schema_version, repository, ref, catalog_digest, template_key)
+
+
+def _cache_metadata_matches(metadata_path: Path, expected: TemplateCacheMetadata) -> bool:
+    return _read_cache_metadata(metadata_path) == expected
+
+
+def _write_cache_metadata(metadata_path: Path, metadata: TemplateCacheMetadata) -> None:
+    metadata_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = metadata_path.with_name(f"{metadata_path.name}.tmp")
+    payload = asdict(metadata)
+    if payload["template_key"] is None:
+        del payload["template_key"]
+    try:
+        temporary_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        temporary_path.replace(metadata_path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
 
 
 def _git_toplevel() -> Path | None:
@@ -182,7 +276,12 @@ def _is_quarantined_template(project_type: str, template_name: str) -> bool:
 
 def _is_external_spec(spec: str) -> bool:
     """Return ``True`` if *spec* looks like a URL or absolute local path."""
-    return spec.startswith(("https://", "http://", "git@", "gh:", "/"))
+    return (
+        spec.startswith(("https://", "http://", "git@", "gh:"))
+        or Path(spec).is_absolute()
+        or PurePosixPath(spec).is_absolute()
+        or PureWindowsPath(spec).is_absolute()
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -223,7 +322,7 @@ def _cookiecutter_template_is_complete(template_dir: Path) -> bool:
 
 
 def _templates_root_is_complete(templates_root: Path) -> bool:
-    descriptions = _load_template_descriptions(templates_root)
+    descriptions = _load_embedded_template_descriptions()
     return bool(descriptions) and all(
         _cookiecutter_template_is_complete(templates_root / template) for template in descriptions
     )
@@ -240,7 +339,14 @@ def _prepare_templates_root(checkout: str | None = None) -> Path:
     cookiecutters_dir = Path(get_user_config()["cookiecutters_dir"]).expanduser()
     cached_repo = cookiecutters_dir / TEMPLATE_REPO_CACHE_DIR
     cached_templates_root = cached_repo / TEMPLATES_DIR
-    if checkout is None and _templates_root_is_complete(cached_templates_root):
+    ref = checkout or "main"
+    expected_metadata = _expected_cache_metadata(repository=REPO_URL, ref=ref)
+    metadata_path = cached_repo / CACHE_METADATA_FILENAME
+    if (
+        checkout is None
+        and _cache_metadata_matches(metadata_path, expected_metadata)
+        and _templates_root_is_complete(cached_templates_root)
+    ):
         templates_root = cached_templates_root
     else:
         # A partial full-repo cache must never be mistaken for a checkout.
@@ -256,10 +362,12 @@ def _prepare_templates_root(checkout: str | None = None) -> Path:
     if not _templates_root_is_complete(templates_root):
         typer.echo(f"Template cache is missing or incomplete at {templates_root}.", err=True)
         raise typer.Exit(1)
+    try:
+        _write_cache_metadata(Path(templates_root).parent / CACHE_METADATA_FILENAME, expected_metadata)
+    except OSError as exc:
+        typer.echo(f"Could not write template cache metadata: {exc}", err=True)
+        raise typer.Exit(1) from exc
     return templates_root
-
-
-PARTIAL_CACHE_DIR = f"{TEMPLATE_REPO_CACHE_DIR}-partial"
 
 
 def _partial_templates_root(cookiecutters_dir: Path) -> Path:
@@ -271,11 +379,21 @@ def _partial_templates_root(cookiecutters_dir: Path) -> Path:
     return cookiecutters_dir / PARTIAL_CACHE_DIR / TEMPLATES_DIR
 
 
+def _partial_cache_metadata_path(cookiecutters_dir: Path, project_type: str, template_name: str) -> Path:
+    """Return the identity record for one partial-cache template."""
+    template_digest = hashlib.sha256(_template_key(project_type, template_name).encode()).hexdigest()
+    return cookiecutters_dir / PARTIAL_CACHE_DIR / "metadata" / f"{template_digest}.json"
+
+
 def _is_safe_tar_member(member: tarfile.TarInfo, dest: Path) -> bool:
     """Reject path-traversal and absolute paths inside a tarball member."""
-    if member.name.startswith("/") or member.name.startswith("\\"):
-        return False
-    if ".." in Path(member.name).parts:
+    if (
+        member.name.startswith(("/", "\\"))
+        or PurePosixPath(member.name).is_absolute()
+        or PureWindowsPath(member.name).is_absolute()
+        or ".." in PurePosixPath(member.name).parts
+        or ".." in PureWindowsPath(member.name).parts
+    ):
         return False
     try:
         target = (dest / member.name).resolve()
@@ -283,6 +401,31 @@ def _is_safe_tar_member(member: tarfile.TarInfo, dest: Path) -> bool:
     except OSError:
         return False
     return target == dest_root or dest_root in target.parents
+
+
+def _is_safe_tar_link(member: tarfile.TarInfo, dest: Path) -> bool:
+    """Return whether a symbolic link resolves inside the extraction root."""
+    if not member.issym():
+        return True
+    if (
+        member.linkname.startswith(("/", "\\"))
+        or PurePosixPath(member.linkname).is_absolute()
+        or PureWindowsPath(member.linkname).is_absolute()
+    ):
+        return False
+    try:
+        link_target = (dest / Path(member.name).parent / member.linkname).resolve()
+        dest_root = dest.resolve()
+    except OSError:
+        return False
+    return link_target == dest_root or dest_root in link_target.parents
+
+
+def _validate_tar_member(member: tarfile.TarInfo, dest: Path) -> None:
+    if not _is_safe_tar_member(member, dest):
+        raise _UnsafeArchiveError
+    if member.isdev() or member.islnk() or not _is_safe_tar_link(member, dest):
+        raise _UnsafeArchiveError
 
 
 def _extract_tar_member(tar: tarfile.TarFile, member: tarfile.TarInfo, dest: Path) -> None:
@@ -295,6 +438,76 @@ def _extract_tar_member(tar: tarfile.TarFile, member: tarfile.TarInfo, dest: Pat
         tar.extract(member, dest, filter="data")  # type: ignore[call-arg]
     except TypeError:
         tar.extract(member, dest)
+
+
+def _is_safe_template_segment(value: str) -> bool:
+    return bool(value) and value not in {".", ".."} and "/" not in value and "\\" not in value
+
+
+def _download_archive(tarball_url: str, tarball_path: Path) -> None:
+    with httpx.stream("GET", tarball_url, follow_redirects=True, timeout=30.0) as response:
+        response.raise_for_status()
+        raw_content_length = response.headers.get("Content-Length")
+        try:
+            content_length = int(raw_content_length) if raw_content_length is not None else None
+        except (TypeError, ValueError):
+            content_length = None
+        if content_length is not None and content_length > MAX_ARCHIVE_DOWNLOAD_BYTES:
+            raise _ArchiveLimitError
+
+        downloaded_bytes = 0
+        with tarball_path.open("wb") as tarball_file:
+            for chunk in response.iter_bytes(chunk_size=8192):
+                downloaded_bytes += len(chunk)
+                if downloaded_bytes > MAX_ARCHIVE_DOWNLOAD_BYTES:
+                    raise _ArchiveLimitError
+                tarball_file.write(chunk)
+
+
+def _updated_archive_totals(
+    member: tarfile.TarInfo,
+    member_count: int,
+    uncompressed_bytes: int,
+) -> tuple[int, int]:
+    member_count += 1
+    if member_count > MAX_ARCHIVE_MEMBERS:
+        raise _ArchiveLimitError
+    if member.size < 0 or member.size > MAX_ARCHIVE_MEMBER_BYTES:
+        raise _ArchiveLimitError
+    uncompressed_bytes += member.size
+    if uncompressed_bytes > MAX_ARCHIVE_UNCOMPRESSED_BYTES:
+        raise _ArchiveLimitError
+    return member_count, uncompressed_bytes
+
+
+def _extract_template_archive(
+    tarball_path: Path,
+    destination: Path,
+    *,
+    template_rel_path: str,
+    checkout: str,
+) -> bool:
+    repo_prefix = f"agentseek-{checkout}/"
+    target_prefix = f"{repo_prefix}{template_rel_path}/"
+    member_count = 0
+    uncompressed_bytes = 0
+    found_template = False
+
+    with tarfile.open(tarball_path, "r|gz") as tar:
+        for member in tar:
+            member_count, uncompressed_bytes = _updated_archive_totals(
+                member,
+                member_count,
+                uncompressed_bytes,
+            )
+            _validate_tar_member(member, destination)
+            if not member.name.startswith(target_prefix):
+                continue
+            member.name = member.name[len(repo_prefix) :]
+            _extract_tar_member(tar, member, destination)
+            found_template = True
+
+    return found_template
 
 
 def _download_template_tarball(
@@ -317,6 +530,10 @@ def _download_template_tarball(
     """
     from cookiecutter.config import get_user_config
 
+    if not _is_safe_template_segment(project_type) or not _is_safe_template_segment(template_name):
+        typer.echo(f"Invalid template key: {_template_key(project_type, template_name)!r}.", err=True)
+        return None
+
     template_rel_path = f"{TEMPLATES_DIR}/{project_type}/{template_name}"
     tarball_url = f"{repo_url}/archive/refs/heads/{checkout}.tar.gz"
 
@@ -324,9 +541,20 @@ def _download_template_tarball(
         cookiecutters_dir = Path(get_user_config()["cookiecutters_dir"]).expanduser()
         templates_root = _partial_templates_root(cookiecutters_dir)
         template_cache_path = templates_root / project_type / template_name
+        metadata_path = _partial_cache_metadata_path(cookiecutters_dir, project_type, template_name)
+        expected_metadata = _expected_cache_metadata(
+            repository=repo_url,
+            ref=checkout,
+            template_key=_template_key(project_type, template_name),
+        )
 
-        # Reuse a complete single-template cache hit.
-        if template_cache_path.is_dir() and (template_cache_path / "cookiecutter.json").is_file():
+        # Reuse only a template that can actually be rendered. A stale or
+        # interrupted cache may contain cookiecutter.json without its context
+        # or generated-project source tree.
+        if (
+            _cache_metadata_matches(metadata_path, expected_metadata)
+            and _cookiecutter_template_is_complete(template_cache_path)
+        ):
             return templates_root
 
         typer.echo(f"Downloading {project_type}/{template_name}...", err=True)
@@ -334,37 +562,21 @@ def _download_template_tarball(
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
             tarball_path = tmpdir_path / "repo.tar.gz"
-
-            with httpx.stream("GET", tarball_url, follow_redirects=True, timeout=30.0) as response:
-                response.raise_for_status()
-                with open(tarball_path, "wb") as f:
-                    for chunk in response.iter_bytes(chunk_size=8192):
-                        f.write(chunk)
-
-            with tarfile.open(tarball_path, "r:gz") as tar:
-                # GitHub archive layout: agentseek-<ref>/templates/...
-                repo_prefix = f"agentseek-{checkout}/"
-                target_prefix = f"{repo_prefix}{template_rel_path}/"
-
-                members_to_extract: list[tarfile.TarInfo] = []
-                for member in tar.getmembers():
-                    if not member.name.startswith(target_prefix):
-                        continue
-                    member.name = member.name[len(repo_prefix) :]
-                    members_to_extract.append(member)
-
-                if not members_to_extract:
-                    typer.echo(
-                        f"Template {project_type}/{template_name} not found in {checkout}.",
-                        err=True,
-                    )
-                    return None
-
-                for member in members_to_extract:
-                    _extract_tar_member(tar, member, tmpdir_path)
+            _download_archive(tarball_url, tarball_path)
+            if not _extract_template_archive(
+                tarball_path,
+                tmpdir_path,
+                template_rel_path=template_rel_path,
+                checkout=checkout,
+            ):
+                typer.echo(
+                    f"Template {project_type}/{template_name} not found in {checkout}.",
+                    err=True,
+                )
+                return None
 
             extracted_template = tmpdir_path / TEMPLATES_DIR / project_type / template_name
-            if not extracted_template.is_dir() or not (extracted_template / "cookiecutter.json").is_file():
+            if not _cookiecutter_template_is_complete(extracted_template):
                 return None
 
             # Replace any incomplete previous attempt for this template only.
@@ -372,10 +584,11 @@ def _download_template_tarball(
             if template_cache_path.exists():
                 shutil.rmtree(template_cache_path)
             shutil.move(str(extracted_template), str(template_cache_path))
+            _write_cache_metadata(metadata_path, expected_metadata)
 
             return templates_root
 
-    except (httpx.HTTPError, tarfile.TarError, OSError) as exc:
+    except (httpx.HTTPError, tarfile.TarError, OSError, _TemplateFetchError) as exc:
         typer.echo(
             f"Fast download failed ({type(exc).__name__}), falling back to full clone...",
             err=True,
@@ -407,14 +620,21 @@ def _prepare_templates_root_optimized(
     return _prepare_templates_root(checkout=checkout)
 
 
-def _load_template_descriptions(templates_root: Path | None = None) -> dict[str, str]:
-    """Load template descriptions from index.json.
+def _load_embedded_template_descriptions() -> dict[str, str]:
+    """Load the packaged catalogue without consulting any on-disk checkout."""
+    try:
+        embedded_data = files("agentseek").joinpath("data/templates_index.json").read_text(encoding="utf-8")
+        data = json.loads(embedded_data)
+        if isinstance(data, dict):
+            return {str(k): str(v) for k, v in data.items()}
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+        pass
 
-    Resolution order:
-    1. Local templates/index.json (if templates_root exists)
-    2. Embedded templates_index.json from package data
-    """
-    # Try local first
+    return {}
+
+
+def _load_template_descriptions(templates_root: Path | None = None) -> dict[str, str]:
+    """Load local template descriptions, falling back to the packaged catalogue."""
     if templates_root is None:
         templates_root = _local_templates_root()
 
@@ -428,16 +648,7 @@ def _load_template_descriptions(templates_root: Path | None = None) -> dict[str,
             except (OSError, UnicodeDecodeError, json.JSONDecodeError):
                 pass
 
-    # Fallback to embedded
-    try:
-        embedded_data = files("agentseek").joinpath("data/templates_index.json").read_text(encoding="utf-8")
-        data = json.loads(embedded_data)
-        if isinstance(data, dict):
-            return {str(k): str(v) for k, v in data.items()}
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError):
-        pass
-
-    return {}
+    return _load_embedded_template_descriptions()
 
 
 def _public_templates_for_type(project_type: str, descriptions: dict[str, str]) -> set[str]:

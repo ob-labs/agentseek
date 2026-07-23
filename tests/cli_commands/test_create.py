@@ -57,6 +57,7 @@ def _mock_remote_template_repo(
         return str(repo_root)
 
     monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
+    monkeypatch.setattr(create_module, "_load_embedded_template_descriptions", lambda: dict(index))
     monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
     monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
     return clone_calls
@@ -317,6 +318,12 @@ def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path:
         {"bub/cached": "Cached Bub template."},
         cached=True,
     )
+    embedded_catalogue = json.loads(
+        (Path(__file__).resolve().parents[2] / "src" / "agentseek" / "data" / "templates_index.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    monkeypatch.setattr(create_module, "_load_embedded_template_descriptions", lambda: embedded_catalogue)
 
     result = _runner().invoke(build_command_app(), ["create", "bub", "--template"])
 
@@ -418,6 +425,11 @@ def test_incomplete_clone_is_not_reused_on_retry(
         return str(repo_root)
 
     monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
+    monkeypatch.setattr(
+        create_module,
+        "_load_embedded_template_descriptions",
+        lambda: {"deepagents/default": "Default DeepAgents template."},
+    )
     monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
     monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
 
@@ -433,8 +445,8 @@ def test_incomplete_clone_is_not_reused_on_retry(
     assert len(clone_calls) == 2
 
 
-def test_invalid_utf8_template_index_is_not_reused_on_retry(monkeypatch, tmp_path: Path) -> None:
-    """A clone with an unreadable registry must be replaceable on the next attempt."""
+def test_invalid_utf8_template_index_does_not_override_embedded_catalogue(monkeypatch, tmp_path: Path) -> None:
+    """The packaged catalogue remains authoritative when a clone index is unreadable."""
     cookiecutters_dir = tmp_path / "cookiecutters"
     repo_root = cookiecutters_dir / "agentseek"
     clone_calls: list[tuple[str, str | None, str, bool]] = []
@@ -472,19 +484,24 @@ def test_invalid_utf8_template_index_is_not_reused_on_retry(monkeypatch, tmp_pat
         return str(repo_root)
 
     monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
+    monkeypatch.setattr(
+        create_module,
+        "_load_embedded_template_descriptions",
+        lambda: {"deepagents/default": "Default DeepAgents template."},
+    )
     monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
     monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
 
-    with pytest.raises(typer.Exit) as first_error:
-        create_module._prepare_templates_root()
+    first_result = create_module._prepare_templates_root()
 
-    assert first_error.value.exit_code == 1
+    assert first_result == repo_root / "templates"
     assert len(clone_calls) == 1
+    assert (repo_root / create_module.CACHE_METADATA_FILENAME).is_file()
 
     second_result = create_module._prepare_templates_root()
 
     assert second_result == repo_root / "templates"
-    assert len(clone_calls) == 2
+    assert len(clone_calls) == 1
 
 
 # -- template resolution ---------------------------------------------------
@@ -544,6 +561,19 @@ def test_is_external_spec_url() -> None:
     assert create_module._is_external_spec("https://github.com/x/y.git")
     assert create_module._is_external_spec("git@github.com:x/y.git")
     assert create_module._is_external_spec("/opt/my-template")
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        r"C:\templates\demo",
+        "C:/templates/demo",
+        r"\\server\share\template",
+    ],
+    ids=["drive-backslashes", "drive-forward-slashes", "unc"],
+)
+def test_is_external_spec_windows_absolute_path(spec: str) -> None:
+    assert create_module._is_external_spec(spec)
 
 
 def test_is_external_spec_local_type() -> None:
