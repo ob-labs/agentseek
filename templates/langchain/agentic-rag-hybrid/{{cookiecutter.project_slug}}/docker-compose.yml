@@ -1,0 +1,39 @@
+name: {{ cookiecutter.project_slug }}-observability
+
+services:
+  phoenix:
+    image: "${AGENTSEEK_PHOENIX_IMAGE:-ghcr.io/agentseek-ai/agentseek-phoenix:main}"
+    depends_on:
+      seekdb:
+        condition: service_healthy
+    ports:
+      - "6006:6006"
+    expose:
+      - "4317"
+    environment:
+      PHOENIX_SQL_DATABASE_URL: mysql://root@seekdb:2881/phoenix
+      PHOENIX_ALLOW_EXTERNAL_RESOURCES: "false"
+      PHOENIX_WORKING_DIR: /phoenix-data
+    user: root
+    volumes:
+      - ./.phoenix-data:/phoenix-data
+
+  seekdb:
+    image: "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}"
+    restart: unless-stopped
+    environment:
+      DATAFILE_SIZE: 2G
+      DATAFILE_NEXT: 2G
+      DATAFILE_MAXSIZE: 50G
+      LOG_DISK_SIZE: 2G
+      SEEKDB_DATABASE: phoenix
+    ports:
+      - "127.0.0.1:2884:2881"
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 60s
+    volumes:
+      - ./.seekdb-data:/var/lib/oceanbase

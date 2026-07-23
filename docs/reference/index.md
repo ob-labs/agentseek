@@ -15,5 +15,6 @@ sources:
 | --- | --- |
 | [CLI](cli.md) | Command and option lookup. |
 | [Lifecycle Spec](lifecycle-spec.md) | Generated project lifecycle contract. |
+| [Lifecycle v2 Service Discovery](lifecycle-v2-service-discovery.md) | Accepted service metadata, normalized model, and deterministic JSON contract for Desktop. |
 | [Templates](templates.md) | Available template paths. |
 | [Template Authoring Contract](template-authoring-contract.md) | Required files, configuration, lifecycle behavior, and validation for contributed templates. |

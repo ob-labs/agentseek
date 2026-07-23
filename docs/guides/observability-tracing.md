@@ -10,6 +10,9 @@ sources:
   - templates/langchain/default/{{cookiecutter.project_slug}}/.env.example
   - templates/langchain/default/{{cookiecutter.project_slug}}/README.md
   - templates/langchain/default/{{cookiecutter.project_slug}}/docker-compose.yml
+  - templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/.env.example
+  - templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/README.md
+  - templates/langchain/agentic-rag-hybrid/{{cookiecutter.project_slug}}/docker-compose.yml
   - templates/deepagents/research/{{cookiecutter.project_slug}}/.env.example
   - templates/langchain/markdown-messages/{{cookiecutter.project_slug}}/.env.example
   - templates/deepagents/sandbox/{{cookiecutter.project_slug}}/.env.example
@@ -26,7 +29,7 @@ showing up where you expect them.
 | --- | --- | --- |
 | LangSmith cloud | You want hosted LangChain or LangGraph traces. | `LANGSMITH_*` variables in `.env` or the shell. |
 | AgentSeek console | You want local CLI diagnostic spans and events. | `AGENTSEEK_CONSOLE=true`. |
-| Phoenix | You use `langchain/default` and want local OpenTelemetry traces. | `AGENTSEEK_OTEL_*` variables and the template compose stack. |
+| Phoenix | You use `langchain/default` or `langchain/agentic-rag-hybrid` and want local OpenTelemetry traces. | `AGENTSEEK_OTEL_*` variables and the template compose stack. |
 
 These targets are independent. Enabling one does not send data to the others.
 
@@ -119,6 +122,29 @@ The template compose stack uses `ghcr.io/agentseek-ai/agentseek-phoenix:main`
 for Phoenix and persists Phoenix data through OceanBase seekdb
 (`quay.io/oceanbase/seekdb:latest`). Override the images with
 `AGENTSEEK_PHOENIX_IMAGE` and `OCEANBASE_SEEKDB_IMAGE`.
+
+## Use Phoenix In `langchain/agentic-rag-hybrid`
+
+The hybrid template keeps `agentseek dev` lightweight with `uv`, `langgraph
+dev`, and the Vite frontend. Phoenix is opt-in:
+
+```bash
+agentseek task phoenix
+```
+
+Then set OTEL in `.env` before starting `agentseek dev`.
+
+```env
+AGENTSEEK_OTEL_ENABLED=true
+AGENTSEEK_OTEL_SERVICE_NAME=<project-slug>
+AGENTSEEK_OTEL_PROJECT_NAME=<project-slug>
+AGENTSEEK_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://127.0.0.1:6006/v1/traces
+```
+
+The generated custom route `/custom/observability` reports the active OTEL
+endpoint, Phoenix URL, and Phoenix OceanBase seekdb URL. Phoenix trace storage
+uses the compose stack, while hybrid retrieval remains on embedded SeekDB
+through `langchain-oceanbase`.
 
 ## Related
 

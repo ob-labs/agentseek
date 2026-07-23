@@ -1,0 +1,30 @@
+version = 2
+template = "example/task-providers"
+name = "Task Providers"
+description = "Tasks declare complete service effects."
+
+[services.app]
+name = "Application"
+url = "http://127.0.0.1:8000"
+kind = "web"
+primary = true
+description = "Browser application."
+
+[services.database]
+name = "Database"
+url = "mysql://127.0.0.1:3306/app"
+kind = "database"
+description = "Local application database."
+
+[processes.app]
+command = ["python", "app.py"]
+
+[tasks.stack]
+command = ["docker", "compose", "up"]
+description = "Start application dependencies."
+starts = ["app", "database"]
+
+[tasks.stack-stop]
+command = ["docker", "compose", "down"]
+description = "Stop application dependencies."
+stops = ["app", "database"]

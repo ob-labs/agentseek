@@ -5,9 +5,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES_ROOT = ROOT / "templates"
 TEMPLATE_INDEX = TEMPLATES_ROOT / "index.json"
+LIFECYCLE_REFERENCES = (
+    ROOT / "docs" / "reference" / "lifecycle-spec.md",
+    ROOT / "docs" / "reference" / "lifecycle-spec.zh.md",
+)
+LIFECYCLE_V2_SPEC_URL = "https://github.com/ob-labs/agentseek/blob/main/specs/lifecycle-v2-service-discovery.md"
 
 
 def _public_template_readmes() -> list[Path]:
@@ -55,3 +62,19 @@ def test_core_quickstarts_show_lifecycle_task_discovery() -> None:
 
     for doc in docs:
         assert "agentseek task" in doc.read_text(encoding="utf-8"), doc
+
+
+@pytest.mark.parametrize("reference", LIFECYCLE_REFERENCES)
+def test_lifecycle_references_describe_authored_v2_loading(reference: Path) -> None:
+    """Both references must describe the shipped authored v1/v2 boundary."""
+    text = reference.read_text(encoding="utf-8")
+    table_rows = [line for line in text.splitlines() if line.startswith("|")]
+
+    assert LIFECYCLE_V2_SPEC_URL in text, reference
+    assert "lifecycle-v2-service-discovery.md" in text, reference
+    assert any("`1`, `2`" in row for row in table_rows), reference
+    assert any("`templates/`" in row and "`version = 1`" in row for row in table_rows), reference
+    has_v2_catalog_row = any(
+        "`agentseek-ai/agentseek-templates`" in row and "`version = 2`" in row for row in table_rows
+    )
+    assert has_v2_catalog_row, reference

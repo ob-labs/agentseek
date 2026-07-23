@@ -1,0 +1,43 @@
+version = 2
+template = "bub/default"
+name = "Bub Agent"
+description = "Bub-style explicit service mapping."
+guide = "README.md"
+
+[services.app]
+name = "Application"
+url = "http://127.0.0.1:5173"
+kind = "web"
+display = "default"
+primary = true
+description = "Browser application for this template."
+
+[services.gateway]
+name = "AG-UI gateway"
+url = "http://127.0.0.1:8088/agent"
+kind = "protocol"
+display = "advanced"
+description = "AG-UI endpoint used by the application runtime."
+tech = "ag-ui"
+links = { docs = "https://docs.ag-ui.com/introduction" }
+
+[services.copilotkit]
+name = "CopilotKit runtime"
+url = "http://127.0.0.1:4000/api/copilotkit"
+kind = "api"
+display = "hidden"
+description = "Internal runtime used by the frontend."
+
+[processes.frontend]
+command = ["npm", "run", "dev"]
+provides = ["app", "copilotkit"]
+
+[processes.gateway]
+command = ["python", "gateway.py"]
+
+[checks.frontend]
+target = "http://127.0.0.1:5173"
+service = "app"
+
+[checks.gateway]
+target = "http://127.0.0.1:8088/health"

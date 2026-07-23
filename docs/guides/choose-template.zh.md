@@ -15,6 +15,7 @@ sources:
   - templates/langchain/default/README.md
   - templates/langchain/markdown-messages/README.md
   - templates/langchain/agentic-rag/README.md
+  - templates/langchain/agentic-rag-hybrid/README.md
   - templates/langchain/cli-remote/README.md
 ---
 
@@ -46,6 +47,7 @@ DeepAgents、LangChain 或 LangGraph 的形态。
 | 构建 LangChain AG-UI 应用 | `langchain/default` | 它保留 LangChain `create_agent(...)` 形态，并通过 AgentSeek 接入。 |
 | 从纯 LangGraph 风格 chat UI 开始 | `langchain/markdown-messages` | 它使用 `langgraph dev`、`@langchain/react` 和 Markdown 消息渲染。 |
 | 基于 OceanBase seekdb 构建 RAG | `langchain/agentic-rag` | 它包含 agentic retrieval tool、ingest command、frontend 和 OceanBase seekdb 设置。 |
+| 学习并观察混合检索效果 | `langchain/agentic-rag-hybrid` | 它包含图片导入、向量/稀疏/全文/元数据模式、内置 starter pack、可视化对比 UI 和可选 Phoenix traces。 |
 | 连接远程 LangGraph 服务 | `langchain/cli-remote` | 它通过 `LangGraphClientRunnable` 桥接远程 LangGraph agent。 |
 
 ## 选择 AgentSeek 包装形态或框架原生形态
@@ -56,10 +58,13 @@ DeepAgents、LangChain 或 LangGraph 的形态。
 如果你希望保留 `langgraph dev` 等框架原生 backend，同时仍由 AgentSeek
 生命周期命令管理本地开发，选择 `deepagents/research`、
 `deepagents/content-builder`、`deepagents/sandbox`、
-`langchain/markdown-messages` 或 `langchain/agentic-rag`。
+`langchain/markdown-messages`、`langchain/agentic-rag` 或
+`langchain/agentic-rag-hybrid`。
 
 如果生成项目应该连接一个已经运行的 LangGraph 服务，而不是自己管理图进程，
 选择 `langchain/cli-remote`。
+
+当你希望开发者能够观察和理解混合检索效果，尤其是图片知识库同时依赖视觉相似度、caption、标签和元数据召回时，选择 `langchain/agentic-rag-hybrid`。
 
 ## 查看完整细节
 

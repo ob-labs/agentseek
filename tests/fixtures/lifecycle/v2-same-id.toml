@@ -1,0 +1,17 @@
+version = 2
+template = "example/same-id"
+name = "Same Identifier Project"
+description = "Uses the same identifier relationship convention."
+
+[services.app]
+name = "Application"
+url = "http://127.0.0.1:8000"
+kind = "web"
+primary = true
+description = "Browser application."
+
+[processes.app]
+command = ["python", "-m", "http.server", "8000"]
+
+[checks.app]
+target = "http://127.0.0.1:8000/health"
