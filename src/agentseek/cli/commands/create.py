@@ -243,6 +243,8 @@ def _prepare_templates_root(checkout: str | None = None) -> Path:
     if checkout is None and _templates_root_is_complete(cached_templates_root):
         templates_root = cached_templates_root
     else:
+        # A partial full-repo cache must never be mistaken for a checkout.
+        # clone() is responsible for replacing or refreshing it.
         repo_root = clone(
             REPO_URL,
             checkout=checkout,
@@ -257,6 +259,44 @@ def _prepare_templates_root(checkout: str | None = None) -> Path:
     return templates_root
 
 
+PARTIAL_CACHE_DIR = f"{TEMPLATE_REPO_CACHE_DIR}-partial"
+
+
+def _partial_templates_root(cookiecutters_dir: Path) -> Path:
+    """Return the templates root used for single-template tarball caches.
+
+    Kept separate from the full-repo cookiecutter cache so a failed/partial
+    download can never be mistaken for a complete ``clone()`` checkout.
+    """
+    return cookiecutters_dir / PARTIAL_CACHE_DIR / TEMPLATES_DIR
+
+
+def _is_safe_tar_member(member: tarfile.TarInfo, dest: Path) -> bool:
+    """Reject path-traversal and absolute paths inside a tarball member."""
+    if member.name.startswith("/") or member.name.startswith("\\"):
+        return False
+    if ".." in Path(member.name).parts:
+        return False
+    try:
+        target = (dest / member.name).resolve()
+        dest_root = dest.resolve()
+    except OSError:
+        return False
+    return target == dest_root or dest_root in target.parents
+
+
+def _extract_tar_member(tar: tarfile.TarFile, member: tarfile.TarInfo, dest: Path) -> None:
+    """Extract one tar member with path-slip protection."""
+    if not _is_safe_tar_member(member, dest):
+        msg = f"Refusing unsafe tar member path: {member.name!r}"
+        raise tarfile.TarError(msg)
+    # Python 3.12+ supports filter=; older runtimes ignore it via TypeError path.
+    try:
+        tar.extract(member, dest, filter="data")  # type: ignore[call-arg]
+    except TypeError:
+        tar.extract(member, dest)
+
+
 def _download_template_tarball(
     project_type: str,
     template_name: str,
@@ -264,19 +304,16 @@ def _download_template_tarball(
     repo_url: str = REPO_URL,
     checkout: str = "main",
 ) -> Path | None:
-    """Download a specific template using GitHub's tarball API.
+    """Download a specific template using GitHub's repository tarball API.
 
-    This avoids cloning the entire repo when the user requests a single template.
-    Falls back to full clone on any error.
-
-    Args:
-        project_type: Framework type (bub, deepagents, langchain)
-        template_name: Template name (default, research, etc.)
-        repo_url: Base GitHub repo URL
-        checkout: Branch/tag/commit to download
+    GitHub's archive endpoint still serves the full repository archive; this
+    helper only *extracts* the requested template subtree into a dedicated
+    partial-cache directory.  On any failure it returns ``None`` without
+    touching the full-repo cookiecutter cache, so callers can fall back to
+    ``clone()`` safely.
 
     Returns:
-        Path to templates root in cache, or None on failure
+        Path to the partial templates root, or ``None`` on failure.
     """
     from cookiecutter.config import get_user_config
 
@@ -284,16 +321,13 @@ def _download_template_tarball(
     tarball_url = f"{repo_url}/archive/refs/heads/{checkout}.tar.gz"
 
     try:
-        # Create cache directory
         cookiecutters_dir = Path(get_user_config()["cookiecutters_dir"]).expanduser()
-        cache_dir = cookiecutters_dir / TEMPLATE_REPO_CACHE_DIR
-        cache_dir.mkdir(parents=True, exist_ok=True)
+        templates_root = _partial_templates_root(cookiecutters_dir)
+        template_cache_path = templates_root / project_type / template_name
 
-        template_cache_path = cache_dir / TEMPLATES_DIR / project_type / template_name
-
-        # Skip if already cached
+        # Reuse a complete single-template cache hit.
         if template_cache_path.is_dir() and (template_cache_path / "cookiecutter.json").is_file():
-            return cache_dir / TEMPLATES_DIR
+            return templates_root
 
         typer.echo(f"Downloading {project_type}/{template_name}...", err=True)
 
@@ -301,25 +335,23 @@ def _download_template_tarball(
             tmpdir_path = Path(tmpdir)
             tarball_path = tmpdir_path / "repo.tar.gz"
 
-            # Download tarball
             with httpx.stream("GET", tarball_url, follow_redirects=True, timeout=30.0) as response:
                 response.raise_for_status()
                 with open(tarball_path, "wb") as f:
                     for chunk in response.iter_bytes(chunk_size=8192):
                         f.write(chunk)
 
-            # Extract only the needed template
             with tarfile.open(tarball_path, "r:gz") as tar:
-                # GitHub tarball format: agentseek-main/templates/...
+                # GitHub archive layout: agentseek-<ref>/templates/...
                 repo_prefix = f"agentseek-{checkout}/"
                 target_prefix = f"{repo_prefix}{template_rel_path}/"
 
-                members_to_extract = []
+                members_to_extract: list[tarfile.TarInfo] = []
                 for member in tar.getmembers():
-                    if member.name.startswith(target_prefix):
-                        # Strip the repo prefix
-                        member.name = member.name[len(repo_prefix):]
-                        members_to_extract.append(member)
+                    if not member.name.startswith(target_prefix):
+                        continue
+                    member.name = member.name[len(repo_prefix) :]
+                    members_to_extract.append(member)
 
                 if not members_to_extract:
                     typer.echo(
@@ -328,19 +360,20 @@ def _download_template_tarball(
                     )
                     return None
 
-                # Extract to temp dir first
                 for member in members_to_extract:
-                    tar.extract(member, tmpdir_path)
+                    _extract_tar_member(tar, member, tmpdir_path)
 
-            # Move to cache
             extracted_template = tmpdir_path / TEMPLATES_DIR / project_type / template_name
-            if not extracted_template.is_dir():
+            if not extracted_template.is_dir() or not (extracted_template / "cookiecutter.json").is_file():
                 return None
 
+            # Replace any incomplete previous attempt for this template only.
             template_cache_path.parent.mkdir(parents=True, exist_ok=True)
+            if template_cache_path.exists():
+                shutil.rmtree(template_cache_path)
             shutil.move(str(extracted_template), str(template_cache_path))
 
-            return cache_dir / TEMPLATES_DIR
+            return templates_root
 
     except (httpx.HTTPError, tarfile.TarError, OSError) as exc:
         typer.echo(
@@ -355,30 +388,23 @@ def _prepare_templates_root_optimized(
     template_name: str | None = None,
     checkout: str | None = None,
 ) -> Path:
-    """Prepare templates root, using tarball download when possible.
+    """Prepare templates root, preferring a single-template tarball fetch.
 
     Strategy:
-    1. Use local templates if available (development mode)
-    2. Use tarball API for specific template (fast, ~3s)
-    3. Fall back to full clone (slow, ~30s)
+    1. Local ``templates/`` checkout (development mode)
+    2. Single-template tarball extract into the partial cache (when type+name known)
+    3. Full repository clone into the normal cookiecutter cache
     """
     local_root = _local_templates_root()
     if local_root is not None:
         return local_root
 
-    # Try tarball download for specific templates
     if project_type and template_name and checkout is None:
         templates_root = _download_template_tarball(project_type, template_name)
         if templates_root is not None:
             return templates_root
 
-    # Fallback to full clone
     return _prepare_templates_root(checkout=checkout)
-
-    if not templates_root.is_dir():
-        typer.echo(f"Templates directory not found at {templates_root}.", err=True)
-        raise typer.Exit(1)
-    return templates_root
 
 
 def _load_template_descriptions(templates_root: Path | None = None) -> dict[str, str]:
@@ -470,18 +496,34 @@ def _filter_templates(
     return [name for name in templates if _template_matches_filter(project_type, name, descriptions, filter_keyword)]
 
 
+def _templates_from_descriptions(project_type: str, descriptions: dict[str, str]) -> list[str]:
+    """Return sorted public template names for *project_type* from an index map."""
+    prefix = f"{project_type}/"
+    return sorted(
+        key.removeprefix(prefix)
+        for key in descriptions
+        if key.startswith(prefix) and not _is_quarantined_template(project_type, key.removeprefix(prefix))
+    )
+
+
 def _print_all_templates(
-    templates_root: Path,
+    templates_root: Path | None,
     descriptions: dict[str, str],
     *,
     filter_keyword: str | None = None,
 ) -> None:
-    """Print all templates across all types with usage hints."""
+    """Print all templates across all types with usage hints.
+
+    When *templates_root* is ``None``, names come from *descriptions* alone
+    (offline / embedded-index mode).
+    """
     total = 0
     for project_type in KNOWN_TYPES:
-        templates = _filter_templates(
-            project_type, _list_templates(project_type, templates_root), descriptions, filter_keyword
-        )
+        if templates_root is None:
+            available = _templates_from_descriptions(project_type, descriptions)
+        else:
+            available = _list_templates(project_type, templates_root)
+        templates = _filter_templates(project_type, available, descriptions, filter_keyword)
         total += len(templates)
         if templates or filter_keyword is None:
             _print_templates_table(project_type, templates, descriptions)
@@ -768,34 +810,39 @@ def create(ctx: typer.Context) -> None:
         _show_templates(project_type, checkout=args.checkout, filter_keyword=args.filter)
         return
 
-    # --- Prepare templates root (optimized path) ---
-    templates_root = _prepare_templates_root_optimized(
-        project_type=project_type,
-        template_name=template_name,
-        checkout=args.checkout,
-    )
-
     # --- Interactive type selection if needed ---
     if project_type is None:
         project_type = _prompt_project_type()
 
     _validate_project_type(project_type)
 
-    # --- Resolve template name ---
-    if template_name is None:
+    # --- Resolve template name before fetching templates ---
+    # Prefer an explicit --template value when the positional did not carry a name.
+    if template_name is None and args.template not in (None, _TEMPLATE_LIST_SENTINEL):
         template_name = args.template
+
+    # Default without network when the user opted out of prompts.
+    if template_name is None and args.no_input:
+        template_name = "default"
+
+    # Interactive selection uses the embedded catalogue offline so we only
+    # download the chosen template afterwards.
     if template_name is None:
-        if args.no_input:
+        descriptions = _load_template_descriptions(templates_root=_local_templates_root())
+        available = _templates_from_descriptions(project_type, descriptions)
+        if not available:
             template_name = "default"
+        elif len(available) == 1:
+            template_name = available[0]
         else:
-            descriptions = _load_template_descriptions(templates_root)
-            available = _list_templates(project_type, templates_root)
-            if not available:
-                template_name = "default"
-            elif len(available) == 1:
-                template_name = available[0]
-            else:
-                template_name = _prompt_template_name(project_type, available, descriptions)
+            template_name = _prompt_template_name(project_type, available, descriptions)
+
+    # Now that type+name are known, prefer the single-template tarball path.
+    templates_root = _prepare_templates_root_optimized(
+        project_type=project_type,
+        template_name=template_name,
+        checkout=args.checkout,
+    )
 
     source = _resolve_type_template(
         project_type,
@@ -857,9 +904,35 @@ def _show_templates(
     checkout: str | None = None,
     filter_keyword: str | None = None,
 ) -> None:
+    """Show available templates, offline-first via the embedded catalogue.
+
+    Listing never clones the repository unless the caller asks for a specific
+    non-default ``checkout`` (branch/tag).  Local development checkouts still
+    win so authors see on-disk templates while iterating.
+    """
     if project_type is not None:
         _validate_project_type(project_type)
-    templates_root = _prepare_templates_root(checkout=checkout)
+
+    local_root = _local_templates_root()
+
+    # Offline / embedded path: no local checkout and no custom checkout ref.
+    if local_root is None and checkout is None:
+        descriptions = _load_template_descriptions(templates_root=None)
+        if project_type is None:
+            _print_all_templates(None, descriptions, filter_keyword=filter_keyword)
+        else:
+            templates = _filter_templates(
+                project_type,
+                _templates_from_descriptions(project_type, descriptions),
+                descriptions,
+                filter_keyword,
+            )
+            _print_templates_table(project_type, templates, descriptions, filter_keyword=filter_keyword)
+            typer.echo()
+        return
+
+    # Local checkout or explicit remote checkout: use an on-disk templates root.
+    templates_root = local_root if local_root is not None else _prepare_templates_root(checkout=checkout)
     descriptions = _load_template_descriptions(templates_root)
     if project_type is None:
         _print_all_templates(templates_root, descriptions, filter_keyword=filter_keyword)

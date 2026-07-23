@@ -66,7 +66,8 @@ includes = [
     "src/agentseek",
     "src/skills",
 ]
-package-data = {"agentseek" = ["data/*.json"]}
+# Non-Python package data under src/agentseek/ (e.g. data/templates_index.json)
+# is included automatically by pdm-backend for files inside included packages.
 skills = [
     { git = "https://github.com/PsiACE/skills.git", subpath = "skills", include = ["friendly-python", "piglet"] },
 ]

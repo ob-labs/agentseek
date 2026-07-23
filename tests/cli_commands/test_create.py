@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import typer
 from typer.testing import CliRunner
 
 from agentseek.cli.commands import create as create_module
@@ -270,8 +271,8 @@ def test_quarantined_contextseek_template_stays_hidden_from_stale_cache(monkeypa
     assert "Template bub/contextseek was not found" in describe_result.output
 
 
-def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypatch, tmp_path: Path) -> None:
-    """Installed CLI should download templates before listing them."""
+def test_template_flag_no_value_lists_embedded_templates_without_checkout(monkeypatch, tmp_path: Path) -> None:
+    """Installed CLI should list the embedded catalogue without cloning."""
     clone_calls = _mock_remote_template_repo(
         monkeypatch,
         tmp_path,
@@ -285,13 +286,10 @@ def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypa
     result = _runner().invoke(build_command_app(), ["create", "--template"])
 
     assert result.exit_code == 0, result.output
-    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
+    assert clone_calls == []
     assert "bub/default" in result.output
-    assert "Default Bub template." in result.output
     assert "deepagents/default" in result.output
-    assert "Default DeepAgents template." in result.output
     assert "langchain/default" in result.output
-    assert "Default LangChain template." in result.output
     assert "Usage:" in result.output
 
 
@@ -312,7 +310,7 @@ def test_template_flag_no_value_for_type_uses_remote_checkout(monkeypatch, tmp_p
 
 
 def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path: Path) -> None:
-    """Installed CLI should use the cookiecutter cache before cloning."""
+    """Listing should prefer the embedded catalogue over a custom remote cache."""
     clone_calls = _mock_remote_template_repo(
         monkeypatch,
         tmp_path,
@@ -324,8 +322,8 @@ def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path:
 
     assert result.exit_code == 0, result.output
     assert clone_calls == []
-    assert "bub/cached" in result.output
-    assert "Cached Bub template." in result.output
+    assert "bub/default" in result.output
+    assert "bub/cached" not in result.output
 
 
 @pytest.mark.parametrize("partial_path", [Path("."), Path("templates")])
@@ -343,12 +341,10 @@ def test_template_flag_refetches_incomplete_cached_remote_repo(
     incomplete_cache = tmp_path / "cookiecutters" / "agentseek" / partial_path
     incomplete_cache.mkdir(parents=True)
 
-    result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+    result = create_module._prepare_templates_root()
 
-    assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
-    assert "deepagents/default" in result.output
-    assert "Default DeepAgents template." in result.output
+    assert result == tmp_path / "downloaded-agentseek" / "templates"
 
 
 def test_template_flag_refetches_cache_with_missing_registered_template(monkeypatch, tmp_path: Path) -> None:
@@ -365,12 +361,10 @@ def test_template_flag_refetches_cache_with_missing_registered_template(monkeypa
         encoding="utf-8",
     )
 
-    result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+    result = create_module._prepare_templates_root()
 
-    assert result.exit_code == 0, result.output
     assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
-    assert "deepagents/default" in result.output
-    assert "Default DeepAgents template." in result.output
+    assert result == tmp_path / "downloaded-agentseek" / "templates"
 
 
 @pytest.mark.parametrize(
@@ -427,17 +421,16 @@ def test_incomplete_clone_is_not_reused_on_retry(
     monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
     monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
 
-    first_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+    with pytest.raises(typer.Exit) as first_error:
+        create_module._prepare_templates_root()
 
-    assert first_result.exit_code == 1
-    assert "Template cache is missing or incomplete" in first_result.output
+    assert first_error.value.exit_code == 1
     assert len(clone_calls) == 1
 
-    second_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+    second_result = create_module._prepare_templates_root()
 
-    assert second_result.exit_code == 0, second_result.output
+    assert second_result == repo_root / "templates"
     assert len(clone_calls) == 2
-    assert "deepagents/default" in second_result.output
 
 
 def test_invalid_utf8_template_index_is_not_reused_on_retry(monkeypatch, tmp_path: Path) -> None:
@@ -482,17 +475,16 @@ def test_invalid_utf8_template_index_is_not_reused_on_retry(monkeypatch, tmp_pat
     monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
     monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
 
-    first_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+    with pytest.raises(typer.Exit) as first_error:
+        create_module._prepare_templates_root()
 
-    assert first_result.exit_code == 1
-    assert "Template cache is missing or incomplete" in first_result.output
+    assert first_error.value.exit_code == 1
     assert len(clone_calls) == 1
 
-    second_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
+    second_result = create_module._prepare_templates_root()
 
-    assert second_result.exit_code == 0, second_result.output
+    assert second_result == repo_root / "templates"
     assert len(clone_calls) == 2
-    assert "deepagents/default" in second_result.output
 
 
 # -- template resolution ---------------------------------------------------
@@ -564,12 +556,14 @@ def test_is_external_spec_local_type() -> None:
 
 def _assert_next_steps(output: str, *, project_path: str, cd_path: str | None = None) -> None:
     cd_path = cd_path or project_path
-    assert f"Created {project_path}" in output
-    assert "Next:" in output
-    assert f"cd {cd_path}" in output
-    assert "agentseek info" in output
-    assert "agentseek task --list" in output
-    assert "agentseek doctor" in output
+    normalized_output = output.replace("\\", "/")
+    assert f"Created {project_path}" in normalized_output
+    assert "Next:" in normalized_output
+    normalized_cd_path = cd_path.replace("\\", "/")
+    assert f"cd {normalized_cd_path}" in normalized_output or f"cd '{normalized_cd_path}'" in normalized_output
+    assert "agentseek info" in normalized_output
+    assert "agentseek task --list" in normalized_output
+    assert "agentseek doctor" in normalized_output
 
 
 def _assert_no_next_steps(output: str) -> None:
