@@ -13,6 +13,10 @@ from agentseek.cli.commands import create as create_module
 from agentseek.cli.commands.create import TemplateSource
 from tests.cli_commands.helpers import build_command_app
 
+_CATALOG_COMMIT = "0123456789abcdef0123456789abcdef01234567"
+_OTHER_CATALOG_COMMIT = "89abcdef0123456789abcdef0123456789abcdef"
+_CATALOG_URL = "https://example.com/teams/agentseek-templates.git"
+
 
 def _runner() -> CliRunner:
     return CliRunner()
@@ -840,3 +844,510 @@ def test_describe_unknown_template_exits_2() -> None:
     assert result.exit_code == 2
     assert "Template bub/missing-template was not found" in result.output
     assert "bub/default" in result.output
+
+
+# -- explicit AgentSeek catalog override ----------------------------------
+
+
+def _write_catalog(
+    root: Path,
+    index: object,
+) -> Path:
+    templates_root = root / "templates"
+    templates_root.mkdir(parents=True)
+    (templates_root / "index.json").write_text(json.dumps(index), encoding="utf-8")
+    if isinstance(index, dict):
+        for key in index:
+            if not isinstance(key, str) or key.startswith(("/", ".")):
+                continue
+            template_dir = templates_root / key
+            template_dir.mkdir(parents=True)
+            (template_dir / "cookiecutter.json").write_text(
+                json.dumps({"project_slug": "demo", "project_name": "Demo"}),
+                encoding="utf-8",
+            )
+            project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
+            project_file.parent.mkdir()
+            project_file.write_text(f"# {key}\n", encoding="utf-8")
+    return root
+
+
+def _mock_explicit_catalog(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    index: object,
+    *,
+    commit: str = _CATALOG_COMMIT,
+    clone_error: Exception | None = None,
+) -> tuple[list[tuple[str, str | None, Path, bool]], dict[str, str], Path]:
+    source_root = _write_catalog(tmp_path / "catalog-source", index)
+    cookiecutters_dir = tmp_path / "cookiecutters"
+    clone_calls: list[tuple[str, str | None, Path, bool]] = []
+    state = {"cached_head": commit}
+    staging_heads: dict[Path, str | None] = {}
+
+    def fail_if_local_templates_are_consulted() -> Path:
+        pytest.fail("an explicit catalog must bypass the local core templates")
+
+    def fake_get_user_config() -> dict[str, str]:
+        return {"cookiecutters_dir": str(cookiecutters_dir)}
+
+    def fake_clone(
+        repo_url: str,
+        *,
+        checkout: str | None = None,
+        clone_to_dir: Path | str = ".",
+        no_input: bool = False,
+    ) -> str:
+        destination_parent = Path(clone_to_dir)
+        clone_calls.append((repo_url, checkout, destination_parent, no_input))
+        if clone_error is not None:
+            raise clone_error
+        destination = destination_parent / "catalog"
+        shutil.copytree(source_root, destination, symlinks=True)
+        staging_heads[destination.resolve()] = checkout
+        return str(destination)
+
+    def fake_git_head(repo_root: Path) -> str | None:
+        if repo_root.name == "catalog":
+            return staging_heads[repo_root.resolve()]
+        return state["cached_head"]
+
+    monkeypatch.setattr(create_module, "_local_templates_root", fail_if_local_templates_are_consulted)
+    monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
+    monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
+    monkeypatch.setattr(create_module, "_git_head", fake_git_head, raising=False)
+    return clone_calls, state, source_root
+
+
+def _explicit_args(*args: str, url: str = _CATALOG_URL, commit: str = _CATALOG_COMMIT) -> list[str]:
+    return [
+        "create",
+        *args,
+        "--template-repo",
+        url,
+        "--checkout",
+        commit,
+    ]
+
+
+def _catalog_metadata_files(cookiecutters_dir: Path) -> list[Path]:
+    matches: list[Path] = []
+    for candidate in cookiecutters_dir.rglob("*.json"):
+        try:
+            data = json.loads(candidate.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if (
+            isinstance(data, dict)
+            and {"schema_version", "repository_url", "commit", "repository_subdirectory"} <= data.keys()
+        ):
+            matches.append(candidate)
+    return matches
+
+
+def test_help_documents_template_repo() -> None:
+    result = _runner().invoke(build_command_app(), ["create", "--help"])
+
+    assert result.exit_code == 0
+    assert "--template-repo" in result.output
+
+
+@pytest.mark.parametrize(
+    "checkout",
+    [None, "main", "v1.0.0", "0123456", _CATALOG_COMMIT.upper()],
+    ids=["missing", "branch", "tag", "abbreviated", "uppercase"],
+)
+def test_template_repo_requires_full_lowercase_commit(checkout: str | None) -> None:
+    argv = ["create", "bub", "--template-repo", _CATALOG_URL]
+    if checkout is not None:
+        argv += ["--checkout", checkout]
+
+    result = _runner().invoke(build_command_app(), argv)
+
+    assert result.exit_code == 2
+    assert "--checkout must be a 40-character lowercase commit SHA" in result.output
+
+
+@pytest.mark.parametrize(
+    "repo_url",
+    [
+        "http://example.com/catalog.git",
+        "git@example.com:catalog.git",
+        "https://example.com/catalog.git?token=secret",
+        "https://example.com/catalog.git#main",
+        "https://user:super-secret@example.com/catalog.git",
+    ],
+    ids=["http", "ssh", "query", "fragment", "credentials"],
+)
+def test_template_repo_rejects_unsafe_repository_urls_without_leaking_credentials(repo_url: str) -> None:
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates", url=repo_url),
+    )
+
+    assert result.exit_code == 2
+    assert "--template-repo must be an HTTPS repository URL without credentials, query, or fragment" in result.output
+    assert "super-secret" not in result.output
+
+
+@pytest.mark.parametrize("spec", ["https://github.com/foo/bar.git", "/abs/template"])
+def test_template_repo_rejects_external_positional_source_before_dispatch(
+    monkeypatch: pytest.MonkeyPatch,
+    spec: str,
+) -> None:
+    monkeypatch.setattr(
+        create_module,
+        "_run_cookiecutter",
+        lambda *args, **kwargs: pytest.fail("conflicting sources must not reach cookiecutter"),
+    )
+
+    result = _runner().invoke(build_command_app(), _explicit_args(spec))
+
+    assert result.exit_code == 2
+    assert "--template-repo cannot be combined with a positional URL or absolute path" in result.output
+
+
+def test_explicit_catalog_list_filter_describe_and_create_use_one_catalog(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {
+            "bub/remote": "Remote-only Bub template.",
+            "deepagents/other": "Other catalog template.",
+        },
+    )
+    captured: dict[str, object] = {}
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
+        captured["source"] = source
+        captured["context"] = create_module._cookiecutter_source_context(source)
+        generated = output_dir / "generated"
+        generated.mkdir()
+        return generated
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    list_result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates", "--filter", "REMOTE-ONLY"),
+    )
+    describe_result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub/remote", "--describe"),
+    )
+    assert "source" not in captured
+    create_result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub/remote", "--no-input"),
+    )
+
+    assert list_result.exit_code == 0, list_result.output
+    assert "bub/remote" in list_result.output
+    assert "deepagents/other" not in list_result.output
+    assert describe_result.exit_code == 0, describe_result.output
+    assert "Remote-only Bub template." in describe_result.output
+    assert create_result.exit_code == 0, create_result.output
+    source = captured["source"]
+    assert isinstance(source, TemplateSource)
+    assert Path(source.template).is_absolute()
+    assert source.install_source_path is None
+    assert captured["context"] == {
+        "_agentseek_source_path": "",
+        "_agentseek_source_path_posix": "",
+        "_agentseek_source_path_shell": "",
+        "_agentseek_source_url": create_module.REPO_GIT_URL,
+    }
+    assert len(clone_calls) == 1
+    assert clone_calls[0][0] == "https://example.com/teams/agentseek-templates"
+    assert clone_calls[0][1] == _CATALOG_COMMIT
+    assert clone_calls[0][3] is True
+
+
+def test_explicit_catalog_registry_is_not_filtered_by_legacy_core_quarantine(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/contextseek": "Reviewed external ContextSeek template."},
+    )
+
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates"),
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "bub/contextseek" in result.output
+
+
+def test_explicit_catalog_cold_cache_publishes_metadata_and_warm_cache_reuses_it(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    argv = _explicit_args("bub", "--list-templates")
+
+    cold_result = _runner().invoke(build_command_app(), argv)
+    warm_result = _runner().invoke(build_command_app(), argv)
+
+    assert cold_result.exit_code == 0, cold_result.output
+    assert warm_result.exit_code == 0, warm_result.output
+    assert len(clone_calls) == 1
+    metadata_files = _catalog_metadata_files(tmp_path / "cookiecutters")
+    assert len(metadata_files) == 1
+    metadata = json.loads(metadata_files[0].read_text(encoding="utf-8"))
+    assert metadata == {
+        "schema_version": 1,
+        "repository_url": "https://example.com/teams/agentseek-templates",
+        "commit": _CATALOG_COMMIT,
+        "repository_subdirectory": "templates",
+    }
+    metadata_path = str(metadata_files[0])
+    assert "agentseek" in metadata_path
+    assert "explicit" in metadata_path
+
+
+@pytest.mark.parametrize(
+    "stale_part",
+    ["metadata-url", "metadata-commit", "metadata-symlink", "head"],
+)
+def test_explicit_catalog_rejects_stale_cache_provenance(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    stale_part: str,
+) -> None:
+    clone_calls, state, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    argv = _explicit_args("bub", "--list-templates")
+    first_result = _runner().invoke(build_command_app(), argv)
+    assert first_result.exit_code == 0, first_result.output
+
+    if stale_part.startswith("metadata-"):
+        metadata_file = _catalog_metadata_files(tmp_path / "cookiecutters")[0]
+        metadata = json.loads(metadata_file.read_text(encoding="utf-8"))
+        if stale_part == "metadata-url":
+            metadata["repository_url"] = "https://example.com/wrong/catalog"
+            metadata_file.write_text(json.dumps(metadata), encoding="utf-8")
+        elif stale_part == "metadata-commit":
+            metadata["commit"] = _OTHER_CATALOG_COMMIT
+            metadata_file.write_text(json.dumps(metadata), encoding="utf-8")
+        else:
+            external_metadata = tmp_path / "external-metadata.json"
+            metadata_file.replace(external_metadata)
+            metadata_file.symlink_to(external_metadata)
+    else:
+        state["cached_head"] = _OTHER_CATALOG_COMMIT
+
+    second_result = _runner().invoke(build_command_app(), argv)
+
+    assert second_result.exit_code == 0, second_result.output
+    assert len(clone_calls) == 2
+
+
+def test_explicit_catalog_cache_normalizes_url_identity(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+
+    first_result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates", url="HTTPS://EXAMPLE.COM:443/teams/agentseek-templates.git/"),
+    )
+    second_result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates", url="https://example.com/teams/agentseek-templates"),
+    )
+
+    assert first_result.exit_code == 0, first_result.output
+    assert second_result.exit_code == 0, second_result.output
+    assert len(clone_calls) == 1
+
+
+def test_explicit_catalog_cache_isolates_same_basename_urls_and_commits(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+
+    results = [
+        _runner().invoke(
+            build_command_app(),
+            _explicit_args("bub", "--list-templates", url="https://one.example/team/catalog.git"),
+        ),
+        _runner().invoke(
+            build_command_app(),
+            _explicit_args("bub", "--list-templates", url="https://two.example/other/catalog.git"),
+        ),
+        _runner().invoke(
+            build_command_app(),
+            _explicit_args("bub", "--list-templates", commit=_OTHER_CATALOG_COMMIT),
+        ),
+    ]
+
+    assert all(result.exit_code == 0 for result in results), [result.output for result in results]
+    assert len(clone_calls) == 3
+    assert len(_catalog_metadata_files(tmp_path / "cookiecutters")) == 3
+
+
+def test_explicit_catalog_fetch_failure_does_not_fall_back(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+        clone_error=RuntimeError("network unavailable"),
+    )
+    monkeypatch.setattr(
+        create_module,
+        "_run_cookiecutter",
+        lambda *args, **kwargs: pytest.fail("a failed explicit fetch must not generate"),
+    )
+
+    result = _runner().invoke(build_command_app(), _explicit_args("bub/remote", "--no-input"))
+
+    assert result.exit_code == 1
+    assert "Could not prepare the explicit template catalog" in result.output
+    assert "bub/default" not in result.output
+
+
+@pytest.mark.parametrize(
+    ("index", "expected"),
+    [
+        ({}, "non-empty object"),
+        ([], "non-empty object"),
+        ({"../escape": "Unsafe key."}, "safe type/name"),
+        ({"bub/remote": 42}, "descriptions must be strings"),
+    ],
+    ids=["empty", "not-object", "unsafe-key", "non-string-description"],
+)
+def test_explicit_catalog_rejects_invalid_registry_without_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    index: object,
+    expected: str,
+) -> None:
+    _mock_explicit_catalog(monkeypatch, tmp_path, index)
+
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates"),
+    )
+
+    assert result.exit_code == 1
+    assert "Explicit template catalog is invalid" in result.output
+    assert expected in result.output
+
+
+@pytest.mark.parametrize(
+    "damage",
+    ["missing-config", "invalid-config", "missing-project-slug", "empty-body"],
+)
+def test_explicit_catalog_rejects_incomplete_registered_template(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    damage: str,
+) -> None:
+    _, _, source_root = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    template_dir = source_root / "templates" / "bub" / "remote"
+    if damage == "missing-config":
+        (template_dir / "cookiecutter.json").unlink()
+    elif damage == "invalid-config":
+        (template_dir / "cookiecutter.json").write_text("{", encoding="utf-8")
+    elif damage == "missing-project-slug":
+        (template_dir / "cookiecutter.json").write_text("{}", encoding="utf-8")
+    else:
+        shutil.rmtree(template_dir / "{{cookiecutter.project_slug}}")
+        (template_dir / "{{cookiecutter.project_slug}}").mkdir()
+
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates"),
+    )
+
+    assert result.exit_code == 1
+    assert "Explicit template catalog is invalid" in result.output
+    assert "bub/remote" in result.output
+
+
+def test_explicit_catalog_rejects_template_symlink_escape(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _, _, source_root = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    outside = tmp_path / "outside-secret.txt"
+    outside.write_text("secret", encoding="utf-8")
+    (source_root / "templates" / "bub" / "remote" / "{{cookiecutter.project_slug}}" / "escape.txt").symlink_to(outside)
+
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates"),
+    )
+
+    assert result.exit_code == 1
+    assert "Explicit template catalog is invalid" in result.output
+    assert "symlink" in result.output
+
+
+def test_positional_cookiecutter_url_keeps_checkout_and_directory_passthrough(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
+        captured["source"] = source
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        [
+            "create",
+            "https://github.com/foo/bar.git",
+            "--checkout",
+            "release/next",
+            "--template",
+            "nested/template",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    source = captured["source"]
+    assert isinstance(source, TemplateSource)
+    assert source.template == "https://github.com/foo/bar.git"
+    assert source.checkout == "release/next"
+    assert source.directory == "nested/template"
