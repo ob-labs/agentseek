@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import sys
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -91,6 +92,51 @@ def prepare_rendered_mcp_subprocess(rendered: Path, *, server_name: str = "calcu
     config_payload["mcpServers"][server_name] = calculator
     config_path.write_text(json.dumps(config_payload), encoding="utf-8")
     return {**os.environ, "PYTHONPATH": str(source_root)}
+
+
+def test_langgraph_host_override_remains_one_argv_value(rendered_mcp: Path, tmp_path: Path) -> None:
+    lifecycle = tomllib.loads((rendered_mcp / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
+    command = lifecycle["processes"]["langgraph"]["command"]
+    capture_path = tmp_path / "argv.json"
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_uv = fake_bin / "uv"
+    fake_uv.write_text(
+        f"#!{sys.executable}\n"
+        "import json, os, sys\n"
+        "from pathlib import Path\n"
+        "Path(os.environ['ARGV_CAPTURE']).write_text(json.dumps(sys.argv[1:]), encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    fake_uv.chmod(0o755)
+    hostile_host = "127.0.0.1 --allow-blocking *.json"
+    environment = {
+        **os.environ,
+        "ARGV_CAPTURE": str(capture_path),
+        "LANGGRAPH_HOST": hostile_host,
+        "PATH": f"{fake_bin}{os.pathsep}{os.environ.get('PATH', '')}",
+    }
+
+    completed = subprocess.run(  # noqa: S603 - executes rendered lifecycle through a controlled fake uv
+        command,
+        cwd=rendered_mcp,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert json.loads(capture_path.read_text(encoding="utf-8")) == [
+        "run",
+        "langgraph",
+        "dev",
+        "--port",
+        "2024",
+        "--no-browser",
+        "--host",
+        hostile_host,
+    ]
 
 
 def test_load_mcp_config_normalizes_stdio_and_http(rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch) -> None:

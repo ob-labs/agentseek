@@ -208,7 +208,11 @@ export default function App() {
       </section>
 
       <form className="composer" onSubmit={onSubmit}>
+        <label className="visually-hidden" htmlFor="mcp-message">
+          Message the MCP agent
+        </label>
         <input
+          id="mcp-message"
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}

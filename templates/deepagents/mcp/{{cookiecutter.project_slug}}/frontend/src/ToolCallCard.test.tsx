@@ -13,30 +13,30 @@ describe("ToolCallCard", () => {
       <ToolCallCard
         card={{
           callId: "call-1",
-          name: "task",
-          args: { description: "Research IBM" },
+          name: "calculator_add",
+          args: { a: 19, b: 23 },
           result: null,
           status: "pending",
         }}
       />,
     );
 
-    const pendingDetails = screen.getByText("mcp/task").closest("details");
+    const pendingDetails = screen.getByText("mcp/calculator_add").closest("details");
     expect(pendingDetails?.hasAttribute("open")).toBe(true);
 
     rerender(
       <ToolCallCard
         card={{
           callId: "call-1",
-          name: "task",
-          args: { description: "Research IBM" },
-          result: "Done",
+          name: "calculator_add",
+          args: { a: 19, b: 23 },
+          result: "42",
           status: "done",
         }}
       />,
     );
 
-    const finishedDetails = screen.getByText("mcp/task").closest("details");
+    const finishedDetails = screen.getByText("mcp/calculator_add").closest("details");
     expect(finishedDetails?.hasAttribute("open")).toBe(false);
   });
 

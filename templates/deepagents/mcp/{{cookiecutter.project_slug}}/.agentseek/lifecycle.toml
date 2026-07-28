@@ -42,7 +42,7 @@ url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
 url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 
 [processes.langgraph]
-command = ["sh", "-lc", "uv run langgraph dev --port {{ cookiecutter.langgraph_port }} --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}"]
+command = ["sh", "-lc", "uv run langgraph dev --port {{ cookiecutter.langgraph_port }} --no-browser --host \"${LANGGRAPH_HOST:-127.0.0.1}\""]
 
 [processes.frontend]
 command = ["npm", "run", "dev"]

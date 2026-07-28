@@ -21,6 +21,18 @@
   box-sizing: border-box;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -515,7 +527,7 @@ code {
 }
 
 .composer input::placeholder {
-  color: #798594;
+  color: #5d6875;
 }
 
 .composer button {

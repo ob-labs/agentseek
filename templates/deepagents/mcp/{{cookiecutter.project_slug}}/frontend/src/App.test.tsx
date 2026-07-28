@@ -12,13 +12,13 @@ const streamState: {
 } = {
   values: {
     todos: [
-      { content: "Plan the report sections", status: "completed" },
-      { content: "Research LangGraph 1.0 changes", status: "in_progress" },
-      { content: "Write final summary", status: "pending" },
+      { content: "Inspect calculator tool schema", status: "completed" },
+      { content: "Call calculator_add", status: "in_progress" },
+      { content: "Return the computed result", status: "pending" },
     ],
   },
   messages: [
-    { id: "human-1", type: "human", content: "Research IBM" },
+    { id: "human-1", type: "human", content: "Add 19 and 23 with the calculator tool." },
     {
       id: "ai-1",
       type: "ai",
@@ -26,11 +26,8 @@ const streamState: {
       tool_calls: [
         {
           id: "call-1",
-          name: "task",
-          args: {
-            description: "Research IBM's LangGraph work",
-            subagent_type: "research-agent",
-          },
+          name: "calculator_add",
+          args: { a: 19, b: 23 },
         },
       ],
     },
@@ -38,12 +35,13 @@ const streamState: {
       id: "tool-1",
       type: "tool",
       tool_call_id: "call-1",
-      content: "IBM summary",
+      content: "42",
+      status: "success",
     },
     {
       id: "ai-2",
       type: "ai",
-      content: "IBM published a LangGraph guide.",
+      content: "The calculator returned 42.",
     },
   ],
   isLoading: false,
@@ -68,13 +66,13 @@ afterEach(() => {
   streamState.error = null;
   streamState.values = {
     todos: [
-      { content: "Plan the report sections", status: "completed" },
-      { content: "Research LangGraph 1.0 changes", status: "in_progress" },
-      { content: "Write final summary", status: "pending" },
+      { content: "Inspect calculator tool schema", status: "completed" },
+      { content: "Call calculator_add", status: "in_progress" },
+      { content: "Return the computed result", status: "pending" },
     ],
   };
   streamState.messages = [
-    { id: "human-1", type: "human", content: "Research IBM" },
+    { id: "human-1", type: "human", content: "Add 19 and 23 with the calculator tool." },
     {
       id: "ai-1",
       type: "ai",
@@ -82,11 +80,8 @@ afterEach(() => {
       tool_calls: [
         {
           id: "call-1",
-          name: "task",
-          args: {
-            description: "Research IBM's LangGraph work",
-            subagent_type: "research-agent",
-          },
+          name: "calculator_add",
+          args: { a: 19, b: 23 },
         },
       ],
     },
@@ -94,17 +89,25 @@ afterEach(() => {
       id: "tool-1",
       type: "tool",
       tool_call_id: "call-1",
-      content: "IBM summary",
+      content: "42",
+      status: "success",
     },
     {
       id: "ai-2",
       type: "ai",
-      content: "IBM published a LangGraph guide.",
+      content: "The calculator returned 42.",
     },
   ];
 });
 
 describe("App", () => {
+  it("keeps a durable accessible label on the message composer", () => {
+    render(<App />);
+
+    const composer = screen.getByRole("textbox", { name: "Message the MCP agent" });
+    expect(composer.getAttribute("placeholder")).toBe("Ask the MCP-enabled agent…");
+  });
+
   it("connects the browser to the mcp graph on the browser host", () => {
     render(<App />);
 
@@ -131,35 +134,32 @@ describe("App", () => {
     expect(screen.getByText("Execution plan")).toBeTruthy();
     expect(screen.getByText("1/3 completed")).toBeTruthy();
     expect(screen.getByText("33%")).toBeTruthy();
-    expect(screen.getByText("Plan the report sections")).toBeTruthy();
-    expect(screen.getByText("Research LangGraph 1.0 changes")).toBeTruthy();
-    expect(screen.getByText("Write final summary")).toBeTruthy();
+    expect(screen.getByText("Inspect calculator tool schema")).toBeTruthy();
+    expect(screen.getByText("Call calculator_add")).toBeTruthy();
+    expect(screen.getByText("Return the computed result")).toBeTruthy();
   });
 
-  it("renders sub-agent cards from streamed task tool calls", () => {
+  it("renders prefixed calculator cards from streamed MCP tool calls", () => {
     render(<App />);
 
-    expect(screen.getByText("mcp/task")).toBeTruthy();
-    expect(screen.getByText("IBM summary")).toBeTruthy();
-    expect(screen.getByText("IBM published a LangGraph guide.")).toBeTruthy();
+    expect(screen.getByText("mcp/calculator_add")).toBeTruthy();
+    expect(screen.getByText("42")).toBeTruthy();
+    expect(screen.getByText("The calculator returned 42.")).toBeTruthy();
   });
 
   it("renders planning-shaped mixed ai content as a collapsed agent plan block", () => {
     streamState.messages = [
-      { id: "human-1", type: "human", content: "Research IBM" },
+      { id: "human-1", type: "human", content: "Add 19 and 23." },
       {
         id: "ai-1",
         type: "ai",
         content:
-          "## SESSION INTENT\nCompare LangGraph 1.0 and 0.x.\n\n## SUMMARY\nThe user requested a specific multi-step workflow.",
+          "## SESSION INTENT\nUse the calculator tool.\n\n## SUMMARY\nThe user requested a specific multi-step workflow.",
         tool_calls: [
           {
             id: "call-1",
-            name: "task",
-            args: {
-              description: "Research IBM's LangGraph work",
-              subagent_type: "research-agent",
-            },
+            name: "calculator_add",
+            args: { a: 19, b: 23 },
           },
         ],
       },
@@ -167,7 +167,8 @@ describe("App", () => {
         id: "tool-1",
         type: "tool",
         tool_call_id: "call-1",
-        content: "IBM summary",
+        content: "42",
+        status: "success",
       },
     ];
 
@@ -176,18 +177,18 @@ describe("App", () => {
     expect(screen.getByText("Agent plan")).toBeTruthy();
     expect(screen.getByText("SESSION INTENT")).toBeTruthy();
     expect(screen.getByText("Agent plan").closest("details")?.hasAttribute("open")).toBe(false);
-    expect(screen.getByText("mcp/task")).toBeTruthy();
-    expect(screen.getByText("IBM summary")).toBeTruthy();
+    expect(screen.getByText("mcp/calculator_add")).toBeTruthy();
+    expect(screen.getByText("42")).toBeTruthy();
   });
 
   it("renders a standalone planning message as a collapsed agent plan block", () => {
     streamState.messages = [
-      { id: "human-1", type: "human", content: "Research IBM" },
+      { id: "human-1", type: "human", content: "Add 19 and 23." },
       {
         id: "ai-1",
         type: "ai",
         content:
-          "## SESSION INTENT\nCompare LangGraph 1.0 and 0.x.\n\n## SUMMARY\nThe user requested a specific multi-step workflow.",
+          "## SESSION INTENT\nUse the calculator tool.\n\n## SUMMARY\nThe user requested a specific multi-step workflow.",
       },
       {
         id: "ai-2",
@@ -205,19 +206,17 @@ describe("App", () => {
 
   it("renders substantive mixed ai content as a normal assistant answer", () => {
     streamState.messages = [
-      { id: "human-1", type: "human", content: "Research IBM" },
+      { id: "human-1", type: "human", content: "Multiply 6 and 7." },
       {
         id: "ai-1",
         type: "ai",
         content:
-          "- **Answer point one:** LangGraph 1.0 adds a functional API.\n- **Answer point two:** LangGraph 1.0 improves deployment tooling.",
+          "- **Calculation:** 6 multiplied by 7.\n- **Expected result:** 42.",
         tool_calls: [
           {
             id: "call-1",
-            name: "write_todos",
-            args: {
-              todos: [{ content: "Wrap up", status: "completed" }],
-            },
+            name: "calculator_multiply",
+            args: { a: 6, b: 7 },
           },
         ],
       },
@@ -225,16 +224,17 @@ describe("App", () => {
         id: "tool-1",
         type: "tool",
         tool_call_id: "call-1",
-        content: "Updated todo list",
+        content: "42",
+        status: "success",
       },
     ];
 
     render(<App />);
 
     expect(screen.queryByText("Agent plan")).toBeNull();
-    expect(screen.getByText("Answer point one:")).toBeTruthy();
-    expect(screen.getByText("mcp/write_todos")).toBeTruthy();
-    expect(screen.getByText("Updated todo list")).toBeTruthy();
+    expect(screen.getByText("Calculation:")).toBeTruthy();
+    expect(screen.getByText("mcp/calculator_multiply")).toBeTruthy();
+    expect(screen.getByText("42")).toBeTruthy();
   });
 
   it("renders a successful prefixed MCP tool call from streamed messages", () => {
@@ -323,7 +323,7 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.queryByText("Execution plan")).toBeNull();
-    expect(screen.getByText("mcp/task")).toBeTruthy();
+    expect(screen.getByText("mcp/calculator_add")).toBeTruthy();
   });
 });
 {% endraw %}

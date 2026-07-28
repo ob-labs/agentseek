@@ -13,6 +13,7 @@ catch Jinja errors, missing files, and unsubstituted variables before they hit
 from __future__ import annotations
 
 import json
+import re
 import shlex
 import shutil
 import tomllib
@@ -236,7 +237,7 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     assert lifecycle_data["processes"]["langgraph"]["command"] == [
         "sh",
         "-lc",
-        "uv run langgraph dev --port 2024 --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}",
+        'uv run langgraph dev --port 2024 --no-browser --host "${LANGGRAPH_HOST:-127.0.0.1}"',
     ]
     frontend = generated / "frontend"
     assert (frontend / "package.json").is_file()
@@ -247,33 +248,60 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     assert "window.location.hostname" in app_text
     assert 'assistantId: "mcp"' in app_text
     assert "FRONTEND_HOST" in vite_text
+    assert "process.env.FRONTEND_HOST" in vite_text
     frontend_env_text = (frontend / ".env.example").read_text(encoding="utf-8")
-    browser_sources = "\n".join([
-        vite_text,
-        frontend_env_text,
-        *(
-            path.read_text(encoding="utf-8")
-            for path in sorted((frontend / "src").iterdir())
-            if path.suffix in {".ts", ".tsx"} and not path.name.endswith(".test.tsx")
-        ),
-    ])
-    for forbidden in (
-        ".mcp.json",
-        "mcpServers",
-        "MCP_TOKEN",
-        "MCP_SERVER",
-        "VITE_MCP",
-        "Authorization",
-        "OPENAI_API_KEY",
-    ):
-        assert forbidden not in browser_sources
+    production_surfaces = {
+        ".env.example",
+        ".gitignore",
+        "index.html",
+        "package.json",
+        "src/App.tsx",
+        "src/ThinkingBlock.tsx",
+        "src/TodoList.tsx",
+        "src/ToolCallCard.tsx",
+        "src/main.tsx",
+        "src/styles.css",
+        "src/vite-env.d.ts",
+        "tsconfig.json",
+        "tsconfig.node.json",
+        "vite.config.ts",
+    }
+    test_surfaces = {
+        "src/App.test.tsx",
+        "src/ToolCallCard.test.tsx",
+        "vite.config.test.ts",
+    }
+    rendered_frontend_files = {path.relative_to(frontend).as_posix() for path in frontend.rglob("*") if path.is_file()}
+    assert rendered_frontend_files == production_surfaces | test_surfaces
+    surface_text = {
+        relative_path: (frontend / relative_path).read_text(encoding="utf-8") for relative_path in production_surfaces
+    }
+    shipped_production_config = "\n".join(surface_text.values())
+    browser_env_variables = set(re.findall(r"import\.meta\.env\.([A-Z][A-Z0-9_]*)", shipped_production_config))
+    assert browser_env_variables == {"VITE_LANGGRAPH_API_URL"}
+    forbidden_patterns = {
+        "static server URL": r"https?://[a-z0-9]",
+        "server header": r"(?:['\"]?(?:authorization|x-api-key|headers?)['\"]?\s*:)",
+        "credential value": r"\b(?:api[_-]?key|token|password|bearer)\b",
+        "MCP config": r"(?:\.mcp\.json|mcpservers|vite_[a-z0-9_]*mcp|mcp[_-](?:url|token|key|password|headers?))",
+        "config editor": r"(?:config(?:uration)?\s*editor|edit(?:or)?\s+(?:mcp|server|connection))",
+    }
+    for label, pattern in forbidden_patterns.items():
+        assert re.search(pattern, shipped_production_config, flags=re.IGNORECASE) is None, label
     assert "VITE_LANGGRAPH_API_URL=http://127.0.0.1" not in frontend_env_text
+    root_env_text = (generated / ".env.example").read_text(encoding="utf-8")
+    assert "LANGGRAPH_HOST=" not in root_env_text
+    assert "FRONTEND_HOST=" not in root_env_text
+    package_data = json.loads((frontend / "package.json").read_text(encoding="utf-8"))
+    assert package_data["engines"]["node"] == "^20.19.0 || ^22.13.0 || >=24.0.0"
     readme_text = (generated / "README.md").read_text(encoding="utf-8")
     assert "Run `agentseek task sync`, `agentseek task frontend`, and" in readme_text
     assert "`agentseek task mcp-smoke`, then inspect with `agentseek doctor`" in readme_text
     assert "development services with `agentseek dev`." in readme_text
     assert "agentseek task mcp-smoke" in readme_text
     assert "LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev" in readme_text
+    assert "`frontend/.env`" in readme_text
+    assert "Node.js `^20.19.0 || ^22.13.0 || >=24.0.0`" in readme_text
 
 
 def _assert_language_instruction_template(generated: Path) -> None:
