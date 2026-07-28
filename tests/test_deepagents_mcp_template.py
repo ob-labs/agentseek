@@ -765,3 +765,17 @@ def test_graph_factory_retries_after_failed_runtime_build(
 
     assert asyncio.run(rendered_agent.make_graph()) is graph
     assert attempts == 2
+
+
+def test_mcp_template_readmes_cover_runtime_contract(rendered_mcp: Path) -> None:
+    source = (TEMPLATE / "README.md").read_text()
+    generated = (rendered_mcp / "README.md").read_text()
+    for text in (source, generated):
+        assert "stdio" in text
+        assert "Streamable HTTP" in text
+        assert "tool_name_prefix" in text
+        assert "trusted local code execution" in text
+        assert "persistent sessions" in text
+    assert "agentseek task mcp-smoke" in generated
+    assert "browser-based MCP configuration editor" in generated
+    assert "billing_charge_card" in generated

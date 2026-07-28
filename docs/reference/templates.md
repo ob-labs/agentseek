@@ -45,6 +45,7 @@ for published 0.0.x clients and explicit local-path use.
 | `bub/default` | Lightweight Bub agent with AgentSeek lifecycle spec. |
 | `deepagents/content-builder` | DeepAgents content builder with writing workflows, image generation, local UI, and AgentSeek lifecycle spec. |
 | `deepagents/default` | Minimal DeepAgents app with AgentSeek lifecycle spec. |
+| `deepagents/mcp` | DeepAgents MCP Tools app with validated stdio/HTTP configuration, a local calculator example, streamed UI, and AgentSeek lifecycle spec. |
 | `deepagents/research` | DeepAgents research app with search workflow, local UI, and AgentSeek lifecycle spec. |
 | `deepagents/sandbox` | DeepAgents sandbox coding agent with Daytona by default, a charged LangSmith Sandbox alternative, local UI, and AgentSeek lifecycle spec. |
 | `langchain/agentic-rag` | LangChain agentic RAG with OceanBase vector search and AgentSeek lifecycle spec. |

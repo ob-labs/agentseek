@@ -42,6 +42,7 @@ AgentSeek 0.1.0 使用独立的
 | `bub/default` | 带 AgentSeek 生命周期规范的轻量 Bub agent。 |
 | `deepagents/content-builder` | 带写作流程、图像生成、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents 内容构建器。 |
 | `deepagents/default` | 带 AgentSeek 生命周期规范的最小 DeepAgents 应用。 |
+| `deepagents/mcp` | DeepAgents MCP Tools 应用，提供经过校验的 stdio/HTTP 配置、本地计算器示例、流式 UI 和 AgentSeek 生命周期规范。 |
 | `deepagents/research` | 带检索流程、本地 UI 和 AgentSeek 生命周期规范的 DeepAgents research 应用。 |
 | `deepagents/sandbox` | DeepAgents sandbox coding agent，默认接入 Daytona，并提供收费的 LangSmith Sandbox 备选、本地 UI 和 AgentSeek 生命周期规范。 |
 | `langchain/agentic-rag` | 带 OceanBase vector search 和 AgentSeek 生命周期规范的 LangChain agentic RAG。 |
