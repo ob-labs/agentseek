@@ -185,7 +185,7 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     requires_python = pyproject_data["project"]["requires-python"]
     assert requires_python == ">=3.12"
     assert pyproject_data["project"]["dependencies"] == [
-        "deepagents>=0.6.12,<0.7",
+        "deepagents==0.6.12",
         "langchain>=1.0",
         "langchain-anthropic>=1.0",
         "langchain-google-genai>=4.0",

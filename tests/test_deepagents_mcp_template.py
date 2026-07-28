@@ -21,6 +21,7 @@ from cookiecutter.main import cookiecutter
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = REPO_ROOT / "templates" / "deepagents" / "mcp"
+CHARACTERIZED_DEEPAGENTS_VERSION = "0.6.12"
 
 
 class _GeneralPurposeSubagentProfileLike(Protocol):
@@ -707,8 +708,11 @@ def test_reserved_mcp_names_match_real_deepagents_0_6_12_runtime(
 ) -> None:
     from deepagents._version import __version__ as deepagents_version
 
-    if deepagents_version != "0.6.12":
-        pytest.skip("requires the generated template's pinned DeepAgents 0.6.12 runtime")
+    if deepagents_version != CHARACTERIZED_DEEPAGENTS_VERSION:
+        pytest.skip(
+            f"repository test environment has DeepAgents {deepagents_version}; "
+            "the generated project pins DeepAgents 0.6.12 exactly"
+        )
 
     from deepagents import (
         GeneralPurposeSubagentProfile,
@@ -1217,6 +1221,8 @@ def test_mcp_template_readmes_cover_runtime_contract(rendered_mcp: Path) -> None
         "Adding, removing, or replacing any server changes the complete discovered tool-name tuple, so update the calculator smoke contract at the same time.",
         "Final names must be unique and cannot replace the enabled DeepAgents built-ins:",
         "The `task` tool is disabled by this template's harness profile and is not reserved.",
+        "This template pins DeepAgents to `0.6.12` because the enabled built-in tool set and harness profile APIs are characterized for that exact runtime.",
+        "Before upgrading DeepAgents, rerun and update the real built-in collision characterization, reserved-name set, and profile regressions together.",
         "Set `AGENTSEEK_MODEL_PROVIDER` and `AGENTSEEK_MODEL` for the DeepAgents graph. `DEEPAGENTS_MODEL` and `BUB_MODEL` are model-name compatibility aliases.",
         "`AGENTSEEK_MODEL_API_KEY` is",
         "Provider-native API keys remain",
@@ -1257,3 +1263,18 @@ def test_mcp_template_readmes_cover_runtime_contract(rendered_mcp: Path) -> None
     assert chinese_row in (REPO_ROOT / "docs" / "reference" / "templates.zh.md").read_text(encoding="utf-8")
     registry = json.loads((REPO_ROOT / "templates" / "index.json").read_text(encoding="utf-8"))
     assert registry["deepagents/mcp"] == english_description
+
+
+def test_deepagents_dependency_pin_matches_runtime_characterization(rendered_mcp: Path) -> None:
+    pyproject = tomllib.loads((rendered_mcp / "pyproject.toml").read_text(encoding="utf-8"))
+    dependencies = pyproject["project"]["dependencies"]
+    design = (REPO_ROOT / "docs" / "superpowers" / "specs" / "2026-07-28-deepagents-mcp-template-design.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert f"deepagents=={CHARACTERIZED_DEEPAGENTS_VERSION}" in dependencies
+    assert f"`deepagents=={CHARACTERIZED_DEEPAGENTS_VERSION}`" in design
+    assert (
+        "Upgrading DeepAgents requires rerunning and updating the real built-in collision characterization"
+        in _normalized(design)
+    )

@@ -72,6 +72,11 @@ client sessions between calls.
 
 ## Adapt the template
 
+This template pins DeepAgents to `0.6.12` because the enabled built-in tool set
+and harness profile APIs are characterized for that exact runtime. Before
+upgrading DeepAgents, rerun and update the real built-in collision
+characterization, reserved-name set, and profile regressions together.
+
 The smoke task checks the complete discovered tool-name tuple, schema, and
 calculation. Adding, removing, or replacing any server changes the complete
 discovered tool-name tuple, so update the calculator smoke contract at the same

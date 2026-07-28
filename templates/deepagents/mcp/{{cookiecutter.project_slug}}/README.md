@@ -97,6 +97,11 @@ Final names must be unique and cannot replace the enabled DeepAgents built-ins:
 `execute`. The `task` tool is disabled by this template's harness profile and
 is not reserved.
 
+This template pins DeepAgents to `0.6.12` because the enabled built-in tool set
+and harness profile APIs are characterized for that exact runtime. Before
+upgrading DeepAgents, rerun and update the real built-in collision
+characterization, reserved-name set, and profile regressions together.
+
 Restart the AgentSeek development processes after changing `.mcp.json`, model
 settings, or server credentials. MCP tool calls are stateless and do not retain
 persistent MCP client sessions between calls.
