@@ -245,6 +245,9 @@ def _assert_agentic_rag_template(generated: Path, lifecycle_data: dict[str, Any]
     assert "path" in helper_text and "SEEKDB_MODE" in helper_text
     assert "get_vector_store" in agent_text
     assert "get_vector_store" in ingest_text
+    assert "from my_rag_agent.vector_store import get_vector_store" in agent_text
+    assert "from my_rag_agent.vector_store import get_vector_store" in ingest_text
+    assert "from .vector_store" not in agent_text
     assert "DeterministicEmbeddings" in smoke_test
     assert "subprocess.run" in smoke_test
     assert "shutil.rmtree" in smoke_test

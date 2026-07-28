@@ -10,7 +10,7 @@ from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain.tools import tool
 
-from .vector_store import get_vector_store
+from {{ cookiecutter.project_slug }}.vector_store import get_vector_store
 
 load_dotenv()
 

@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from .vector_store import get_vector_store
+from {{ cookiecutter.project_slug }}.vector_store import get_vector_store
 
 load_dotenv()
 
