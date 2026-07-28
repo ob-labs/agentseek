@@ -13,7 +13,8 @@ from typing import Any, Literal, NotRequired, TypedDict, cast
 from urllib.parse import urlparse
 
 _ENVIRONMENT_REFERENCE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
-_SERVER_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+_SERVER_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*\Z")
+_INVALID_URL_CHARACTER = re.compile(r"[\s\x00-\x1f\x7f-\x9f]")
 
 
 class MCPConfigError(ValueError):
@@ -48,7 +49,12 @@ def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def _require_string(value: Any, json_path: str) -> None:
-    if not isinstance(value, str) or not value:
+    if not isinstance(value, str):
+        raise MCPConfigError(f"Expected a string at {json_path}")
+
+
+def _require_non_empty_string(value: str, json_path: str) -> None:
+    if not value:
         raise MCPConfigError(f"Expected a non-empty string at {json_path}")
 
 
@@ -81,14 +87,22 @@ def _validate_http(connection: dict[str, Any], json_path: str) -> None:
         raise MCPConfigError(f"Missing required field at {json_path}.url")
     url = connection["url"]
     _require_string(url, f"{json_path}.url")
-    try:
-        parsed_url = urlparse(url)
-    except ValueError as exc:
-        raise MCPConfigError(f"Expected an absolute http or https URL at {json_path}.url") from exc
-    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
-        raise MCPConfigError(f"Expected an absolute http or https URL at {json_path}.url")
     if "headers" in connection:
         _validate_string_mapping(connection["headers"], f"{json_path}.headers")
+
+
+def _is_absolute_http_url(url: str) -> bool:
+    if _INVALID_URL_CHARACTER.search(url) is not None:
+        return False
+    try:
+        parsed_url = urlparse(url)
+        hostname = parsed_url.hostname
+        port = parsed_url.port
+    except ValueError:
+        return False
+    if parsed_url.scheme not in {"http", "https"} or not hostname or parsed_url.netloc.endswith(":"):
+        return False
+    return port is None or 1 <= port <= 65535
 
 
 def _validate_config(value: Any) -> dict[str, Any]:
@@ -116,6 +130,19 @@ def _validate_config(value: Any) -> dict[str, Any]:
         else:
             raise MCPConfigError(f"Unsupported transport at {json_path}.transport")
     return value
+
+
+def _validate_resolved_connections(value: dict[str, Any]) -> None:
+    for server_name, connection in value["mcpServers"].items():
+        json_path = f"$.mcpServers.{server_name}"
+        if connection["transport"] == "stdio":
+            _require_non_empty_string(connection["command"], f"{json_path}.command")
+            continue
+
+        url = connection["url"]
+        _require_non_empty_string(url, f"{json_path}.url")
+        if not _is_absolute_http_url(url):
+            raise MCPConfigError(f"Expected an absolute http or https URL at {json_path}.url")
 
 
 def _resolve(value: Any, environment: Mapping[str, str], json_path: str) -> Any:
@@ -155,4 +182,5 @@ def load_mcp_config(path: Path, environ: Mapping[str, str] | None = None) -> MCP
     validated = _validate_config(unresolved)
     environment = os.environ if environ is None else environ
     resolved = _resolve(validated, environment, "$")
+    _validate_resolved_connections(resolved)
     return MCPConfig(servers=cast(dict[str, StdioConnection | HttpConnection], resolved["mcpServers"]))

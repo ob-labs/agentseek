@@ -78,6 +78,142 @@ def test_python_executable_placeholder_ignores_environment_override(
     assert loaded.servers["calculator"]["command"] == sys.executable
 
 
+def test_connection_values_support_whole_and_embedded_environment_references(rendered_mcp: Path) -> None:
+    module = load_rendered_module(rendered_mcp, "config")
+    path = write_json(
+        rendered_mcp,
+        {
+            "mcpServers": {
+                "worker": {
+                    "transport": "stdio",
+                    "command": "${COMMAND}",
+                    "args": ["${MODULE}", "--mode=${MODE}"],
+                    "env": {"SERVICE_URL": "https://${SERVICE_HOST}/${SERVICE_PATH}"},
+                },
+                "remote": {
+                    "transport": "http",
+                    "url": "${MCP_URL}",
+                    "headers": {"Authorization": "Bearer ${MCP_TOKEN}"},
+                },
+                "embedded": {
+                    "transport": "http",
+                    "url": "https://${MCP_HOST}:${MCP_PORT}/${MCP_PATH}",
+                },
+            }
+        },
+    )
+
+    loaded = module.load_mcp_config(
+        path,
+        environ={
+            "COMMAND": "python3",
+            "MODULE": "-m",
+            "MODE": "safe",
+            "SERVICE_HOST": "service.example.com",
+            "SERVICE_PATH": "v1",
+            "MCP_URL": "https://mcp.example.com/mcp",
+            "MCP_TOKEN": "token-value",
+            "MCP_HOST": "embedded.example.com",
+            "MCP_PORT": "8443",
+            "MCP_PATH": "mcp",
+        },
+    )
+
+    assert loaded.servers["worker"] == {
+        "transport": "stdio",
+        "command": "python3",
+        "args": ["-m", "--mode=safe"],
+        "env": {"SERVICE_URL": "https://service.example.com/v1"},
+    }
+    assert loaded.servers["remote"] == {
+        "transport": "http",
+        "url": "https://mcp.example.com/mcp",
+        "headers": {"Authorization": "Bearer token-value"},
+    }
+    assert loaded.servers["embedded"]["url"] == "https://embedded.example.com:8443/mcp"
+
+
+def test_empty_resolved_command_is_rejected(rendered_mcp: Path) -> None:
+    module = load_rendered_module(rendered_mcp, "config")
+    path = write_json(
+        rendered_mcp,
+        {"mcpServers": {"worker": {"transport": "stdio", "command": "${COMMAND}"}}},
+    )
+
+    with pytest.raises(module.MCPConfigError, match=r"non-empty string at \$\.mcpServers\.worker\.command") as exc:
+        module.load_mcp_config(path, environ={"COMMAND": ""})
+
+    assert exc.value.__cause__ is None
+    assert exc.value.__context__ is None
+
+
+def test_invalid_resolved_url_is_rejected_without_leaking_value_or_exception_chain(rendered_mcp: Path) -> None:
+    module = load_rendered_module(rendered_mcp, "config")
+    invalid_value = "[credential-like-host-value"
+    path = write_json(
+        rendered_mcp,
+        {"mcpServers": {"remote": {"transport": "http", "url": "https://${HOST}/mcp"}}},
+    )
+
+    with pytest.raises(module.MCPConfigError, match=r"absolute http or https URL at \$\.mcpServers\.remote\.url") as exc:
+        module.load_mcp_config(path, environ={"HOST": invalid_value})
+
+    assert invalid_value not in str(exc.value)
+    assert exc.value.__cause__ is None
+    assert exc.value.__context__ is None
+
+
+def test_server_name_with_dot_is_rejected(rendered_mcp: Path) -> None:
+    module = load_rendered_module(rendered_mcp, "config")
+    path = write_json(
+        rendered_mcp,
+        {"mcpServers": {"prod.billing": {"transport": "stdio", "command": "python"}}},
+    )
+
+    with pytest.raises(module.MCPConfigError, match="server name"):
+        module.load_mcp_config(path)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://:80/mcp",
+        "http://user@/mcp",
+        "https://bad host/mcp",
+        "https://bad\thost/mcp",
+        "https://example.com:/mcp",
+        "https://example.com:bad/mcp",
+        "https://example.com:0/mcp",
+        "https://example.com:99999/mcp",
+    ],
+)
+def test_malformed_http_authority_is_rejected(rendered_mcp: Path, url: str) -> None:
+    module = load_rendered_module(rendered_mcp, "config")
+    path = write_json(
+        rendered_mcp,
+        {"mcpServers": {"remote": {"transport": "http", "url": url}}},
+    )
+
+    with pytest.raises(module.MCPConfigError, match=r"absolute http or https URL at \$\.mcpServers\.remote\.url"):
+        module.load_mcp_config(path)
+
+
+def test_invalid_resolved_host_is_rejected_without_leaking_value(rendered_mcp: Path) -> None:
+    module = load_rendered_module(rendered_mcp, "config")
+    invalid_value = "sensitive host value"
+    path = write_json(
+        rendered_mcp,
+        {"mcpServers": {"remote": {"transport": "http", "url": "https://${HOST}/mcp"}}},
+    )
+
+    with pytest.raises(module.MCPConfigError, match=r"absolute http or https URL at \$\.mcpServers\.remote\.url") as exc:
+        module.load_mcp_config(path, environ={"HOST": invalid_value})
+
+    assert invalid_value not in str(exc.value)
+    assert exc.value.__cause__ is None
+    assert exc.value.__context__ is None
+
+
 @pytest.mark.parametrize(
     ("payload", "match"),
     [
