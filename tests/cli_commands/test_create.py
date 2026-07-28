@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path, PureWindowsPath
+from threading import Event
 
 import pytest
 from typer.testing import CliRunner
@@ -849,6 +852,17 @@ def test_describe_unknown_template_exits_2() -> None:
 # -- explicit AgentSeek catalog override ----------------------------------
 
 
+def _write_catalog_template(template_dir: Path) -> None:
+    template_dir.mkdir(parents=True)
+    (template_dir / "cookiecutter.json").write_text(
+        json.dumps({"project_slug": "demo", "project_name": "Demo"}),
+        encoding="utf-8",
+    )
+    project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
+    project_file.parent.mkdir()
+    project_file.write_text(f"# {template_dir.parent.name}/{template_dir.name}\n", encoding="utf-8")
+
+
 def _write_catalog(
     root: Path,
     index: object,
@@ -860,15 +874,7 @@ def _write_catalog(
         for key in index:
             if not isinstance(key, str) or key.startswith(("/", ".")):
                 continue
-            template_dir = templates_root / key
-            template_dir.mkdir(parents=True)
-            (template_dir / "cookiecutter.json").write_text(
-                json.dumps({"project_slug": "demo", "project_name": "Demo"}),
-                encoding="utf-8",
-            )
-            project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
-            project_file.parent.mkdir()
-            project_file.write_text(f"# {key}\n", encoding="utf-8")
+            _write_catalog_template(templates_root / key)
     return root
 
 
@@ -879,11 +885,13 @@ def _mock_explicit_catalog(
     *,
     commit: str = _CATALOG_COMMIT,
     clone_error: Exception | None = None,
+    clone_started: Event | None = None,
+    clone_release: Event | None = None,
 ) -> tuple[list[tuple[str, str | None, Path, bool]], dict[str, str], Path]:
     source_root = _write_catalog(tmp_path / "catalog-source", index)
     cookiecutters_dir = tmp_path / "cookiecutters"
     clone_calls: list[tuple[str, str | None, Path, bool]] = []
-    state = {"cached_head": commit}
+    state = {"cached_head": commit, "fetched_head": commit}
     staging_heads: dict[Path, str | None] = {}
 
     def fail_if_local_templates_are_consulted() -> Path:
@@ -901,11 +909,15 @@ def _mock_explicit_catalog(
     ) -> str:
         destination_parent = Path(clone_to_dir)
         clone_calls.append((repo_url, checkout, destination_parent, no_input))
+        if clone_started is not None:
+            clone_started.set()
+        if clone_release is not None:
+            assert clone_release.wait(timeout=5), "test did not release the coordinated clone"
         if clone_error is not None:
             raise clone_error
         destination = destination_parent / "catalog"
         shutil.copytree(source_root, destination, symlinks=True)
-        staging_heads[destination.resolve()] = checkout
+        staging_heads[destination.resolve()] = state["fetched_head"]
         return str(destination)
 
     def fake_git_head(repo_root: Path) -> str | None:
@@ -944,6 +956,18 @@ def _catalog_metadata_files(cookiecutters_dir: Path) -> list[Path]:
         ):
             matches.append(candidate)
     return matches
+
+
+def _explicit_cache_paths(
+    tmp_path: Path,
+    *,
+    normalized_url: str = "https://example.com/teams/agentseek-templates",
+    commit: str = _CATALOG_COMMIT,
+) -> tuple[Path, Path, Path]:
+    namespace = tmp_path / "cookiecutters" / create_module.EXPLICIT_TEMPLATE_REPO_CACHE_DIR
+    digest = hashlib.sha256(normalized_url.encode()).hexdigest()
+    digest_dir = namespace / digest
+    return namespace, digest_dir, digest_dir / commit
 
 
 def test_help_documents_template_repo() -> None:
@@ -1063,7 +1087,7 @@ def test_explicit_catalog_list_filter_describe_and_create_use_one_catalog(
         "_agentseek_source_url": create_module.REPO_GIT_URL,
     }
     assert len(clone_calls) == 1
-    assert clone_calls[0][0] == "https://example.com/teams/agentseek-templates"
+    assert clone_calls[0][0] == _CATALOG_URL
     assert clone_calls[0][1] == _CATALOG_COMMIT
     assert clone_calls[0][3] is True
 
@@ -1158,6 +1182,178 @@ def test_explicit_catalog_rejects_stale_cache_provenance(
     assert len(clone_calls) == 2
 
 
+@pytest.mark.parametrize("damage", ["metadata-json", "deleted-template", "corrupt-template"])
+def test_explicit_catalog_repairs_corrupt_warm_cache_and_moves_stale_entry_aside(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    damage: str,
+) -> None:
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    argv = _explicit_args("bub", "--list-templates")
+    first_result = _runner().invoke(build_command_app(), argv)
+    assert first_result.exit_code == 0, first_result.output
+    cache_entry = _catalog_metadata_files(tmp_path / "cookiecutters")[0].parent
+
+    if damage == "metadata-json":
+        (cache_entry / create_module.EXPLICIT_CATALOG_METADATA).write_text("{", encoding="utf-8")
+    elif damage == "deleted-template":
+        shutil.rmtree(cache_entry / "templates" / "bub" / "remote")
+    else:
+        (cache_entry / "templates" / "bub" / "remote" / "cookiecutter.json").write_text("{", encoding="utf-8")
+
+    second_result = _runner().invoke(build_command_app(), argv)
+
+    assert second_result.exit_code == 0, second_result.output
+    assert len(clone_calls) == 2
+    assert (cache_entry / "templates" / "bub" / "remote" / "cookiecutter.json").is_file()
+    assert list(cache_entry.parent.glob(f".{_CATALOG_COMMIT}.stale-*"))
+
+
+@pytest.mark.parametrize("metadata_damage", ["boolean-schema", "extra-key"])
+def test_explicit_catalog_metadata_requires_exact_keys_and_field_types(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    metadata_damage: str,
+) -> None:
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    argv = _explicit_args("bub", "--list-templates")
+    first_result = _runner().invoke(build_command_app(), argv)
+    assert first_result.exit_code == 0, first_result.output
+    metadata_path = _catalog_metadata_files(tmp_path / "cookiecutters")[0]
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if metadata_damage == "boolean-schema":
+        metadata["schema_version"] = True
+    else:
+        metadata["unexpected"] = "not part of schema 1"
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    second_result = _runner().invoke(build_command_app(), argv)
+
+    assert second_result.exit_code == 0, second_result.output
+    assert len(clone_calls) == 2
+
+
+@pytest.mark.parametrize("symlink_part", ["namespace", "digest", "commit"])
+def test_explicit_catalog_rejects_symlinked_cache_ancestors(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    symlink_part: str,
+) -> None:
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    namespace, digest_dir, cache_entry = _explicit_cache_paths(tmp_path)
+    outside = tmp_path / f"outside-{symlink_part}"
+    outside.mkdir()
+    if symlink_part == "namespace":
+        namespace.parent.mkdir(parents=True)
+        namespace.symlink_to(outside, target_is_directory=True)
+    elif symlink_part == "digest":
+        namespace.mkdir(parents=True)
+        digest_dir.symlink_to(outside, target_is_directory=True)
+    else:
+        digest_dir.mkdir(parents=True)
+        cache_entry.symlink_to(outside, target_is_directory=True)
+
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates"),
+    )
+
+    assert result.exit_code == 1
+    assert "explicit template catalog" in result.output.lower()
+    assert clone_calls == []
+
+
+def test_explicit_catalog_publishers_share_coordinate_lock_and_one_publication(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    clone_started = Event()
+    clone_release = Event()
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+        clone_started=clone_started,
+        clone_release=clone_release,
+    )
+    coordinate = create_module._explicit_catalog_coordinate(
+        create_module._parse_argv(["bub", "--template-repo", _CATALOG_URL, "--checkout", _CATALOG_COMMIT])
+    )
+    assert coordinate is not None
+    second_started = Event()
+
+    def prepare(*, mark_second: bool = False) -> create_module._PreparedCatalog:
+        if mark_second:
+            second_started.set()
+        return create_module._prepare_explicit_catalog(coordinate)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(prepare)
+        assert clone_started.wait(timeout=5)
+        second = executor.submit(prepare, mark_second=True)
+        assert second_started.wait(timeout=5)
+        clone_release.set()
+        prepared = [first.result(timeout=5), second.result(timeout=5)]
+
+    roots = [item.templates_root for item in prepared]
+    assert len(clone_calls) == 1
+    assert roots[0] == roots[1]
+    assert all((Path(root) / "bub" / "remote" / "cookiecutter.json").is_file() for root in roots)
+
+
+def test_explicit_catalog_selection_uses_validated_registry_snapshot(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    original_prepare = create_module._prepare_explicit_catalog
+
+    def prepare_then_mutate_registry(
+        coordinate: create_module._ExplicitCatalogCoordinate,
+    ) -> create_module._PreparedCatalog:
+        prepared = original_prepare(coordinate)
+        templates_root = prepared.templates_root
+        index_path = templates_root / "index.json"
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+        index["bub/unregistered"] = "Added after strict preparation."
+        index_path.write_text(json.dumps(index), encoding="utf-8")
+        template_dir = templates_root / "bub" / "unregistered"
+        _write_catalog_template(template_dir)
+        return prepared
+
+    monkeypatch.setattr(create_module, "_prepare_explicit_catalog", prepare_then_mutate_registry)
+    monkeypatch.setattr(
+        create_module,
+        "_run_cookiecutter",
+        lambda *args, **kwargs: pytest.fail("an unregistered post-prepare template must not generate"),
+    )
+
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub/unregistered", "--describe"),
+    )
+
+    assert result.exit_code == 2
+    assert "Template bub/unregistered was not found" in result.output
+    assert "bub/remote" in result.output
+
+
 def test_explicit_catalog_cache_normalizes_url_identity(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -1180,13 +1376,35 @@ def test_explicit_catalog_cache_normalizes_url_identity(
     assert first_result.exit_code == 0, first_result.output
     assert second_result.exit_code == 0, second_result.output
     assert len(clone_calls) == 1
+    assert clone_calls[0][0] == "HTTPS://EXAMPLE.COM:443/teams/agentseek-templates.git/"
+
+
+def test_explicit_catalog_accepts_https_repository_at_host_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    clone_calls, _, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates", url="https://git.example/"),
+    )
+
+    assert result.exit_code == 0, result.output
+    assert clone_calls[0][0] == "https://git.example/"
+    metadata = json.loads(_catalog_metadata_files(tmp_path / "cookiecutters")[0].read_text(encoding="utf-8"))
+    assert metadata["repository_url"] == "https://git.example"
 
 
 def test_explicit_catalog_cache_isolates_same_basename_urls_and_commits(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    clone_calls, _, _ = _mock_explicit_catalog(
+    clone_calls, state, _ = _mock_explicit_catalog(
         monkeypatch,
         tmp_path,
         {"bub/remote": "Remote template."},
@@ -1201,15 +1419,40 @@ def test_explicit_catalog_cache_isolates_same_basename_urls_and_commits(
             build_command_app(),
             _explicit_args("bub", "--list-templates", url="https://two.example/other/catalog.git"),
         ),
+    ]
+    state["fetched_head"] = _OTHER_CATALOG_COMMIT
+    results.append(
         _runner().invoke(
             build_command_app(),
             _explicit_args("bub", "--list-templates", commit=_OTHER_CATALOG_COMMIT),
-        ),
-    ]
+        )
+    )
 
     assert all(result.exit_code == 0 for result in results), [result.output for result in results]
     assert len(clone_calls) == 3
     assert len(_catalog_metadata_files(tmp_path / "cookiecutters")) == 3
+
+
+def test_explicit_catalog_rejects_wrong_fetched_head_without_publishing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    clone_calls, state, _ = _mock_explicit_catalog(
+        monkeypatch,
+        tmp_path,
+        {"bub/remote": "Remote template."},
+    )
+    state["fetched_head"] = _OTHER_CATALOG_COMMIT
+
+    result = _runner().invoke(
+        build_command_app(),
+        _explicit_args("bub", "--list-templates"),
+    )
+
+    assert result.exit_code == 1
+    assert "HEAD does not match --checkout" in result.output
+    assert len(clone_calls) == 1
+    assert _catalog_metadata_files(tmp_path / "cookiecutters") == []
 
 
 def test_explicit_catalog_fetch_failure_does_not_fall_back(
