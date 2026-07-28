@@ -14,12 +14,29 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
+from typing import Protocol, cast
 
 import pytest
 from cookiecutter.main import cookiecutter
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = REPO_ROOT / "templates" / "deepagents" / "mcp"
+
+
+class _GeneralPurposeSubagentProfileLike(Protocol):
+    enabled: bool | None
+
+
+class _HarnessProfileLike(Protocol):
+    general_purpose_subagent: _GeneralPurposeSubagentProfileLike
+
+
+class _NamedTool(Protocol):
+    name: str
+
+
+class _NamedModel(Protocol):
+    model_name: str
 
 
 @pytest.fixture
@@ -655,7 +672,7 @@ def test_runtime_loads_project_mcp_config_and_registers_model_specific_profile(
     model = object()
     tool = SimpleNamespace(name="calculator_add")
     client = object()
-    registered: list[tuple[str, object]] = []
+    registered: list[tuple[str, _HarnessProfileLike]] = []
     created: list[dict[str, object]] = []
 
     def load_config(path: Path) -> object:
@@ -666,16 +683,22 @@ def test_runtime_loads_project_mcp_config_and_registers_model_specific_profile(
         return SimpleNamespace(client=client, tools=(tool,), tool_names=(tool.name,))
 
     def register_profile(key: str, profile: object) -> None:
-        registered.append((key, profile))
+        registered.append((key, cast(_HarnessProfileLike, profile)))
 
     def create_agent(**kwargs: object) -> object:
         created.append(kwargs)
         key, profile = registered[-1]
+        general_purpose_subagent = profile.general_purpose_subagent
+        subagents = kwargs["subagents"]
+        tools_value = kwargs["tools"]
         assert key == "openai:gpt-test"
-        assert profile.general_purpose_subagent.enabled is False
-        assert kwargs["subagents"] == []
-        exposed_names = {item.name for item in kwargs["tools"]}
-        if profile.general_purpose_subagent.enabled is not False or kwargs["subagents"]:
+        assert general_purpose_subagent.enabled is False
+        assert isinstance(subagents, list)
+        assert subagents == []
+        assert isinstance(tools_value, list)
+        tools = cast(list[_NamedTool], tools_value)
+        exposed_names = {item.name for item in tools}
+        if general_purpose_subagent.enabled is not False or subagents:
             exposed_names.add("task")
         graph.tool_names = tuple(sorted(exposed_names))
         return graph
@@ -713,11 +736,11 @@ def test_runtime_profile_key_cannot_drift_during_discovery(
         return SimpleNamespace(client=object(), tools=(tool,), tool_names=(tool.name,))
 
     registrations: list[str] = []
-    created_models: list[object] = []
+    created_models: list[_NamedModel] = []
     graph = object()
 
     def create_agent(**kwargs: object) -> object:
-        created_models.append(kwargs["model"])
+        created_models.append(cast(_NamedModel, kwargs["model"]))
         return graph
 
     monkeypatch.setattr(rendered_agent, "load_mcp_config", lambda _path: object())

@@ -197,6 +197,13 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     ]
     assert set(lifecycle_data["processes"]) == {"langgraph", "frontend"}
     assert set(lifecycle_data["tasks"]) == {"sync", "frontend", "mcp-smoke"}
+    assert lifecycle_data["paths"]["required"] == [
+        "pyproject.toml",
+        "langgraph.json",
+        ".mcp.json",
+        "frontend/package.json",
+        "frontend/node_modules",
+    ]
     assert lifecycle_data["tasks"]["mcp-smoke"]["command"] == [
         "uv",
         "run",

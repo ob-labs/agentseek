@@ -3,7 +3,10 @@
     "calculator": {
       "transport": "stdio",
       "command": "${PYTHON_EXECUTABLE}",
-      "args": ["-m", "{{ cookiecutter.project_slug }}.calculator_server"]
+      "args": [
+        "-m",
+        "{{ cookiecutter.project_slug }}.calculator_server"
+      ]
     }
   }
 }

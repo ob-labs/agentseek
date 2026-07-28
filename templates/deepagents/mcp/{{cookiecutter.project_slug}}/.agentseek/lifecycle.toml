@@ -7,7 +7,7 @@ env_file = ".env"
 required = ["uv", "node", "npm"]
 
 [paths]
-required = ["pyproject.toml", ".mcp.json", "frontend/package.json", "frontend/node_modules"]
+required = ["pyproject.toml", "langgraph.json", ".mcp.json", "frontend/package.json", "frontend/node_modules"]
 
 [env.AGENTSEEK_MODEL_PROVIDER]
 required = true
