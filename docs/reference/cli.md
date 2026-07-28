@@ -74,6 +74,14 @@ The built-in template type set is currently `bub`, `deepagents`, and
 
 ### Catalog Source Rules
 
+`--checkout` has three distinct modes:
+
+| Mode | `--checkout` behavior |
+| --- | --- |
+| Direct Cookiecutter source | A branch, tag, or commit is passed through to Cookiecutter together with the positional URL/path and optional template directory. |
+| Named/default AgentSeek catalog | Without `--template-repo`, an optional ref is a development override for preparing the default AgentSeek catalog. A local AgentSeek source checkout continues to use its local templates. |
+| Explicit AgentSeek catalog override | With `--template-repo`, the value is required and must be an exact 40-character lowercase commit SHA. List, filter, describe, and create all use that immutable coordinate. |
+
 | Input | Resolution rule |
 | --- | --- |
 | Named template, list, filter, or describe without `--template-repo` | Use the bundled AgentSeek catalog. |

@@ -83,7 +83,7 @@ requires-dist = [
     { name = "bub", specifier = "==0.3.9" },
     { name = "cookiecutter", specifier = ">=2.5" },
     { name = "duty", specifier = ">=1.9" },
-    { name = "filelock", specifier = ">=3.20" },
+    { name = "filelock", specifier = ">=3.20.3" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "logfire", specifier = ">=4.33.0" },

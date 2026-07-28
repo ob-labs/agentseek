@@ -73,6 +73,14 @@ sources:
 
 ### 模板目录源规则
 
+`--checkout` 有三种不同模式：
+
+| 模式 | `--checkout` 行为 |
+| --- | --- |
+| 直接 Cookiecutter 源 | 将分支、tag 或 commit 与位置参数 URL/路径、可选模板目录一起原样传给 Cookiecutter。 |
+| 命名/默认 AgentSeek 模板目录 | 不带 `--template-repo` 时，可选 ref 是准备默认 AgentSeek 模板目录的开发覆盖值。在 AgentSeek 本地源码 checkout 中仍使用本地模板。 |
+| 显式 AgentSeek 模板目录覆盖 | 带 `--template-repo` 时必须提供精确的 40 位小写 commit SHA。列出、过滤、描述和创建都使用这个不可变坐标。 |
+
 | 输入 | 解析规则 |
 | --- | --- |
 | 不带 `--template-repo` 的命名模板、列表、过滤或描述 | 使用内置 AgentSeek 模板目录。 |
