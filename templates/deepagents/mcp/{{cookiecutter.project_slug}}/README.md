@@ -12,3 +12,10 @@ development services with `agentseek dev`.
 
 Copy `.env.example` to `.env` and set a provider credential before using the
 agent. The MCP smoke task does not require a model key.
+
+Both development servers bind to loopback by default. To make them reachable
+from another machine or container, opt in explicitly:
+
+```bash
+LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
+```

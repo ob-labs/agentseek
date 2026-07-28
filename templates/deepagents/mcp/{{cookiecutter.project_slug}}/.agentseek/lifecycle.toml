@@ -7,7 +7,7 @@ env_file = ".env"
 required = ["uv", "node", "npm"]
 
 [paths]
-required = ["pyproject.toml", ".mcp.json"]
+required = ["pyproject.toml", ".mcp.json", "frontend/package.json", "frontend/node_modules"]
 
 [env.AGENTSEEK_MODEL_PROVIDER]
 required = true
@@ -25,6 +25,16 @@ required = true
 description = "Credential for the selected model provider."
 aliases = ["ANTHROPIC_API_KEY", "GOOGLE_API_KEY"]
 
+[env.LANGGRAPH_HOST]
+required = false
+default = "127.0.0.1"
+description = "Bind address for the LangGraph development server."
+
+[env.FRONTEND_HOST]
+required = false
+default = "127.0.0.1"
+description = "Bind address for the Vite development server."
+
 [services.langgraph]
 url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
 
@@ -32,7 +42,7 @@ url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
 url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 
 [processes.langgraph]
-command = ["uv", "run", "langgraph", "dev", "--port", "{{ cookiecutter.langgraph_port }}", "--no-browser"]
+command = ["sh", "-lc", "uv run langgraph dev --port {{ cookiecutter.langgraph_port }} --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}"]
 
 [processes.frontend]
 command = ["npm", "run", "dev"]

@@ -218,10 +218,62 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     assert "register_harness_profile" in agent_text
     assert "GeneralPurposeSubagentProfile(enabled=False)" in agent_text
     assert "Answer in the same language as the user's question." in agent_text
+    assert "frontend" in lifecycle_data["services"]
+    assert "langgraph" in lifecycle_data["services"]
+    assert "mcp-smoke" in lifecycle_data["tasks"]
+    assert "LANGGRAPH_HOST" in lifecycle_data["env"]
+    assert "FRONTEND_HOST" in lifecycle_data["env"]
+    assert lifecycle_data["env"]["LANGGRAPH_HOST"] == {
+        "required": False,
+        "default": "127.0.0.1",
+        "description": "Bind address for the LangGraph development server.",
+    }
+    assert lifecycle_data["env"]["FRONTEND_HOST"] == {
+        "required": False,
+        "default": "127.0.0.1",
+        "description": "Bind address for the Vite development server.",
+    }
+    assert lifecycle_data["processes"]["langgraph"]["command"] == [
+        "sh",
+        "-lc",
+        "uv run langgraph dev --port 2024 --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}",
+    ]
+    frontend = generated / "frontend"
+    assert (frontend / "package.json").is_file()
+    assert (frontend / "src" / "App.test.tsx").is_file()
+    assert (frontend / "src" / "ToolCallCard.test.tsx").is_file()
+    app_text = (frontend / "src" / "App.tsx").read_text(encoding="utf-8")
+    vite_text = (frontend / "vite.config.ts").read_text(encoding="utf-8")
+    assert "window.location.hostname" in app_text
+    assert 'assistantId: "mcp"' in app_text
+    assert "FRONTEND_HOST" in vite_text
+    frontend_env_text = (frontend / ".env.example").read_text(encoding="utf-8")
+    browser_sources = "\n".join([
+        vite_text,
+        frontend_env_text,
+        *(
+            path.read_text(encoding="utf-8")
+            for path in sorted((frontend / "src").iterdir())
+            if path.suffix in {".ts", ".tsx"} and not path.name.endswith(".test.tsx")
+        ),
+    ])
+    for forbidden in (
+        ".mcp.json",
+        "mcpServers",
+        "MCP_TOKEN",
+        "MCP_SERVER",
+        "VITE_MCP",
+        "Authorization",
+        "OPENAI_API_KEY",
+    ):
+        assert forbidden not in browser_sources
+    assert "VITE_LANGGRAPH_API_URL=http://127.0.0.1" not in frontend_env_text
     readme_text = (generated / "README.md").read_text(encoding="utf-8")
     assert "Run `agentseek task sync`, `agentseek task frontend`, and" in readme_text
     assert "`agentseek task mcp-smoke`, then inspect with `agentseek doctor`" in readme_text
     assert "development services with `agentseek dev`." in readme_text
+    assert "agentseek task mcp-smoke" in readme_text
+    assert "LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev" in readme_text
 
 
 def _assert_language_instruction_template(generated: Path) -> None:
