@@ -105,7 +105,7 @@ def _model_spec(environ: Mapping[str, str]) -> tuple[str, str]:
 
 
 def provider_kwargs(provider: str, environ: Mapping[str, str] | None = None) -> dict[str, object]:
-    """Return only non-empty provider-native credential and endpoint values."""
+    """Return the shared credential and provider-native endpoint values."""
     snapshot = _environment_snapshot(environ)
     names = {
         "openai": ("OPENAI_API_KEY", "OPENAI_API_BASE"),
@@ -114,7 +114,10 @@ def provider_kwargs(provider: str, environ: Mapping[str, str] | None = None) -> 
     }
     key_name, base_name = names[provider]
     kwargs: dict[str, object] = {}
-    if api_key := _nonempty_env(key_name, snapshot):
+    if api_key := (
+        _nonempty_env("AGENTSEEK_MODEL_API_KEY", snapshot)
+        or _nonempty_env(key_name, snapshot)
+    ):
         kwargs["api_key"] = api_key
     if base_url := _nonempty_env(base_name, snapshot):
         kwargs["base_url"] = base_url

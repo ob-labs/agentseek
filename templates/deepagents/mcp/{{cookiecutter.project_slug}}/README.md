@@ -20,8 +20,8 @@ cp .env.example .env
 cp frontend/.env.example frontend/.env
 ```
 
-Edit `.env`. Set `AGENTSEEK_MODEL_PROVIDER`, `AGENTSEEK_MODEL`, and one matching
-provider key. Then continue in this exact order:
+Edit `.env`. Set `AGENTSEEK_MODEL_PROVIDER`, `AGENTSEEK_MODEL`, and
+`AGENTSEEK_MODEL_API_KEY`. Then continue in this exact order:
 
 ```bash
 uvx agentseek task sync
@@ -92,6 +92,11 @@ complete discovered tool-name tuple, schema, and calculation. Adding, removing,
 or replacing any server changes the complete discovered tool-name tuple, so
 update the calculator smoke contract at the same time.
 
+Final names must be unique and cannot replace the enabled DeepAgents built-ins:
+`write_todos`, `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep`, or
+`execute`. The `task` tool is disabled by this template's harness profile and
+is not reserved.
+
 Restart the AgentSeek development processes after changing `.mcp.json`, model
 settings, or server credentials. MCP tool calls are stateless and do not retain
 persistent MCP client sessions between calls.
@@ -102,8 +107,11 @@ persistent MCP client sessions between calls.
 
 Set `AGENTSEEK_MODEL_PROVIDER` and `AGENTSEEK_MODEL` for the DeepAgents graph.
 `DEEPAGENTS_MODEL` and `BUB_MODEL` are model-name compatibility aliases.
-Provider credentials and optional custom endpoints use the provider-native
-variables in `.env.example`.
+`AGENTSEEK_MODEL_API_KEY` is required by `agentseek doctor` and is passed
+explicitly to whichever provider adapter is selected. Provider-native API keys
+remain fallbacks when the graph is invoked directly, but they do not satisfy
+the lifecycle readiness check. Optional custom endpoints continue to use the
+provider-native variables in `.env.example`.
 
 Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
 `LANGSMITH_PROJECT`.
@@ -112,9 +120,10 @@ Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
 | --- | --- |
 | `AGENTSEEK_MODEL_PROVIDER` | Provider: `openai`, `anthropic`, or `google_genai`; aliases `google` and `gemini` are accepted. |
 | `AGENTSEEK_MODEL` | Required model name. `DEEPAGENTS_MODEL` and `BUB_MODEL` are compatibility fallbacks. |
-| `OPENAI_API_KEY`, `OPENAI_API_BASE` | OpenAI credential and optional endpoint. |
-| `ANTHROPIC_API_KEY`, `ANTHROPIC_API_URL` | Anthropic credential and optional endpoint. |
-| `GOOGLE_API_KEY`, `GOOGLE_API_BASE` | Google credential and optional endpoint. |
+| `AGENTSEEK_MODEL_API_KEY` | Required lifecycle credential; passed to the selected provider adapter. |
+| `OPENAI_API_KEY`, `OPENAI_API_BASE` | OpenAI direct-runtime key fallback and optional endpoint. |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_API_URL` | Anthropic direct-runtime key fallback and optional endpoint. |
+| `GOOGLE_API_KEY`, `GOOGLE_API_BASE` | Google direct-runtime key fallback and optional endpoint. |
 | `LANGSMITH_TRACING` | Set `true` to enable optional LangSmith tracing. |
 | `LANGSMITH_API_KEY` | LangSmith credential when tracing is enabled. |
 | `LANGSMITH_PROJECT` | Optional LangSmith project name. |
@@ -136,6 +145,13 @@ bind address.
 Binding to `0.0.0.0` makes the development services reachable from other hosts.
 Add an authenticated reverse proxy, TLS, and network access controls before any
 non-loopback use.
+
+The frontend derives `http://<browser-host>:{{ cookiecutter.langgraph_port }}`
+by default. If the frontend is served over HTTPS, or a reverse proxy changes
+the backend's public scheme, port, or path, set `VITE_LANGGRAPH_API_URL` in
+`frontend/.env` to the public LangGraph API URL. Leave it unset for the
+browser-derived local default. Keep MCP URLs, headers, and credentials out of
+Vite variables.
 
 ### Optional installed-CLI shortcut
 

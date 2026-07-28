@@ -60,7 +60,10 @@ Configuration and discovery are all-or-nothing. Every configured server must
 connect and expose at least one tool. If any server fails or returns no tools,
 graph creation fails without a partial tool set. `tool_name_prefix=True`
 exposes tools as `<server>_<tool>`, such as `calculator_add` or
-`billing_charge_card`.
+`billing_charge_card`. Final names must be unique and cannot replace the
+enabled DeepAgents built-ins: `write_todos`, `ls`, `read_file`, `write_file`,
+`edit_file`, `glob`, `grep`, or `execute`. The `task` tool is disabled by this
+template's harness profile and is not reserved.
 
 The graph is cached after the first successful build. Restart the AgentSeek
 development processes after changing `.mcp.json`, model settings, or server
@@ -76,14 +79,22 @@ time.
 
 Set `AGENTSEEK_MODEL_PROVIDER` and `AGENTSEEK_MODEL` for the DeepAgents graph.
 `DEEPAGENTS_MODEL` and `BUB_MODEL` are model-name compatibility aliases.
-Provider credentials and optional custom endpoints use the provider-native
-variables in `.env.example`. Optional LangSmith tracing uses `LANGSMITH_TRACING`,
-`LANGSMITH_API_KEY`, and `LANGSMITH_PROJECT`.
+`AGENTSEEK_MODEL_API_KEY` is the lifecycle credential and is passed explicitly
+to the selected provider adapter. Provider-native API keys remain direct-runtime
+fallbacks; they do not satisfy `agentseek doctor`. Optional custom endpoints
+continue to use the provider-native variables in `.env.example`. Optional
+LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
+`LANGSMITH_PROJECT`.
 
 Both development services bind to loopback by default. `LANGGRAPH_HOST` controls
 LangGraph from the launching shell. `FRONTEND_HOST` controls Vite from that
 shell or `frontend/.env`. Do not add these controls to the root `.env`; it is
 reserved for application, model, MCP, and tracing settings.
+
+The frontend derives `http://<browser-host>:2024` by default. For an HTTPS
+frontend or a reverse proxy that changes the backend's public scheme, port, or
+path, set `VITE_LANGGRAPH_API_URL` in `frontend/.env` to the public LangGraph
+API URL. Keep MCP URLs, headers, and credentials out of Vite variables.
 
 This v1 template exposes MCP Tools only. It does not expose MCP Resources or
 Prompts, persistent MCP client sessions, interceptors, OAuth helpers, or a

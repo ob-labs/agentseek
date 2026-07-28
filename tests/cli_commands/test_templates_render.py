@@ -231,6 +231,13 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     assert "frontend" in lifecycle_data["services"]
     assert "langgraph" in lifecycle_data["services"]
     assert "mcp-smoke" in lifecycle_data["tasks"]
+    assert lifecycle_data["env"]["AGENTSEEK_MODEL_API_KEY"] == {
+        "required": True,
+        "description": "Provider-independent credential passed to the selected model adapter.",
+    }
+    assert "OPENAI_API_KEY" not in lifecycle_data["env"]
+    assert "ANTHROPIC_API_KEY" not in lifecycle_data["env"]
+    assert "GOOGLE_API_KEY" not in lifecycle_data["env"]
     assert "LANGGRAPH_HOST" in lifecycle_data["env"]
     assert "FRONTEND_HOST" in lifecycle_data["env"]
     assert lifecycle_data["env"]["LANGGRAPH_HOST"] == {
@@ -297,6 +304,7 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     }
     for label, pattern in forbidden_patterns.items():
         assert re.search(pattern, shipped_production_config, flags=re.IGNORECASE) is None, label
+    assert "# VITE_LANGGRAPH_API_URL=" in frontend_env_text
     assert "VITE_LANGGRAPH_API_URL=http://127.0.0.1" not in frontend_env_text
     root_env_text = (generated / ".env.example").read_text(encoding="utf-8")
     assert "LANGGRAPH_HOST=" not in root_env_text

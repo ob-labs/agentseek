@@ -39,6 +39,22 @@ class _NamedModel(Protocol):
     model_name: str
 
 
+class _LoadedToolsLike(Protocol):
+    tool_names: tuple[str, ...]
+
+
+class _DescribedToolLike(Protocol):
+    description: str
+
+
+class _ToolRegistryLike(Protocol):
+    tools_by_name: dict[str, object]
+
+
+class _ToolNodeLike(Protocol):
+    bound: _ToolRegistryLike
+
+
 @pytest.fixture
 def rendered_mcp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     output = tmp_path / "rendered"
@@ -580,6 +596,163 @@ def test_zero_tool_server_rejects_the_entire_discovery_result(
         asyncio.run(tools_module.load_mcp_tools(config))
 
 
+def test_failed_discovery_finalizes_siblings_before_error_and_retry(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tools_module = import_rendered_package_module(rendered_mcp, "mcp_tools")
+    config_module = importlib.import_module(f"{rendered_mcp.name}.config")
+    events: list[str] = []
+    client_attempts = 0
+
+    class CancellingClient:
+        def __init__(self, connections: object, **kwargs: object) -> None:
+            nonlocal client_attempts
+            client_attempts += 1
+            self.attempt = client_attempts
+            self.slow_started = asyncio.Event()
+
+        async def get_tools(self, *, server_name: str) -> list[object]:
+            if self.attempt > 1:
+                return [SimpleNamespace(name=f"{server_name}_ping")]
+            if server_name == "a_fail":
+                await self.slow_started.wait()
+                raise RuntimeError("failure contains secret-token")  # noqa: TRY003
+            events.append("slow-started")
+            self.slow_started.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                events.append("slow-finalized")
+            raise AssertionError("slow server unexpectedly resumed")  # noqa: TRY003
+
+    monkeypatch.setattr(tools_module, "MultiServerMCPClient", CancellingClient)
+    config = config_module.MCPConfig(
+        servers={
+            "a_fail": {"transport": "stdio", "command": "python"},
+            "z_slow": {"transport": "stdio", "command": "python"},
+        }
+    )
+
+    async def fail_then_retry() -> object:
+        with pytest.raises(tools_module.MCPDiscoveryError, match="server 'a_fail'") as exc:
+            await tools_module.load_mcp_tools(config)
+        assert "secret-token" not in str(exc.value)
+        assert events == ["slow-started", "slow-finalized"]
+        events.append("retry-started")
+        return await tools_module.load_mcp_tools(config)
+
+    loaded = cast(_LoadedToolsLike, asyncio.run(fail_then_retry()))
+
+    assert events == ["slow-started", "slow-finalized", "retry-started"]
+    assert loaded.tool_names == ("a_fail_ping", "z_slow_ping")
+
+
+def test_duplicate_final_mcp_names_identify_both_server_tool_pairs(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tools_module = import_rendered_package_module(rendered_mcp, "mcp_tools")
+    config_module = importlib.import_module(f"{rendered_mcp.name}.config")
+
+    class DuplicateNameClient:
+        def __init__(self, connections: object, **kwargs: object) -> None:
+            pass
+
+        async def get_tools(self, *, server_name: str) -> list[object]:
+            return [SimpleNamespace(name="a_b_c", description="secret-token")]
+
+    monkeypatch.setattr(tools_module, "MultiServerMCPClient", DuplicateNameClient)
+    config = config_module.MCPConfig(
+        servers={
+            "a": {"transport": "stdio", "command": "python"},
+            "a_b": {"transport": "stdio", "command": "python"},
+        }
+    )
+
+    with pytest.raises(
+        tools_module.MCPDiscoveryError,
+        match=r"server/tool pairs 'a'/'b_c' and 'a_b'/'c'",
+    ) as exc:
+        asyncio.run(tools_module.load_mcp_tools(config))
+
+    assert "secret-token" not in str(exc.value)
+
+
+def test_mcp_name_cannot_collide_with_enabled_deepagents_builtin(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tools_module = import_rendered_package_module(rendered_mcp, "mcp_tools")
+    config_module = importlib.import_module(f"{rendered_mcp.name}.config")
+
+    class BuiltinCollisionClient:
+        def __init__(self, connections: object, **kwargs: object) -> None:
+            pass
+
+        async def get_tools(self, *, server_name: str) -> list[object]:
+            return [SimpleNamespace(name="write_todos", description="secret-token")]
+
+    monkeypatch.setattr(tools_module, "MultiServerMCPClient", BuiltinCollisionClient)
+    config = config_module.MCPConfig(servers={"write": {"transport": "stdio", "command": "python"}})
+
+    with pytest.raises(
+        tools_module.MCPDiscoveryError,
+        match=r"server/tool pair 'write'/'todos'.*enabled DeepAgents built-in",
+    ) as exc:
+        asyncio.run(tools_module.load_mcp_tools(config))
+
+    assert "secret-token" not in str(exc.value)
+
+
+def test_reserved_mcp_names_match_real_deepagents_0_6_12_runtime(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from deepagents._version import __version__ as deepagents_version
+
+    if deepagents_version != "0.6.12":
+        pytest.skip("requires the generated template's pinned DeepAgents 0.6.12 runtime")
+
+    from deepagents import (
+        GeneralPurposeSubagentProfile,
+        HarnessProfile,
+        create_deep_agent,
+        register_harness_profile,
+    )
+    from langchain_openai import ChatOpenAI
+
+    tools_module = import_rendered_package_module(rendered_mcp, "mcp_tools")
+    config_module = importlib.import_module(f"{rendered_mcp.name}.config")
+    profile_key = "openai:mcp-final-name-regression"
+    register_harness_profile(
+        profile_key,
+        HarnessProfile(
+            general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False),
+        ),
+    )
+    graph = create_deep_agent(
+        model=ChatOpenAI(model="mcp-final-name-regression", api_key="unused-test-key"),
+        tools=[],
+        subagents=[],
+    )
+    tool_node = cast(_ToolNodeLike, graph.nodes["tools"])
+
+    assert frozenset(tool_node.bound.tools_by_name) == tools_module.RESERVED_DEEPAGENTS_TOOL_NAMES
+    assert "task" not in tools_module.RESERVED_DEEPAGENTS_TOOL_NAMES
+
+    class ExternalWriteTodosClient:
+        def __init__(self, connections: object, **kwargs: object) -> None:
+            pass
+
+        async def get_tools(self, *, server_name: str) -> list[object]:
+            return [SimpleNamespace(name="write_todos", description="EXTERNAL MCP COLLISION SENTINEL")]
+
+    monkeypatch.setattr(tools_module, "MultiServerMCPClient", ExternalWriteTodosClient)
+    config = config_module.MCPConfig(servers={"write": {"transport": "stdio", "command": "python"}})
+    with pytest.raises(tools_module.MCPDiscoveryError, match="enabled DeepAgents built-in"):
+        asyncio.run(tools_module.load_mcp_tools(config))
+
+    builtin = cast(_DescribedToolLike, tool_node.bound.tools_by_name["write_todos"])
+    assert builtin.description != "EXTERNAL MCP COLLISION SENTINEL"
+
+
 def test_model_environment_precedence_and_provider_native_settings(
     rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -617,6 +790,112 @@ def test_model_environment_precedence_and_provider_native_settings(
         "base_url": "https://google.example.com",
     }
     assert model_module.model_profile_key() == "google_genai:primary-model"
+
+
+@pytest.mark.parametrize(
+    ("provider", "model_name", "expected_type", "key_attribute", "base_name", "base_value"),
+    [
+        ("openai", "gpt-local", "ChatOpenAI", "openai_api_key", "OPENAI_API_BASE", "https://openai.local/v1"),
+        (
+            "anthropic",
+            "claude-local",
+            "ChatAnthropic",
+            "anthropic_api_key",
+            "ANTHROPIC_API_URL",
+            "https://anthropic.local",
+        ),
+        (
+            "google_genai",
+            "gemini-local",
+            "ChatGoogleGenerativeAI",
+            "google_api_key",
+            "GOOGLE_API_BASE",
+            "https://google.local",
+        ),
+    ],
+)
+def test_shared_model_key_constructs_selected_real_provider_without_hosted_call(
+    rendered_mcp: Path,
+    provider: str,
+    model_name: str,
+    expected_type: str,
+    key_attribute: str,
+    base_name: str,
+    base_value: str,
+) -> None:
+    model_module = load_rendered_module(rendered_mcp, "model")
+    binding = model_module.resolve_model_binding({
+        "AGENTSEEK_MODEL_PROVIDER": provider,
+        "AGENTSEEK_MODEL": model_name,
+        "AGENTSEEK_MODEL_API_KEY": "shared-test-key",
+        {
+            "openai": "OPENAI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "google_genai": "GOOGLE_API_KEY",
+        }[provider]: "wrong-native-key",
+        base_name: base_value,
+    })
+
+    credential = getattr(binding.model, key_attribute)
+    assert type(binding.model).__name__ == expected_type
+    assert credential.get_secret_value() == "shared-test-key"
+    assert binding.profile_key == f"{provider}:{model_name}"
+
+
+@pytest.mark.parametrize(
+    ("provider", "mismatched_key"),
+    [
+        ("openai", "ANTHROPIC_API_KEY"),
+        ("openai", "GOOGLE_API_KEY"),
+        ("anthropic", "OPENAI_API_KEY"),
+        ("anthropic", "GOOGLE_API_KEY"),
+        ("google_genai", "OPENAI_API_KEY"),
+        ("google_genai", "ANTHROPIC_API_KEY"),
+    ],
+)
+def test_public_doctor_requires_shared_key_for_every_provider(
+    rendered_mcp: Path, provider: str, mismatched_key: str
+) -> None:
+    (rendered_mcp / "frontend" / "node_modules").mkdir()
+    (rendered_mcp / ".env").write_text("", encoding="utf-8")
+    environment = dict(os.environ)
+    for name in (
+        "AGENTSEEK_MODEL_API_KEY",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GOOGLE_API_KEY",
+    ):
+        environment.pop(name, None)
+    environment.update({
+        "AGENTSEEK_MODEL_PROVIDER": provider,
+        "AGENTSEEK_MODEL": "local-constructor-only",
+    })
+    environment[mismatched_key] = "wrong-provider-key"
+
+    mismatched = subprocess.run(
+        [sys.executable, "-m", "agentseek", "doctor"],
+        cwd=rendered_mcp,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert mismatched.returncode == 1
+    assert "AGENTSEEK_MODEL_API_KEY is not configured" in mismatched.stdout
+
+    environment["AGENTSEEK_MODEL_API_KEY"] = "shared-test-key"
+    matching = subprocess.run(
+        [sys.executable, "-m", "agentseek", "doctor"],
+        cwd=rendered_mcp,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert matching.returncode == 0, matching.stdout + matching.stderr
+    assert "AGENTSEEK_MODEL_API_KEY is configured" in matching.stdout
 
 
 def test_langgraph_file_export_loads_under_a_synthetic_module_name(
@@ -936,11 +1215,18 @@ def test_mcp_template_readmes_cover_runtime_contract(rendered_mcp: Path) -> None
         "Restart the AgentSeek development processes after changing `.mcp.json`, model settings, or server credentials.",
         "MCP tool calls are stateless and do not retain persistent MCP client sessions between calls.",
         "Adding, removing, or replacing any server changes the complete discovered tool-name tuple, so update the calculator smoke contract at the same time.",
+        "Final names must be unique and cannot replace the enabled DeepAgents built-ins:",
+        "The `task` tool is disabled by this template's harness profile and is not reserved.",
         "Set `AGENTSEEK_MODEL_PROVIDER` and `AGENTSEEK_MODEL` for the DeepAgents graph. `DEEPAGENTS_MODEL` and `BUB_MODEL` are model-name compatibility aliases.",
-        "Provider credentials and optional custom endpoints use the provider-native variables in `.env.example`.",
+        "`AGENTSEEK_MODEL_API_KEY` is",
+        "Provider-native API keys remain",
+        "they do not satisfy",
+        "Optional custom endpoints continue to use the provider-native variables in `.env.example`.",
         "Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and `LANGSMITH_PROJECT`.",
         "Both development services bind to loopback by default.",
         "`LANGGRAPH_HOST` controls LangGraph from the launching shell. `FRONTEND_HOST` controls Vite from that shell or `frontend/.env`.",
+        "set `VITE_LANGGRAPH_API_URL` in `frontend/.env` to the public LangGraph API URL.",
+        "Keep MCP URLs, headers, and credentials out of Vite variables.",
         "This v1 template exposes MCP Tools only. It does not expose MCP Resources or Prompts, persistent MCP client sessions, interceptors, OAuth helpers, or a browser-based MCP configuration editor.",
         "Treat every configured `stdio` command as trusted local code execution.",
         "TLS, network ACLs, and authentication or OAuth must be enforced at the MCP server, gateway, or deployment boundary.",

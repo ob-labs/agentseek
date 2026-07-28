@@ -20,10 +20,9 @@ default = "{{ cookiecutter.default_model }}"
 description = "Model id used by the DeepAgents graph."
 aliases = ["DEEPAGENTS_MODEL", "BUB_MODEL"]
 
-[env.OPENAI_API_KEY]
+[env.AGENTSEEK_MODEL_API_KEY]
 required = true
-description = "Credential for the selected model provider."
-aliases = ["ANTHROPIC_API_KEY", "GOOGLE_API_KEY"]
+description = "Provider-independent credential passed to the selected model adapter."
 
 [env.LANGGRAPH_HOST]
 required = false
