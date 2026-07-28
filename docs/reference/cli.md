@@ -66,7 +66,7 @@ The built-in template type set is currently `bub`, `deepagents`, and
 | `--filter keyword` | Filter listed templates by template spec or description. |
 | `--template name` | Select a template under the chosen type, for example `bub --template default`. |
 | `--template` | Compatibility entry point that lists templates. Prefer `--list-templates` in new scripts. |
-| `--template-repo https-url` | Select an explicit AgentSeek catalog repository containing `templates/index.json`. Requires `--checkout` with a 40-character lowercase commit SHA. Cannot be combined with a positional direct Cookiecutter URL or absolute path. |
+| `--template-repo <https-url>` | Select an explicit AgentSeek catalog repository containing `templates/index.json`. Requires `--checkout` with a 40-character lowercase commit SHA. Cannot be combined with a positional direct Cookiecutter URL or absolute path. |
 | `--checkout ref` | For a direct Cookiecutter source, use a branch, tag, or commit. With `--template-repo`, the value must match `[0-9a-f]{40}`. |
 | `--output-dir path` | Write the generated project below the selected directory. Defaults to the current working directory. |
 | `--no-input` | Skip Cookiecutter variable prompts and use template defaults. |
@@ -78,8 +78,8 @@ The built-in template type set is currently `bub`, `deepagents`, and
 | --- | --- |
 | Named template, list, filter, or describe without `--template-repo` | Use the bundled AgentSeek catalog. |
 | Named template, list, filter, or describe with `--template-repo` and a valid immutable `--checkout` | Use the same explicit catalog repository and commit for every operation. |
-| Positional HTTPS URL or absolute path | Pass the source directly to Cookiecutter. |
-| `--template-repo` with a positional HTTPS URL or absolute path | Reject the conflicting sources. |
+| Positional URL or absolute path | Pass the source directly to Cookiecutter without changing its existing URL/path behavior. |
+| `--template-repo` with a positional direct Cookiecutter URL or absolute path | Reject the conflicting sources. |
 | Explicit catalog repository, checkout, registry, or template failure | Return an error; do not fall back to bundled templates or a local checkout. |
 
 Explicit catalog cache entries are keyed by normalized repository URL and exact

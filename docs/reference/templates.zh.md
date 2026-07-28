@@ -48,7 +48,8 @@ sources:
 
 `<https-url>` 标识包含 `templates/index.json` 的 AgentSeek 模板目录仓库。
 `<sha>` 必须是完整的 40 个小写字符 Git commit SHA，并匹配 `[0-9a-f]{40}`。
-显式模板目录不能与位置参数中的直接 Cookiecutter URL 或绝对路径组合。
+显式模板目录不能与位置参数中的直接 Cookiecutter URL 或绝对路径组合。位置
+参数 URL/路径的 passthrough 行为保持不变；只有 `--template-repo` 限定为 HTTPS。
 
 规范化后的模板目录 URL 和精确 commit 标识缓存条目。AgentSeek 在复用前
 验证缓存元数据。显式模板目录失败时，不回退到内置模板或本地 checkout。

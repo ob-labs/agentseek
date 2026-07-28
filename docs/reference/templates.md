@@ -49,7 +49,8 @@ sources:
 `<https-url>` identifies an AgentSeek catalog repository that contains
 `templates/index.json`. `<sha>` must be a full 40-character lowercase Git commit
 SHA matching `[0-9a-f]{40}`. The explicit catalog cannot be combined with a
-positional direct Cookiecutter URL or absolute path.
+positional direct Cookiecutter URL or absolute path. The positional URL/path
+passthrough remains unchanged; only `--template-repo` is HTTPS-only.
 
 The normalized catalog URL and exact commit identify the cache entry. AgentSeek
 validates cache metadata before reuse. A failure for an explicit catalog does
