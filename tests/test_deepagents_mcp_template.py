@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 import importlib.util
+import inspect
 import json
 import os
 import subprocess
@@ -503,6 +504,25 @@ def test_model_environment_precedence_and_provider_native_settings(
     assert model_module.model_profile_key() == "google_genai:primary-model"
 
 
+def test_langgraph_file_export_loads_under_a_synthetic_module_name(
+    rendered_mcp: Path, rendered_agent: ModuleType
+) -> None:
+    config = json.loads((rendered_mcp / "langgraph.json").read_text(encoding="utf-8"))
+    source, export_name = config["graphs"]["mcp"].split(":", maxsplit=1)
+    source_path = rendered_mcp / source
+    spec = importlib.util.spec_from_file_location("langgraph_api_graph_1234", source_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        del sys.modules[spec.name]
+
+    exported = getattr(module, export_name)
+    assert inspect.iscoroutinefunction(exported)
+
+
 def test_invalid_model_fails_before_mcp_discovery(rendered_agent: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[str] = []
     config = object()
@@ -521,7 +541,7 @@ def test_invalid_model_fails_before_mcp_discovery(rendered_agent: ModuleType, mo
         return object()
 
     monkeypatch.setattr(rendered_agent, "load_mcp_config", load_config)
-    monkeypatch.setattr(rendered_agent, "build_model", invalid_model)
+    monkeypatch.setattr(rendered_agent, "resolve_model_binding", invalid_model)
     monkeypatch.setattr(rendered_agent, "load_mcp_tools", load_tools)
 
     with pytest.raises(ValueError, match="bad model"):
@@ -563,8 +583,11 @@ def test_runtime_loads_project_mcp_config_and_registers_model_specific_profile(
         return graph
 
     monkeypatch.setattr(rendered_agent, "load_mcp_config", load_config)
-    monkeypatch.setattr(rendered_agent, "build_model", lambda: model)
-    monkeypatch.setattr(rendered_agent, "model_profile_key", lambda: "openai:gpt-test")
+    monkeypatch.setattr(
+        rendered_agent,
+        "resolve_model_binding",
+        lambda: SimpleNamespace(model=model, profile_key="openai:gpt-test"),
+    )
     monkeypatch.setattr(rendered_agent, "load_mcp_tools", load_tools)
     monkeypatch.setattr(rendered_agent, "register_harness_profile", register_profile)
     monkeypatch.setattr(rendered_agent, "create_deep_agent", create_agent)
@@ -577,6 +600,77 @@ def test_runtime_loads_project_mcp_config_and_registers_model_specific_profile(
     assert "task" not in bundle.graph.tool_names
     assert len(registered) == 1
     assert len(created) == 1
+
+
+def test_runtime_profile_key_cannot_drift_during_discovery(
+    rendered_agent: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("AGENTSEEK_MODEL_PROVIDER", "openai")
+    monkeypatch.setenv("AGENTSEEK_MODEL", "gpt-before-discovery")
+    monkeypatch.setenv("OPENAI_API_KEY", "unused-test-key")
+
+    async def mutate_environment(_config: object) -> object:
+        monkeypatch.setenv("AGENTSEEK_MODEL", "gpt-after-discovery")
+        tool = SimpleNamespace(name="calculator_add")
+        return SimpleNamespace(client=object(), tools=(tool,), tool_names=(tool.name,))
+
+    registrations: list[str] = []
+    created_models: list[object] = []
+    graph = object()
+
+    def create_agent(**kwargs: object) -> object:
+        created_models.append(kwargs["model"])
+        return graph
+
+    monkeypatch.setattr(rendered_agent, "load_mcp_config", lambda _path: object())
+    monkeypatch.setattr(rendered_agent, "load_mcp_tools", mutate_environment)
+    monkeypatch.setattr(rendered_agent, "register_harness_profile", lambda key, _profile: registrations.append(key))
+    monkeypatch.setattr(rendered_agent, "create_deep_agent", create_agent)
+
+    bundle = asyncio.run(rendered_agent._build_runtime())
+
+    assert bundle.graph is graph
+    assert registrations == ["openai:gpt-before-discovery"]
+    assert len(created_models) == 1
+    assert created_models[0].model_name == "gpt-before-discovery"
+    assert type(created_models[0]).__name__ == "ChatOpenAI"
+    assert os.environ["AGENTSEEK_MODEL"] == "gpt-after-discovery"
+
+
+def test_colon_bearing_native_model_is_rejected_before_model_or_discovery(
+    rendered_mcp: Path, rendered_agent: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model_module = importlib.import_module(f"{rendered_mcp.name}.model")
+    sensitive_model = "ft:gpt-private-org:secret-job"
+    events: list[str] = []
+    monkeypatch.setenv("AGENTSEEK_MODEL_PROVIDER", "openai")
+    monkeypatch.setenv("AGENTSEEK_MODEL", sensitive_model)
+
+    def construct_model(**_kwargs: object) -> object:
+        events.append("model")
+        return object()
+
+    async def discover(_config: object) -> object:
+        events.append("discover")
+        tool = SimpleNamespace(name="calculator_add")
+        return SimpleNamespace(client=object(), tools=(tool,), tool_names=(tool.name,))
+
+    def validate_registry_key(key: str, _profile: object) -> None:
+        if key.count(":") > 1:
+            raise ValueError(  # noqa: TRY003 - mirrors DeepAgents 0.6.12 key validation
+                f"Profile key {key!r} has more than one ':'; expected 'provider' or 'provider:model'."
+            )
+
+    monkeypatch.setattr(model_module, "init_chat_model", construct_model)
+    monkeypatch.setattr(rendered_agent, "load_mcp_config", lambda _path: object())
+    monkeypatch.setattr(rendered_agent, "load_mcp_tools", discover)
+    monkeypatch.setattr(rendered_agent, "register_harness_profile", validate_registry_key)
+
+    with pytest.raises(ValueError, match="more than one ':'") as exc:
+        asyncio.run(rendered_agent._build_runtime())
+
+    assert sensitive_model not in str(exc.value)
+    assert events == []
 
 
 def test_concurrent_graph_factory_builds_one_runtime(

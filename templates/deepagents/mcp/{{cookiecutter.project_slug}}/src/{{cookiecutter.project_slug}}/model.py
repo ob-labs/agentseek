@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
+from dataclasses import dataclass
+from types import MappingProxyType
 
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
@@ -19,8 +22,23 @@ SUPPORTED_MODEL_PROVIDERS = {
 }
 
 
-def _nonempty_env(name: str) -> str | None:
-    value = os.getenv(name)
+@dataclass(frozen=True)
+class ModelBinding:
+    """One model instance and the exact DeepAgents profile key it resolves."""
+
+    model: BaseChatModel
+    provider: str
+    model_name: str
+    profile_key: str
+
+
+def _environment_snapshot(environ: Mapping[str, str] | None = None) -> Mapping[str, str]:
+    source = os.environ if environ is None else environ
+    return MappingProxyType(dict(source))
+
+
+def _nonempty_env(name: str, environ: Mapping[str, str]) -> str | None:
+    value = environ.get(name)
     if value is None:
         return None
     return value.strip() or None
@@ -38,12 +56,13 @@ def normalize_provider(provider: str) -> str:
         ) from None
 
 
-def require_nonempty_model() -> str:
+def require_nonempty_model(environ: Mapping[str, str] | None = None) -> str:
     """Resolve the model name using AgentSeek's compatibility precedence."""
+    snapshot = _environment_snapshot(environ)
     model_name = (
-        _nonempty_env("AGENTSEEK_MODEL")
-        or _nonempty_env("DEEPAGENTS_MODEL")
-        or _nonempty_env("BUB_MODEL")
+        _nonempty_env("AGENTSEEK_MODEL", snapshot)
+        or _nonempty_env("DEEPAGENTS_MODEL", snapshot)
+        or _nonempty_env("BUB_MODEL", snapshot)
         or "{{ cookiecutter.default_model }}".strip()
     )
     if not model_name:
@@ -64,10 +83,15 @@ def _split_prefixed_model(model_name: str) -> tuple[str | None, str]:
     return provider, bare_model.strip()
 
 
-def _model_spec() -> tuple[str, str]:
-    raw_model = require_nonempty_model()
+def _model_spec(environ: Mapping[str, str]) -> tuple[str, str]:
+    raw_model = require_nonempty_model(environ)
     prefixed_provider, model_name = _split_prefixed_model(raw_model)
-    configured_provider = _nonempty_env("AGENTSEEK_MODEL_PROVIDER")
+    if ":" in model_name:
+        raise ValueError(
+            "Resolved DeepAgents profile keys cannot contain more than one ':'; "
+            "provider-native model identifiers containing ':' are unsupported."
+        )
+    configured_provider = _nonempty_env("AGENTSEEK_MODEL_PROVIDER", environ)
     if configured_provider is not None:
         provider = normalize_provider(configured_provider)
         if prefixed_provider is not None and prefixed_provider != provider:
@@ -80,8 +104,9 @@ def _model_spec() -> tuple[str, str]:
     return provider, model_name
 
 
-def provider_kwargs(provider: str) -> dict[str, object]:
+def provider_kwargs(provider: str, environ: Mapping[str, str] | None = None) -> dict[str, object]:
     """Return only non-empty provider-native credential and endpoint values."""
+    snapshot = _environment_snapshot(environ)
     names = {
         "openai": ("OPENAI_API_KEY", "OPENAI_API_BASE"),
         "anthropic": ("ANTHROPIC_API_KEY", "ANTHROPIC_API_URL"),
@@ -89,24 +114,38 @@ def provider_kwargs(provider: str) -> dict[str, object]:
     }
     key_name, base_name = names[provider]
     kwargs: dict[str, object] = {}
-    if api_key := _nonempty_env(key_name):
+    if api_key := _nonempty_env(key_name, snapshot):
         kwargs["api_key"] = api_key
-    if base_url := _nonempty_env(base_name):
+    if base_url := _nonempty_env(base_name, snapshot):
         kwargs["base_url"] = base_url
     return kwargs
 
 
 def model_profile_key() -> str:
     """Return the exact provider:model key resolved for DeepAgents profiles."""
-    provider, model_name = _model_spec()
+    snapshot = _environment_snapshot()
+    provider, model_name = _model_spec(snapshot)
     return f"{provider}:{model_name}"
 
 
-def build_model() -> BaseChatModel:
-    """Validate provider/model settings before constructing the chat model."""
-    provider, model_name = _model_spec()
-    return init_chat_model(
+def resolve_model_binding(environ: Mapping[str, str] | None = None) -> ModelBinding:
+    """Build a model and exact profile key from one immutable environment snapshot."""
+    snapshot = _environment_snapshot(environ)
+    provider, model_name = _model_spec(snapshot)
+    profile_key = f"{provider}:{model_name}"
+    model = init_chat_model(
         model=model_name,
         model_provider=provider,
-        **provider_kwargs(provider),
+        **provider_kwargs(provider, snapshot),
     )
+    return ModelBinding(
+        model=model,
+        provider=provider,
+        model_name=model_name,
+        profile_key=profile_key,
+    )
+
+
+def build_model() -> BaseChatModel:
+    """Validate settings and construct a chat model from one environment snapshot."""
+    return resolve_model_binding().model

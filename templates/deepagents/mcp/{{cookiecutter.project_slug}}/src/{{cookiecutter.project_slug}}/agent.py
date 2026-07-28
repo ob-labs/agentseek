@@ -14,9 +14,9 @@ from deepagents import (
 )
 from langgraph.graph.state import CompiledStateGraph
 
-from .config import load_mcp_config
-from .mcp_tools import load_mcp_tools
-from .model import build_model, model_profile_key
+from {{ cookiecutter.project_slug }}.config import load_mcp_config
+from {{ cookiecutter.project_slug }}.mcp_tools import load_mcp_tools
+from {{ cookiecutter.project_slug }}.model import resolve_model_binding
 
 
 @dataclass(frozen=True)
@@ -34,14 +34,14 @@ _runtime_lock = asyncio.Lock()
 
 async def _build_runtime() -> RuntimeBundle:
     config = load_mcp_config(Path(".mcp.json"))
-    model = build_model()
+    model_binding = resolve_model_binding()
     loaded = await load_mcp_tools(config)
     profile = HarnessProfile(
         general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False),
     )
-    register_harness_profile(model_profile_key(), profile)
+    register_harness_profile(model_binding.profile_key, profile)
     graph = create_deep_agent(
-        model=model,
+        model=model_binding.model,
         tools=list(loaded.tools),
         subagents=[],
         system_prompt=(
