@@ -7,7 +7,7 @@ import json
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path, PureWindowsPath
-from threading import Event
+from threading import Event, Lock
 
 import pytest
 from typer.testing import CliRunner
@@ -1292,22 +1292,36 @@ def test_explicit_catalog_publishers_share_coordinate_lock_and_one_publication(
         create_module._parse_argv(["bub", "--template-repo", _CATALOG_URL, "--checkout", _CATALOG_COMMIT])
     )
     assert coordinate is not None
-    second_started = Event()
+    second_cold_miss = Event()
+    validation_guard = Lock()
+    cold_misses = 0
+    original_validate = create_module._validated_explicit_catalog_cache
 
-    def prepare(*, mark_second: bool = False) -> create_module._PreparedCatalog:
-        if mark_second:
-            second_started.set()
-        return create_module._prepare_explicit_catalog(coordinate)
+    def validate_cache(
+        repo_root: Path,
+        selected_coordinate: create_module._ExplicitCatalogCoordinate,
+    ) -> create_module._PreparedCatalog | None:
+        nonlocal cold_misses
+        prepared = original_validate(repo_root, selected_coordinate)
+        if prepared is None:
+            with validation_guard:
+                cold_misses += 1
+                if cold_misses == 3:
+                    second_cold_miss.set()
+        return prepared
+
+    monkeypatch.setattr(create_module, "_validated_explicit_catalog_cache", validate_cache)
 
     with ThreadPoolExecutor(max_workers=2) as executor:
-        first = executor.submit(prepare)
+        first = executor.submit(create_module._prepare_explicit_catalog, coordinate)
         assert clone_started.wait(timeout=5)
-        second = executor.submit(prepare, mark_second=True)
-        assert second_started.wait(timeout=5)
+        second = executor.submit(create_module._prepare_explicit_catalog, coordinate)
+        assert second_cold_miss.wait(timeout=5)
         clone_release.set()
         prepared = [first.result(timeout=5), second.result(timeout=5)]
 
     roots = [item.templates_root for item in prepared]
+    assert cold_misses == 3
     assert len(clone_calls) == 1
     assert roots[0] == roots[1]
     assert all((Path(root) / "bub" / "remote" / "cookiecutter.json").is_file() for root in roots)
