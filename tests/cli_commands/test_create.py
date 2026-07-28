@@ -999,9 +999,10 @@ def _catalog_metadata_files(cookiecutters_dir: Path) -> list[Path]:
         if (
             isinstance(data, dict)
             and {"schema_version", "repository_url", "commit", "repository_subdirectory"} <= data.keys()
+            and candidate.parent.name == data.get("commit")
         ):
             matches.append(candidate)
-    return matches
+    return sorted(matches)
 
 
 def _cached_catalog_repository(metadata_path: Path) -> Path:
@@ -1403,7 +1404,9 @@ def test_explicit_catalog_repairs_corrupt_warm_cache_and_moves_stale_entry_aside
 
     assert second_result.exit_code == 0, second_result.output
     assert len(clone_calls) == 2
-    repaired_repository = _cached_catalog_repository(_catalog_metadata_files(tmp_path / "cookiecutters")[0])
+    metadata_files = _catalog_metadata_files(tmp_path / "cookiecutters")
+    assert metadata_files == [cache_entry / create_module.EXPLICIT_CATALOG_METADATA]
+    repaired_repository = _cached_catalog_repository(metadata_files[0])
     assert (repaired_repository / "templates" / "bub" / "remote" / "cookiecutter.json").is_file()
     assert list(cache_entry.parent.glob(f".{_CATALOG_COMMIT}.stale-*"))
 
