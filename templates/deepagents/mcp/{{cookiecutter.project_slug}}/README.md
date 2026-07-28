@@ -6,7 +6,7 @@ local calculator example plus a streamed React UI.
 
 ## Prerequisites
 
-- Python 3.11 or newer with `uv`.
+- Python 3.12 or newer with `uv`.
 - Node.js `^20.19.0 || ^22.13.0 || >=24.0.0` with `npm`.
 
 ## Quickstart

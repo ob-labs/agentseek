@@ -182,6 +182,8 @@ def _assert_deepagents_default_template(generated: Path) -> None:
 
 def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, Any]) -> None:
     pyproject_data = tomllib.loads((generated / "pyproject.toml").read_text(encoding="utf-8"))
+    requires_python = pyproject_data["project"]["requires-python"]
+    assert requires_python == ">=3.12"
     assert pyproject_data["project"]["dependencies"] == [
         "deepagents>=0.6.12,<0.7",
         "langchain>=1.0",
@@ -302,6 +304,7 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     assert "LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev" in readme_text
     assert "`frontend/.env`" in readme_text
     assert "Node.js `^20.19.0 || ^22.13.0 || >=24.0.0`" in readme_text
+    assert f"Python {requires_python.removeprefix('>=')} or newer with `uv`." in readme_text
 
 
 def _assert_language_instruction_template(generated: Path) -> None:
