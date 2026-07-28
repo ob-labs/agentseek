@@ -97,6 +97,7 @@ language_instruction_templates = {
 }
 dependency_sync_templates = {
     ("deepagents", "content-builder"),
+    ("deepagents", "mcp"),
     ("deepagents", "research"),
     ("deepagents", "sandbox"),
     ("langchain", "agentic-rag-hybrid"),
@@ -175,6 +176,43 @@ def _assert_deepagents_default_template(generated: Path) -> None:
     assert "does not include a frontend" in readme_text
     assert "Answer in the same language as the user's question." in readme_text
     assert "Answer in the same language as the user's question." in binding_text
+
+
+def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, Any]) -> None:
+    pyproject_data = tomllib.loads((generated / "pyproject.toml").read_text(encoding="utf-8"))
+    assert pyproject_data["project"]["dependencies"] == [
+        "deepagents>=0.6.12,<0.7",
+        "langchain>=1.0",
+        "langchain-anthropic>=1.0",
+        "langchain-google-genai>=4.0",
+        "langchain-mcp-adapters>=0.3,<0.4",
+        "langchain-openai>=0.3",
+        "mcp>=1.28,<2",
+        "python-dotenv>=1.0",
+        "langgraph-cli[inmem]>=0.4",
+    ]
+    assert set(lifecycle_data["processes"]) == {"langgraph", "frontend"}
+    assert set(lifecycle_data["tasks"]) == {"sync", "frontend", "mcp-smoke"}
+    assert lifecycle_data["tasks"]["mcp-smoke"]["command"] == [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        f"{generated.name}.mcp_smoke",
+    ]
+    assert json.loads((generated / ".mcp.json").read_text(encoding="utf-8")) == {
+        "mcpServers": {
+            "calculator": {
+                "transport": "stdio",
+                "command": "${PYTHON_EXECUTABLE}",
+                "args": ["-m", f"{generated.name}.calculator_server"],
+            }
+        }
+    }
+    readme_text = (generated / "README.md").read_text(encoding="utf-8")
+    assert "Run `agentseek task sync`, `agentseek task frontend`, and" in readme_text
+    assert "`agentseek task mcp-smoke`, then inspect with `agentseek doctor`" in readme_text
+    assert "development services with `agentseek dev`." in readme_text
 
 
 def _assert_language_instruction_template(generated: Path) -> None:
@@ -335,6 +373,9 @@ def test_template_renders_without_unrendered_jinja(
 
     if (type_name, template_name) == ("deepagents", "default"):
         _assert_deepagents_default_template(generated)
+
+    if (type_name, template_name) == ("deepagents", "mcp"):
+        _assert_deepagents_mcp_template(generated, lifecycle_data)
 
     if (type_name, template_name) in language_instruction_templates:
         _assert_language_instruction_template(generated)

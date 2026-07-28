@@ -12,6 +12,7 @@ EXPECTED_TEMPLATE_KEYS = {
     "bub/default",
     "deepagents/content-builder",
     "deepagents/default",
+    "deepagents/mcp",
     "deepagents/research",
     "deepagents/sandbox",
     "langchain/agentic-rag",
