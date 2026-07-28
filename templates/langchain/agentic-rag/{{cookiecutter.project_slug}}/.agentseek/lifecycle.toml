@@ -104,6 +104,10 @@ command = ["uv", "sync"]
 description = "Install frontend dependencies."
 command = ["npm", "install", "--prefix", "frontend"]
 
+[tasks.test]
+description = "Run the embedded seekdb smoke test."
+command = ["uv", "run", "--extra", "dev", "python", "-m", "pytest"]
+
 [tasks.seekdb-docker]
 description = "Start the optional seekdb Docker server (set SEEKDB_MODE=server)."
 command = ["docker", "compose", "up", "-d", "seekdb"]

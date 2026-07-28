@@ -106,8 +106,7 @@ adds deterministic document embeddings, and retrieves the expected document
 without Docker or hosted APIs:
 
 ```bash
-uv sync --extra dev
-uv run python -m pytest
+agentseek task test
 ```
 
 ## Run
