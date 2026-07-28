@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import ast
 import asyncio
 import importlib
 import importlib.util
 import inspect
 import json
 import os
+import re
 import subprocess
 import sys
 import tomllib
@@ -767,15 +769,131 @@ def test_graph_factory_retries_after_failed_runtime_build(
     assert attempts == 2
 
 
+def _fenced_blocks(markdown: str, language: str) -> list[str]:
+    pattern = rf"```{re.escape(language)}\n(.*?)\n```"
+    return re.findall(pattern, markdown, flags=re.DOTALL)
+
+
+def _normalized(markdown: str) -> str:
+    return " ".join(markdown.split())
+
+
+def _assert_mcp_json_examples(markdown: str) -> None:
+    blocks = _fenced_blocks(markdown, "json")
+    assert blocks
+    connections: list[dict[str, object]] = []
+    for block in blocks:
+        parsed = json.loads(block)
+        assert isinstance(parsed, dict)
+        servers = parsed.get("mcpServers")
+        assert isinstance(servers, dict) and servers
+        for connection in servers.values():
+            assert isinstance(connection, dict)
+            connections.append(connection)
+
+    assert all(connection.get("transport") in {"stdio", "http"} for connection in connections)
+    stdio = [connection for connection in connections if connection.get("transport") == "stdio"]
+    http = [connection for connection in connections if connection.get("transport") == "http"]
+    assert stdio and http
+    assert any(
+        connection.get("command") == "${PYTHON_EXECUTABLE}"
+        and isinstance(connection.get("args"), list)
+        and isinstance(connection.get("env"), dict)
+        for connection in stdio
+    )
+    assert any(
+        isinstance(connection.get("url"), str)
+        and str(connection["url"]).startswith("${")
+        and isinstance(connection.get("headers"), dict)
+        for connection in http
+    )
+
+
+def _assert_hitl_policy(markdown: str) -> None:
+    policies: list[object] = []
+    for block in _fenced_blocks(markdown, "python"):
+        module = ast.parse(block)
+        for statement in module.body:
+            if (
+                isinstance(statement, ast.Assign)
+                and len(statement.targets) == 1
+                and isinstance(statement.targets[0], ast.Name)
+                and statement.targets[0].id == "interrupt_on"
+            ):
+                policies.append(ast.literal_eval(statement.value))
+    assert policies == [{"billing_charge_card": {"allowed_decisions": ["approve", "reject"]}}]
+
+
 def test_mcp_template_readmes_cover_runtime_contract(rendered_mcp: Path) -> None:
-    source = (TEMPLATE / "README.md").read_text()
-    generated = (rendered_mcp / "README.md").read_text()
+    source = (TEMPLATE / "README.md").read_text(encoding="utf-8")
+    generated = (rendered_mcp / "README.md").read_text(encoding="utf-8")
+    normalized_source = _normalized(source)
+    normalized_generated = _normalized(generated)
+
+    expected_commands = [
+        "cp .env.example .env",
+        "cp frontend/.env.example frontend/.env",
+        "uvx agentseek task sync",
+        "uvx agentseek task frontend",
+        "uvx agentseek task mcp-smoke",
+        "uvx agentseek info",
+        "uvx agentseek doctor",
+        "uvx agentseek dev --dry-run",
+        "uvx agentseek dev",
+    ]
+    bash_blocks = _fenced_blocks(generated, "bash")
+    assert bash_blocks[0].splitlines() == expected_commands[:2]
+    assert bash_blocks[1].splitlines() == expected_commands[2:]
+    first_block_start = generated.index("```bash")
+    first_block_end = generated.index("```", first_block_start + len("```bash"))
+    edit_instruction = generated.index("Edit `.env`")
+    second_block_start = generated.index("```bash", first_block_end + len("```"))
+    assert first_block_end < edit_instruction < second_block_start
+    documented_commands = [line for block in bash_blocks for line in block.splitlines() if line in expected_commands]
+    assert documented_commands == expected_commands
+
     for text in (source, generated):
-        assert "stdio" in text
-        assert "Streamable HTTP" in text
-        assert "tool_name_prefix" in text
-        assert "trusted local code execution" in text
-        assert "persistent sessions" in text
-    assert "agentseek task mcp-smoke" in generated
-    assert "browser-based MCP configuration editor" in generated
-    assert "billing_charge_card" in generated
+        _assert_mcp_json_examples(text)
+        _assert_hitl_policy(text)
+
+    common_clauses = [
+        "`${ENV_VAR}` references are interpolated in commands, arguments, environment values, URLs, and headers. Every reference must resolve.",
+        "`${PYTHON_EXECUTABLE}` is reserved and always resolves to the current Python interpreter. An environment variable named `PYTHON_EXECUTABLE` cannot override it.",
+        "Every configured server must connect and expose at least one tool. If any server fails or returns no tools, graph creation fails without a partial tool set.",
+        "Restart the AgentSeek development processes after changing `.mcp.json`, model settings, or server credentials.",
+        "MCP tool calls are stateless and do not retain persistent MCP client sessions between calls.",
+        "Adding, removing, or replacing any server changes the complete discovered tool-name tuple, so update the calculator smoke contract at the same time.",
+        "Set `AGENTSEEK_MODEL_PROVIDER` and `AGENTSEEK_MODEL` for the DeepAgents graph. `DEEPAGENTS_MODEL` and `BUB_MODEL` are model-name compatibility aliases.",
+        "Provider credentials and optional custom endpoints use the provider-native variables in `.env.example`.",
+        "Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and `LANGSMITH_PROJECT`.",
+        "Both development services bind to loopback by default.",
+        "`LANGGRAPH_HOST` controls LangGraph from the launching shell. `FRONTEND_HOST` controls Vite from that shell or `frontend/.env`.",
+        "This v1 template exposes MCP Tools only. It does not expose MCP Resources or Prompts, persistent MCP client sessions, interceptors, OAuth helpers, or a browser-based MCP configuration editor.",
+        "Treat every configured `stdio` command as trusted local code execution.",
+        "TLS, network ACLs, and authentication or OAuth must be enforced at the MCP server, gateway, or deployment boundary.",
+        "MCP tool descriptions and annotations do not authorize calls.",
+        "This example does not enable automatic HITL.",
+        "Keep secrets in the process environment or the untracked `.env` file and reference them from `.mcp.json` with `${ENV_VAR}`.",
+        "Never put secret literals in tracked `.mcp.json`, commits, logs, error messages, shell output, or shared output, and never echo them.",
+        "Do not rely on the template to redact arbitrary MCP tool error content.",
+    ]
+    for normalized in (normalized_source, normalized_generated):
+        for clause in common_clauses:
+            assert clause in normalized
+        assert "persistent sessions" not in normalized
+    assert "LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 uvx agentseek dev" in generated
+    assert "Optional installed-CLI shortcut" in generated
+
+    english_description = (
+        "DeepAgents MCP Tools app with validated stdio/HTTP configuration, a local calculator example, "
+        "streamed UI, and AgentSeek lifecycle spec."
+    )
+    english_row = f"| `deepagents/mcp` | {english_description} |"
+    chinese_row = (
+        "| `deepagents/mcp` | DeepAgents MCP Tools 应用，提供经过校验的 stdio/HTTP 配置、"  # noqa: RUF001
+        "本地计算器示例、流式 UI 和 AgentSeek 生命周期规范。 |"
+    )
+    assert english_row in (REPO_ROOT / "docs" / "reference" / "templates.md").read_text(encoding="utf-8")
+    assert chinese_row in (REPO_ROOT / "docs" / "reference" / "templates.zh.md").read_text(encoding="utf-8")
+    registry = json.loads((REPO_ROOT / "templates" / "index.json").read_text(encoding="utf-8"))
+    assert registry["deepagents/mcp"] == english_description

@@ -13,13 +13,17 @@ a model-free smoke check, and a streamed React UI.
 - Node.js `^20.19.0 || ^22.13.0 || >=24.0.0` with `npm`.
 - A model name and credential for OpenAI, Anthropic, or Google when you send chat.
 
-Run the first two copy commands, then edit `.env`. Set
-`AGENTSEEK_MODEL_PROVIDER`, `AGENTSEEK_MODEL`, and one matching provider key.
-Continue with the remaining commands in this exact order:
+Copy the two environment files:
 
 ```bash
 cp .env.example .env
 cp frontend/.env.example frontend/.env
+```
+
+Edit `.env`. Set `AGENTSEEK_MODEL_PROVIDER`, `AGENTSEEK_MODEL`, and one matching
+provider key. Then continue in this exact order:
+
+```bash
 uvx agentseek task sync
 uvx agentseek task frontend
 uvx agentseek task mcp-smoke
@@ -41,6 +45,8 @@ it does not claim a hosted chat was executed without a real provider key.
 
 Stop `uvx agentseek dev` with `Ctrl-C`. The command only starts local development
 processes, so no additional cleanup is required.
+
+### Optional installed-CLI shortcut
 
 If AgentSeek is already installed in your active environment, you can omit the
 `uvx` prefix. Run `agentseek task sync`, `agentseek task frontend`, and
@@ -70,23 +76,37 @@ example shows the supported `stdio` and Streamable HTTP shapes together:
 }
 ```
 
-Define referenced values in the environment that starts AgentSeek. `${ENV_VAR}`
-interpolation works in commands, arguments, `env`, URLs, and headers. Every
-reference must resolve. `${PYTHON_EXECUTABLE}` is reserved and always resolves
-to the current Python interpreter; an environment override is ignored.
+`${ENV_VAR}` references are interpolated in commands, arguments, environment
+values, URLs, and headers. Every reference must resolve.
+`${PYTHON_EXECUTABLE}` is reserved and always resolves to the current Python
+interpreter. An environment variable named `PYTHON_EXECUTABLE` cannot override
+it.
 
-Server names may contain letters, numbers, `_`, and `-`. The loader requires
-every configured server to connect and return a nonempty tool list. A failure
-stops graph creation instead of starting with a partial tool set.
+Server names may contain letters, numbers, `_`, and `-`. Every configured server
+must connect and expose at least one tool. If any server fails or returns no
+tools, graph creation fails without a partial tool set.
 
 `tool_name_prefix=True` publishes `<server>_<tool>` names. The local tools are
-therefore `calculator_add` and `calculator_multiply`. Restart `agentseek dev`
-after changing `.mcp.json`, credentials, or model settings. MCP tool connections
-are stateless; this template does not keep persistent sessions between calls.
+therefore `calculator_add` and `calculator_multiply`. The smoke task checks the
+complete discovered tool-name tuple, schema, and calculation. Adding, removing,
+or replacing any server changes the complete discovered tool-name tuple, so
+update the calculator smoke contract at the same time.
+
+Restart the AgentSeek development processes after changing `.mcp.json`, model
+settings, or server credentials. MCP tool calls are stateless and do not retain
+persistent MCP client sessions between calls.
 
 ## Configuration reference
 
 ### Model and tracing
+
+Set `AGENTSEEK_MODEL_PROVIDER` and `AGENTSEEK_MODEL` for the DeepAgents graph.
+`DEEPAGENTS_MODEL` and `BUB_MODEL` are model-name compatibility aliases.
+Provider credentials and optional custom endpoints use the provider-native
+variables in `.env.example`.
+
+Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
+`LANGSMITH_PROJECT`.
 
 | Variable | Purpose |
 | --- | --- |
@@ -101,35 +121,51 @@ are stateless; this template does not keep persistent sessions between calls.
 
 ### Development hosts
 
-Both services bind to `127.0.0.1` by default. For a one-run remote or container
-bind, opt in from the launching shell:
+Both development services bind to loopback by default. For a one-run remote or
+container bind, opt in from the launching shell:
 
 ```bash
-LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
+LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 uvx agentseek dev
 ```
 
-`LANGGRAPH_HOST` must be a shell export or inline assignment when AgentSeek
-starts. `FRONTEND_HOST` may instead be stored in `frontend/.env`. The root `.env`
-configures the application, model, MCP values, and tracing; it does not configure
-either server bind address.
+`LANGGRAPH_HOST` controls LangGraph from the launching shell. `FRONTEND_HOST`
+controls Vite from that shell or `frontend/.env`. The root `.env` configures the
+application, model, MCP values, and tracing; it does not configure either server
+bind address.
 
 Binding to `0.0.0.0` makes the development services reachable from other hosts.
 Add an authenticated reverse proxy, TLS, and network access controls before any
 non-loopback use.
 
+### Optional installed-CLI shortcut
+
+If AgentSeek is already installed in your active environment, the equivalent
+remote-bind command is:
+
+```bash
+LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
+```
+
 ## Security and v1 boundaries
 
-A configured `stdio` command is trusted local code execution. Review its command,
-arguments, environment, and package source before starting AgentSeek.
+Treat every configured `stdio` command as trusted local code execution. Review
+its command, arguments, environment, and package source before starting
+AgentSeek.
+
+Keep secrets in the process environment or the untracked `.env` file and
+reference them from `.mcp.json` with `${ENV_VAR}`. Never put secret literals in
+tracked `.mcp.json`, commits, logs, error messages, shell output, or shared
+output, and never echo them. Do not rely on the template to redact arbitrary MCP
+tool error content.
 
 For Streamable HTTP, the loader accepts absolute `http` and `https` URLs. URL
 validation is not transport security. TLS, network ACLs, and authentication or
-OAuth belong at the MCP server, gateway, or deployment boundary. This template
-does not provide OAuth helpers.
+OAuth must be enforced at the MCP server, gateway, or deployment boundary. This
+template does not provide OAuth helpers.
 
-MCP descriptions and annotations are model hints, not authorization. Enforce
-identity and permissions in the tool service. If you add DeepAgents
-human-in-the-loop policy for side effects, target the final prefixed name:
+MCP tool descriptions and annotations do not authorize calls. Enforce identity
+and permissions in the tool service. If you add DeepAgents human-in-the-loop
+policy for side effects, target the final prefixed name:
 
 ```python
 interrupt_on={
@@ -137,9 +173,9 @@ interrupt_on={
 }
 ```
 
-The template does not configure automatic HITL. You must add and test that policy
-in the graph assembly.
+This example does not enable automatic HITL. You must add and test that policy in
+the graph assembly.
 
-This v1 template exposes MCP Tools. It does not expose MCP Resources or Prompts.
-It has no persistent sessions, interceptors, or OAuth helpers. It also has no
+This v1 template exposes MCP Tools only. It does not expose MCP Resources or
+Prompts, persistent MCP client sessions, interceptors, OAuth helpers, or a
 browser-based MCP configuration editor.
