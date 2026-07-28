@@ -8,15 +8,15 @@ ARG INSTALL_FEISHU=false
 ARG UV_DEFAULT_INDEX
 ARG UV_INDEX_URL
 ARG UV_INSECURE_HOST
-{% if cookiecutter._agentseek_source_path %}
+{% if cookiecutter._agentseek_source_path_posix %}
 RUN if [ "$INSTALL_FEISHU" = "true" ]; then \
         apt-get update \
         && apt-get install -y --no-install-recommends git \
         && rm -rf /var/lib/apt/lists/*; \
     fi
 
-COPY --from=agentseek_source contrib/agentseek-ag-ui {{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui
-COPY --from=agentseek_source contrib/agentseek-langchain {{ cookiecutter._agentseek_source_path }}/contrib/agentseek-langchain
+COPY --from=agentseek_source ["contrib/agentseek-ag-ui", {{ (cookiecutter._agentseek_source_path_posix ~ "/contrib/agentseek-ag-ui") | tojson }}]
+COPY --from=agentseek_source ["contrib/agentseek-langchain", {{ (cookiecutter._agentseek_source_path_posix ~ "/contrib/agentseek-langchain") | tojson }}]
 
 {% else %}
 RUN apt-get update \
@@ -26,14 +26,14 @@ RUN apt-get update \
 {% endif %}
 COPY pyproject.toml requirements.txt README.md ./
 COPY src ./src
-{% if cookiecutter._agentseek_source_path %}
+{% if cookiecutter._agentseek_source_path_posix %}
 RUN set -e; \
     if [ -n "${UV_DEFAULT_INDEX:-}" ]; then export UV_DEFAULT_INDEX; fi; \
     if [ -n "${UV_INDEX_URL:-}" ]; then export UV_INDEX_URL; fi; \
     if [ -n "${UV_INSECURE_HOST:-}" ]; then export UV_INSECURE_HOST; fi; \
     UV_LINK_MODE=copy uv pip install --system \
-        {{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui \
-        {{ cookiecutter._agentseek_source_path }}/contrib/agentseek-langchain \
+        {{ cookiecutter._agentseek_source_path_shell }}/contrib/agentseek-ag-ui \
+        {{ cookiecutter._agentseek_source_path_shell }}/contrib/agentseek-langchain \
         "bub==0.3.9" \
         -r requirements.txt \
     && if [ "$INSTALL_FEISHU" = "true" ]; then \

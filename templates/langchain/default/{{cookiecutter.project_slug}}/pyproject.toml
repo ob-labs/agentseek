@@ -34,9 +34,9 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.uv.sources]
-{% if cookiecutter._agentseek_source_path %}
-agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
-agentseek-langchain = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-langchain", editable = true }
+{% if cookiecutter._agentseek_source_path_posix %}
+agentseek-ag-ui = { path = {{ (cookiecutter._agentseek_source_path_posix ~ "/contrib/agentseek-ag-ui") | tojson }}, editable = true }
+agentseek-langchain = { path = {{ (cookiecutter._agentseek_source_path_posix ~ "/contrib/agentseek-langchain") | tojson }}, editable = true }
 bub-feishu = { git = "https://github.com/bubbuild/bub-contrib.git", rev = "5374c8ffc8a38091a4e26dcc455c54f3c9e71aff", subdirectory = "packages/bub-feishu" }
 {% else %}
 agentseek-ag-ui = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-ag-ui" }

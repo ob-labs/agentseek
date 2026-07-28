@@ -34,7 +34,7 @@ import json
 import shlex
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any
 
 import typer
@@ -94,7 +94,7 @@ class TemplateSource:
     template: str  # local path or remote URL
     directory: str | None = None  # cookiecutter ``directory`` kwarg (monorepo subdir)
     checkout: str | None = None  # cookiecutter ``checkout`` kwarg (branch / tag)
-    install_source_path: str | None = None  # local monorepo path for generated project deps
+    install_source_path: PurePath | None = None  # local monorepo path for generated project deps
     install_source_url: str | None = None  # remote repo URL for generated project deps
 
 
@@ -153,7 +153,7 @@ def _resolve_type_template(
         _is_public_template(project_type, template_name, templates_root)
         and (template_path / "cookiecutter.json").is_file()
     ):
-        install_source_path = str(templates_root.parent) if _local_templates_root() == templates_root else None
+        install_source_path = templates_root.parent if _local_templates_root() == templates_root else None
         return TemplateSource(
             template=str(template_path),
             install_source_path=install_source_path,
@@ -411,6 +411,19 @@ def _prompt_template_name(
 # ---------------------------------------------------------------------------
 
 
+def _cookiecutter_source_context(source: TemplateSource) -> dict[str, str]:
+    """Build safe local-source values for structured template files."""
+    install_source_path = source.install_source_path
+    source_path = str(install_source_path) if install_source_path is not None else ""
+    source_path_posix = install_source_path.as_posix() if install_source_path is not None else ""
+    return {
+        "_agentseek_source_path": source_path,
+        "_agentseek_source_path_posix": source_path_posix,
+        "_agentseek_source_path_shell": shlex.quote(source_path_posix) if source_path_posix else "",
+        "_agentseek_source_url": source.install_source_url or REPO_GIT_URL,
+    }
+
+
 def _run_cookiecutter(
     source: TemplateSource,
     *,
@@ -428,10 +441,7 @@ def _run_cookiecutter(
             no_input=no_input,
             directory=source.directory,
             checkout=source.checkout,
-            extra_context={
-                "_agentseek_source_path": source.install_source_path or "",
-                "_agentseek_source_url": source.install_source_url or REPO_GIT_URL,
-            },
+            extra_context=_cookiecutter_source_context(source),
         )
         return Path(generated) if generated else None
     except OutputDirExistsException:

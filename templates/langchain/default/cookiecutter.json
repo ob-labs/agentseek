@@ -8,5 +8,7 @@
   "frontend_port": "5174",
   "copilotkit_port": "4001",
   "_agentseek_source_path": "",
+  "_agentseek_source_path_posix": "",
+  "_agentseek_source_path_shell": "",
   "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git"
 }

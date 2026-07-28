@@ -9,9 +9,9 @@ services:
         UV_DEFAULT_INDEX: "${UV_DEFAULT_INDEX:-}"
         UV_INDEX_URL: "${UV_INDEX_URL:-}"
         UV_INSECURE_HOST: "${UV_INSECURE_HOST:-}"
-{% if cookiecutter._agentseek_source_path %}
+{% if cookiecutter._agentseek_source_path_posix %}
       additional_contexts:
-        agentseek_source: "{{ cookiecutter._agentseek_source_path }}"
+        agentseek_source: {{ cookiecutter._agentseek_source_path_posix | tojson }}
 {% endif %}
     env_file:
       - .env
@@ -40,9 +40,9 @@ services:
         UV_DEFAULT_INDEX: "${UV_DEFAULT_INDEX:-}"
         UV_INDEX_URL: "${UV_INDEX_URL:-}"
         UV_INSECURE_HOST: "${UV_INSECURE_HOST:-}"
-{% if cookiecutter._agentseek_source_path %}
+{% if cookiecutter._agentseek_source_path_posix %}
       additional_contexts:
-        agentseek_source: "{{ cookiecutter._agentseek_source_path }}"
+        agentseek_source: {{ cookiecutter._agentseek_source_path_posix | tojson }}
 {% endif %}
     env_file:
       - .env

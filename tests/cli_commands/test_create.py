@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 from typer.testing import CliRunner
@@ -508,6 +508,21 @@ def test_resolve_type_template_local() -> None:
     assert template_path.is_dir()
     assert (template_path / "cookiecutter.json").is_file()
     assert source.directory is None  # local path — no directory needed
+    assert source.install_source_path == local_root.parent
+
+
+def test_cookiecutter_source_context_normalizes_windows_paths() -> None:
+    """Structured template values use portable paths and shell-safe quoting."""
+    source = TemplateSource(
+        template="unused",
+        install_source_path=PureWindowsPath(r"D:\source trees\agentseek"),
+    )
+
+    context = create_module._cookiecutter_source_context(source)
+
+    assert context["_agentseek_source_path"] == r"D:\source trees\agentseek"
+    assert context["_agentseek_source_path_posix"] == "D:/source trees/agentseek"
+    assert context["_agentseek_source_path_shell"] == "'D:/source trees/agentseek'"
 
 
 def test_list_templates_returns_names() -> None:

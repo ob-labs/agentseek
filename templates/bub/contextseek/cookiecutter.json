@@ -11,5 +11,6 @@
   "contextseek_storage_path": ".contextseek/store",
   "contextseek_tenant": "default",
   "_agentseek_source_path": "",
+  "_agentseek_source_path_posix": "",
   "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git"
 }

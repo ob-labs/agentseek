@@ -13,10 +13,11 @@ catch Jinja errors, missing files, and unsubstituted variables before they hit
 from __future__ import annotations
 
 import json
+import shlex
 import shutil
 import tomllib
 from collections.abc import Sequence
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import Any
 
 import pytest
@@ -57,6 +58,20 @@ def _discover_templates() -> list[tuple[str, str, Path]]:
 
 
 TEMPLATES = _discover_templates()
+LOCAL_SOURCE_PATH_TEMPLATES = {
+    ("bub", "contextseek"),
+    ("bub", "default"),
+    ("deepagents", "default"),
+    ("langchain", "cli-remote"),
+    ("langchain", "default"),
+}
+LOCAL_SOURCE_TEMPLATES = [
+    template for template in TEMPLATES if (template[0], template[1]) in LOCAL_SOURCE_PATH_TEMPLATES
+]
+LOCAL_SOURCE_PATH_CASES = (
+    pytest.param(PureWindowsPath(r"D:\source trees\agentseek"), id="windows"),
+    pytest.param(PurePosixPath('/workspace/agent"seek'), id="quoted-posix"),
+)
 seekdb_skill_templates = {
     ("bub", "contextseek"),
     ("langchain", "agentic-rag-hybrid"),
@@ -317,6 +332,56 @@ def test_template_renders_without_unrendered_jinja(
         _assert_agentic_rag_hybrid_template(generated, lifecycle_data)
 
     _assert_frontend_package_json(generated)
+
+
+@pytest.mark.parametrize(
+    ("type_name", "template_name", "template_dir"),
+    LOCAL_SOURCE_TEMPLATES,
+    ids=[f"{type_name}/{template_name}" for type_name, template_name, _ in LOCAL_SOURCE_TEMPLATES],
+)
+@pytest.mark.parametrize("source_path", LOCAL_SOURCE_PATH_CASES)
+def test_template_renders_local_source_path_safely(
+    type_name: str,
+    template_name: str,
+    template_dir: Path,
+    source_path: PurePath,
+    tmp_path: Path,
+) -> None:
+    """Local source paths remain valid in TOML, YAML, and Dockerfile output."""
+    patched = _patch_template_for_test(template_dir, tmp_path)
+    out_dir = tmp_path / "output"
+    out_dir.mkdir()
+
+    generated = create_module._run_cookiecutter(
+        create_module.TemplateSource(
+            template=str(patched),
+            install_source_path=source_path,
+        ),
+        output_dir=out_dir,
+        no_input=True,
+    )
+
+    assert generated is not None
+    with (generated / "pyproject.toml").open("rb") as pyproject_file:
+        pyproject_data = tomllib.load(pyproject_file)
+
+    normalized_source = source_path.as_posix()
+    uv_sources = pyproject_data["tool"]["uv"]["sources"]
+    local_paths = [source["path"] for source in uv_sources.values() if "path" in source]
+    assert local_paths
+    assert all(path.startswith(f"{normalized_source}/contrib/") for path in local_paths)
+    assert all("\\" not in path for path in local_paths)
+
+    if (type_name, template_name) == ("langchain", "default"):
+        dockerfile = (generated / "Dockerfile").read_text(encoding="utf-8")
+        compose = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+        ag_ui_path = f"{normalized_source}/contrib/agentseek-ag-ui"
+        assert (f'COPY --from=agentseek_source ["contrib/agentseek-ag-ui", {json.dumps(ag_ui_path)}]') in dockerfile
+        assert f"{shlex.quote(normalized_source)}/contrib/agentseek-ag-ui" in dockerfile
+        assert compose.count(f"agentseek_source: {json.dumps(normalized_source)}") == 2
+        if str(source_path) != normalized_source:
+            assert str(source_path) not in dockerfile
+            assert str(source_path) not in compose
 
 
 @pytest.mark.parametrize(

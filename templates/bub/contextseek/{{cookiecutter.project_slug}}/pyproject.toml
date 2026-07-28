@@ -28,9 +28,9 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.uv.sources]
-{% if cookiecutter._agentseek_source_path %}
-agentseek-ag-ui = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-ag-ui", editable = true }
-agentseek-contextseek = { path = "{{ cookiecutter._agentseek_source_path }}/contrib/agentseek-contextseek", editable = true }
+{% if cookiecutter._agentseek_source_path_posix %}
+agentseek-ag-ui = { path = {{ (cookiecutter._agentseek_source_path_posix ~ "/contrib/agentseek-ag-ui") | tojson }}, editable = true }
+agentseek-contextseek = { path = {{ (cookiecutter._agentseek_source_path_posix ~ "/contrib/agentseek-contextseek") | tojson }}, editable = true }
 {% else %}
 agentseek-ag-ui = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-ag-ui" }
 agentseek-contextseek = { git = "{{ cookiecutter._agentseek_source_url }}", subdirectory = "contrib/agentseek-contextseek" }
