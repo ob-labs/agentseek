@@ -95,10 +95,11 @@ Treat every configured `stdio` command as trusted local code execution. Review
 the executable, arguments, working environment, and package source before use.
 
 Keep secrets in the process environment or the untracked `.env` file and
-reference them from `.mcp.json` with `${ENV_VAR}`. Never put secret literals in
-tracked `.mcp.json`, commits, logs, error messages, shell output, or shared
-output, and never echo them. Do not rely on the template to redact arbitrary MCP
-tool error content.
+reference them from `.mcp.json` with `${ENV_VAR}`. The root `.env` file is loaded
+by both `agentseek task mcp-smoke` and `agentseek dev`, while exported process
+values take precedence. Never put secret literals in tracked `.mcp.json`,
+commits, logs, error messages, shell output, or shared output, and never echo
+them. Do not rely on the template to redact arbitrary MCP tool error content.
 
 For Streamable HTTP, the template validates configuration shape and absolute
 `http` or `https` URLs. TLS, network ACLs, and authentication or OAuth must be

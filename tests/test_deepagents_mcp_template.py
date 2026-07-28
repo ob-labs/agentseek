@@ -418,6 +418,56 @@ def test_rendered_calculator_mcp_smoke_is_real(rendered_mcp: Path, monkeypatch: 
     assert result.calculation == "95"
 
 
+@pytest.mark.parametrize(
+    ("dotenv_uses_source", "exported_uses_source"),
+    [(True, False), (False, True)],
+    ids=["dotenv-only", "exported-environment-precedence"],
+)
+def test_real_mcp_smoke_loads_project_dotenv_without_overriding_exported_values(
+    rendered_mcp: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    *,
+    dotenv_uses_source: bool,
+    exported_uses_source: bool,
+) -> None:
+    monkeypatch.chdir(rendered_mcp)
+    for name in (
+        "AGENTSEEK_MODEL",
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GOOGLE_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    source_root = rendered_mcp / "src"
+    monkeypatch.syspath_prepend(str(source_root))
+    variable = "MCP_SMOKE_PYTHONPATH"
+    invalid_path = tmp_path / "invalid-pythonpath"
+    dotenv_value = source_root if dotenv_uses_source else invalid_path
+    (rendered_mcp / ".env").write_text(f"{variable}={dotenv_value}\n", encoding="utf-8")
+    if exported_uses_source:
+        monkeypatch.setenv(variable, str(source_root))
+    else:
+        monkeypatch.delenv(variable, raising=False)
+
+    config_path = rendered_mcp / ".mcp.json"
+    config_payload = json.loads(config_path.read_text(encoding="utf-8"))
+    config_payload["mcpServers"]["calculator"]["env"] = {
+        "PYTHONPATH": f"${{{variable}}}",
+    }
+    config_path.write_text(json.dumps(config_payload), encoding="utf-8")
+    smoke = importlib.import_module(f"{rendered_mcp.name}.mcp_smoke")
+
+    try:
+        result = asyncio.run(smoke.run_smoke(config_path))
+    finally:
+        os.environ.pop(variable, None)
+
+    assert result.tool_names == ("calculator_add", "calculator_multiply")
+    assert result.required_arguments == ("a", "b")
+    assert result.calculation == "95"
+
+
 def test_rendered_calculator_mcp_smoke_cli_runs_the_real_check(rendered_mcp: Path) -> None:
     environment = prepare_rendered_mcp_subprocess(rendered_mcp)
 
@@ -874,6 +924,7 @@ def test_mcp_template_readmes_cover_runtime_contract(rendered_mcp: Path) -> None
         "MCP tool descriptions and annotations do not authorize calls.",
         "This example does not enable automatic HITL.",
         "Keep secrets in the process environment or the untracked `.env` file and reference them from `.mcp.json` with `${ENV_VAR}`.",
+        "The root `.env` file is loaded by both `agentseek task mcp-smoke` and `agentseek dev`, while exported process values take precedence.",
         "Never put secret literals in tracked `.mcp.json`, commits, logs, error messages, shell output, or shared output, and never echo them.",
         "Do not rely on the template to redact arbitrary MCP tool error content.",
     ]

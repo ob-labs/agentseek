@@ -153,10 +153,11 @@ its command, arguments, environment, and package source before starting
 AgentSeek.
 
 Keep secrets in the process environment or the untracked `.env` file and
-reference them from `.mcp.json` with `${ENV_VAR}`. Never put secret literals in
-tracked `.mcp.json`, commits, logs, error messages, shell output, or shared
-output, and never echo them. Do not rely on the template to redact arbitrary MCP
-tool error content.
+reference them from `.mcp.json` with `${ENV_VAR}`. The root `.env` file is loaded
+by both `agentseek task mcp-smoke` and `agentseek dev`, while exported process
+values take precedence. Never put secret literals in tracked `.mcp.json`,
+commits, logs, error messages, shell output, or shared output, and never echo
+them. Do not rely on the template to redact arbitrary MCP tool error content.
 
 For Streamable HTTP, the loader accepts absolute `http` and `https` URLs. URL
 validation is not transport security. TLS, network ACLs, and authentication or

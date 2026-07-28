@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
 from .config import MCPConfig, load_mcp_config
 from .mcp_tools import load_mcp_tools
 
@@ -62,6 +64,7 @@ def _first_text_block(result: Any) -> str:
 
 async def run_smoke(config_path: Path) -> SmokeResult:
     """Discover and invoke the calculator without calling a language model."""
+    load_dotenv(dotenv_path=config_path.parent / ".env", override=False)
     config: MCPConfig = load_mcp_config(config_path)
     loaded = await load_mcp_tools(config)
     if loaded.tool_names != _EXPECTED_TOOL_NAMES:
