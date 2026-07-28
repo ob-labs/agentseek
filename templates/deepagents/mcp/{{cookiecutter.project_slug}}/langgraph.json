@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "mcp": "./src/{{ cookiecutter.project_slug }}/agent.py:make_graph"
+  },
+  "env": "./.env"
+}

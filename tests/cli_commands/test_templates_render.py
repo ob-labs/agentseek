@@ -86,6 +86,7 @@ rag_host_binding_templates = {
     ("langchain", "agentic-rag-openvino"),
 }
 language_instruction_templates = {
+    ("deepagents", "mcp"),
     ("deepagents", "research"),
     ("deepagents", "sandbox"),
     ("langchain", "agentic-rag"),
@@ -209,6 +210,14 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
             }
         }
     }
+    config = json.loads((generated / "langgraph.json").read_text(encoding="utf-8"))
+    mcp_tools_text = (generated / "src" / generated.name / "mcp_tools.py").read_text(encoding="utf-8")
+    agent_text = (generated / "src" / generated.name / "agent.py").read_text(encoding="utf-8")
+    assert config["graphs"]["mcp"] == f"./src/{generated.name}/agent.py:make_graph"
+    assert "tool_name_prefix=True" in mcp_tools_text
+    assert "register_harness_profile" in agent_text
+    assert "GeneralPurposeSubagentProfile(enabled=False)" in agent_text
+    assert "Answer in the same language as the user's question." in agent_text
     readme_text = (generated / "README.md").read_text(encoding="utf-8")
     assert "Run `agentseek task sync`, `agentseek task frontend`, and" in readme_text
     assert "`agentseek task mcp-smoke`, then inspect with `agentseek doctor`" in readme_text
@@ -308,7 +317,7 @@ def test_at_least_one_template_discovered() -> None:
     TEMPLATES,
     ids=[f"{t}/{n}" for t, n, _ in TEMPLATES],
 )
-def test_template_renders_without_unrendered_jinja(
+def test_template_renders_without_unrendered_jinja(  # noqa: C901 - one integration assertion block per template family
     type_name: str,
     template_name: str,
     template_dir: Path,

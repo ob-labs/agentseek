@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
@@ -25,6 +26,35 @@ def rendered_mcp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     rendered = output / "mcp_deepagent"
     monkeypatch.syspath_prepend(str(rendered / "src"))
     return rendered
+
+
+@pytest.fixture
+def rendered_agent(rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch) -> ModuleType:
+    """Import the generated boundary against the public DeepAgents 0.6.12 surface.
+
+    The repository test environment is still on DeepAgents 0.6.10, so provide
+    only the two profile classes and registry function introduced in 0.6.12.
+    Individual tests replace hosted/model and graph construction boundaries.
+    """
+    import deepagents
+
+    @dataclass(frozen=True)
+    class GeneralPurposeSubagentProfile:
+        enabled: bool | None = None
+
+    @dataclass(frozen=True)
+    class HarnessProfile:
+        general_purpose_subagent: GeneralPurposeSubagentProfile | None = None
+
+    monkeypatch.setattr(
+        deepagents,
+        "GeneralPurposeSubagentProfile",
+        GeneralPurposeSubagentProfile,
+        raising=False,
+    )
+    monkeypatch.setattr(deepagents, "HarnessProfile", HarnessProfile, raising=False)
+    monkeypatch.setattr(deepagents, "register_harness_profile", lambda _key, _profile: None, raising=False)
+    return import_rendered_package_module(rendered_mcp, "agent")
 
 
 def load_rendered_module(rendered: Path, module_name: str) -> ModuleType:
@@ -67,22 +97,20 @@ def test_load_mcp_config_normalizes_stdio_and_http(rendered_mcp: Path, monkeypat
     monkeypatch.setenv("MCP_TOKEN", "secret-token")
     config_path = rendered_mcp / "connections.json"
     config_path.write_text(
-        json.dumps(
-            {
-                "mcpServers": {
-                    "calculator": {
-                        "transport": "stdio",
-                        "command": "${PYTHON_EXECUTABLE}",
-                        "args": ["-m", f"{rendered_mcp.name}.calculator_server"],
-                    },
-                    "orders": {
-                        "transport": "http",
-                        "url": "https://mcp.example.com/mcp",
-                        "headers": {"Authorization": "Bearer ${MCP_TOKEN}"},
-                    },
-                }
+        json.dumps({
+            "mcpServers": {
+                "calculator": {
+                    "transport": "stdio",
+                    "command": "${PYTHON_EXECUTABLE}",
+                    "args": ["-m", f"{rendered_mcp.name}.calculator_server"],
+                },
+                "orders": {
+                    "transport": "http",
+                    "url": "https://mcp.example.com/mcp",
+                    "headers": {"Authorization": "Bearer ${MCP_TOKEN}"},
+                },
             }
-        ),
+        }),
         encoding="utf-8",
     )
 
@@ -178,7 +206,9 @@ def test_invalid_resolved_url_is_rejected_without_leaking_value_or_exception_cha
         {"mcpServers": {"remote": {"transport": "http", "url": "https://${HOST}/mcp"}}},
     )
 
-    with pytest.raises(module.MCPConfigError, match=r"absolute http or https URL at \$\.mcpServers\.remote\.url") as exc:
+    with pytest.raises(
+        module.MCPConfigError, match=r"absolute http or https URL at \$\.mcpServers\.remote\.url"
+    ) as exc:
         module.load_mcp_config(path, environ={"HOST": invalid_value})
 
     assert invalid_value not in str(exc.value)
@@ -229,7 +259,9 @@ def test_invalid_resolved_host_is_rejected_without_leaking_value(rendered_mcp: P
         {"mcpServers": {"remote": {"transport": "http", "url": "https://${HOST}/mcp"}}},
     )
 
-    with pytest.raises(module.MCPConfigError, match=r"absolute http or https URL at \$\.mcpServers\.remote\.url") as exc:
+    with pytest.raises(
+        module.MCPConfigError, match=r"absolute http or https URL at \$\.mcpServers\.remote\.url"
+    ) as exc:
         module.load_mcp_config(path, environ={"HOST": invalid_value})
 
     assert invalid_value not in str(exc.value)
@@ -430,3 +462,166 @@ def test_zero_tool_server_rejects_the_entire_discovery_result(
 
     with pytest.raises(tools_module.MCPDiscoveryError, match="server 'empty' exposed no tools"):
         asyncio.run(tools_module.load_mcp_tools(config))
+
+
+def test_model_environment_precedence_and_provider_native_settings(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model_module = load_rendered_module(rendered_mcp, "model")
+    for name in (
+        "AGENTSEEK_MODEL",
+        "DEEPAGENTS_MODEL",
+        "BUB_MODEL",
+        "AGENTSEEK_MODEL_PROVIDER",
+        "GOOGLE_API_KEY",
+        "GOOGLE_API_BASE",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("BUB_MODEL", "fallback-model")
+    monkeypatch.setenv("DEEPAGENTS_MODEL", "compat-model")
+    monkeypatch.setenv("AGENTSEEK_MODEL", "primary-model")
+    monkeypatch.setenv("AGENTSEEK_MODEL_PROVIDER", "gemini")
+    monkeypatch.setenv("GOOGLE_API_KEY", "google-key")
+    monkeypatch.setenv("GOOGLE_API_BASE", "https://google.example.com")
+    captured: dict[str, object] = {}
+
+    def fake_init_chat_model(**kwargs: object) -> object:
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(model_module, "init_chat_model", fake_init_chat_model)
+
+    built = model_module.build_model()
+
+    assert built is not None
+    assert captured == {
+        "model": "primary-model",
+        "model_provider": "google_genai",
+        "api_key": "google-key",
+        "base_url": "https://google.example.com",
+    }
+    assert model_module.model_profile_key() == "google_genai:primary-model"
+
+
+def test_invalid_model_fails_before_mcp_discovery(rendered_agent: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
+    events: list[str] = []
+    config = object()
+
+    def load_config(path: Path) -> object:
+        assert path == Path(".mcp.json")
+        events.append("config")
+        return config
+
+    def invalid_model() -> object:
+        events.append("model")
+        raise ValueError("bad model")  # noqa: TRY003 - deliberate model validation failure
+
+    async def load_tools(_config: object) -> object:
+        events.append("discover")
+        return object()
+
+    monkeypatch.setattr(rendered_agent, "load_mcp_config", load_config)
+    monkeypatch.setattr(rendered_agent, "build_model", invalid_model)
+    monkeypatch.setattr(rendered_agent, "load_mcp_tools", load_tools)
+
+    with pytest.raises(ValueError, match="bad model"):
+        asyncio.run(rendered_agent.make_graph())
+
+    assert events == ["config", "model"]
+
+
+def test_runtime_loads_project_mcp_config_and_registers_model_specific_profile(
+    rendered_agent: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    graph = SimpleNamespace(tool_names=())
+    model = object()
+    tool = SimpleNamespace(name="calculator_add")
+    client = object()
+    registered: list[tuple[str, object]] = []
+    created: list[dict[str, object]] = []
+
+    def load_config(path: Path) -> object:
+        assert path == Path(".mcp.json")
+        return object()
+
+    async def load_tools(_config: object) -> object:
+        return SimpleNamespace(client=client, tools=(tool,), tool_names=(tool.name,))
+
+    def register_profile(key: str, profile: object) -> None:
+        registered.append((key, profile))
+
+    def create_agent(**kwargs: object) -> object:
+        created.append(kwargs)
+        key, profile = registered[-1]
+        assert key == "openai:gpt-test"
+        assert profile.general_purpose_subagent.enabled is False
+        assert kwargs["subagents"] == []
+        exposed_names = {item.name for item in kwargs["tools"]}
+        if profile.general_purpose_subagent.enabled is not False or kwargs["subagents"]:
+            exposed_names.add("task")
+        graph.tool_names = tuple(sorted(exposed_names))
+        return graph
+
+    monkeypatch.setattr(rendered_agent, "load_mcp_config", load_config)
+    monkeypatch.setattr(rendered_agent, "build_model", lambda: model)
+    monkeypatch.setattr(rendered_agent, "model_profile_key", lambda: "openai:gpt-test")
+    monkeypatch.setattr(rendered_agent, "load_mcp_tools", load_tools)
+    monkeypatch.setattr(rendered_agent, "register_harness_profile", register_profile)
+    monkeypatch.setattr(rendered_agent, "create_deep_agent", create_agent)
+
+    bundle = asyncio.run(rendered_agent._build_runtime())
+
+    assert bundle.client is client
+    assert bundle.tool_names == ("calculator_add",)
+    assert bundle.graph is graph
+    assert "task" not in bundle.graph.tool_names
+    assert len(registered) == 1
+    assert len(created) == 1
+
+
+def test_concurrent_graph_factory_builds_one_runtime(
+    rendered_agent: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    builds = 0
+    graph = object()
+
+    async def build_once() -> object:
+        nonlocal builds
+        builds += 1
+        await asyncio.sleep(0)
+        return SimpleNamespace(graph=graph)
+
+    monkeypatch.setattr(rendered_agent, "_build_runtime", build_once)
+
+    async def call_twice() -> tuple[object, object]:
+        first, second = await asyncio.gather(rendered_agent.make_graph(), rendered_agent.make_graph())
+        return first, second
+
+    first, second = asyncio.run(call_twice())
+
+    assert first is graph
+    assert second is graph
+    assert first is second
+    assert builds == 1
+
+
+def test_graph_factory_retries_after_failed_runtime_build(
+    rendered_agent: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    attempts = 0
+    graph = object()
+
+    async def fail_once() -> object:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise RuntimeError("temporary startup failure")  # noqa: TRY003 - deliberate retry trigger
+        return SimpleNamespace(graph=graph)
+
+    monkeypatch.setattr(rendered_agent, "_build_runtime", fail_once)
+
+    with pytest.raises(RuntimeError, match="temporary startup failure"):
+        asyncio.run(rendered_agent.make_graph())
+
+    assert asyncio.run(rendered_agent.make_graph()) is graph
+    assert attempts == 2
