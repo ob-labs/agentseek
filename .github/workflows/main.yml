@@ -25,6 +25,31 @@ jobs:
       - name: Run lint and type check
         run: make lint typecheck
 
+  cross-platform-tests-and-type-check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+
+      - name: Check typing
+        shell: bash
+        run: uv run ty check src tests
+
+      - name: Run tests
+        run: uv run python -m pytest --doctest-modules
+
   tests-and-type-check:
     runs-on: ubuntu-latest
     strategy:

@@ -1566,10 +1566,16 @@ def _print_created_next_steps(generated: Path | None, *, base_dir: Path) -> None
     typer.echo(f"Created {display_path}")
     typer.echo()
     typer.echo("Next:")
-    typer.echo(f"  cd {shlex.quote(display_path)}")
+    typer.echo(f"  cd {_quote_directory_for_shell(display_path)}")
     typer.echo("  agentseek info")
     typer.echo("  agentseek task --list")
     typer.echo("  agentseek doctor")
+
+
+def _quote_directory_for_shell(path: str) -> str:
+    if os.name == "nt":
+        return subprocess.list2cmdline([path])
+    return shlex.quote(path)
 
 
 def _display_generated_path(generated: Path, *, base_dir: Path) -> str:

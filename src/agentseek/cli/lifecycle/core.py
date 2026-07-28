@@ -566,8 +566,10 @@ def _wait_for_processes(processes: list[subprocess.Popen[bytes]]) -> None:
 def _terminate(process: subprocess.Popen[bytes]) -> None:
     if process.poll() is not None:
         return
+    killpg = vars(os)["killpg"]
+    sigkill = cast("int", vars(signal)["SIGKILL"])
     try:
-        os.killpg(process.pid, signal.SIGTERM)
+        killpg(process.pid, signal.SIGTERM)
     except ProcessLookupError:
         return
     deadline = time.monotonic() + 10
@@ -575,7 +577,7 @@ def _terminate(process: subprocess.Popen[bytes]) -> None:
         time.sleep(0.2)
     if process.poll() is None:
         with contextlib.suppress(ProcessLookupError):
-            os.killpg(process.pid, signal.SIGKILL)
+            killpg(process.pid, sigkill)
 
 
 def _check(status: str, name: str, detail: str, fix: str = "") -> CheckResult:

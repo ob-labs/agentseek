@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import shlex
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
@@ -19,9 +21,18 @@ from agentseek.cli.commands import create as create_module
 from agentseek.cli.commands.create import TemplateSource
 from tests.cli_commands.helpers import build_command_app
 
+pytestmark = pytest.mark.usefixtures("create_symlink")
+
+
 _CATALOG_COMMIT = "0123456789abcdef0123456789abcdef01234567"
 _OTHER_CATALOG_COMMIT = "89abcdef0123456789abcdef0123456789abcdef"
 _CATALOG_URL = "https://example.com/teams/agentseek-templates.git"
+
+
+def test_module_symlink_fixture_does_not_skip_regular_tmp_path_tests(tmp_path: Path) -> None:
+    """The symlink fallback must not intercept pytest's own tmp-path setup."""
+
+    assert tmp_path.is_dir()
 
 
 class _ExplicitCatalogState(TypedDict):
@@ -370,14 +381,23 @@ def test_is_external_spec_local_type() -> None:
 # -- integration with cookiecutter via monkeypatch -------------------------
 
 
-def _assert_next_steps(output: str, *, project_path: str, cd_path: str | None = None) -> None:
-    cd_path = cd_path or project_path
-    assert f"Created {project_path}" in output
+def _assert_next_steps(output: str, *, project_path: Path, cd_path: str | None = None) -> None:
+    display_path = str(project_path)
+    if cd_path is None:
+        cd_path = subprocess.list2cmdline([display_path]) if os.name == "nt" else shlex.quote(display_path)
+    assert f"Created {display_path}" in output
     assert "Next:" in output
     assert f"cd {cd_path}" in output
     assert "agentseek info" in output
     assert "agentseek task --list" in output
     assert "agentseek doctor" in output
+
+
+def test_quote_directory_for_shell_uses_the_current_platform_convention() -> None:
+    path = str(Path("output directory") / "fake project")
+    expected = subprocess.list2cmdline([path]) if os.name == "nt" else shlex.quote(path)
+
+    assert create_module._quote_directory_for_shell(path) == expected
 
 
 def _assert_no_next_steps(output: str) -> None:
@@ -418,7 +438,7 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
     assert captured["no_input"] is True
     assert Path(str(captured["output_dir"])) == tmp_path
     assert (tmp_path / "fake-project" / "README.md").read_text(encoding="utf-8") == "ok"
-    _assert_next_steps(result.output, project_path="fake-project")
+    _assert_next_steps(result.output, project_path=Path("fake-project"))
 
 
 def test_create_with_output_dir_invokes_cookiecutter_in_selected_directory(monkeypatch, tmp_path: Path) -> None:
@@ -448,7 +468,7 @@ def test_create_with_output_dir_invokes_cookiecutter_in_selected_directory(monke
     assert "deepagents" in source.template and "default" in source.template
     assert captured["output_dir"] == output_dir
     assert captured["no_input"] is True
-    _assert_next_steps(result.output, project_path="generated/fake-project")
+    _assert_next_steps(result.output, project_path=Path("generated") / "fake-project")
 
 
 def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
@@ -475,7 +495,7 @@ def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path
     assert isinstance(source, TemplateSource)
     assert source.directory is None
     assert "bub" in source.template and "default" in source.template
-    _assert_next_steps(result.output, project_path="fake-project")
+    _assert_next_steps(result.output, project_path=Path("fake-project"))
 
 
 def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> None:
@@ -504,7 +524,7 @@ def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> Non
     assert source.template == "https://github.com/foo/bar.git"
     assert captured["output_dir"] == tmp_path
     assert captured["no_input"] is True
-    _assert_next_steps(result.output, project_path="external project", cd_path="'external project'")
+    _assert_next_steps(result.output, project_path=Path("external project"))
 
 
 def test_create_with_url_spec_and_output_dir_passes_selected_directory(monkeypatch, tmp_path: Path) -> None:
@@ -541,8 +561,7 @@ def test_create_with_url_spec_and_output_dir_passes_selected_directory(monkeypat
     assert captured["no_input"] is True
     _assert_next_steps(
         result.output,
-        project_path="external-output/external project",
-        cd_path="'external-output/external project'",
+        project_path=Path("external-output") / "external project",
     )
 
 

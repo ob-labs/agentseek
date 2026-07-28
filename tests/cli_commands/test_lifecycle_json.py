@@ -14,6 +14,9 @@ import agentseek.cli.lifecycle.json_output as json_contract
 from agentseek.cli.lifecycle.json_output import CheckResultDTO, DoctorDataDTO, ErrorDTO
 from tests.cli_commands.helpers import build_command_app
 
+pytestmark = pytest.mark.usefixtures("create_symlink")
+
+
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "lifecycle"
 
 

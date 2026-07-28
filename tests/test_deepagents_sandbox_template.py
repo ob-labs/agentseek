@@ -102,7 +102,7 @@ def _load_webapp_module(rendered: Path, monkeypatch: pytest.MonkeyPatch, cleanup
 
 
 def test_rendered_dependencies_include_both_sandbox_integrations(rendered_sandbox: Path) -> None:
-    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text())
+    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text(encoding="utf-8"))
     dependencies = project["project"]["dependencies"]
     assert "langchain-daytona>=0.0.7" in dependencies
     assert "langsmith[sandbox]" in dependencies
@@ -110,13 +110,13 @@ def test_rendered_dependencies_include_both_sandbox_integrations(rendered_sandbo
 
 
 def test_rendered_langgraph_uses_custom_http_app(rendered_sandbox: Path) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     assert config["http"]["app"] == f"./src/{rendered_sandbox.name}/webapp.py:app"
     assert (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").is_file()
 
 
 def test_rendered_frontend_test_mock_allows_stream_errors(rendered_sandbox: Path) -> None:
-    test_source = (rendered_sandbox / "frontend" / "src" / "App.test.tsx").read_text()
+    test_source = (rendered_sandbox / "frontend" / "src" / "App.test.tsx").read_text(encoding="utf-8")
 
     assert "type MockStreamState = {" in test_source
     assert "error: string | null;" in test_source
@@ -153,8 +153,8 @@ def test_rendered_webapp_lifespan_always_invokes_agent_cleanup(
 def test_rendered_descriptions_default_to_daytona_and_keep_langsmith_as_an_alternative(
     rendered_sandbox: Path,
 ) -> None:
-    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text())
-    agent_source = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text()
+    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text(encoding="utf-8"))
+    agent_source = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text(encoding="utf-8")
     agent_docstring = ast.get_docstring(ast.parse(agent_source))
 
     for description in (project["project"]["description"], agent_docstring):
@@ -166,9 +166,9 @@ def test_rendered_descriptions_default_to_daytona_and_keep_langsmith_as_an_alter
 def test_generated_configuration_defaults_to_daytona_and_warns_about_langsmith_charges(
     rendered_sandbox: Path,
 ) -> None:
-    env_text = (rendered_sandbox / ".env.example").read_text()
-    lifecycle = tomllib.loads((rendered_sandbox / ".agentseek" / "lifecycle.toml").read_text())
-    readme = (rendered_sandbox / "README.md").read_text()
+    env_text = (rendered_sandbox / ".env.example").read_text(encoding="utf-8")
+    lifecycle = tomllib.loads((rendered_sandbox / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
+    readme = (rendered_sandbox / "README.md").read_text(encoding="utf-8")
 
     assert "AGENTSEEK_SANDBOX_PROVIDER=daytona" in env_text
     assert "DAYTONA_API_KEY=" in env_text
@@ -184,7 +184,7 @@ def test_generated_configuration_defaults_to_daytona_and_warns_about_langsmith_c
 
 def test_template_and_generated_readmes_explain_cleanup_paths(rendered_sandbox: Path) -> None:
     for readme_path in (TEMPLATE / "README.md", rendered_sandbox / "README.md"):
-        readme = " ".join(readme_path.read_text().lower().split())
+        readme = " ".join(readme_path.read_text(encoding="utf-8").lower().split())
         assert "custom server lifespan" in readme
         assert "atexit" in readme
         assert "cleanup warning" in readme
@@ -201,11 +201,11 @@ def test_provider_normalization(rendered_sandbox: Path) -> None:
 
 
 def test_rendered_runtime_is_the_only_sandbox_resource_owner(rendered_sandbox: Path) -> None:
-    agent = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text()
+    agent = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text(encoding="utf-8")
     runtime_path = rendered_sandbox / "src" / rendered_sandbox.name / "runtime.py"
     assert runtime_path.is_file()
-    runtime = runtime_path.read_text()
-    webapp = (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").read_text()
+    runtime = runtime_path.read_text(encoding="utf-8")
+    webapp = (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").read_text(encoding="utf-8")
 
     assert f"from {rendered_sandbox.name}.runtime import get_backend" in agent
     assert "create_sandbox_backend" not in agent
@@ -228,7 +228,7 @@ def test_rendered_runtime_is_the_only_sandbox_resource_owner(rendered_sandbox: P
 def test_importing_configured_webapp_does_not_initialize_sandbox(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     webapp_path_text, _ = config["http"]["app"].split(":", maxsplit=1)
     webapp_path = Path(webapp_path_text.removeprefix("./"))
     webapp_module_name = ".".join(webapp_path.with_suffix("").parts[1:])
@@ -261,7 +261,7 @@ def test_importing_configured_webapp_does_not_initialize_sandbox(
 def test_invalid_model_configuration_does_not_initialize_sandbox(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
     graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
     package_name = rendered_sandbox.name
@@ -300,7 +300,7 @@ def test_invalid_model_configuration_does_not_initialize_sandbox(
 def test_model_initialization_failure_does_not_initialize_sandbox(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
     graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
     package_name = rendered_sandbox.name
@@ -346,7 +346,7 @@ def test_model_initialization_failure_does_not_initialize_sandbox(
 def test_file_graph_and_package_webapp_share_one_runtime_owner(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
     graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
     assert graph_path.name == "agent.py"

@@ -6,6 +6,7 @@ import gzip
 import hashlib
 import io
 import json
+import os
 import subprocess
 import tarfile
 from concurrent.futures import ThreadPoolExecutor
@@ -22,6 +23,9 @@ from agentseek.cli.catalog import CatalogLock
 from agentseek.cli.commands import create as create_module
 from agentseek.cli.commands.create import TemplateSource
 from tests.cli_commands.helpers import build_command_app
+
+pytestmark = pytest.mark.usefixtures("create_symlink")
+
 
 _FIXTURE_TEMPLATE_DIGEST = "3f682e624588556b23b29692d8b4f781e78166f56a5905e9def330b36fbd57a9"
 
@@ -238,7 +242,7 @@ def test_locked_template_is_published_once_and_reused_offline(monkeypatch: pytes
     assert first == second
     assert fetches == 1
     assert (first / "cookiecutter.json").is_file()
-    assert (first / "{{cookiecutter.project_slug}}" / "README.md").read_text() == "# Demo\n"
+    assert (first / "{{cookiecutter.project_slug}}" / "README.md").read_text(encoding="utf-8") == "# Demo\n"
     assert not (first.parents[1] / "langchain" / "default").exists()
 
 
@@ -286,6 +290,9 @@ def test_downloaded_template_digest_covers_semantic_tree_entries(
     """Empty directories and executable semantics are part of the trusted tree."""
     from agentseek.cli import catalog
 
+    if mutation == "executable-file" and os.name == "nt":
+        pytest.skip("Windows does not preserve POSIX executable bits in extracted test archives")
+
     lock = _fixture_lock(catalog.load_catalog_lock())
     extras: list[tuple[tarfile.TarInfo, bytes | None]] = []
     readme_mode = 0o644
@@ -325,11 +332,12 @@ def test_warm_cache_cannot_forge_directory_or_executable_semantics(
     injected = template / "{{cookiecutter.project_slug}}" / "injected-empty"
     injected.mkdir()
     readme = template / "{{cookiecutter.project_slug}}" / "README.md"
-    readme.chmod(0o755)
+    if os.name != "nt":
+        readme.chmod(0o755)
     metadata_path = next(tmp_path.rglob(".agentseek-catalog-metadata.json"))
-    metadata = json.loads(metadata_path.read_text())
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     metadata["template_sha256"] = catalog._template_tree_digest(template)
-    metadata_path.write_text(json.dumps(metadata))
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
 
     repaired = catalog.prepare_locked_template(lock, "bub/default", tmp_path)
 
@@ -796,7 +804,7 @@ def test_invalid_cache_entries_are_replaced_from_the_exact_archive(
     template = catalog.prepare_locked_template(lock, "bub/default", tmp_path)
     if damage.startswith("metadata-"):
         metadata_path = next(tmp_path.rglob(".agentseek-catalog-metadata.json"))
-        metadata = json.loads(metadata_path.read_text())
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         field = {
             "metadata-repository": "catalog_repository",
             "metadata-commit": "catalog_commit",
@@ -804,22 +812,22 @@ def test_invalid_cache_entries_are_replaced_from_the_exact_archive(
             "metadata-lock": "catalog_lock_sha256",
         }[damage]
         metadata[field] = "wrong"
-        metadata_path.write_text(json.dumps(metadata))
+        metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
     elif damage == "configuration":
         (template / "cookiecutter.json").unlink()
     elif damage == "content":
-        (template / "{{cookiecutter.project_slug}}" / "README.md").write_text("tampered\n")
+        (template / "{{cookiecutter.project_slug}}" / "README.md").write_text("tampered\n", encoding="utf-8")
     else:
-        (template / "{{cookiecutter.project_slug}}" / "README.md").write_text("tampered\n")
+        (template / "{{cookiecutter.project_slug}}" / "README.md").write_text("tampered\n", encoding="utf-8")
         metadata_path = next(tmp_path.rglob(".agentseek-catalog-metadata.json"))
-        metadata = json.loads(metadata_path.read_text())
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         metadata["template_sha256"] = catalog._template_tree_digest(template)
-        metadata_path.write_text(json.dumps(metadata))
+        metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
 
     repaired = catalog.prepare_locked_template(lock, "bub/default", tmp_path)
 
     assert fetches == 2
-    assert (repaired / "{{cookiecutter.project_slug}}" / "README.md").read_text() == "# Demo\n"
+    assert (repaired / "{{cookiecutter.project_slug}}" / "README.md").read_text(encoding="utf-8") == "# Demo\n"
     assert all(".stale-" not in path.name for path in tmp_path.rglob("*"))
 
 
@@ -834,7 +842,7 @@ def test_stale_cleanup_failure_does_not_hide_a_valid_replacement(
     archive = _catalog_archive(lock)
     monkeypatch.setattr(catalog, "_download_archive", lambda _lock, destination: destination.write_bytes(archive))
     template = catalog.prepare_locked_template(lock, "bub/default", tmp_path)
-    (template / "{{cookiecutter.project_slug}}" / "README.md").write_text("tampered\n")
+    (template / "{{cookiecutter.project_slug}}" / "README.md").write_text("tampered\n", encoding="utf-8")
     monkeypatch.setattr(
         catalog,
         "_remove_stale_entry",
@@ -843,7 +851,7 @@ def test_stale_cleanup_failure_does_not_hide_a_valid_replacement(
 
     repaired = catalog.prepare_locked_template(lock, "bub/default", tmp_path)
 
-    assert (repaired / "{{cookiecutter.project_slug}}" / "README.md").read_text() == "# Demo\n"
+    assert (repaired / "{{cookiecutter.project_slug}}" / "README.md").read_text(encoding="utf-8") == "# Demo\n"
     assert catalog._validated_cache(repaired.parents[2], lock, "bub/default") == repaired
 
 
@@ -858,7 +866,7 @@ def test_invalid_cache_plus_network_failure_does_not_reuse_stale_content(
     archive = _catalog_archive(lock)
     monkeypatch.setattr(catalog, "_download_archive", lambda _lock, destination: destination.write_bytes(archive))
     template = catalog.prepare_locked_template(lock, "bub/default", tmp_path)
-    (template / "cookiecutter.json").write_text("{")
+    (template / "cookiecutter.json").write_text("{", encoding="utf-8")
     monkeypatch.setattr(
         catalog,
         "_download_archive",
@@ -868,7 +876,7 @@ def test_invalid_cache_plus_network_failure_does_not_reuse_stale_content(
     with pytest.raises(catalog.CatalogError, match="network unavailable"):
         catalog.prepare_locked_template(lock, "bub/default", tmp_path)
 
-    assert (template / "cookiecutter.json").read_text() == "{"
+    assert (template / "cookiecutter.json").read_text(encoding="utf-8") == "{"
 
 
 def test_cache_identity_includes_repository_commit_key_and_raw_lock_digest(
@@ -1263,8 +1271,8 @@ def test_checkout_override_uses_registry_and_files_from_the_resolved_commit(
     templates_root = tmp_path / "override" / "templates"
     template_dir = templates_root / "bub" / "dev"
     (template_dir / "{{cookiecutter.project_slug}}").mkdir(parents=True)
-    (template_dir / "cookiecutter.json").write_text('{"project_slug":"demo"}')
-    (template_dir / "{{cookiecutter.project_slug}}" / "README.md").write_text("dev\n")
+    (template_dir / "cookiecutter.json").write_text('{"project_slug":"demo"}', encoding="utf-8")
+    (template_dir / "{{cookiecutter.project_slug}}" / "README.md").write_text("dev\n", encoding="utf-8")
     prepared = create_module._prepared_catalog(
         templates_root,
         {"bub/dev": "Developer override."},
