@@ -3,7 +3,7 @@ title: CLI Reference
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-07-07
+verified_on: 2026-07-28
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
@@ -66,10 +66,29 @@ The built-in template type set is currently `bub`, `deepagents`, and
 | `--filter keyword` | Filter listed templates by template spec or description. |
 | `--template name` | Select a template under the chosen type, for example `bub --template default`. |
 | `--template` | Compatibility entry point that lists templates. Prefer `--list-templates` in new scripts. |
-| `--checkout ref` | Use a branch, tag, or commit when fetching the remote template source. |
+| `--template-repo https-url` | Select an explicit AgentSeek catalog repository containing `templates/index.json`. Requires `--checkout` with a 40-character lowercase commit SHA. Cannot be combined with a positional direct Cookiecutter URL or absolute path. |
+| `--checkout ref` | For a direct Cookiecutter source, use a branch, tag, or commit. With `--template-repo`, the value must match `[0-9a-f]{40}`. |
 | `--output-dir path` | Write the generated project below the selected directory. Defaults to the current working directory. |
 | `--no-input` | Skip Cookiecutter variable prompts and use template defaults. |
 | `--describe` | Print template description and Cookiecutter variables without generating a project. |
+
+### Catalog Source Rules
+
+| Input | Resolution rule |
+| --- | --- |
+| Named template, list, filter, or describe without `--template-repo` | Use the bundled AgentSeek catalog. |
+| Named template, list, filter, or describe with `--template-repo` and a valid immutable `--checkout` | Use the same explicit catalog repository and commit for every operation. |
+| Positional HTTPS URL or absolute path | Pass the source directly to Cookiecutter. |
+| `--template-repo` with a positional HTTPS URL or absolute path | Reject the conflicting sources. |
+| Explicit catalog repository, checkout, registry, or template failure | Return an error; do not fall back to bundled templates or a local checkout. |
+
+Explicit catalog cache entries are keyed by normalized repository URL and exact
+commit. Matching cache metadata is required before reuse.
+
+`--list-templates`, `--filter`, and `--describe` inspect catalog content and do
+not execute Cookiecutter hooks. Generation trusts the selected template content
+and may execute its Cookiecutter hooks. Generated `_agentseek_source_url`
+remains the AgentSeek core repository, not the template catalog repository.
 
 ### Missing Templates
 

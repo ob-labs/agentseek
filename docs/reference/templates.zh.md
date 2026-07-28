@@ -3,7 +3,7 @@ title: 模板
 type: reference
 audience: [A1, A2]
 runs: no
-verified_on: 2026-07-11
+verified_on: 2026-07-28
 sources:
   - templates/index.json
   - src/agentseek/cli/commands/create.py
@@ -36,6 +36,26 @@ sources:
 | Type and name | `bub/default` |
 | Absolute local path | `/path/to/template` |
 | Git URL | `https://github.com/example/templates.git` |
+
+## 显式模板目录仓库
+
+| 形式 | 结果 |
+| --- | --- |
+| `agentseek create --template-repo <https-url> --checkout <sha> --list-templates` | 列出指定 commit 上的显式 AgentSeek 模板目录。 |
+| `agentseek create --template-repo <https-url> --checkout <sha> --filter rag --list-templates` | 过滤同一显式模板目录 commit。 |
+| `agentseek create langchain/default --template-repo <https-url> --checkout <sha> --describe` | 描述同一显式模板目录 commit 上的命名模板。 |
+| `agentseek create langchain/default --template-repo <https-url> --checkout <sha>` | 从同一显式模板目录 commit 生成项目。 |
+
+`<https-url>` 标识包含 `templates/index.json` 的 AgentSeek 模板目录仓库。
+`<sha>` 必须是完整的 40 个小写字符 Git commit SHA，并匹配 `[0-9a-f]{40}`。
+显式模板目录不能与位置参数中的直接 Cookiecutter URL 或绝对路径组合。
+
+规范化后的模板目录 URL 和精确 commit 标识缓存条目。AgentSeek 在复用前
+验证缓存元数据。显式模板目录失败时，不回退到内置模板或本地 checkout。
+
+列出、过滤和描述不执行 Cookiecutter hooks。生成操作信任模板内容，可能
+执行其 hooks。生成项目中的 `_agentseek_source_url` 仍指向 AgentSeek 核心
+仓库，而非模板目录仓库。
 
 ## 选择和发现
 

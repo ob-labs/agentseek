@@ -3,7 +3,7 @@ title: Templates
 type: reference
 audience: [A1, A2]
 runs: no
-verified_on: 2026-07-11
+verified_on: 2026-07-28
 sources:
   - templates/index.json
   - src/agentseek/cli/commands/create.py
@@ -36,6 +36,29 @@ sources:
 | Type and name | `bub/default` |
 | Absolute local path | `/path/to/template` |
 | Git URL | `https://github.com/example/templates.git` |
+
+## Catalog Repository Override
+
+| Form | Result |
+| --- | --- |
+| `agentseek create --template-repo <https-url> --checkout <sha> --list-templates` | List the explicit AgentSeek catalog at the specified commit. |
+| `agentseek create --template-repo <https-url> --checkout <sha> --filter rag --list-templates` | Filter that same explicit catalog commit. |
+| `agentseek create langchain/default --template-repo <https-url> --checkout <sha> --describe` | Describe the named template at that same explicit catalog commit. |
+| `agentseek create langchain/default --template-repo <https-url> --checkout <sha>` | Generate from that same explicit catalog commit. |
+
+`<https-url>` identifies an AgentSeek catalog repository that contains
+`templates/index.json`. `<sha>` must be a full 40-character lowercase Git commit
+SHA matching `[0-9a-f]{40}`. The explicit catalog cannot be combined with a
+positional direct Cookiecutter URL or absolute path.
+
+The normalized catalog URL and exact commit identify the cache entry. AgentSeek
+validates cache metadata before reuse. A failure for an explicit catalog does
+not fall back to bundled templates or a local checkout.
+
+Listing, filtering, and describing do not execute Cookiecutter hooks.
+Generation trusts template content and may execute its hooks. The generated
+`_agentseek_source_url` remains the AgentSeek core repository rather than the
+catalog repository.
 
 ## Selection And Discovery
 

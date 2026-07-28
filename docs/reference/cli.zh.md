@@ -3,7 +3,7 @@ title: CLI 参考
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-07-07
+verified_on: 2026-07-28
 sources:
   - pyproject.toml
   - src/agentseek/__main__.py
@@ -65,10 +65,29 @@ sources:
 | `--filter keyword` | 按模板 spec 或描述过滤列出的模板。 |
 | `--template name` | 选择所选类型下的命名模板，例如 `bub --template default`。 |
 | `--template` | 列出模板的兼容入口。新脚本优先使用 `--list-templates`。 |
-| `--checkout ref` | 拉取远程模板源时使用分支、tag 或 commit。 |
+| `--template-repo https-url` | 选择包含 `templates/index.json` 的显式 AgentSeek 模板目录仓库。必须同时提供 40 个小写字符的 commit SHA 作为 `--checkout`。不能与位置参数中的直接 Cookiecutter URL 或绝对路径组合使用。 |
+| `--checkout ref` | 对直接 Cookiecutter 源，可使用分支、tag 或 commit。与 `--template-repo` 一起使用时，值必须匹配 `[0-9a-f]{40}`。 |
 | `--output-dir path` | 将生成项目写入所选目录下。默认使用当前工作目录。 |
 | `--no-input` | 跳过 Cookiecutter 变量提示，使用模板默认值。 |
 | `--describe` | 打印模板描述和 Cookiecutter 变量，不生成项目。 |
+
+### 模板目录源规则
+
+| 输入 | 解析规则 |
+| --- | --- |
+| 不带 `--template-repo` 的命名模板、列表、过滤或描述 | 使用内置 AgentSeek 模板目录。 |
+| 带 `--template-repo` 和有效不可变 `--checkout` 的命名模板、列表、过滤或描述 | 所有操作使用同一个显式模板目录仓库及 commit。 |
+| 位置参数 HTTPS URL 或绝对路径 | 直接传给 Cookiecutter。 |
+| `--template-repo` 与位置参数 HTTPS URL 或绝对路径组合 | 拒绝这两个冲突的来源。 |
+| 显式模板目录的仓库、checkout、注册表或模板失败 | 返回错误；不回退到内置模板或本地 checkout。 |
+
+显式模板目录缓存以规范化仓库 URL 和精确 commit 为键，复用前必须验证
+匹配的缓存元数据。
+
+`--list-templates`、`--filter` 和 `--describe` 仅检查模板目录内容，不执行
+Cookiecutter hooks。生成操作信任所选模板内容，可能执行其 Cookiecutter
+hooks。生成项目中的 `_agentseek_source_url` 始终指向 AgentSeek 核心仓库，
+不指向模板目录仓库。
 
 ### 缺失模板
 
