@@ -229,7 +229,7 @@ def _assert_agentic_rag_template(generated: Path, lifecycle_data: dict[str, Any]
     assert "docker" not in lifecycle_data["tools"]["required"]
     assert "docker compose" not in lifecycle_text
     assert lifecycle_data["tasks"]["seekdb-docker"]["command"] == ["docker", "compose", "up", "-d", "seekdb"]
-    assert lifecycle_data["tasks"]["test"]["command"] == [
+    assert lifecycle_data["tasks"]["embedded-smoke"]["command"] == [
         "uv",
         "run",
         "--extra",
@@ -250,7 +250,7 @@ def _assert_agentic_rag_template(generated: Path, lifecycle_data: dict[str, Any]
     assert "shutil.rmtree" in smoke_test
     assert "similarity_search" in smoke_test
     assert "agentseek task seekdb-docker" in (generated / "README.md").read_text(encoding="utf-8")
-    assert "agentseek task test" in (generated / "README.md").read_text(encoding="utf-8")
+    assert "agentseek task embedded-smoke" in (generated / "README.md").read_text(encoding="utf-8")
 
 
 def _assert_frontend_package_json(generated: Path) -> None:

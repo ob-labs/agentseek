@@ -104,7 +104,7 @@ command = ["uv", "sync"]
 description = "Install frontend dependencies."
 command = ["npm", "install", "--prefix", "frontend"]
 
-[tasks.test]
+[tasks.embedded-smoke]
 description = "Run the embedded seekdb smoke test."
 command = ["uv", "run", "--extra", "dev", "python", "-m", "pytest"]
 

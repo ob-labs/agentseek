@@ -106,7 +106,7 @@ adds deterministic document embeddings, and retrieves the expected document
 without Docker or hosted APIs:
 
 ```bash
-agentseek task test
+agentseek task embedded-smoke
 ```
 
 ## Run
