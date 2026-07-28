@@ -3,12 +3,12 @@ title: Create a Project
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-07-07
+verified_on: 2026-07-28
 sources:
   - pyproject.toml
+  - src/agentseek/data/catalog-lock.json
   - src/agentseek/cli/commands/create.py
-  - templates/index.json
-  - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # Create a Project
@@ -48,10 +48,12 @@ my_bub_agent/
 ```
 
 ```toml title=".agentseek/lifecycle.toml excerpt"
-version = 1
+version = 2
 template = "bub/default"
 name = "My Bub Agent"
+description = "Bub agent with a browser UI, CopilotKit runtime, and AG-UI gateway."
 env_file = ".env"
+guide = "README.md"
 ```
 
 Change into the generated directory when you are ready to inspect or run it.
@@ -65,6 +67,10 @@ cd my_bub_agent
 ```bash
 agentseek create --list-templates
 ```
+
+This listing uses the registry snapshot embedded in AgentSeek 0.1.0 and works
+offline. The selected lifecycle-v2 template is downloaded only when you
+describe or create it, at the immutable catalog commit recorded by the CLI.
 
 The shared CLI currently recognizes `bub`, `deepagents`, and `langchain`
 template types. List only one type by passing it before `--list-templates`.

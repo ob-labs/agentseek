@@ -3,20 +3,22 @@ title: 模板编写规范
 type: reference
 audience: [A2, A3]
 runs: no
-verified_on: 2026-07-10
+verified_on: 2026-07-28
 sources:
-  - templates/index.json
+  - https://github.com/agentseek-ai/agentseek-templates/blob/main/CONTRIBUTING.md
+  - https://github.com/agentseek-ai/agentseek-templates/blob/v0.1.0/templates/index.json
   - src/agentseek/cli/lifecycle/spec.py
-  - src/agentseek/cli/lifecycle/core.py
-  - tests/cli_commands/test_templates_registry.py
-  - tests/cli_commands/test_templates_render.py
-  - "templates/langchain/agentic-rag/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
-  - "templates/langchain/markdown-messages/{{cookiecutter.project_slug}}/.env.example"
+  - specs/lifecycle-v2-service-discovery.md
 ---
 
 # 模板编写规范
 
 本规范适用于新增模板或对现有模板进行较大调整。框架实现可以不同，但生成项目必须保持统一的 AgentSeek 接口。
+
+新模板在独立的
+[`agentseek-ai/agentseek-templates`](https://github.com/agentseek-ai/agentseek-templates)
+仓库中开发。core 仓库的 `templates/` 是为已发布 0.0.x 客户端冻结的 lifecycle-v1
+兼容镜像，不再承载常规模板功能开发。
 
 ## 必需结构
 
@@ -36,7 +38,7 @@ sources:
 | --- | --- |
 | Key | 使用 `type/name`，并与模板目录和生命周期中的 `template` 值一致。 |
 | 描述 | 用一句话说明生成应用及其主要差异。 |
-| 唯一来源 | `templates/index.json`。除隔离模板外，每个 Cookiecutter 模板都必须注册。 |
+| 唯一来源 | 独立 catalog 中的 `templates/index.json`。每个 catalog 模板目录都必须注册。 |
 | 新类型 | 必须单独评审 CLI 和测试；只新增目录不够。 |
 
 ## 模型服务配置
@@ -55,14 +57,21 @@ sources:
 
 | 区块 | 要求 |
 | --- | --- |
-| 根字段 | `version = 1`、准确的 `template = "type/name"`、可读的 `name`；声明环境检查时使用 `env_file = ".env"`。 |
+| 根字段 | `version = 2`、准确且非空的 `template = "type/name"`、非空 `name`、有用的 `description`、项目相对 `guide`；声明环境检查时使用 `env_file = ".env"`。 |
 | `[tools]` | setup 或本地开发前必需的所有可执行文件。 |
 | `[paths]` | `agentseek doctor` 需要检查的生成文件或安装目录。 |
 | `[env.<name>]` | `agentseek doctor` 需要检查的配置。别名必须与运行时代码一致。 |
-| `[services.<name>]` | `agentseek info` 展示的所有稳定用户入口。 |
-| `[processes.<name>]` | `agentseek dev` 启动的所有长时间运行进程。至少需要一个进程。 |
-| `[checks.<name>]` | 对每个具有稳定健康检查或应用 endpoint 的服务声明 HTTP readiness check。 |
-| `[tasks.<name>]` | 通过 `agentseek task` 暴露的一次性 setup、准备或维护动作。每个 task 都必须有描述。 |
+| `[services.<name>]` | 每个稳定本地 endpoint，包含 `name`、`kind`、`display`、`primary`、`description`、可选 `tech` 和有用的类型化 `links`。必须恰有一个非隐藏主服务。 |
+| `[processes.<name>]` | `agentseek dev` 启动的所有长时间运行进程。至少需要一个进程；同 ID 推断不够时使用 `provides`。 |
+| `[checks.<name>]` | 对每个可检查服务声明 HTTP readiness check；同 ID 推断不够时使用 `service`。 |
+| `[tasks.<name>]` | 通过 `agentseek task` 暴露的一次性动作。每个 task 都必须有描述；用 `starts` 和 `stops` 表达服务效果。 |
+
+`display` 只决定展示建议：`default` 优先展示，`advanced` 按需展示，`hidden`
+不生成默认动作。它不控制认证、授权、网络暴露或启动。
+
+每个 catalog 模板还包含内部 Cookiecutter 值 `_agentseek_source_url` 和
+`_agentseek_source_ref`。它们必须指向 catalog release 配对的 core 仓库与精确
+依赖快照；常规模板修改不能把它们替换为 catalog 仓库或可变分支。
 
 生命周期检查的环境变量优先级：
 
@@ -126,10 +135,11 @@ lifecycle default < env_file < shell environment
 
 | 检查 | 命令或依据 |
 | --- | --- |
-| 注册表一致性 | `uv run python -m pytest tests/cli_commands/test_templates_registry.py -q` |
-| 默认渲染和生命周期 smoke | `uv run python -m pytest tests/cli_commands/test_templates_render.py -q` |
+| 完整 catalog 契约 | 在独立 catalog checkout 中运行 `make check`。 |
+| 注册表与自包含 | Catalog 测试要求注册表与目录完全一致、只含普通文件/目录，并确保每个模板子树自包含。 |
+| 默认渲染和生命周期 smoke | Catalog 测试渲染每个注册模板，并用配对 core 快照验证严格 lifecycle v2。 |
 | 生成项目检查 | 使用 `agentseek create <absolute-template-path> --no-input` 渲染本地模板。 |
-| 文档 | `make docs-test` |
+| Core 文档 | 本规范变化时，在 AgentSeek core checkout 中运行 `make docs-test`。 |
 
 ## 相关页面
 

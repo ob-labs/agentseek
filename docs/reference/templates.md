@@ -5,12 +5,38 @@ audience: [A1, A2]
 runs: no
 verified_on: 2026-07-28
 sources:
-  - templates/index.json
+  - src/agentseek/data/catalog-lock.json
+  - src/agentseek/cli/catalog.py
   - src/agentseek/cli/commands/create.py
-  - templates/deepagents/sandbox/README.md
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # Templates
+
+## Default Catalog
+
+AgentSeek 0.1.0 uses the standalone
+[`agentseek-ai/agentseek-templates`](https://github.com/agentseek-ai/agentseek-templates)
+catalog. The installed wheel embeds an immutable lock with these coordinates:
+
+| Coordinate | Value |
+| --- | --- |
+| Catalog release | `v0.1.0` |
+| Catalog commit | `494863bc1b9aab19f9885d716c03ce654fb26014` |
+| Lifecycle version | `2` |
+| Core dependency snapshot | `core-snapshot-v0.1.0` |
+| Core dependency commit | `883addad1e2993c4be6fc8ba053f87f25fb5057a` |
+
+Listing, filtering, and interactive selection read the registry snapshot from
+the wheel and work without downloading the catalog. Describing or generating a
+named template fetches the repository archive at the exact catalog commit, then
+validates its bytes against the trusted subtree digest in the wheel and
+atomically caches only that selected template. A partial, stale, tampered, or
+mismatched cache is not reused.
+
+The default resolver never selects the lifecycle-v1 mirror in the core source
+checkout and never falls back to mutable `main`. The core mirror remains only
+for published 0.0.x clients and explicit local-path use.
 
 ## Available Templates
 

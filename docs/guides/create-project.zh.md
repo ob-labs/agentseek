@@ -3,12 +3,12 @@ title: 创建项目
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-07-07
+verified_on: 2026-07-28
 sources:
   - pyproject.toml
+  - src/agentseek/data/catalog-lock.json
   - src/agentseek/cli/commands/create.py
-  - templates/index.json
-  - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # 创建项目
@@ -47,10 +47,12 @@ my_bub_agent/
 ```
 
 ```toml title=".agentseek/lifecycle.toml 片段"
-version = 1
+version = 2
 template = "bub/default"
 name = "My Bub Agent"
+description = "Bub agent with a browser UI, CopilotKit runtime, and AG-UI gateway."
 env_file = ".env"
+guide = "README.md"
 ```
 
 准备查看或运行项目时，进入生成目录。
@@ -64,6 +66,9 @@ cd my_bub_agent
 ```bash
 agentseek create --list-templates
 ```
+
+列表直接读取 AgentSeek 0.1.0 内嵌的注册表快照，因此可以离线使用。只有在描述或
+创建所选模板时，CLI 才会按自身记录的不可变 catalog commit 下载生命周期 v2 模板。
 
 共享 CLI 当前识别 `bub`、`deepagents` 和 `langchain` 三种模板类型。
 把类型放在 `--list-templates` 前面，可以只列出一个类型。

@@ -3,7 +3,7 @@ title: "ADR 0001: Versioned Standalone Template Catalog"
 type: explanation
 audience: [A2, A3, A5]
 runs: no
-verified_on: 2026-07-21
+verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/commands/create.py
   - templates/index.json
@@ -15,7 +15,7 @@ sources:
 
 # ADR 0001: Use a Versioned Standalone Template Catalog
 
-> **In short:** AgentSeek 0.1.0 will load lifecycle-v2 templates from a
+> **In short:** AgentSeek 0.1.0 loads lifecycle-v2 templates from a
 > version-pinned standalone repository. The core repository will retain its
 > existing lifecycle-v1 templates so released 0.0.x clients remain functional.
 > Public skills will move separately; packaged built-in skills remain in core.
@@ -33,6 +33,22 @@ Accepted on 2026-07-21 for the AgentSeek 0.1.0 delivery sequence.
 This record governs template distribution and repository ownership. The
 separate lifecycle-v2 service-discovery specification governs lifecycle TOML,
 normalization, and public JSON semantics.
+
+## AgentSeek 0.1.0 implementation record
+
+| Surface | Recorded implementation |
+| --- | --- |
+| Lifecycle and JSON contract | Core specification and ADR merged through [PR #141](https://github.com/ob-labs/agentseek/pull/141), merge commit `778efdfc40def78b3c583d42a63ef41ee640802e`. |
+| Explicit catalog input | `--template-repo` merged through [PR #150](https://github.com/ob-labs/agentseek/pull/150), establishing the immutable repository-plus-commit override before default cutover. |
+| Core dependency snapshot | Protected tag `core-snapshot-v0.1.0` retains core commit `883addad1e2993c4be6fc8ba053f87f25fb5057a`. |
+| Standalone catalog | [`agentseek-ai/agentseek-templates`](https://github.com/agentseek-ai/agentseek-templates) release [`v0.1.0`](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0) retains commit `494863bc1b9aab19f9885d716c03ce654fb26014`. |
+| Catalog provenance | Source registry SHA-256 is `d16027882500eb03c1aa8b3157c03dbb17eba6e34c74d6d7f0f285787f799907`; eleven registered templates were migrated and `bub/contextseek` remained quarantined. |
+| Embedded lock | `src/agentseek/data/catalog-lock.json` records schema `1`, lifecycle `2`, both exact repositories, commits, protected release names, the offline registry snapshot, and a trusted SHA-256 digest for every template subtree. |
+| Catalog safety | The client limits the compressed download, complete expanded tar stream, every raw member (including hidden PAX/GNU metadata), raw-member count, and extension nesting; it rejects unsafe paths, links, devices, duplicate paths, multiple roots, registry drift, and template-content drift before atomically publishing a cache entry. |
+| Legacy proof | `scripts/check_legacy_template_compat.py` executes the real v0.0.1-v0.0.5 artifacts with isolated Cookiecutter state and phase-specific cold, warm, and v0.0.5 repaired-cache renders. Release-PR CI passes the exact candidate SHA; post-merge CI exercises the default branch without an override. |
+| Packaged skill provenance | The build imports `friendly-python` and `piglet` from `PsiACE/skills` at full commit `4f09937234d128656fdc8c8658c840ebbf7e28d1`; this is an immutable build input, not the future public-skills repository split. |
+| Publication gate | Tag CI requires the peeled tag commit to be merged to `main`, resolves both protected dependency tags to their locked commits, re-runs the candidate-anchored v0.0.1-v0.0.5 matrix, validates the source distribution and wheel, compares the wheel's vendored skills byte-for-byte with the pinned checkout, and installs both distributions before PyPI upload. The wheel smoke also performs offline listing plus a real locked fetch, render, and `info --json`. |
+| Deferred boundary | Public skills remain in core for this release and require a separate repository contract and ADR. |
 
 ## Baseline recorded at decision time
 
@@ -59,17 +75,16 @@ evidence rather than descriptions of the future implementation.
   [`pyproject.toml`](https://github.com/ob-labs/agentseek/blob/v0.0.5/pyproject.toml#L60-L71)
   and the [public skills guide](https://github.com/ob-labs/agentseek/blob/v0.0.5/skills/README.md).
 
-Unless an explicitly reviewed v1 compatibility fix lands before the copy, the
-initial catalog source baseline is core commit
-`e1953217fbe629a2ca67c3632575c22a7ba493d9` (`v0.0.5`). The actual
-`catalog-origin.json` in the standalone release is authoritative.
+The copied source inventory was finalized at core commit
+`883addad1e2993c4be6fc8ba053f87f25fb5057a`. The standalone release's
+`catalog-origin.json` and recorded source-registry digest are authoritative.
 
 The published backward-compatibility set is exactly v0.0.1 through v0.0.5. It
 contains three resolver generations:
 
 | Released clients | Resolver behavior | Required compatibility fixture |
 | --- | --- | --- |
-| v0.0.1, v0.0.2 | Cookiecutter receives the core repository plus a remote template `directory`; installed remote listing was not available. | With an isolated home, no source checkout, and an empty Cookiecutter cache, create a representative bundled template for every framework, then verify the rendered lifecycle with the frozen v1 contract. Preserve the historical installed-listing behavior. |
+| v0.0.1, v0.0.2 | Cookiecutter receives the core repository plus a remote template `directory`; installed remote listing was not available. | With isolated Cookiecutter and uv state, no source checkout, and an empty Cookiecutter cache, create a representative bundled template for every framework, then verify the rendered lifecycle with the frozen v1 contract. Preserve the historical installed-listing behavior. |
 | v0.0.3, v0.0.4 | AgentSeek prepares a cached core repository root before listing or creation. | From an empty cache, list and create a representative template for every framework, then repeat from the warm cache; every generated lifecycle remains v1. |
 | v0.0.5 | AgentSeek reuses only a complete cache and repairs an incomplete one. | Run the cold- and warm-cache cases, then corrupt the cache and prove listing and creation recover to valid lifecycle-v1 templates. |
 
@@ -219,6 +234,7 @@ The AgentSeek wheel embeds a catalog lock. The lock contains, at minimum:
 | `core_commit` | Full 40-character lowercase Git commit SHA compatible with the catalog release. |
 | `core_release` | Protected dependency-snapshot tag that permanently retains `core_commit`; informational at runtime. |
 | `templates` | Registry snapshot used for offline listing and selection. |
+| `template_digests` | Map with exactly the registry keys and a lowercase SHA-256 digest of each complete template subtree. |
 
 `catalog_commit` is authoritative for template content. `core_commit` is
 authoritative for generated-project dependencies. The catalog and core release
@@ -226,8 +242,9 @@ tags provide human-readable names and retain reachability, but the CLI never
 resolves content by tag.
 
 Release validation compares the embedded registry snapshot with
-`templates/index.json` at `catalog_commit`. A mismatch blocks the core release.
-The lock must not contain credentials or a mutable branch name.
+`templates/index.json` at `catalog_commit` and recomputes every registered
+template subtree digest. A mismatch blocks the core release. The lock must not
+contain credentials or a mutable branch name.
 
 ### Catalog source and generated dependency source
 
@@ -259,13 +276,33 @@ AgentSeek 0.1.0 resolves bundled templates as follows:
 1. Read the embedded catalog lock.
 2. Resolve the requested registry key from the embedded snapshot.
 3. Reuse a complete cache entry only when its catalog repository, catalog
-   commit, template key, and catalog-lock digest all match.
+   commit, template key, catalog-lock digest, and template bytes all match the
+   trusted embedded digest.
 4. Otherwise download the standalone repository archive at the locked commit.
-5. Extract only the requested template subtree into a new cache entry.
+5. Extract only the requested template subtree, verify its trusted digest, and
+   place it in a new cache entry.
 6. Validate the cached template before invoking Cookiecutter.
 
 The catalog-lock digest is the lowercase hexadecimal SHA-256 of the exact
 packaged lock-file bytes.
+
+Each `template_digests` value is SHA-256 over one unambiguous byte stream. The
+stream begins with `agentseek-template-tree-v1` followed by one NUL byte
+(`0x00`), then the number of descendant entries as an unsigned 64-bit
+big-endian integer. Directories and
+regular files are sorted together by their UTF-8 POSIX relative path. Each
+entry contributes a type byte, path byte length, and path bytes. A regular file
+then contributes a normalized executable marker, content byte length, and
+exact content bytes; both lengths are unsigned 64-bit big-endian integers.
+The type byte is `0x64` (`d`) for a directory or `0x66` (`f`) for a regular
+file. The executable marker is `0x78` (`x`) when any Git executable bit is set,
+or `0x2d` (`-`) otherwise.
+Regular archive members are normalized to mode `0644` or `0755` according to
+their Git executable bit. Directory modes and timestamps are excluded, while
+directory presence and file executable semantics remain protected. Links and
+other entry types are rejected rather than hashed. This encoding is
+reproducible across normal archive extraction umasks without allowing entry or
+file boundaries to be reinterpreted.
 
 GitHub archive endpoints transfer a repository archive, not a server-side
 subtree. AgentSeek may filter extraction to the selected template, but it must
@@ -321,7 +358,9 @@ Catalog extraction and reuse follow these rules:
   URL and exact commit. Matching catalog metadata is required before reuse;
   partial, stale, or mismatched entries are never cache hits.
 - A complete entry includes `cookiecutter.json`, a generated-project source
-  tree, and catalog metadata matching the lock.
+  tree, and catalog metadata matching the lock. The recomputed subtree digest
+  must equal the trusted digest embedded in the lock; cache metadata cannot
+  redefine that value.
 - Downloads use HTTPS, bounded time, a maximum 64 MiB compressed response, no
   more than 10,000 archive members, no member larger than 32 MiB, and no more
   than 256 MiB total uncompressed content.
@@ -390,6 +429,12 @@ The template extraction does not imply a simultaneous skills extraction.
   may move to `agentseek-ai/agentseek-skills` under a later ADR.
 - `src/skills/` is included in the core package and remains versioned with the
   CLI until a separate package and compatibility contract exists.
+- The build also vendors `friendly-python` and `piglet` from
+  `https://github.com/PsiACE/skills.git` at full commit
+  `4f09937234d128656fdc8c8658c840ebbf7e28d1`. The source distribution retains
+  that exact pin, and tag CI compares the wheel payload with a checkout of that
+  commit before publication. This makes the existing build input reproducible;
+  it does not establish a new AgentSeek skills distribution contract.
 - Template references to public skills use stable installation coordinates;
   they do not import files from the core checkout by relative path.
 
@@ -461,6 +506,12 @@ The 0.1.0 release is blocked unless all of these are true:
   `contrib/` dependencies from the exact core URL and SHA, and `core_release`
   points to `core_commit`;
 - the embedded registry snapshot matches the locked catalog commit;
+- every embedded template digest matches its complete subtree at the locked
+  catalog commit, and the built wheel contains the exact committed lock bytes;
+- the source distribution contains the exact committed catalog lock and the
+  reviewed full-commit build-skill pin; the wheel's `friendly-python` and
+  `piglet` payload matches that pinned checkout byte-for-byte; both built
+  distributions install successfully before upload;
 - a stale, partial, or wrong-commit cache is rejected and recovered;
 - archive extraction confinement tests pass;
 - archive response-size, member-count, per-member, and total-uncompressed limits
@@ -478,6 +529,7 @@ The 0.1.0 release is blocked unless all of these are true:
 - v1 JSON is conservative and v2 JSON is complete;
 - core `pyproject.toml`, `uv.lock`, package metadata, `v0.1.0` tag, GitHub
   Release, PyPI release, and documentation all identify AgentSeek 0.1.0;
+- the peeled `v0.1.0` tag commit is an ancestor of the protected `main` branch;
 - lock `schema_version` remains `1` and `lifecycle_version` remains `2`; these
   protocol versions are not required to equal the core SemVer;
 - `catalog_release` points to `catalog_commit`, `core_release` points to

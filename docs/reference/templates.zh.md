@@ -5,12 +5,35 @@ audience: [A1, A2]
 runs: no
 verified_on: 2026-07-28
 sources:
-  - templates/index.json
+  - src/agentseek/data/catalog-lock.json
+  - src/agentseek/cli/catalog.py
   - src/agentseek/cli/commands/create.py
-  - templates/deepagents/sandbox/README.md
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # 模板
+
+## 默认模板目录
+
+AgentSeek 0.1.0 使用独立的
+[`agentseek-ai/agentseek-templates`](https://github.com/agentseek-ai/agentseek-templates)
+模板目录。安装后的 wheel 内嵌以下不可变坐标：
+
+| 坐标 | 值 |
+| --- | --- |
+| 模板目录 release | `v0.1.0` |
+| 模板目录 commit | `494863bc1b9aab19f9885d716c03ce654fb26014` |
+| 生命周期版本 | `2` |
+| Core 依赖快照 | `core-snapshot-v0.1.0` |
+| Core 依赖 commit | `883addad1e2993c4be6fc8ba053f87f25fb5057a` |
+
+列出、过滤和交互选择直接读取 wheel 内嵌的注册表快照，不需要下载目录。
+描述或生成命名模板时，CLI 会获取精确目录 commit 的仓库归档，并以 wheel
+内嵌的可信子树摘要验证模板内容，再把选中的模板原子写入缓存。部分、过期、
+被篡改或元数据不匹配的缓存不会被复用。
+
+默认解析器不会选择 core 源码 checkout 中的生命周期 v1 镜像，也不会回退
+到可变的 `main`。core 镜像只为已发布的 0.0.x 客户端和显式本地路径保留。
 
 ## 可用模板
 

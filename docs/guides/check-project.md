@@ -3,10 +3,12 @@ title: Check a Project
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-06-26
+verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/commands/doctor.py
-  - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
+  - src/agentseek/cli/lifecycle/diagnostics.py
+  - src/agentseek/cli/lifecycle/json_output.py
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # Check a Project
@@ -75,6 +77,24 @@ target = "http://127.0.0.1:8088/agent/health"
 timeout = 2
 attempts = 3
 ```
+
+## Use Diagnostics From Automation
+
+Use JSON mode for a stable list of typed results. Add `--live` when the
+services are already running.
+
+```bash
+agentseek doctor --json
+agentseek doctor --live --json
+```
+
+A completed diagnostic run has `ok: true`. Read `data.passed` and the process
+exit status to decide whether checks passed; declared live checks have
+`state: "not_run"` unless `--live` is present. JSON mode writes one document to
+stdout and no diagnostic prose to stderr.
+
+Do not combine `--strict` with `--json`. That option conflict returns exit code
+`2` in a structured error envelope.
 
 ## Next
 

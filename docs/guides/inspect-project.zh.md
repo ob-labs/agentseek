@@ -3,10 +3,11 @@ title: 查看项目
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-07-07
+verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/commands/info.py
-  - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
+  - src/agentseek/cli/lifecycle/json_output.py
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # 查看项目
@@ -22,7 +23,7 @@ Project
   Root: /path/to/my_bub_agent
   Name: My Bub Agent
   Template: bub/default
-  Lifecycle: .agentseek/lifecycle.toml / version 1
+  Lifecycle: .agentseek/lifecycle.toml / version 2
 
 Entrypoints
   Dev: agentseek dev
@@ -74,6 +75,19 @@ Discovery
   node: /path/to/node
   npm: /path/to/npm
 ```
+
+## 供 Desktop 或其他工具读取
+
+其他程序需要稳定的服务拓扑和操作时，使用 JSON 模式。
+
+```bash
+agentseek info --json
+```
+
+返回值是一个紧凑 JSON 文档，包含 `schema_version`、生命周期版本、规范化
+`services` 以及可直接使用的 `actions`。消费者应使用这些结构化动作，而不是
+解析人类输出或自行推断哪些 URL 可以打开。输出不包含环境变量值、原始命令、
+不安全 URL 或主机绝对路径。
 
 ## 下一步
 

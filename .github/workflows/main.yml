@@ -49,6 +49,44 @@ jobs:
       - name: Check typing
         run: make typecheck
 
+  legacy-template-compatibility:
+    if: ${{ github.event_name == 'push' || startsWith(github.head_ref, 'release/') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["0.0.1", "0.0.2", "0.0.3", "0.0.4", "0.0.5"]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.28"
+          enable-cache: "true"
+          cache-suffix: legacy-${{ matrix.version }}
+
+      - name: Verify release candidate with published resolver
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          UV_TOOL_DIR: ${{ runner.temp }}/agentseek-legacy-tools
+        run: >-
+          python scripts/check_legacy_template_compat.py "${{ matrix.version }}"
+          --candidate-ref "${{ github.event.pull_request.head.sha }}"
+
+      - name: Verify default branch with published resolver
+        if: ${{ github.event_name == 'push' }}
+        env:
+          UV_TOOL_DIR: ${{ runner.temp }}/agentseek-legacy-tools
+        run: python scripts/check_legacy_template_compat.py "${{ matrix.version }}"
+
   contrib-package-checks:
     runs-on: ubuntu-latest
     steps:

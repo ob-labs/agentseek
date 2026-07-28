@@ -3,26 +3,26 @@ title: Create a Template
 type: how-to
 audience: [A2, A3]
 runs: yes
-verified_on: 2026-07-10
+verified_on: 2026-07-28
 sources:
-  - templates/index.json
+  - https://github.com/agentseek-ai/agentseek-templates/blob/main/CONTRIBUTING.md
+  - https://github.com/agentseek-ai/agentseek-templates/blob/v0.1.0/templates/index.json
   - src/agentseek/cli/commands/create.py
-  - src/agentseek/cli/lifecycle/spec.py
-  - tests/cli_commands/test_templates_registry.py
-  - tests/cli_commands/test_templates_render.py
-  - "templates/langchain/agentic-rag/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
-  - "templates/langchain/markdown-messages/{{cookiecutter.project_slug}}/.env.example"
+  - specs/lifecycle-v2-service-discovery.md
 ---
 
 # Create a Template
 
-Use this guide to contribute a bundled template under `templates/`. Read the
+Use this guide in the standalone
+[`agentseek-ai/agentseek-templates`](https://github.com/agentseek-ai/agentseek-templates)
+repository. Do not add new templates to the core repository's frozen
+lifecycle-v1 compatibility mirror. Read the
 [Template Authoring Contract](../reference/template-authoring-contract.md)
 before choosing configuration names or lifecycle tasks.
 
 ## Prerequisites
 
-- A local AgentSeek checkout with its development dependencies installed.
+- A local standalone catalog checkout with `uv sync` completed.
 - A clear generated-app outcome and one existing template with a similar runtime.
 - A unique `type/name` spec. Reuse `bub`, `deepagents`, or `langchain` unless the contribution also extends CLI type support.
 
@@ -72,7 +72,9 @@ contributor should decide at render time.
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
   "author": "Your Name",
   "system_prompt": "You are a helpful assistant. Answer in the same language as the user's question.",
-  "default_model": "openai:gpt-4o-mini"
+  "default_model": "openai:gpt-4o-mini",
+  "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git",
+  "_agentseek_source_ref": "<catalog-paired-core-commit>"
 }
 ```
 
@@ -104,10 +106,12 @@ Declare the generated app's required tools, paths, environment checks, local
 services, long-running processes, readiness checks, and setup tasks.
 
 ```toml title=".agentseek/lifecycle.toml excerpt"
-version = 1
+version = 2
 template = "langchain/my-template"
 name = "{{ cookiecutter.project_name }}"
+description = "LangChain example application."
 env_file = ".env"
+guide = "README.md"
 
 [tools]
 required = ["uv"]
@@ -118,7 +122,13 @@ default = "{{ cookiecutter.default_model }}"
 description = "Chat model used by the generated agent."
 
 [services.backend]
+name = "LangGraph API"
 url = "http://127.0.0.1:2024"
+kind = "api"
+display = "default"
+primary = true
+description = "Local API used by the generated application."
+links = { docs = "https://docs.langchain.com/oss/python/langgraph/overview" }
 
 [processes.backend]
 command = ["uv", "run", "python", "-m", "{{ cookiecutter.project_slug }}.server"]
@@ -128,6 +138,7 @@ type = "http"
 target = "http://127.0.0.1:2024"
 timeout = 2
 attempts = 3
+service = "backend"
 
 [tasks.sync]
 description = "Install Python dependencies."
@@ -201,16 +212,11 @@ application entry points. Run lifecycle commands from the generated project.
 
 ## 9. Run Template Validation
 
-Check registry coverage and default rendering.
+Check the lock, registry, self-containment, every default render, strict
+lifecycle-v2 loading, formatting, and linting.
 
 ```bash
-uv run python -m pytest tests/cli_commands/test_templates_registry.py tests/cli_commands/test_templates_render.py -q
-```
-
-Build both documentation languages in strict mode.
-
-```bash
-make docs-test
+make check
 ```
 
 Add a focused CI smoke test when the template depends on model conversion,
@@ -221,7 +227,7 @@ default rendering cannot prove.
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| Registry test reports a missing template | `templates/index.json` has no matching key. | Add the exact `type/name` entry or document a temporary quarantine in the registry test. |
+| Registry test reports a missing template | `templates/index.json` has no matching key. | Add the exact `type/name` entry; every standalone catalog directory must be registered. |
 | Render test finds `{{` in generated files | A Cookiecutter variable is missing or escaped incorrectly. | Add the input to `cookiecutter.json` or correct the generated-file expression. |
 | `agentseek doctor` accepts configuration but the process cannot read it | The lifecycle check and runtime loader use different names, or the process never loads `.env`. | Align the names and load runtime configuration in the generated app. |
 | Frontend works locally but fails from a remote browser | A server or frontend API URL is fixed to loopback. | Keep loopback as the default and add explicit host/API overrides. |

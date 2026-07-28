@@ -3,11 +3,13 @@ title: 生命周期规范
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-07-21
+verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/lifecycle/spec.py
   - src/agentseek/cli/lifecycle/core.py
   - src/agentseek/cli/lifecycle/authored.py
+  - src/agentseek/cli/lifecycle/normalize.py
+  - src/agentseek/cli/lifecycle/json_output.py
   - src/agentseek/cli/lifecycle/safety.py
   - specs/lifecycle-v2-service-discovery.md
   - docs/adr/0001-versioned-template-catalog-boundary.md
@@ -37,8 +39,8 @@ AgentSeek 当前加载并验证编写的生命周期版本 `1` 和 `2`。现有�
 | --- | --- |
 | `1`, `2` | 编写的生命周期文件会被加载和验证。 |
 | `templates/` | core 仍是 `version = 1` 兼容镜像。 |
-| `agentseek-ai/agentseek-templates` | 后续进行的 `version = 2` catalog 迁移。 |
-| 此切片 | 仅实现编写文件的加载和验证；normalization、JSON 与 catalog 交付仍是独立后续工作。 |
+| `agentseek-ai/agentseek-templates` | 锁定的独立 `v0.1.0` catalog 为新项目提供 `version = 2` 模板。 |
+| 规范化与机器接口 | V1 和 v2 都投影到同一个安全规范化模型；`info --json` 和 `doctor --json` 提供公共 schema 版本 `1`。 |
 
 完整的编写契约见已发布的 [lifecycle v2 概览
 (`lifecycle-v2-service-discovery.md`)](lifecycle-v2-service-discovery.md)。
@@ -98,6 +100,9 @@ command = ["npm", "install", "--prefix", "frontend"]
 | `checks.<name>` | `agentseek doctor --live` 使用的 HTTP live 就绪检查。2xx 和 3xx 响应成功。 |
 | `tasks.<name>` | `agentseek task <name>` 运行的一次性任务。`cwd` 是项目相对路径，且必须存在。 |
 
+生命周期 v2 的 HTTP 检查要求 `timeout` 为大于 `0` 且不超过 `300` 的有限秒数，
+`attempts` 为正整数。
+
 ## 环境检查
 
 AgentSeek 从生命周期默认值、可选 `env_file` 和当前进程环境检查环境需求：
@@ -138,8 +143,8 @@ service。验证还会拒绝未知字段、空 command、重复的 `tools.requir
 
 | 命令 | 行为 |
 | --- | --- |
-| `agentseek info [--verbose]` | 打印生命周期规范里的项目事实。 |
-| `agentseek doctor [--live] [--strict]` | 检查 tools、paths、env 和可选 live endpoints。 |
+| `agentseek info [--verbose] [--json]` | 打印项目事实，或以 JSON 输出确定且安全的生命周期元数据。 |
+| `agentseek doctor [--live] [--strict] [--json]` | 检查 tools、paths、env 和可选 live endpoints；`--json` 不能与 `--strict` 同时使用。 |
 | `agentseek dev [--dry-run] [--skip-check]` | 打印或启动声明的开发进程。`--skip-check` 只跳过预先的 strict `doctor` 检查。 |
 | `agentseek task --list` | 列出 `tasks` 下声明的任务。 |
 | `agentseek task <name>` | 运行一个声明的一次性任务。 |

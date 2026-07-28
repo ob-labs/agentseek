@@ -3,20 +3,11 @@ title: Choose a Template
 type: how-to
 audience: [A1, A2]
 runs: no
-verified_on: 2026-07-11
+verified_on: 2026-07-28
 sources:
-  - templates/index.json
+  - src/agentseek/data/catalog-lock.json
   - docs/reference/templates.md
-  - templates/bub/default/README.md
-  - templates/deepagents/default/README.md
-  - templates/deepagents/research/README.md
-  - templates/deepagents/content-builder/README.md
-  - templates/deepagents/sandbox/README.md
-  - templates/langchain/default/README.md
-  - templates/langchain/markdown-messages/README.md
-  - templates/langchain/agentic-rag/README.md
-  - templates/langchain/agentic-rag-hybrid/README.md
-  - templates/langchain/cli-remote/README.md
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # Choose a Template
@@ -31,7 +22,7 @@ Use this guide before you create a project.
 | `deepagents` | Planning, tool use, sub-agent workflows, sandbox-backed coding agents, or DeepAgents examples with local development. |
 | `langchain` | LangChain or LangGraph app patterns, including RAG, markdown chat, or AG-UI integration. |
 
-Every maintained template exposes AgentSeek lifecycle commands through
+Every template in the locked standalone catalog exposes lifecycle v2 through
 `.agentseek/lifecycle.toml`. The runtime choice still matters because the
 generated app code is Bub, DeepAgents, LangChain, or LangGraph shaped.
 

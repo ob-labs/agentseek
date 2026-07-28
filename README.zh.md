@@ -9,6 +9,11 @@ AgentSeek 是面向本地 AI 生态应用开发的 template-first toolkit。它�
 创建应用、运行应用、查看本地生命周期状态，并诊断常见环境问题，然后再逐步进入
 [OceanBase](https://www.oceanbase.com/) AI 生态。
 
+AgentSeek 0.1.0 从不可变的
+[`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0)
+解析 lifecycle-v2 模板。CLI 直接用内嵌注册表快照列出模板；命名模板内容只按
+精确锁定的 commit 获取。
+
 > **《Deep Agents 实战》**：基于 AgentSeek 实验的 LangChain / DeepAgents 免费课程。
 > [课程仓库](https://github.com/datawhalechina/deepagents-in-action/)
 
@@ -60,6 +65,17 @@ agentseek dev
 | `dev` | 启动本地开发栈。 |
 | `info` | 输出项目入口和 lifecycle 元数据。 |
 | `task` | 运行项目定义的任务。 |
+
+Desktop、脚本或其他机器消费者应使用版本化 JSON 契约，不要解析人类输出。
+
+```bash
+agentseek info --json
+agentseek doctor --json
+agentseek doctor --live --json
+```
+
+`info --json` 会给出规范化服务、参考链接和安全动作，例如哪个 URL 可以直接打开；
+它不会包含环境变量值或原始 process/task command。
 
 ## 文档
 

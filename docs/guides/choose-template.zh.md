@@ -3,20 +3,11 @@ title: 选择模板
 type: how-to
 audience: [A1, A2]
 runs: no
-verified_on: 2026-07-11
+verified_on: 2026-07-28
 sources:
-  - templates/index.json
+  - src/agentseek/data/catalog-lock.json
   - docs/reference/templates.zh.md
-  - templates/bub/default/README.md
-  - templates/deepagents/default/README.md
-  - templates/deepagents/research/README.md
-  - templates/deepagents/content-builder/README.md
-  - templates/deepagents/sandbox/README.md
-  - templates/langchain/default/README.md
-  - templates/langchain/markdown-messages/README.md
-  - templates/langchain/agentic-rag/README.md
-  - templates/langchain/agentic-rag-hybrid/README.md
-  - templates/langchain/cli-remote/README.md
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # 选择模板
@@ -31,8 +22,8 @@ sources:
 | `deepagents` | 需要规划、工具调用、sub-agent 工作流、sandbox coding agent，或 DeepAgents 本地开发示例。 |
 | `langchain` | 需要 LangChain 或 LangGraph 应用形态，包括 RAG、Markdown chat 或 AG-UI 集成。 |
 
-所有维护中的模板都会通过 `.agentseek/lifecycle.toml` 暴露 AgentSeek
-生命周期命令。运行时选择仍然重要，因为生成的应用代码会保持 Bub、
+锁定的独立 catalog 中每个模板都会通过 `.agentseek/lifecycle.toml` 提供
+lifecycle v2。运行时选择仍然重要，因为生成的应用代码会保持 Bub、
 DeepAgents、LangChain 或 LangGraph 的形态。
 
 ## 按项目目标选择

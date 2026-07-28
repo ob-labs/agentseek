@@ -3,24 +3,25 @@ title: 创建模板
 type: how-to
 audience: [A2, A3]
 runs: yes
-verified_on: 2026-07-10
+verified_on: 2026-07-28
 sources:
-  - templates/index.json
+  - https://github.com/agentseek-ai/agentseek-templates/blob/main/CONTRIBUTING.md
+  - https://github.com/agentseek-ai/agentseek-templates/blob/v0.1.0/templates/index.json
   - src/agentseek/cli/commands/create.py
-  - src/agentseek/cli/lifecycle/spec.py
-  - tests/cli_commands/test_templates_registry.py
-  - tests/cli_commands/test_templates_render.py
-  - "templates/langchain/agentic-rag/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
-  - "templates/langchain/markdown-messages/{{cookiecutter.project_slug}}/.env.example"
+  - specs/lifecycle-v2-service-discovery.md
 ---
 
 # 创建模板
 
-本指南用于向 `templates/` 贡献内置模板。在确定配置名称和 lifecycle task 前，先阅读[模板编写规范](../reference/template-authoring-contract.md)。
+本指南用于在独立的
+[`agentseek-ai/agentseek-templates`](https://github.com/agentseek-ai/agentseek-templates)
+仓库中贡献模板。不要向 core 仓库冻结的 lifecycle-v1 兼容镜像增加新模板。
+在确定配置名称和 lifecycle task 前，先阅读
+[模板编写规范](../reference/template-authoring-contract.md)。
 
 ## 前置条件
 
-- 本地已有 AgentSeek checkout，并已安装开发依赖。
+- 本地已有独立 catalog checkout，并已完成 `uv sync`。
 - 已明确生成应用的目标，并找到一个运行时相近的现有模板。
 - 已选择唯一的 `type/name` spec。除非同时扩展 CLI 的类型支持，否则复用 `bub`、`deepagents` 或 `langchain`。
 
@@ -67,7 +68,9 @@ templates/<type>/<name>/
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
   "author": "Your Name",
   "system_prompt": "You are a helpful assistant. Answer in the same language as the user's question.",
-  "default_model": "openai:gpt-4o-mini"
+  "default_model": "openai:gpt-4o-mini",
+  "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git",
+  "_agentseek_source_ref": "<catalog-paired-core-commit>"
 }
 ```
 
@@ -92,10 +95,12 @@ AGENTSEEK_API_BASE=
 声明生成应用所需的 tools、paths、环境检查、本地服务、长时间运行进程、readiness checks 和 setup tasks。
 
 ```toml title=".agentseek/lifecycle.toml 片段"
-version = 1
+version = 2
 template = "langchain/my-template"
 name = "{{ cookiecutter.project_name }}"
+description = "LangChain example application."
 env_file = ".env"
+guide = "README.md"
 
 [tools]
 required = ["uv"]
@@ -106,7 +111,13 @@ default = "{{ cookiecutter.default_model }}"
 description = "Chat model used by the generated agent."
 
 [services.backend]
+name = "LangGraph API"
 url = "http://127.0.0.1:2024"
+kind = "api"
+display = "default"
+primary = true
+description = "Local API used by the generated application."
+links = { docs = "https://docs.langchain.com/oss/python/langgraph/overview" }
 
 [processes.backend]
 command = ["uv", "run", "python", "-m", "{{ cookiecutter.project_slug }}.server"]
@@ -116,6 +127,7 @@ type = "http"
 target = "http://127.0.0.1:2024"
 timeout = 2
 attempts = 3
+service = "backend"
 
 [tasks.sync]
 description = "Install Python dependencies."
@@ -181,16 +193,10 @@ uv run agentseek create "$PWD/templates/$TEMPLATE_SPEC" --no-input --output-dir 
 
 ## 9. 运行模板验证
 
-检查注册表覆盖和默认渲染。
+检查 lock、注册表、自包含性、所有默认渲染、严格 lifecycle-v2 加载、格式和 lint。
 
 ```bash
-uv run python -m pytest tests/cli_commands/test_templates_registry.py tests/cli_commands/test_templates_render.py -q
-```
-
-以 strict mode 构建中英文文档。
-
-```bash
-make docs-test
+make check
 ```
 
 如果模板依赖模型转换、外部服务、硬件专属库，或 default render 无法验证的其他集成，则增加有针对性的 CI smoke test。
@@ -199,7 +205,7 @@ make docs-test
 
 | 现象 | 常见原因 | 处理方式 |
 | --- | --- | --- |
-| 注册表测试报告缺少模板 | `templates/index.json` 没有对应 key。 | 增加准确的 `type/name` 记录，或在注册表测试中记录临时隔离。 |
+| 注册表测试报告缺少模板 | `templates/index.json` 没有对应 key。 | 增加准确的 `type/name` 记录；独立 catalog 的每个目录都必须注册。 |
 | 渲染测试在生成文件中发现 `{{` | Cookiecutter 参数缺失或转义错误。 | 在 `cookiecutter.json` 中增加参数，或修正生成文件表达式。 |
 | `agentseek doctor` 接受配置，但进程无法读取 | Lifecycle 检查和 runtime loader 使用了不同名称，或进程没有加载 `.env`。 | 对齐名称，并在生成应用中加载运行时配置。 |
 | Frontend 本地可用，但远程浏览器访问失败 | Server 或 frontend API URL 写死为 loopback。 | 保留 loopback 默认值，并增加显式 host/API override。 |

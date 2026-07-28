@@ -3,7 +3,7 @@ title: Lifecycle v2 Service Discovery
 type: reference
 audience: [A2, A3, A5]
 runs: no
-verified_on: 2026-07-21
+verified_on: 2026-07-28
 sources:
   - specs/lifecycle-v2-service-discovery.md
   - docs/adr/0001-versioned-template-catalog-boundary.md
@@ -17,8 +17,8 @@ sources:
 
 The canonical normative specification is
 [Desktop Service Discovery and Lifecycle v2](https://github.com/ob-labs/agentseek/blob/main/specs/lifecycle-v2-service-discovery.md).
-It is accepted for AgentSeek 0.1.0 and does not describe behavior available in
-AgentSeek 0.0.5.
+It is implemented by AgentSeek 0.1.0. These authored-v2 and JSON behaviors are
+not available in AgentSeek 0.0.5.
 
 ## Contract surfaces
 

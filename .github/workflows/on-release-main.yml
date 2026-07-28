@@ -7,31 +7,71 @@ on:
   workflow_dispatch:
 
 jobs:
-  set-version:
+  validate-version:
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Export release version
-        id: vars
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
-      - name: Update project version
-        run: |
-          sed -i "s/^version = \".*\"/version = \"$RELEASE_VERSION\"/" pyproject.toml
-        env:
-          RELEASE_VERSION: ${{ steps.vars.outputs.version }}
-
-      - name: Upload updated pyproject.toml
-        uses: actions/upload-artifact@v4
+      - name: Check out
+        uses: actions/checkout@v4
         with:
-          name: pyproject-toml
-          path: pyproject.toml
+          fetch-depth: 0
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Verify tag commit is merged to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          tag_commit="$(git rev-list -n 1 "${GITHUB_REF_NAME}")"
+          git merge-base --is-ancestor "${tag_commit}" refs/remotes/origin/main
+
+      - name: Verify committed release version and locked tags
+        run: uv run python -m agentseek.release "${GITHUB_REF_NAME#v}" --verify-remote-tags
+
+      - name: Run release and catalog contract tests
+        run: >-
+          uv run python -m pytest
+          tests/test_release_version.py
+          tests/cli_commands/test_locked_catalog.py
+          tests/test_legacy_template_compat.py
+
+  legacy-template-compatibility:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["0.0.1", "0.0.2", "0.0.3", "0.0.4", "0.0.5"]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.28"
+          enable-cache: "true"
+          cache-suffix: release-legacy-${{ matrix.version }}
+
+      - name: Verify tag candidate with published resolver
+        env:
+          UV_TOOL_DIR: ${{ runner.temp }}/agentseek-legacy-tools
+        run: >-
+          python scripts/check_legacy_template_compat.py "${{ matrix.version }}"
+          --candidate-ref "${{ github.sha }}"
 
   build:
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
-    needs: [set-version]
+    needs: [validate-version, legacy-template-compatibility]
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -39,13 +79,148 @@ jobs:
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
 
-      - name: Download updated pyproject.toml
-        uses: actions/download-artifact@v4
-        with:
-          name: pyproject-toml
-
       - name: Build package
         run: uv build
+
+      - name: Check out the pinned build-skill source
+        shell: bash
+        run: |
+          set -euo pipefail
+          skills_ref="4f09937234d128656fdc8c8658c840ebbf7e28d1"
+          skills_source="${RUNNER_TEMP}/agentseek-release-skills-source"
+          git init "${skills_source}"
+          git -C "${skills_source}" remote add origin https://github.com/PsiACE/skills.git
+          git -C "${skills_source}" fetch --depth 1 origin "${skills_ref}"
+          git -C "${skills_source}" checkout --detach FETCH_HEAD
+          test "$(git -C "${skills_source}" rev-parse HEAD)" = "${skills_ref}"
+          echo "AGENTSEEK_PINNED_SKILLS_ROOT=${skills_source}/skills" >> "${GITHUB_ENV}"
+
+      - name: Verify built distributions and vendored skills
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheels=(dist/*.whl)
+          sdists=(dist/*.tar.gz)
+          if [[ ${#wheels[@]} -ne 1 || ! -f "${wheels[0]}" ]]; then
+            echo "Expected exactly one built wheel" >&2
+            exit 1
+          fi
+          if [[ ${#sdists[@]} -ne 1 || ! -f "${sdists[0]}" ]]; then
+            echo "Expected exactly one built sdist" >&2
+            exit 1
+          fi
+          uv run python -m agentseek.release "${GITHUB_REF_NAME#v}" \
+            --wheel "${wheels[0]}" \
+            --sdist "${sdists[0]}" \
+            --skills-root "${AGENTSEEK_PINNED_SKILLS_ROOT}"
+
+      - name: Smoke built wheel against locked catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          wheels=(dist/*.whl)
+          sdists=(dist/*.tar.gz)
+          if [[ ${#wheels[@]} -ne 1 || ! -f "${wheels[0]}" ]]; then
+            echo "Expected exactly one built wheel" >&2
+            exit 1
+          fi
+          if [[ ${#sdists[@]} -ne 1 || ! -f "${sdists[0]}" ]]; then
+            echo "Expected exactly one built sdist" >&2
+            exit 1
+          fi
+
+          smoke_root="${RUNNER_TEMP}/agentseek-release-wheel-smoke"
+          python_bin="${smoke_root}/venv/bin/python"
+          agentseek_bin="${smoke_root}/venv/bin/agentseek"
+          sdist_python_bin="${smoke_root}/sdist-venv/bin/python"
+          sdist_agentseek_bin="${smoke_root}/sdist-venv/bin/agentseek"
+          mkdir -p \
+            "${smoke_root}/home" \
+            "${smoke_root}/listing" \
+            "${smoke_root}/rendered" \
+            "${smoke_root}/sdist-listing"
+          uv venv "${smoke_root}/venv" --python "3.12"
+          uv pip install --python "${python_bin}" "${wheels[0]}"
+          uv venv "${smoke_root}/sdist-venv" --python "3.12"
+          uv pip install --no-cache --python "${sdist_python_bin}" "${sdists[0]}"
+
+          catalog_verify_root="${smoke_root}/catalog-verify"
+          mkdir -p "${catalog_verify_root}"
+          CATALOG_VERIFY_ROOT="${catalog_verify_root}" "${python_bin}" - <<'PY'
+          import os
+          from pathlib import Path
+
+          from agentseek.cli.catalog import (
+              _download_archive,
+              _extract_template_archive,
+              load_catalog_lock,
+          )
+
+          root = Path(os.environ["CATALOG_VERIFY_ROOT"])
+          lock = load_catalog_lock()
+          archive = root / "catalog.tar.gz"
+          _download_archive(lock, archive)
+          for index, key in enumerate(lock.templates):
+              candidate = root / f"candidate-{index}"
+              candidate.mkdir()
+              _extract_template_archive(archive, candidate, lock, key)
+          PY
+
+          (
+            cd "${smoke_root}/listing"
+            env \
+              -u NO_PROXY -u no_proxy \
+              HTTP_PROXY=http://127.0.0.1:9 \
+              HTTPS_PROXY=http://127.0.0.1:9 \
+              ALL_PROXY=http://127.0.0.1:9 \
+              http_proxy=http://127.0.0.1:9 \
+              https_proxy=http://127.0.0.1:9 \
+              all_proxy=http://127.0.0.1:9 \
+              HOME="${smoke_root}/home" \
+              "${agentseek_bin}" create --list-templates > templates.txt
+          )
+          grep -F "bub/default" "${smoke_root}/listing/templates.txt"
+          grep -F "deepagents/default" "${smoke_root}/listing/templates.txt"
+          grep -F "langchain/default" "${smoke_root}/listing/templates.txt"
+
+          (
+            cd "${smoke_root}/sdist-listing"
+            env \
+              -u NO_PROXY -u no_proxy \
+              HTTP_PROXY=http://127.0.0.1:9 \
+              HTTPS_PROXY=http://127.0.0.1:9 \
+              ALL_PROXY=http://127.0.0.1:9 \
+              http_proxy=http://127.0.0.1:9 \
+              https_proxy=http://127.0.0.1:9 \
+              all_proxy=http://127.0.0.1:9 \
+              HOME="${smoke_root}/home" \
+              "${sdist_agentseek_bin}" create --list-templates > templates.txt
+          )
+          grep -F "bub/default" "${smoke_root}/sdist-listing/templates.txt"
+
+          HOME="${smoke_root}/home" \
+            "${agentseek_bin}" create bub/default --no-input \
+            --output-dir "${smoke_root}/rendered"
+          (
+            cd "${smoke_root}/rendered/my_bub_agent"
+            "${agentseek_bin}" info --json > "${smoke_root}/info.json"
+          )
+          INFO_JSON="${smoke_root}/info.json" "${python_bin}" - <<'PY'
+          import json
+          import os
+
+          with open(os.environ["INFO_JSON"], encoding="utf-8") as stream:
+              payload = json.load(stream)
+
+          assert payload["schema_version"] == 1
+          assert payload["command"] == "info"
+          assert payload["ok"] is True
+          assert payload["lifecycle_version"] == 2
+          assert payload["data"]["project"]["template"] == "bub/default"
+          assert any(service["id"] == "app" for service in payload["data"]["services"])
+          assert any(action["type"] == "open_url" for action in payload["data"]["actions"])
+          PY
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

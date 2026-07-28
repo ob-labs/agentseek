@@ -3,7 +3,7 @@ title: Lifecycle v2 服务发现
 type: reference
 audience: [A2, A3, A5]
 runs: no
-verified_on: 2026-07-21
+verified_on: 2026-07-28
 sources:
   - specs/lifecycle-v2-service-discovery.md
   - docs/adr/0001-versioned-template-catalog-boundary.md
@@ -17,7 +17,8 @@ sources:
 
 规范性文档以
 [Desktop Service Discovery and Lifecycle v2](https://github.com/ob-labs/agentseek/blob/main/specs/lifecycle-v2-service-discovery.md)
-为准。它已被接受为 AgentSeek 0.1.0 的设计，AgentSeek 0.0.5 尚未提供这些行为。
+为准。AgentSeek 0.1.0 已实现该契约；AgentSeek 0.0.5 不提供这些编写 v2 和
+JSON 行为。
 
 ## 契约范围
 

@@ -20,7 +20,7 @@ import httpx
 import typer
 from duty import Collection
 from duty._internal.collection import Duty
-from pydantic import AliasChoices, Field, create_model
+from pydantic import Field, create_model
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from agentseek.cli.lifecycle.errors import (
@@ -410,7 +410,7 @@ def _run_check(name: str, check: CheckV1 | CheckV2) -> CheckResult:
 def _check_target(check: CheckV1 | CheckV2) -> bool:
     try:
         response = httpx.get(check.target, timeout=check.timeout)
-    except httpx.HTTPError:
+    except (httpx.HTTPError, ValueError, OverflowError):
         return False
     return 200 <= response.status_code < 400
 
@@ -436,33 +436,31 @@ def _env_requirement_source(project: LifecycleProject, name: str, requirement: E
 
 def _env_settings_values(project: LifecycleProject, *, env_file: Path | None, defaults: bool) -> dict[str, str]:
     settings = _env_settings_class(project, defaults=defaults)(_env_file=env_file)
-    return settings.model_dump(by_alias=True, exclude_none=True)
+    raw_values = settings.model_dump(exclude_none=True)
+    values: dict[str, str] = {}
+    for index, (name, requirement) in enumerate(project.spec.env.items()):
+        field_names = tuple(f"env_{index}_{key_index}" for key_index, _key in enumerate(requirement.keys(name)))
+        values[name] = next(
+            (str(raw_values[field_name]) for field_name in field_names if raw_values.get(field_name)),
+            "",
+        )
+    return values
 
 
 def _env_settings_class(project: LifecycleProject, *, defaults: bool) -> type[BaseSettings]:
 
     class EnvSettings(BaseSettings):
-        model_config = SettingsConfigDict(extra="ignore", case_sensitive=True)
+        model_config = SettingsConfigDict(extra="ignore", case_sensitive=True, env_ignore_empty=True)
 
     fields: dict[str, Any] = {}
-    for name, requirement in project.spec.env.items():
-        field_name = f"env_{len(fields)}"
-        fields[field_name] = (
-            str | None,
-            Field(
-                requirement.default if defaults else None,
-                validation_alias=_env_validation_alias(name, requirement),
-                serialization_alias=name,
-            ),
-        )
+    for index, (name, requirement) in enumerate(project.spec.env.items()):
+        for key_index, key in enumerate(requirement.keys(name)):
+            fields[f"env_{index}_{key_index}"] = (
+                str | None,
+                Field(requirement.default if defaults and key_index == 0 else None, validation_alias=key),
+            )
 
     return cast("type[BaseSettings]", create_model("LifecycleEnvSettings", __base__=EnvSettings, **fields))
-
-
-def _env_validation_alias(name: str, requirement: EnvRequirement) -> str | AliasChoices:
-    if not requirement.aliases:
-        return name
-    return AliasChoices(name, *requirement.aliases)
 
 
 def _env_file_path(project: LifecycleProject) -> Path | None:

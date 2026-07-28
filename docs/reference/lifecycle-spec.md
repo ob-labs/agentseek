@@ -3,11 +3,13 @@ title: Lifecycle Spec
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-07-21
+verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/lifecycle/spec.py
   - src/agentseek/cli/lifecycle/core.py
   - src/agentseek/cli/lifecycle/authored.py
+  - src/agentseek/cli/lifecycle/normalize.py
+  - src/agentseek/cli/lifecycle/json_output.py
   - src/agentseek/cli/lifecycle/safety.py
   - specs/lifecycle-v2-service-discovery.md
   - docs/adr/0001-versioned-template-catalog-boundary.md
@@ -37,8 +39,8 @@ AgentSeek currently loads and validates authored lifecycle versions `1` and
 | --- | --- |
 | `1`, `2` | Authored lifecycle files load and validate. |
 | `templates/` | Core remains the `version = 1` compatibility mirror. |
-| `agentseek-ai/agentseek-templates` | A later `version = 2` catalog migration. |
-| This slice | Implements authored loading and validation only; normalization, JSON, and catalog delivery remain separate work. |
+| `agentseek-ai/agentseek-templates` | The locked `v0.1.0` standalone catalog supplies new `version = 2` templates. |
+| Normalized and machine surfaces | V1 and v2 project into one safe normalized model; `info --json` and `doctor --json` expose public schema version `1`. |
 
 For the complete authored contract, see the published [lifecycle v2 overview
 (`lifecycle-v2-service-discovery.md`)](lifecycle-v2-service-discovery.md).
@@ -98,6 +100,9 @@ command = ["npm", "install", "--prefix", "frontend"]
 | `checks.<name>` | Live HTTP readiness checks used by `agentseek doctor --live`. 2xx and 3xx responses are successful. |
 | `tasks.<name>` | One-shot tasks run by `agentseek task <name>`. `cwd` is project-relative and must exist. |
 
+For lifecycle v2 HTTP checks, `timeout` is a finite number of seconds greater
+than `0` and no greater than `300`; `attempts` is a positive integer.
+
 ## Environment Checks
 
 AgentSeek checks environment requirements from lifecycle defaults, the optional
@@ -147,8 +152,8 @@ endpoints, and typed reference URLs.
 
 | Command | Behavior |
 | --- | --- |
-| `agentseek info [--verbose]` | Prints project facts from the lifecycle spec. |
-| `agentseek doctor [--live] [--strict]` | Checks tools, paths, env, and optional live endpoints. |
+| `agentseek info [--verbose] [--json]` | Prints project facts, or emits deterministic safe lifecycle metadata as JSON. |
+| `agentseek doctor [--live] [--strict] [--json]` | Checks tools, paths, env, and optional live endpoints; JSON is incompatible with `--strict`. |
 | `agentseek dev [--dry-run] [--skip-check]` | Prints or starts declared development processes. `--skip-check` skips only the preliminary strict `doctor` pass. |
 | `agentseek task --list` | Lists tasks declared under `tasks`. |
 | `agentseek task <name>` | Runs a declared one-shot task. |

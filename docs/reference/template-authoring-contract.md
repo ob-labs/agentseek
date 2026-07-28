@@ -3,15 +3,12 @@ title: Template Authoring Contract
 type: reference
 audience: [A2, A3]
 runs: no
-verified_on: 2026-07-10
+verified_on: 2026-07-28
 sources:
-  - templates/index.json
+  - https://github.com/agentseek-ai/agentseek-templates/blob/main/CONTRIBUTING.md
+  - https://github.com/agentseek-ai/agentseek-templates/blob/v0.1.0/templates/index.json
   - src/agentseek/cli/lifecycle/spec.py
-  - src/agentseek/cli/lifecycle/core.py
-  - tests/cli_commands/test_templates_registry.py
-  - tests/cli_commands/test_templates_render.py
-  - "templates/langchain/agentic-rag/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
-  - "templates/langchain/markdown-messages/{{cookiecutter.project_slug}}/.env.example"
+  - specs/lifecycle-v2-service-discovery.md
 ---
 
 # Template Authoring Contract
@@ -19,6 +16,12 @@ sources:
 Requirements for new or substantially revised templates. Framework-specific
 implementations may differ, but the generated project must preserve this
 AgentSeek-facing contract.
+
+New template work belongs in
+[`agentseek-ai/agentseek-templates`](https://github.com/agentseek-ai/agentseek-templates).
+The core repository's `templates/` tree is a frozen lifecycle-v1 compatibility
+mirror for published 0.0.x clients and does not accept normal template feature
+development.
 
 ## Required Structure
 
@@ -38,7 +41,7 @@ AgentSeek-facing contract.
 | --- | --- |
 | Key | `type/name`, matching the template directory and lifecycle `template` value. |
 | Description | One sentence describing the generated app and its distinguishing capability. |
-| Source of truth | `templates/index.json`. Every non-quarantined Cookiecutter template must be registered. |
+| Source of truth | `templates/index.json` in the standalone catalog. Every catalog template directory must be registered. |
 | New type | Requires explicit CLI and test review; adding a directory alone is insufficient. |
 
 ## Provider Configuration
@@ -59,14 +62,24 @@ aliases; they do not create a second undocumented configuration path.
 
 | Section | Requirement |
 | --- | --- |
-| Root fields | `version = 1`, exact `template = "type/name"`, human-readable `name`, and `env_file = ".env"` when environment checks are declared. |
+| Root fields | `version = 2`, exact nonblank `template = "type/name"`, nonblank `name`, useful `description`, project-relative `guide`, and `env_file = ".env"` when environment checks are declared. |
 | `[tools]` | Every executable required before setup or local development. |
 | `[paths]` | Generated files or installed directories required by `agentseek doctor`. |
 | `[env.<name>]` | Configuration that `agentseek doctor` must check. Aliases must match runtime aliases. |
-| `[services.<name>]` | Every stable user-facing local endpoint shown by `agentseek info`. |
-| `[processes.<name>]` | Every long-running process started by `agentseek dev`. At least one process is required. |
-| `[checks.<name>]` | HTTP readiness check for each service with a stable health or application endpoint. |
-| `[tasks.<name>]` | One-shot setup, preparation, or maintenance action exposed by `agentseek task`. Each task has a description. |
+| `[services.<name>]` | Every stable local endpoint, with `name`, `kind`, `display`, `primary`, `description`, optional `tech`, and useful typed `links`. Exactly one non-hidden service is primary. |
+| `[processes.<name>]` | Every long-running process started by `agentseek dev`. At least one process is required; use `provides` when same-ID inference is insufficient. |
+| `[checks.<name>]` | HTTP readiness check for each checkable service; use `service` when same-ID inference is insufficient. |
+| `[tasks.<name>]` | One-shot setup, preparation, or maintenance action exposed by `agentseek task`. Each task has a description; use `starts` and `stops` for service effects. |
+
+`display` is a presentation hint only: `default` is shown first, `advanced` is
+available on demand, and `hidden` is omitted from default actions. It does not
+control authentication, authorization, network exposure, or startup.
+
+Each catalog template also carries internal `_agentseek_source_url` and
+`_agentseek_source_ref` Cookiecutter values. They must point to the reviewed
+core repository and exact dependency snapshot recorded by the catalog release;
+normal template changes must not replace them with the catalog repository or a
+mutable branch.
 
 Environment resolution for lifecycle checks:
 
@@ -134,10 +147,11 @@ workflow.
 
 | Check | Command or evidence |
 | --- | --- |
-| Registry consistency | `uv run python -m pytest tests/cli_commands/test_templates_registry.py -q` |
-| Default render and lifecycle smoke | `uv run python -m pytest tests/cli_commands/test_templates_render.py -q` |
+| Full catalog contract | Run `make check` in the standalone catalog checkout. |
+| Registry and self-containment | Catalog tests require an exact registry/tree match, regular files/directories only, and a self-contained subtree. |
+| Default render and lifecycle smoke | Catalog tests render every registered template and validate strict lifecycle v2 with the paired core snapshot. |
 | Generated project inspection | Render the local template with `agentseek create <absolute-template-path> --no-input`. |
-| Documentation | `make docs-test` |
+| Core documentation | Run `make docs-test` in the AgentSeek core checkout when this contract changes. |
 
 ## Related
 

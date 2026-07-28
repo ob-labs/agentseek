@@ -319,7 +319,7 @@ class ProcessV2(SpecModel):
 class CheckV2(SpecModel):
     type: Literal["http"] = "http"
     target: str
-    timeout: StrictFloat = 2.0
+    timeout: StrictFloat = Field(default=2.0, gt=0, le=300, allow_inf_nan=False)
     attempts: StrictInt = Field(default=1, gt=0)
     service: Identifier | None = None
 

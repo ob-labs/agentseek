@@ -3,10 +3,11 @@ title: Inspect a Project
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-07-07
+verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/commands/info.py
-  - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
+  - src/agentseek/cli/lifecycle/json_output.py
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # Inspect a Project
@@ -22,7 +23,7 @@ Project
   Root: /path/to/my_bub_agent
   Name: My Bub Agent
   Template: bub/default
-  Lifecycle: .agentseek/lifecycle.toml / version 1
+  Lifecycle: .agentseek/lifecycle.toml / version 2
 
 Entrypoints
   Dev: agentseek dev
@@ -74,6 +75,48 @@ Discovery
   node: /path/to/node
   npm: /path/to/npm
 ```
+
+## Read The Project From Desktop Or Another Tool
+
+Use JSON mode when another program needs stable service topology and actions.
+
+```bash
+agentseek info --json
+```
+
+```json title="pretty-printed excerpt"
+{
+  "schema_version": 1,
+  "command": "info",
+  "ok": true,
+  "lifecycle_version": 2,
+  "data": {
+    "metadata_complete": true,
+    "services": [
+      {
+        "id": "app",
+        "name": "Application",
+        "kind": "web",
+        "display": "default",
+        "primary": true
+      }
+    ],
+    "actions": [
+      {
+        "id": "service:app:open",
+        "type": "open_url",
+        "label": "Open Application",
+        "service_id": "app",
+        "url": "http://127.0.0.1:5173"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+The actual wire output is one compact JSON line. Consumers should use the
+provided `actions` instead of reconstructing behavior from display text.
 
 ## Next
 

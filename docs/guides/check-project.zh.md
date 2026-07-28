@@ -3,10 +3,12 @@ title: 检查项目
 type: how-to
 audience: [A1, A2]
 runs: yes
-verified_on: 2026-06-26
+verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/commands/doctor.py
-  - "templates/bub/default/{{cookiecutter.project_slug}}/.agentseek/lifecycle.toml"
+  - src/agentseek/cli/lifecycle/diagnostics.py
+  - src/agentseek/cli/lifecycle/json_output.py
+  - https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0
 ---
 
 # 检查项目
@@ -73,6 +75,22 @@ target = "http://127.0.0.1:8088/agent/health"
 timeout = 2
 attempts = 3
 ```
+
+## 在自动化中使用诊断结果
+
+需要稳定的类型化结果列表时使用 JSON 模式。服务已启动时加上 `--live`。
+
+```bash
+agentseek doctor --json
+agentseek doctor --live --json
+```
+
+完成的诊断运行使用 `ok: true`。通过 `data.passed` 和进程退出码判断检查是否
+通过；没有 `--live` 时，声明的实时检查状态为 `not_run`。JSON 模式只向 stdout
+写入一个文档，不向 stderr 混入诊断文本。
+
+不要把 `--strict` 和 `--json` 组合使用；该选项冲突会返回退出码 `2` 和结构化
+错误 envelope。
 
 ## 下一步
 

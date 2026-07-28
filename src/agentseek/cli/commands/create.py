@@ -1,16 +1,10 @@
 """``agentseek create`` — scaffold a new agent project from a cookiecutter template.
 
-Templates live in the ``templates/`` directory at the **repository root** (next
-to ``contrib/``).  At runtime the command resolves them in two ways:
-
-1. **Local checkout** — when running from the cloned repo (detected via
-   ``git rev-parse --show-toplevel``), templates are read straight from disk.
-   This gives instant feedback during development: edit a template, run
-   ``agentseek create``, see the result.
-
-2. **Installed / remote** — when the package is ``pip install``-ed without
-   a working tree, the command prepares the repository in cookiecutter's cache
-   first, then reads templates from that cached checkout.
+Named templates come from the standalone catalog recorded by the immutable lock
+packaged in the AgentSeek wheel. Listing uses the lock's registry snapshot and
+selected template content is cached by repository, commit, key, and lock digest.
+Absolute local paths and external Cookiecutter URLs remain explicit development
+paths and never participate in named default resolution.
 
 Spec resolution:
 
@@ -51,6 +45,8 @@ from filelock import FileLock
 from filelock import Timeout as FileLockTimeout
 from typer.core import TyperGroup
 
+from agentseek.cli import catalog as locked_catalog
+
 # ---------------------------------------------------------------------------
 # Typer plumbing
 # ---------------------------------------------------------------------------
@@ -89,7 +85,6 @@ REPO_URL = "https://github.com/ob-labs/agentseek"
 REPO_GIT_URL = f"{REPO_URL}.git"
 # The directory inside the repo that holds all cookiecutter templates.
 TEMPLATES_DIR = "templates"
-TEMPLATE_REPO_CACHE_DIR = "agentseek"
 EXPLICIT_TEMPLATE_REPO_CACHE_DIR = "agentseek-explicit-catalogs"
 EXPLICIT_CATALOG_METADATA = ".agentseek-catalog-metadata.json"
 EXPLICIT_CATALOG_REPOSITORY_DIR = "repository"
@@ -98,6 +93,7 @@ EXPLICIT_CATALOG_LOCK_TIMEOUT_SECONDS = 30.0
 EXPLICIT_CATALOG_GIT_TIMEOUT_SECONDS = 60.0
 QUARANTINED_TEMPLATE_KEYS: frozenset[str] = frozenset({"bub/contextseek"})
 _COMMIT_SHA_PATTERN = re.compile(r"[0-9a-f]{40}\Z")
+_CHECKOUT_REF_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,200}\Z")
 _TEMPLATE_KEY_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 _WINDOWS_RESERVED_NAMES: frozenset[str] = frozenset(
     {"CON", "PRN", "AUX", "NUL"} | {f"COM{index}" for index in range(1, 10)} | {f"LPT{index}" for index in range(1, 10)}
@@ -118,6 +114,7 @@ class TemplateSource:
     checkout: str | None = None  # cookiecutter ``checkout`` kwarg (branch / tag)
     install_source_path: PurePath | None = None  # local monorepo path for generated project deps
     install_source_url: str | None = None  # remote repo URL for generated project deps
+    install_source_ref: str | None = None  # exact remote revision for generated project deps
 
 
 @dataclass(frozen=True)
@@ -129,13 +126,18 @@ class _ExplicitCatalogCoordinate:
 
 @dataclass(frozen=True)
 class _PreparedCatalog:
-    templates_root: Path
+    templates_root: Path | None
     registry: Mapping[str, str]
     source_policy: str
+    catalog_lock: locked_catalog.CatalogLock | None = None
 
     @property
     def is_explicit(self) -> bool:
-        return self.source_policy == "explicit"
+        return self.source_policy in {"explicit", "checkout-override"}
+
+    @property
+    def is_locked(self) -> bool:
+        return self.source_policy in {"locked-index", "locked-template", "checkout-override"}
 
 
 class _InvalidExplicitCatalog(ValueError):
@@ -198,13 +200,22 @@ def _resolve_type_template(
         if templates_root is None:
             raise TypeError
         catalog = _catalog_from_root(templates_root)
+    if catalog.templates_root is None:
+        raise TypeError
     template_path = catalog.templates_root / project_type / template_name
     if _catalog_has_template(catalog, project_type, template_name) and (template_path / "cookiecutter.json").is_file():
         install_source_path = catalog.templates_root.parent if catalog.source_policy == "local-core" else None
         return TemplateSource(
             template=str(template_path),
             install_source_path=install_source_path,
-            install_source_url=None if install_source_path else REPO_GIT_URL,
+            install_source_url=(
+                None
+                if install_source_path
+                else catalog.catalog_lock.core_repository
+                if catalog.catalog_lock is not None
+                else REPO_GIT_URL
+            ),
+            install_source_ref=catalog.catalog_lock.core_commit if catalog.catalog_lock is not None else None,
         )
     _print_unknown_template(project_type, template_name, catalog=catalog)
     raise typer.Exit(2)
@@ -247,6 +258,11 @@ def _list_templates(
         catalog = catalog_or_root
     else:
         catalog = _catalog_from_root(catalog_or_root)
+    if catalog.is_locked:
+        prefix = f"{project_type}/"
+        return sorted(key.removeprefix(prefix) for key in catalog.registry if key.startswith(prefix))
+    if catalog.templates_root is None:
+        return []
     type_dir = catalog.templates_root / project_type
     if not type_dir.is_dir():
         return []
@@ -255,52 +271,6 @@ def _list_templates(
         for entry in type_dir.iterdir()
         if (entry / "cookiecutter.json").is_file() and _catalog_has_template(catalog, project_type, entry.name)
     )
-
-
-def _cookiecutter_template_is_complete(template_dir: Path) -> bool:
-    context = _load_cookiecutter_context(template_dir)
-    project_root = template_dir / "{{cookiecutter.project_slug}}"
-    if not context or "project_slug" not in context or not project_root.is_dir():
-        return False
-    try:
-        return any(path.is_file() for path in project_root.rglob("*"))
-    except OSError:
-        return False
-
-
-def _templates_root_is_complete(templates_root: Path) -> bool:
-    descriptions = _load_template_descriptions(templates_root)
-    return bool(descriptions) and all(
-        _cookiecutter_template_is_complete(templates_root / template) for template in descriptions
-    )
-
-
-def _prepare_templates_root(checkout: str | None = None) -> Path:
-    local_root = _local_templates_root()
-    if local_root is not None:
-        return local_root
-
-    from cookiecutter.config import get_user_config
-    from cookiecutter.vcs import clone
-
-    cookiecutters_dir = Path(get_user_config()["cookiecutters_dir"]).expanduser()
-    cached_repo = cookiecutters_dir / TEMPLATE_REPO_CACHE_DIR
-    cached_templates_root = cached_repo / TEMPLATES_DIR
-    if checkout is None and _templates_root_is_complete(cached_templates_root):
-        templates_root = cached_templates_root
-    else:
-        repo_root = clone(
-            REPO_URL,
-            checkout=checkout,
-            clone_to_dir=cookiecutters_dir,
-            no_input=True,
-        )
-        templates_root = Path(repo_root) / TEMPLATES_DIR
-
-    if not _templates_root_is_complete(templates_root):
-        typer.echo(f"Template cache is missing or incomplete at {templates_root}.", err=True)
-        raise typer.Exit(1)
-    return templates_root
 
 
 def _normalize_explicit_repository_url(repository_url: str) -> str:
@@ -642,15 +612,17 @@ def _strict_explicit_catalog_descriptions(repo_root: Path) -> dict[str, str]:
 
 
 def _prepared_catalog(
-    templates_root: Path,
+    templates_root: Path | None,
     registry: Mapping[str, str],
     *,
     source_policy: str,
+    catalog_lock: locked_catalog.CatalogLock | None = None,
 ) -> _PreparedCatalog:
     return _PreparedCatalog(
         templates_root=templates_root,
         registry=MappingProxyType(dict(registry)),
         source_policy=source_policy,
+        catalog_lock=catalog_lock,
     )
 
 
@@ -926,7 +898,133 @@ def _catalog_from_root(
 
 
 def _prepare_default_catalog(checkout: str | None = None) -> _PreparedCatalog:
-    return _catalog_from_root(_prepare_templates_root(checkout=checkout))
+    if checkout is not None:
+        return _prepare_checkout_catalog(checkout)
+    try:
+        catalog_lock = locked_catalog.load_catalog_lock()
+    except locked_catalog.CatalogError as exc:
+        typer.echo(f"Could not load the locked template catalog: {exc}.", err=True)
+        raise typer.Exit(1) from None
+    return _prepared_catalog(
+        None,
+        catalog_lock.templates,
+        source_policy="locked-index",
+        catalog_lock=catalog_lock,
+    )
+
+
+def _validate_checkout_ref(ref: str) -> None:
+    parts = ref.split("/")
+    if (
+        _CHECKOUT_REF_PATTERN.fullmatch(ref) is None
+        or ".." in ref
+        or "//" in ref
+        or "@{" in ref
+        or ref.endswith(("/", "."))
+        or any(part in {"", ".", ".."} or part.startswith(".") or part.casefold().endswith(".lock") for part in parts)
+    ):
+        _reject_explicit_catalog("--checkout is not a safe Git branch or tag name")
+
+
+def _resolve_standalone_catalog_ref(repository_url: str, ref: str) -> str:
+    """Resolve one unambiguous standalone-catalog branch or tag to a commit."""
+    if _COMMIT_SHA_PATTERN.fullmatch(ref) is not None:
+        return ref
+    _validate_checkout_ref(ref)
+    command = [
+        "git",
+        "ls-remote",
+        "--exit-code",
+        "--",
+        repository_url,
+        f"refs/heads/{ref}",
+        f"refs/tags/{ref}",
+        f"refs/tags/{ref}^{{}}",
+    ]
+    environment = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+    try:
+        result = subprocess.run(  # noqa: S603
+            command,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=EXPLICIT_CATALOG_GIT_TIMEOUT_SECONDS,
+            stdin=subprocess.DEVNULL,
+            env=environment,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+        _reject_explicit_catalog("standalone catalog checkout ref could not be resolved", cause=exc)
+
+    entries: dict[str, set[str]] = {}
+    for line in result.stdout.splitlines():
+        try:
+            commit, remote_ref = line.split("\t", 1)
+        except ValueError:
+            _reject_explicit_catalog("standalone catalog checkout returned malformed Git output")
+        if _COMMIT_SHA_PATTERN.fullmatch(commit) is None:
+            _reject_explicit_catalog("standalone catalog checkout returned an invalid commit")
+        entries.setdefault(remote_ref, set()).add(commit)
+
+    heads = entries.get(f"refs/heads/{ref}", set())
+    direct_tags = entries.get(f"refs/tags/{ref}", set())
+    peeled_tags = entries.get(f"refs/tags/{ref}^{{}}", set())
+    tags = peeled_tags or direct_tags
+    if heads and tags:
+        _reject_explicit_catalog("standalone catalog checkout ref is ambiguous between a branch and tag")
+    commits = heads or tags
+    if len(commits) != 1:
+        _reject_explicit_catalog("standalone catalog checkout ref did not resolve to one commit")
+    return next(iter(commits))
+
+
+def _prepare_checkout_catalog(checkout: str) -> _PreparedCatalog:
+    try:
+        catalog_lock = locked_catalog.load_catalog_lock()
+    except locked_catalog.CatalogError as exc:
+        typer.echo(f"Could not load the locked template catalog: {exc}.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        commit = _resolve_standalone_catalog_ref(catalog_lock.catalog_repository, checkout)
+        normalized = _normalize_explicit_repository_url(catalog_lock.catalog_repository)
+    except (ValueError, _InvalidExplicitCatalog) as exc:
+        typer.echo(f"Standalone template checkout is invalid: {exc}.", err=True)
+        raise typer.Exit(1) from None
+    prepared = _prepare_explicit_catalog(
+        _ExplicitCatalogCoordinate(
+            fetch_url=catalog_lock.catalog_repository,
+            normalized_url=normalized,
+            commit=commit,
+        )
+    )
+    return _prepared_catalog(
+        prepared.templates_root,
+        prepared.registry,
+        source_policy="checkout-override",
+        catalog_lock=catalog_lock,
+    )
+
+
+def _prepare_locked_template_catalog(catalog: _PreparedCatalog, key: str) -> _PreparedCatalog:
+    catalog_lock = catalog.catalog_lock
+    if catalog_lock is None or not catalog.is_locked:
+        return catalog
+    from cookiecutter.config import get_user_config
+
+    try:
+        cookiecutters_dir = Path(get_user_config()["cookiecutters_dir"]).expanduser().absolute()
+        template_dir = locked_catalog.prepare_locked_template(catalog_lock, key, cookiecutters_dir)
+    except locked_catalog.CatalogError as exc:
+        typer.echo(f"Could not prepare the locked template catalog: {exc}.", err=True)
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Could not prepare the locked template catalog.", err=True)
+        raise typer.Exit(1) from None
+    return _prepared_catalog(
+        template_dir.parents[1],
+        catalog.registry,
+        source_policy="locked-template",
+        catalog_lock=catalog_lock,
+    )
 
 
 def _catalog_has_template(
@@ -1090,12 +1188,15 @@ def _cookiecutter_source_context(source: TemplateSource) -> dict[str, str]:
     install_source_path = source.install_source_path
     source_path = str(install_source_path) if install_source_path is not None else ""
     source_path_posix = install_source_path.as_posix() if install_source_path is not None else ""
-    return {
+    context = {
         "_agentseek_source_path": source_path,
         "_agentseek_source_path_posix": source_path_posix,
         "_agentseek_source_path_shell": shlex.quote(source_path_posix) if source_path_posix else "",
         "_agentseek_source_url": source.install_source_url or REPO_GIT_URL,
     }
+    if source.install_source_ref is not None:
+        context["_agentseek_source_ref"] = source.install_source_ref
+    return context
 
 
 def _run_cookiecutter(
@@ -1233,12 +1334,15 @@ def _describe_template(
     template_dir = Path(source.template)
 
     # Build a clean key (e.g. "bub/default") from the templates root.
-    try:
-        rel = template_dir.relative_to(catalog.templates_root)
-        parts = rel.parts
-        spec_key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else str(rel)
-    except ValueError:
+    if catalog.templates_root is None:
         spec_key = f"{template_dir.parent.name}/{template_dir.name}"
+    else:
+        try:
+            rel = template_dir.relative_to(catalog.templates_root)
+            parts = rel.parts
+            spec_key = f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else str(rel)
+        except ValueError:
+            spec_key = f"{template_dir.parent.name}/{template_dir.name}"
 
     description = catalog.registry.get(spec_key, "")
 
@@ -1293,6 +1397,35 @@ def _handle_external_spec(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _catalog_for_request(
+    args: argparse.Namespace,
+    explicit_catalog: _ExplicitCatalogCoordinate | None,
+) -> _PreparedCatalog:
+    if explicit_catalog is not None:
+        return _prepare_explicit_catalog(explicit_catalog)
+    return _prepare_default_catalog(checkout=args.checkout)
+
+
+def _choose_template_name(
+    args: argparse.Namespace,
+    catalog: _PreparedCatalog,
+    project_type: str,
+    template_name: str | None,
+) -> str:
+    selected = template_name if template_name is not None else args.template
+    if selected is not None:
+        return selected
+    if args.no_input:
+        return "default"
+    descriptions = dict(catalog.registry)
+    available = _list_templates(project_type, catalog)
+    if not available:
+        return "default"
+    if len(available) == 1:
+        return available[0]
+    return _prompt_template_name(project_type, available, descriptions)
+
+
 @app.callback(invoke_without_command=True)
 def create(ctx: typer.Context) -> None:
     """Scaffold a new agent project from a pre-built template."""
@@ -1311,11 +1444,7 @@ def create(ctx: typer.Context) -> None:
     # --- --list-templates or --template (no value) ---
     if args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL:
         _validate_optional_project_type(project_type)
-        catalog = (
-            _prepare_explicit_catalog(explicit_catalog)
-            if explicit_catalog is not None
-            else _prepare_default_catalog(checkout=args.checkout)
-        )
+        catalog = _catalog_for_request(args, explicit_catalog)
         _show_templates(
             project_type,
             catalog=catalog,
@@ -1323,11 +1452,7 @@ def create(ctx: typer.Context) -> None:
         )
         return
 
-    catalog = (
-        _prepare_explicit_catalog(explicit_catalog)
-        if explicit_catalog is not None
-        else _prepare_default_catalog(checkout=args.checkout)
-    )
+    catalog = _catalog_for_request(args, explicit_catalog)
 
     # --- Interactive type selection if needed ---
     if project_type is None:
@@ -1336,20 +1461,14 @@ def create(ctx: typer.Context) -> None:
     _validate_project_type(project_type)
 
     # --- Resolve template name ---
-    if template_name is None:
-        template_name = args.template
-    if template_name is None:
-        if args.no_input:
-            template_name = "default"
-        else:
-            descriptions = dict(catalog.registry)
-            available = _list_templates(project_type, catalog)
-            if not available:
-                template_name = "default"
-            elif len(available) == 1:
-                template_name = available[0]
-            else:
-                template_name = _prompt_template_name(project_type, available, descriptions)
+    template_name = _choose_template_name(args, catalog, project_type, template_name)
+
+    if not _catalog_has_template(catalog, project_type, template_name):
+        _print_unknown_template(project_type, template_name, catalog=catalog)
+        raise typer.Exit(2)
+
+    if catalog.source_policy == "locked-index":
+        catalog = _prepare_locked_template_catalog(catalog, _template_key(project_type, template_name))
 
     source = _resolve_type_template(
         project_type,

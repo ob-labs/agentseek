@@ -1,6 +1,6 @@
 [project]
 name = "agentseek"
-version = "0.0.5"
+version = "0.1.0"
 description = "A database-native Agent Harness for runtime data workflows, powered by Bub"
 authors = [{ name = "Chojan Shang", email = "psiace@apache.org" }]
 readme = "README.md"
@@ -66,10 +66,11 @@ build-backend = "pdm.backend"
 [tool.pdm.build]
 includes = [
     "src/agentseek",
+    "src/agentseek/data/*.json",
     "src/skills",
 ]
 skills = [
-    { git = "https://github.com/PsiACE/skills.git", subpath = "skills", include = ["friendly-python", "piglet"] },
+    { git = "https://github.com/PsiACE/skills.git", ref = "4f09937234d128656fdc8c8658c840ebbf7e28d1", subpath = "skills", include = ["friendly-python", "piglet"] },
 ]
 
 # Lock file is always resolved against PyPI. For faster install during dev, use:

@@ -893,6 +893,28 @@ def test_selected_v2_model_rejects_coerced_scalar_fields(
     assert exc_info.value.issues == (LifecycleValidationIssue(path, "type_invalid", "Value has an invalid type."),)
 
 
+@pytest.mark.parametrize("timeout", ["0.0", "-1.0", "301.0", "nan", "inf", "-inf"])
+def test_selected_v2_model_rejects_out_of_range_check_timeout(
+    tmp_path: Path,
+    timeout: str,
+) -> None:
+    source = (FIXTURES / "v2-bub-explicit.toml").read_text(encoding="utf-8")
+    lifecycle = tmp_path / "lifecycle.toml"
+    lifecycle.write_text(
+        source.replace(
+            'target = "http://127.0.0.1:5173"\nservice = "app"',
+            f'target = "http://127.0.0.1:5173"\nservice = "app"\ntimeout = {timeout}',
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(LifecycleValidationError) as exc_info:
+        read_lifecycle_spec(lifecycle, project_root=tmp_path)
+
+    assert any(issue.path == "checks.frontend.timeout" for issue in exc_info.value.issues)
+
+
 def test_v2_allows_an_empty_optional_root_description(tmp_path: Path) -> None:
     path = tmp_path / "lifecycle.toml"
     path.write_text(

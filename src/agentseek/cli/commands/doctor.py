@@ -7,6 +7,7 @@ from typing import Annotated
 import typer
 
 from agentseek.cli.lifecycle import load_lifecycle_project, run_lifecycle_task
+from agentseek.cli.lifecycle.json_commands import print_doctor_json
 
 app = typer.Typer(
     name="doctor",
@@ -26,8 +27,15 @@ def doctor(
         bool,
         typer.Option("--strict", help="Return non-zero when warnings are present."),
     ] = False,
+    json_output: Annotated[
+        bool,
+        typer.Option("--json", help="Emit versioned machine-readable diagnostic results."),
+    ] = False,
 ) -> None:
     """Run static and optional live checks for the current project."""
+    if json_output:
+        print_doctor_json(live=live, strict=strict)
+        return
     project = load_lifecycle_project()
     run_lifecycle_task(project, "doctor", live=live, strict=strict)
 

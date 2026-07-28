@@ -103,6 +103,16 @@ def _mock_local_templates_root(
     return templates_root
 
 
+def _use_local_default_catalog(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep command-shape tests focused below the locked resolver boundary."""
+    templates_root = Path(__file__).resolve().parents[2] / "templates"
+    monkeypatch.setattr(
+        create_module,
+        "_prepare_default_catalog",
+        lambda checkout=None: create_module._catalog_from_root(templates_root, source_policy="local-core"),
+    )
+
+
 # -- spec validation / error paths -----------------------------------------
 
 
@@ -138,41 +148,21 @@ def test_list_templates_without_type_lists_all_known_types() -> None:
 
 
 def test_list_templates_filter_matches_specs_and_descriptions(monkeypatch, tmp_path: Path) -> None:
-    _mock_local_templates_root(
-        monkeypatch,
-        tmp_path,
-        {
-            "deepagents/default": "General DeepAgents starter.",
-            "langchain/graph": "Remote LangGraph starter.",
-            "bub/default": "Lightweight Bub starter.",
-        },
-    )
-
     result = _runner().invoke(build_command_app(), ["create", "--list-templates", "--filter", "LANGGRAPH"])
 
     assert result.exit_code == 0, result.output
-    assert "langchain/graph" in result.output
-    assert "Remote LangGraph starter." in result.output
+    assert "langchain/cli-remote" in result.output
+    assert "Remote LangGraph CLI agent" in result.output
     assert "deepagents/default" not in result.output
     assert "bub/default" not in result.output
 
 
 def test_list_templates_filter_for_type_only_prints_matching_templates(monkeypatch, tmp_path: Path) -> None:
-    _mock_local_templates_root(
-        monkeypatch,
-        tmp_path,
-        {
-            "langchain/graph": "Remote LangGraph starter.",
-            "langchain/chat": "Chat-only starter.",
-            "bub/default": "Lightweight Bub starter.",
-        },
-    )
-
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--list-templates", "--filter", "graph"])
+    result = _runner().invoke(build_command_app(), ["create", "langchain", "--list-templates", "--filter", "hybrid"])
 
     assert result.exit_code == 0, result.output
-    assert "langchain/graph" in result.output
-    assert "langchain/chat" not in result.output
+    assert "langchain/agentic-rag-hybrid" in result.output
+    assert "langchain/default" not in result.output
     assert "bub/default" not in result.output
 
 
@@ -295,231 +285,6 @@ def test_quarantined_contextseek_template_stays_hidden_from_stale_cache(monkeypa
     assert "Template bub/contextseek was not found" in describe_result.output
 
 
-def test_template_flag_no_value_lists_remote_templates_without_checkout(monkeypatch, tmp_path: Path) -> None:
-    """Installed CLI should download templates before listing them."""
-    clone_calls = _mock_remote_template_repo(
-        monkeypatch,
-        tmp_path,
-        {
-            "bub/default": "Default Bub template.",
-            "deepagents/default": "Default DeepAgents template.",
-            "langchain/default": "Default LangChain template.",
-        },
-    )
-
-    result = _runner().invoke(build_command_app(), ["create", "--template"])
-
-    assert result.exit_code == 0, result.output
-    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
-    assert "bub/default" in result.output
-    assert "Default Bub template." in result.output
-    assert "deepagents/default" in result.output
-    assert "Default DeepAgents template." in result.output
-    assert "langchain/default" in result.output
-    assert "Default LangChain template." in result.output
-    assert "Usage:" in result.output
-
-
-def test_template_flag_no_value_for_type_uses_remote_checkout(monkeypatch, tmp_path: Path) -> None:
-    """``--checkout`` should be forwarded to cookiecutter's clone path."""
-    clone_calls = _mock_remote_template_repo(
-        monkeypatch,
-        tmp_path,
-        {"langchain/remote-only": "Remote-only LangChain template."},
-    )
-
-    result = _runner().invoke(build_command_app(), ["create", "langchain", "--template", "--checkout", "release/next"])
-
-    assert result.exit_code == 0, result.output
-    assert clone_calls == [(create_module.REPO_URL, "release/next", str(tmp_path / "cookiecutters"), True)]
-    assert "langchain/remote-only" in result.output
-    assert "Usage:" not in result.output
-
-
-def test_template_flag_no_value_reuses_cached_remote_repo(monkeypatch, tmp_path: Path) -> None:
-    """Installed CLI should use the cookiecutter cache before cloning."""
-    clone_calls = _mock_remote_template_repo(
-        monkeypatch,
-        tmp_path,
-        {"bub/cached": "Cached Bub template."},
-        cached=True,
-    )
-
-    result = _runner().invoke(build_command_app(), ["create", "bub", "--template"])
-
-    assert result.exit_code == 0, result.output
-    assert clone_calls == []
-    assert "bub/cached" in result.output
-    assert "Cached Bub template." in result.output
-
-
-@pytest.mark.parametrize("partial_path", [Path("."), Path("templates")])
-def test_template_flag_refetches_incomplete_cached_remote_repo(
-    monkeypatch,
-    tmp_path: Path,
-    partial_path: Path,
-) -> None:
-    """Installed CLI should not treat an incomplete cache as a checkout."""
-    clone_calls = _mock_remote_template_repo(
-        monkeypatch,
-        tmp_path,
-        {"deepagents/default": "Default DeepAgents template."},
-    )
-    incomplete_cache = tmp_path / "cookiecutters" / "agentseek" / partial_path
-    incomplete_cache.mkdir(parents=True)
-
-    result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
-
-    assert result.exit_code == 0, result.output
-    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
-    assert "deepagents/default" in result.output
-    assert "Default DeepAgents template." in result.output
-
-
-def test_template_flag_refetches_cache_with_missing_registered_template(monkeypatch, tmp_path: Path) -> None:
-    """A cache index is incomplete when one of its registered templates is absent."""
-    clone_calls = _mock_remote_template_repo(
-        monkeypatch,
-        tmp_path,
-        {"deepagents/default": "Default DeepAgents template."},
-    )
-    incomplete_templates = tmp_path / "cookiecutters" / "agentseek" / "templates"
-    incomplete_templates.mkdir(parents=True)
-    (incomplete_templates / "index.json").write_text(
-        json.dumps({"deepagents/default": "Default DeepAgents template."}),
-        encoding="utf-8",
-    )
-
-    result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
-
-    assert result.exit_code == 0, result.output
-    assert clone_calls == [(create_module.REPO_URL, None, str(tmp_path / "cookiecutters"), True)]
-    assert "deepagents/default" in result.output
-    assert "Default DeepAgents template." in result.output
-
-
-@pytest.mark.parametrize(
-    ("broken_config", "first_clone_has_body"),
-    [
-        (b"{", True),
-        (b"\xff", True),
-        (json.dumps({"project_slug": "demo"}).encode(), False),
-    ],
-    ids=["truncated-json", "invalid-utf8", "missing-template-body"],
-)
-def test_incomplete_clone_is_not_reused_on_retry(
-    monkeypatch,
-    tmp_path: Path,
-    broken_config: bytes,
-    first_clone_has_body: bool,
-) -> None:
-    """A clone that returns corrupt template state must not poison later retries."""
-    cookiecutters_dir = tmp_path / "cookiecutters"
-    repo_root = cookiecutters_dir / "agentseek"
-    clone_calls: list[tuple[str, str | None, str, bool]] = []
-
-    def fake_get_user_config() -> dict[str, str]:
-        return {"cookiecutters_dir": str(cookiecutters_dir)}
-
-    def fake_clone(
-        repo_url: str,
-        *,
-        checkout: str | None = None,
-        clone_to_dir: Path | str = ".",
-        no_input: bool = False,
-    ) -> str:
-        clone_calls.append((repo_url, checkout, str(clone_to_dir), no_input))
-        if repo_root.exists():
-            shutil.rmtree(repo_root)
-        template_dir = repo_root / "templates" / "deepagents" / "default"
-        template_dir.mkdir(parents=True)
-        (repo_root / "templates" / "index.json").write_text(
-            json.dumps({"deepagents/default": "Default DeepAgents template."}),
-            encoding="utf-8",
-        )
-        cookiecutter_json = template_dir / "cookiecutter.json"
-        if len(clone_calls) == 1:
-            cookiecutter_json.write_bytes(broken_config)
-        else:
-            cookiecutter_json.write_text(json.dumps({"project_slug": "demo"}), encoding="utf-8")
-        if len(clone_calls) > 1 or first_clone_has_body:
-            project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
-            project_file.parent.mkdir()
-            project_file.write_text("# Demo\n", encoding="utf-8")
-        return str(repo_root)
-
-    monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
-    monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
-    monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
-
-    first_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
-
-    assert first_result.exit_code == 1
-    assert "Template cache is missing or incomplete" in first_result.output
-    assert len(clone_calls) == 1
-
-    second_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
-
-    assert second_result.exit_code == 0, second_result.output
-    assert len(clone_calls) == 2
-    assert "deepagents/default" in second_result.output
-
-
-def test_invalid_utf8_template_index_is_not_reused_on_retry(monkeypatch, tmp_path: Path) -> None:
-    """A clone with an unreadable registry must be replaceable on the next attempt."""
-    cookiecutters_dir = tmp_path / "cookiecutters"
-    repo_root = cookiecutters_dir / "agentseek"
-    clone_calls: list[tuple[str, str | None, str, bool]] = []
-
-    def fake_get_user_config() -> dict[str, str]:
-        return {"cookiecutters_dir": str(cookiecutters_dir)}
-
-    def fake_clone(
-        repo_url: str,
-        *,
-        checkout: str | None = None,
-        clone_to_dir: Path | str = ".",
-        no_input: bool = False,
-    ) -> str:
-        clone_calls.append((repo_url, checkout, str(clone_to_dir), no_input))
-        if repo_root.exists():
-            shutil.rmtree(repo_root)
-        template_dir = repo_root / "templates" / "deepagents" / "default"
-        template_dir.mkdir(parents=True)
-        index = repo_root / "templates" / "index.json"
-        if len(clone_calls) == 1:
-            index.write_bytes(b"\xff")
-        else:
-            index.write_text(
-                json.dumps({"deepagents/default": "Default DeepAgents template."}),
-                encoding="utf-8",
-            )
-        (template_dir / "cookiecutter.json").write_text(
-            json.dumps({"project_slug": "demo"}),
-            encoding="utf-8",
-        )
-        project_file = template_dir / "{{cookiecutter.project_slug}}" / "README.md"
-        project_file.parent.mkdir()
-        project_file.write_text("# Demo\n", encoding="utf-8")
-        return str(repo_root)
-
-    monkeypatch.setattr(create_module, "_local_templates_root", lambda: None)
-    monkeypatch.setattr("cookiecutter.config.get_user_config", fake_get_user_config)
-    monkeypatch.setattr("cookiecutter.vcs.clone", fake_clone)
-
-    first_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
-
-    assert first_result.exit_code == 1
-    assert "Template cache is missing or incomplete" in first_result.output
-    assert len(clone_calls) == 1
-
-    second_result = _runner().invoke(build_command_app(), ["create", "deepagents", "--list-templates"])
-
-    assert second_result.exit_code == 0, second_result.output
-    assert len(clone_calls) == 2
-    assert "deepagents/default" in second_result.output
-
-
 # -- template resolution ---------------------------------------------------
 
 
@@ -624,6 +389,7 @@ def _assert_no_next_steps(output: str) -> None:
 
 
 def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
+    _use_local_default_catalog(monkeypatch)
     captured: dict[str, object] = {}
 
     def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
@@ -656,6 +422,7 @@ def test_create_with_explicit_template_invokes_cookiecutter(monkeypatch, tmp_pat
 
 
 def test_create_with_output_dir_invokes_cookiecutter_in_selected_directory(monkeypatch, tmp_path: Path) -> None:
+    _use_local_default_catalog(monkeypatch)
     captured: dict[str, object] = {}
     output_dir = Path("generated")
 
@@ -686,6 +453,7 @@ def test_create_with_output_dir_invokes_cookiecutter_in_selected_directory(monke
 
 def test_create_with_slash_spec_invokes_cookiecutter(monkeypatch, tmp_path: Path) -> None:
     """``agentseek create bub/default --no-input`` should resolve correctly."""
+    _use_local_default_catalog(monkeypatch)
     captured: dict[str, object] = {}
 
     def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
@@ -783,6 +551,7 @@ def test_create_with_url_spec_and_output_dir_passes_selected_directory(monkeypat
 
 def test_describe_prints_template_info(monkeypatch, tmp_path: Path) -> None:
     """``--describe`` should print template description and cookiecutter variables."""
+    _use_local_default_catalog(monkeypatch)
     captured: dict[str, object] = {}
 
     def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
@@ -809,6 +578,7 @@ def test_describe_prints_template_info(monkeypatch, tmp_path: Path) -> None:
 
 def test_describe_does_not_create_files(monkeypatch, tmp_path: Path) -> None:
     """``--describe`` must not run cookiecutter or create any files."""
+    _use_local_default_catalog(monkeypatch)
 
     def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> None:
         pytest.fail("cookiecutter should not be called in --describe mode")
@@ -1605,7 +1375,10 @@ def test_explicit_catalog_publishers_share_coordinate_lock_and_one_publication(
         clone_release.set()
         prepared = [first.result(timeout=5), second.result(timeout=5)]
 
-    roots = [item.templates_root for item in prepared]
+    roots: list[Path] = []
+    for item in prepared:
+        assert item.templates_root is not None
+        roots.append(item.templates_root)
     assert acquisition_attempts == 2
     assert len(clone_calls) == 1
     assert roots[0] == roots[1]
@@ -1710,6 +1483,7 @@ def test_explicit_catalog_selection_uses_validated_registry_snapshot(
     ) -> create_module._PreparedCatalog:
         prepared = original_prepare(coordinate)
         templates_root = prepared.templates_root
+        assert templates_root is not None
         index_path = templates_root / "index.json"
         index = json.loads(index_path.read_text(encoding="utf-8"))
         index["bub/unregistered"] = "Added after strict preparation."

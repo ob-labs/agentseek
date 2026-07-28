@@ -199,6 +199,42 @@ def test_doctor_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
     assert "ok   BUB_MODEL: BUB_MODEL is configured." in result.stdout
 
 
+def test_doctor_uses_nonempty_alias_when_primary_environment_value_is_empty(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _write_lifecycle_spec(tmp_path)
+    _write_project_inputs(tmp_path)
+    monkeypatch.setenv("BUB_API_KEY", "")
+    monkeypatch.setenv("BUB_OPENAI_API_KEY", "usable")
+    monkeypatch.setattr(lifecycle_core.shutil, "which", lambda _tool: sys.executable)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["doctor", "--strict"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "ok   BUB_API_KEY: BUB_API_KEY or BUB_OPENAI_API_KEY is configured." in result.stdout
+
+
+def test_doctor_uses_env_file_when_same_shell_key_is_empty(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    _write_project_inputs(tmp_path)
+    (tmp_path / ".env").write_text(
+        "BUB_MODEL=openai:gpt-4o-mini\nBUB_API_KEY=DOTENV_SECRET_MUST_NOT_APPEAR\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("BUB_API_KEY", "")
+    monkeypatch.delenv("BUB_OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(lifecycle_core.shutil, "which", lambda _tool: sys.executable)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["doctor", "--strict"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "ok   BUB_API_KEY: BUB_API_KEY or BUB_OPENAI_API_KEY is configured." in result.stdout
+    assert "DOTENV_SECRET_MUST_NOT_APPEAR" not in result.stdout
+
+
 def test_doctor_reports_missing_required_inputs(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
     monkeypatch.chdir(tmp_path)
@@ -229,6 +265,32 @@ def test_doctor_live_accepts_2xx_and_3xx_statuses(tmp_path: Path, monkeypatch) -
 
         assert result.exit_code == 0, result.stdout + result.stderr
         assert "ok   app: http://127.0.0.1:5173 is reachable." in result.stdout
+
+
+@pytest.mark.parametrize(
+    "error",
+    [ValueError("invalid timeout"), OverflowError("timestamp out of range")],
+    ids=["invalid-value", "platform-overflow"],
+)
+def test_doctor_live_handles_legacy_http_runtime_error_as_failed_check(
+    tmp_path: Path,
+    monkeypatch,
+    error: Exception,
+) -> None:
+    _write_lifecycle_spec(tmp_path)
+    _write_project_inputs(tmp_path)
+    monkeypatch.setattr(lifecycle_core.shutil, "which", lambda _tool: sys.executable)
+    monkeypatch.setattr(
+        lifecycle_core.httpx,
+        "get",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(error),
+    )
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["doctor", "--live", "--strict"])
+
+    assert result.exit_code == 1
+    assert "fail app: http://127.0.0.1:5173 is not reachable." in result.stdout
 
 
 def test_doctor_live_runs_v2_check_through_the_shared_http_path(tmp_path: Path, monkeypatch) -> None:

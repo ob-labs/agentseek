@@ -13,6 +13,11 @@ stack, and expose project tasks through one consistent command surface.
 Each template can choose its own runtime and project layout. AgentSeek provides
 the shared lifecycle workflow around those generated apps.
 
+AgentSeek 0.1.0 resolves its lifecycle-v2 templates from the immutable
+[`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0).
+Template listing works from the registry snapshot embedded in the CLI; named
+template content is fetched at the exact locked commit.
+
 > **"Deep Agents in Action"**: a free LangChain / DeepAgents course with AgentSeek labs.
 > [Course repo](https://github.com/datawhalechina/deepagents-in-action/)
 
@@ -62,6 +67,19 @@ agentseek dev
 | `dev` | Run the local development stack. |
 | `info` | Print project entry points and lifecycle metadata. |
 | `task` | Run project-defined tasks. |
+
+For Desktop, scripts, and other machine consumers, use the versioned JSON
+contract instead of parsing human output.
+
+```bash
+agentseek info --json
+agentseek doctor --json
+agentseek doctor --live --json
+```
+
+`info --json` includes normalized services, references, and safe actions such
+as which URL can be opened directly. It never includes environment values or
+raw process/task commands.
 
 ## Core Concepts
 
