@@ -26,9 +26,9 @@ for dependency management. Install uv first:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-You also need a running OceanBase seekdb instance. The generated project includes a
-`docker-compose.yml` that starts one, or you can use the embedded
-`pylibseekdb` launcher on Linux.
+Embedded OceanBase seekdb is the default and runs in-process; no Docker
+container is needed. The generated project also includes a `docker-compose.yml`
+for explicit server-mode use.
 
 ## Quick start
 
@@ -42,7 +42,6 @@ cd <project_slug>
 cp .env.example .env        # fill in API keys
 agentseek task sync
 agentseek task frontend
-agentseek task seekdb       # start OceanBase seekdb
 agentseek doctor
 agentseek dev --dry-run
 
@@ -66,7 +65,8 @@ LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
 | `author` | Your Name | Author for pyproject.toml |
 | `default_model_provider` | openai | openai / anthropic / google_genai |
 | `default_model` | openai:Pro/zai-org/GLM-5.1 | Model ID for the chosen provider |
-| `seekdb_path` | ./.seekdb-data | Local data path (Docker volume mount) |
+| `seekdb_path` | ~/.agentseek/agentic-rag/<project_slug>/seekdb | Embedded data path |
+| `seekdb_docker_path` | ./.seekdb-docker-data | Optional Docker server data path |
 | `seekdb_db_name` | test | OceanBase seekdb database name |
 | `vector_table_name` | rag_documents | Vector store table name |
 | `frontend_port` | 5174 | Frontend Vite dev server port |
@@ -85,6 +85,9 @@ LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
     __init__.py
     agent.py
     ingest.py
+    vector_store.py
+  tests/
+    test_seekdb_embedded.py
   frontend/
     package.json
     index.html
