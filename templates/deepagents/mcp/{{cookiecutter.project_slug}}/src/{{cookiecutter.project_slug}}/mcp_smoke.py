@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -81,3 +82,18 @@ async def run_smoke(config_path: Path) -> SmokeResult:
         required_arguments=required_arguments,
         calculation=calculation,
     )
+
+
+def main() -> None:
+    """Run the public model-free MCP smoke command."""
+    result = asyncio.run(run_smoke(Path(".mcp.json")))
+    print(
+        "MCP smoke check passed: "
+        f"tools={','.join(result.tool_names)}; "
+        f"required_arguments={','.join(result.required_arguments)}; "
+        f"calculation={result.calculation}"
+    )
+
+
+if __name__ == "__main__":
+    main()

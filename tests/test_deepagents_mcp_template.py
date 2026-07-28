@@ -4,6 +4,8 @@ import asyncio
 import importlib
 import importlib.util
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -47,6 +49,17 @@ def write_json(rendered: Path, payload: object) -> Path:
     path = rendered / "connections.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
     return path
+
+
+def prepare_rendered_mcp_subprocess(rendered: Path, *, server_name: str = "calculator") -> dict[str, str]:
+    source_root = rendered / "src"
+    config_path = rendered / ".mcp.json"
+    config_payload = json.loads(config_path.read_text(encoding="utf-8"))
+    calculator = config_payload["mcpServers"].pop("calculator")
+    calculator["env"] = {"PYTHONPATH": "${PYTHONPATH}"}
+    config_payload["mcpServers"][server_name] = calculator
+    config_path.write_text(json.dumps(config_payload), encoding="utf-8")
+    return {**os.environ, "PYTHONPATH": str(source_root)}
 
 
 def test_load_mcp_config_normalizes_stdio_and_http(rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -322,6 +335,43 @@ def test_rendered_calculator_mcp_smoke_is_real(rendered_mcp: Path, monkeypatch: 
     assert result.tool_names == ("calculator_add", "calculator_multiply")
     assert result.required_arguments == ("a", "b")
     assert result.calculation == "95"
+
+
+def test_rendered_calculator_mcp_smoke_cli_runs_the_real_check(rendered_mcp: Path) -> None:
+    environment = prepare_rendered_mcp_subprocess(rendered_mcp)
+
+    result = subprocess.run(  # noqa: S603 - executes the current trusted interpreter
+        [sys.executable, "-m", f"{rendered_mcp.name}.mcp_smoke"],
+        cwd=rendered_mcp,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == (
+        "MCP smoke check passed: tools=calculator_add,calculator_multiply; required_arguments=a,b; calculation=95\n"
+    )
+
+
+def test_rendered_calculator_mcp_smoke_cli_fails_on_smoke_check_error(rendered_mcp: Path) -> None:
+    environment = prepare_rendered_mcp_subprocess(rendered_mcp, server_name="unexpected")
+
+    result = subprocess.run(  # noqa: S603 - executes the current trusted interpreter
+        [sys.executable, "-m", f"{rendered_mcp.name}.mcp_smoke"],
+        cwd=rendered_mcp,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=20,
+    )
+
+    assert result.returncode != 0
+    assert result.stdout == ""
+    assert "SmokeCheckError: Calculator MCP exposed unexpected tool names." in result.stderr
 
 
 def test_mcp_discovery_failure_does_not_leak_underlying_secret(
