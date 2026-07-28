@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
+import importlib
 import importlib.util
 import json
 import sys
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 from cookiecutter.main import cookiecutter
@@ -31,6 +33,14 @@ def load_rendered_module(rendered: Path, module_name: str) -> ModuleType:
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def import_rendered_package_module(rendered: Path, module_name: str) -> ModuleType:
+    for imported_name in tuple(sys.modules):
+        if imported_name == rendered.name or imported_name.startswith(f"{rendered.name}."):
+            del sys.modules[imported_name]
+    importlib.invalidate_caches()
+    return importlib.import_module(f"{rendered.name}.{module_name}")
 
 
 def write_json(rendered: Path, payload: object) -> Path:
@@ -291,3 +301,82 @@ def test_missing_secret_reference_is_rejected_without_leaking_ambient_value(
 
     assert "MCP_SECRET" in str(exc.value)
     assert ambient_value not in str(exc.value)
+
+
+def test_rendered_calculator_mcp_smoke_is_real(rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(rendered_mcp)
+    source_root = rendered_mcp / "src"
+    monkeypatch.syspath_prepend(str(source_root))
+    monkeypatch.setenv("PYTHONPATH", str(source_root))
+    # Production runs `agentseek task sync`, which installs the package. This
+    # uninstalled test fixture instead forwards its temporary source tree to
+    # the MCP SDK's deliberately restricted stdio subprocess environment.
+    config_path = rendered_mcp / ".mcp.json"
+    config_payload = json.loads(config_path.read_text(encoding="utf-8"))
+    config_payload["mcpServers"]["calculator"]["env"] = {"PYTHONPATH": "${PYTHONPATH}"}
+    config_path.write_text(json.dumps(config_payload), encoding="utf-8")
+    smoke = importlib.import_module(f"{rendered_mcp.name}.mcp_smoke")
+
+    result = asyncio.run(smoke.run_smoke(config_path))
+
+    assert result.tool_names == ("calculator_add", "calculator_multiply")
+    assert result.required_arguments == ("a", "b")
+    assert result.calculation == "95"
+
+
+def test_mcp_discovery_failure_does_not_leak_underlying_secret(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tools_module = import_rendered_package_module(rendered_mcp, "mcp_tools")
+    config_module = importlib.import_module(f"{rendered_mcp.name}.config")
+
+    class SecretFailingClient:
+        def __init__(self, connections: object, **kwargs: object) -> None:
+            pass
+
+        async def get_tools(self, *, server_name: str) -> list[object]:
+            if server_name == "private":
+                raise RuntimeError(  # noqa: TRY003 - deliberate secret-bearing dependency failure
+                    "Authorization failed for Bearer secret-token"
+                )
+            return [SimpleNamespace(name="healthy_ping")]
+
+    monkeypatch.setattr(tools_module, "MultiServerMCPClient", SecretFailingClient)
+    config = config_module.MCPConfig(
+        servers={
+            "healthy": {"transport": "stdio", "command": "python"},
+            "private": {"transport": "stdio", "command": "python"},
+        }
+    )
+
+    with pytest.raises(tools_module.MCPDiscoveryError, match="server 'private'") as exc:
+        asyncio.run(tools_module.load_mcp_tools(config))
+
+    assert "secret-token" not in str(exc.value)
+
+
+def test_zero_tool_server_rejects_the_entire_discovery_result(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tools_module = import_rendered_package_module(rendered_mcp, "mcp_tools")
+    config_module = importlib.import_module(f"{rendered_mcp.name}.config")
+
+    class ZeroToolClient:
+        def __init__(self, connections: object, **kwargs: object) -> None:
+            pass
+
+        async def get_tools(self, *, server_name: str) -> list[object]:
+            if server_name == "empty":
+                return []
+            return [SimpleNamespace(name="healthy_ping")]
+
+    monkeypatch.setattr(tools_module, "MultiServerMCPClient", ZeroToolClient)
+    config = config_module.MCPConfig(
+        servers={
+            "empty": {"transport": "stdio", "command": "python"},
+            "healthy": {"transport": "stdio", "command": "python"},
+        }
+    )
+
+    with pytest.raises(tools_module.MCPDiscoveryError, match="server 'empty' exposed no tools"):
+        asyncio.run(tools_module.load_mcp_tools(config))
