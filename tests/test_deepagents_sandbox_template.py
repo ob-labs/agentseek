@@ -359,7 +359,7 @@ def test_file_graph_and_package_webapp_share_one_runtime_owner(
     factory_calls = 0
     provider_create_calls: list[object] = []
     events: list[str] = []
-    remote = types.SimpleNamespace(id="sandbox-id")
+    remote = types.SimpleNamespace(id="sandbox-id", get_work_dir=lambda: "/home/daytona")
 
     class FakeDaytona:
         def create(self):
@@ -425,7 +425,16 @@ def test_file_graph_and_package_webapp_share_one_runtime_owner(
 
 def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[object] = []
-    sandbox = object()
+    uploads: list[list[tuple[str, bytes]]] = []
+    commands: list[str] = []
+
+    class FakeSandbox:
+        id = "sandbox-id"
+
+        def get_work_dir(self) -> str:
+            return "/home/daytona"
+
+    sandbox = FakeSandbox()
 
     class FakeDaytona:
         def create(self):
@@ -439,6 +448,13 @@ def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest
         def __init__(self, *, sandbox):
             self.sandbox = sandbox
 
+        def upload_files(self, files):
+            uploads.append(files)
+            return [types.SimpleNamespace(path=path, error=None) for path, _ in files]
+
+        def execute(self, command, *, timeout=None):
+            commands.append(command)
+
     monkeypatch.setenv("DAYTONA_API_KEY", "test-key")
     monkeypatch.setitem(sys.modules, "daytona", types.SimpleNamespace(Daytona=FakeDaytona))
     monkeypatch.setitem(
@@ -449,6 +465,16 @@ def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest
     module = _load_sandbox_module(rendered_sandbox)
     backend, cleanup = module.create_sandbox_backend("daytona")
     assert backend.sandbox is sandbox
+    assert backend.workspace == "/home/daytona"
+    assert module._workspace_path(backend.workspace, "hello.py") == "/home/daytona/hello.py"
+    assert module._workspace_path(backend.workspace, "/hello.py") == "/home/daytona/hello.py"
+    with pytest.raises(ValueError, match="must remain inside"):
+        module._workspace_path(backend.workspace, "../../hello.py")
+    responses = backend.upload_files([("/hello.py", b"print('Hello')\n")])
+    assert uploads == [[("/home/daytona/hello.py", b"print('Hello')\n")]]
+    assert responses[0].path == "/hello.py"
+    backend.execute("python hello.py")
+    assert commands == ["cd /home/daytona && python hello.py"]
     cleanup()
     cleanup()
     assert events == ["create", ("delete", sandbox)]
@@ -493,7 +519,7 @@ def test_daytona_adapter_failure_cleans_up_and_reraises(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     events: list[object] = []
-    sandbox = object()
+    sandbox = types.SimpleNamespace(id="sandbox-id", get_work_dir=lambda: "/home/daytona")
 
     class AdapterError(RuntimeError):
         pass
@@ -564,7 +590,7 @@ def test_langsmith_adapter_failure_cleans_up_and_reraises(
 
 
 def test_no_provider_argument_defaults_to_daytona(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    sandbox = object()
+    sandbox = types.SimpleNamespace(id="sandbox-id", get_work_dir=lambda: "/home/daytona")
 
     class FakeDaytona:
         def create(self):
@@ -665,7 +691,7 @@ def test_provider_requires_credential(
 def test_cleanup_suppresses_provider_delete_errors_and_emits_safe_warning(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    sandbox = types.SimpleNamespace(id="sandbox-123")
+    sandbox = types.SimpleNamespace(id="sandbox-123", get_work_dir=lambda: "/home/daytona")
     delete_calls = 0
 
     class DeleteError(RuntimeError):
@@ -717,7 +743,7 @@ def test_cleanup_suppresses_provider_delete_errors_and_emits_safe_warning(
 def test_cleanup_is_idempotent_when_two_threads_call_concurrently(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    sandbox = types.SimpleNamespace(id="sandbox-123")
+    sandbox = types.SimpleNamespace(id="sandbox-123", get_work_dir=lambda: "/home/daytona")
     delete_calls = 0
     delete_count_lock = threading.Lock()
     callers_ready = threading.Barrier(3)
