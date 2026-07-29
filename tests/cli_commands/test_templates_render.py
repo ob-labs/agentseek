@@ -193,9 +193,10 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
         "langchain-openai>=0.3",
         "mcp>=1.28,<2",
         "python-dotenv>=1.0",
+        "starlette>=0.27",
         "langgraph-cli[inmem]>=0.4",
     ]
-    assert set(lifecycle_data["processes"]) == {"langgraph", "frontend"}
+    assert set(lifecycle_data["processes"]) == {"calculator-http", "langgraph", "frontend"}
     assert set(lifecycle_data["tasks"]) == {"sync", "frontend", "mcp-smoke"}
     assert lifecycle_data["paths"]["required"] == [
         "pyproject.toml",
@@ -217,7 +218,11 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
                 "transport": "stdio",
                 "command": "${PYTHON_EXECUTABLE}",
                 "args": ["-m", f"{generated.name}.calculator_server"],
-            }
+            },
+            "calculator_http": {
+                "transport": "http",
+                "url": "http://127.0.0.1:8765/mcp",
+            },
         }
     }
     config = json.loads((generated / "langgraph.json").read_text(encoding="utf-8"))
@@ -230,6 +235,24 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     assert "Answer in the same language as the user's question." in agent_text
     assert "frontend" in lifecycle_data["services"]
     assert "langgraph" in lifecycle_data["services"]
+    assert lifecycle_data["services"]["calculator-http"] == {"url": "http://127.0.0.1:8765/health"}
+    assert lifecycle_data["processes"]["calculator-http"]["command"] == [
+        "uv",
+        "run",
+        "python",
+        "-m",
+        f"{generated.name}.calculator_http_server",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8765",
+    ]
+    assert lifecycle_data["checks"]["calculator-http"] == {
+        "type": "http",
+        "target": "http://127.0.0.1:8765/health",
+        "timeout": 2,
+        "attempts": 10,
+    }
     assert "mcp-smoke" in lifecycle_data["tasks"]
     assert lifecycle_data["env"]["AGENTSEEK_MODEL_API_KEY"] == {
         "required": True,

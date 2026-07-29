@@ -8,8 +8,10 @@ import inspect
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
+import time
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -120,15 +122,46 @@ def write_json(rendered: Path, payload: object) -> Path:
     return path
 
 
-def prepare_rendered_mcp_subprocess(rendered: Path, *, server_name: str = "calculator") -> dict[str, str]:
+def _unused_loopback_port() -> int:
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        return int(listener.getsockname()[1])
+
+
+def _configure_calculator_http_port(rendered: Path) -> int:
+    port = _unused_loopback_port()
+    config_path = rendered / ".mcp.json"
+    config_payload = json.loads(config_path.read_text(encoding="utf-8"))
+    config_payload["mcpServers"]["calculator_http"]["url"] = f"http://127.0.0.1:{port}/mcp"
+    config_path.write_text(json.dumps(config_payload), encoding="utf-8")
+    return port
+
+
+def _loopback_port_is_open(port: int) -> bool:
+    with socket.socket() as client:
+        client.settimeout(0.1)
+        return client.connect_ex(("127.0.0.1", port)) == 0
+
+
+def _wait_for_loopback_port(port: int) -> None:
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        if _loopback_port_is_open(port):
+            return
+        time.sleep(0.05)
+    pytest.fail(f"HTTP server did not listen on port {port}")
+
+
+def prepare_rendered_mcp_subprocess(rendered: Path, *, server_name: str = "calculator") -> tuple[dict[str, str], int]:
     source_root = rendered / "src"
+    http_port = _configure_calculator_http_port(rendered)
     config_path = rendered / ".mcp.json"
     config_payload = json.loads(config_path.read_text(encoding="utf-8"))
     calculator = config_payload["mcpServers"].pop("calculator")
     calculator["env"] = {"PYTHONPATH": "${PYTHONPATH}"}
     config_payload["mcpServers"][server_name] = calculator
     config_path.write_text(json.dumps(config_payload), encoding="utf-8")
-    return {**os.environ, "PYTHONPATH": str(source_root)}
+    return {**os.environ, "PYTHONPATH": str(source_root)}, http_port
 
 
 def test_langgraph_host_override_remains_one_argv_value(rendered_mcp: Path, tmp_path: Path) -> None:
@@ -440,17 +473,110 @@ def test_rendered_calculator_mcp_smoke_is_real(rendered_mcp: Path, monkeypatch: 
     # Production runs `agentseek task sync`, which installs the package. This
     # uninstalled test fixture instead forwards its temporary source tree to
     # the MCP SDK's deliberately restricted stdio subprocess environment.
+    http_port = _configure_calculator_http_port(rendered_mcp)
     config_path = rendered_mcp / ".mcp.json"
     config_payload = json.loads(config_path.read_text(encoding="utf-8"))
     config_payload["mcpServers"]["calculator"]["env"] = {"PYTHONPATH": "${PYTHONPATH}"}
     config_path.write_text(json.dumps(config_payload), encoding="utf-8")
-    smoke = importlib.import_module(f"{rendered_mcp.name}.mcp_smoke")
+    smoke = import_rendered_package_module(rendered_mcp, "mcp_smoke")
 
     result = asyncio.run(smoke.run_smoke(config_path))
 
-    assert result.tool_names == ("calculator_add", "calculator_multiply")
+    assert result.tool_names == (
+        "calculator_add",
+        "calculator_multiply",
+        "calculator_http_add",
+        "calculator_http_multiply",
+    )
     assert result.required_arguments == ("a", "b")
-    assert result.calculation == "95"
+    assert result.stdio_calculation == "95"
+    assert result.http_calculation == "2146"
+    assert not _loopback_port_is_open(http_port)
+
+
+def test_http_smoke_child_environment_excludes_application_secrets(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _configure_calculator_http_port(rendered_mcp)
+    smoke = import_rendered_package_module(rendered_mcp, "mcp_smoke")
+    config = smoke.load_mcp_config(rendered_mcp / ".mcp.json")
+    runtime_temp = str(rendered_mcp / "runtime-tmp")
+    captured: dict[str, object] = {}
+
+    class ProcessLaunchCaptured(Exception):
+        pass
+
+    async def capture_process_launch(*_args: object, **kwargs: object) -> None:
+        captured.update(kwargs)
+        raise ProcessLaunchCaptured
+
+    monkeypatch.setattr(smoke.asyncio, "create_subprocess_exec", capture_process_launch)
+    monkeypatch.setattr(
+        smoke.os,
+        "environ",
+        {
+            "PATH": "/trusted/bin",
+            "PYTHONPATH": "/project/src",
+            "TMPDIR": runtime_temp,
+            "AGENTSEEK_MODEL_API_KEY": "model-secret",
+            "LANGSMITH_API_KEY": "trace-secret",
+            "BILLING_MCP_TOKEN": "tool-secret",
+        },
+    )
+
+    async def launch_http_server() -> None:
+        async with smoke._ensure_calculator_http_server(config):
+            pytest.fail("captured process launch unexpectedly yielded")
+
+    with pytest.raises(ProcessLaunchCaptured):
+        asyncio.run(launch_http_server())
+
+    assert captured["env"] == {
+        "PATH": "/trusted/bin",
+        "PYTHONPATH": "/project/src",
+        "TMPDIR": runtime_temp,
+    }
+
+
+def test_smoke_reuses_running_http_server_without_stopping_it(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(rendered_mcp)
+    source_root = rendered_mcp / "src"
+    monkeypatch.syspath_prepend(str(source_root))
+    monkeypatch.setenv("PYTHONPATH", str(source_root))
+    http_port = _configure_calculator_http_port(rendered_mcp)
+    config_path = rendered_mcp / ".mcp.json"
+    config_payload = json.loads(config_path.read_text(encoding="utf-8"))
+    config_payload["mcpServers"]["calculator"]["env"] = {"PYTHONPATH": "${PYTHONPATH}"}
+    config_path.write_text(json.dumps(config_payload), encoding="utf-8")
+    smoke = import_rendered_package_module(rendered_mcp, "mcp_smoke")
+    process = subprocess.Popen(  # noqa: S603 - current interpreter and rendered trusted module
+        [
+            sys.executable,
+            "-m",
+            f"{rendered_mcp.name}.calculator_http_server",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(http_port),
+        ],
+        cwd=rendered_mcp,
+        env={**os.environ, "PYTHONPATH": str(source_root)},
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        _wait_for_loopback_port(http_port)
+
+        result = asyncio.run(smoke.run_smoke(config_path))
+
+        assert result.http_calculation == "2146"
+        assert process.poll() is None
+        assert _loopback_port_is_open(http_port)
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
 
 
 def test_command_only_stdio_connection_discovers_real_mcp_tools(
@@ -479,15 +605,13 @@ def test_command_only_stdio_connection_discovers_real_mcp_tools(
         },
     )
     config_module = import_rendered_package_module(rendered_mcp, "config")
-    smoke = importlib.import_module(f"{rendered_mcp.name}.mcp_smoke")
+    tools_module = import_rendered_package_module(rendered_mcp, "mcp_tools")
 
     loaded = config_module.load_mcp_config(config_path)
-    result = asyncio.run(smoke.run_smoke(config_path))
+    discovered = asyncio.run(tools_module.load_mcp_tools(loaded))
 
     assert loaded.servers["calculator"]["args"] == []
-    assert result.tool_names == ("calculator_add", "calculator_multiply")
-    assert result.required_arguments == ("a", "b")
-    assert result.calculation == "95"
+    assert discovered.tool_names == ("calculator_add", "calculator_multiply")
 
 
 @pytest.mark.parametrize(
@@ -513,6 +637,10 @@ def test_real_mcp_smoke_loads_project_dotenv_without_overriding_exported_values(
         monkeypatch.delenv(name, raising=False)
     source_root = rendered_mcp / "src"
     monkeypatch.syspath_prepend(str(source_root))
+    # The rendered package is not installed in this fixture, so the HTTP
+    # subprocess needs the same source-root forwarding as the stdio subprocess.
+    monkeypatch.setenv("PYTHONPATH", str(source_root))
+    _configure_calculator_http_port(rendered_mcp)
     variable = "MCP_SMOKE_PYTHONPATH"
     invalid_path = tmp_path / "invalid-pythonpath"
     dotenv_value = source_root if dotenv_uses_source else invalid_path
@@ -528,20 +656,26 @@ def test_real_mcp_smoke_loads_project_dotenv_without_overriding_exported_values(
         "PYTHONPATH": f"${{{variable}}}",
     }
     config_path.write_text(json.dumps(config_payload), encoding="utf-8")
-    smoke = importlib.import_module(f"{rendered_mcp.name}.mcp_smoke")
+    smoke = import_rendered_package_module(rendered_mcp, "mcp_smoke")
 
     try:
         result = asyncio.run(smoke.run_smoke(config_path))
     finally:
         os.environ.pop(variable, None)
 
-    assert result.tool_names == ("calculator_add", "calculator_multiply")
+    assert result.tool_names == (
+        "calculator_add",
+        "calculator_multiply",
+        "calculator_http_add",
+        "calculator_http_multiply",
+    )
     assert result.required_arguments == ("a", "b")
-    assert result.calculation == "95"
+    assert result.stdio_calculation == "95"
+    assert result.http_calculation == "2146"
 
 
 def test_rendered_calculator_mcp_smoke_cli_runs_the_real_check(rendered_mcp: Path) -> None:
-    environment = prepare_rendered_mcp_subprocess(rendered_mcp)
+    environment, http_port = prepare_rendered_mcp_subprocess(rendered_mcp)
 
     result = subprocess.run(  # noqa: S603 - executes the current trusted interpreter
         [sys.executable, "-m", f"{rendered_mcp.name}.mcp_smoke"],
@@ -555,12 +689,15 @@ def test_rendered_calculator_mcp_smoke_cli_runs_the_real_check(rendered_mcp: Pat
 
     assert result.returncode == 0, result.stderr
     assert result.stdout == (
-        "MCP smoke check passed: tools=calculator_add,calculator_multiply; required_arguments=a,b; calculation=95\n"
+        "MCP smoke check passed: "
+        "tools=calculator_add,calculator_multiply,calculator_http_add,calculator_http_multiply; "
+        "required_arguments=a,b; stdio_calculation=95; http_calculation=2146\n"
     )
+    assert not _loopback_port_is_open(http_port)
 
 
 def test_rendered_calculator_mcp_smoke_cli_fails_on_smoke_check_error(rendered_mcp: Path) -> None:
-    environment = prepare_rendered_mcp_subprocess(rendered_mcp, server_name="unexpected")
+    environment, http_port = prepare_rendered_mcp_subprocess(rendered_mcp, server_name="unexpected")
 
     result = subprocess.run(  # noqa: S603 - executes the current trusted interpreter
         [sys.executable, "-m", f"{rendered_mcp.name}.mcp_smoke"],
@@ -575,6 +712,7 @@ def test_rendered_calculator_mcp_smoke_cli_fails_on_smoke_check_error(rendered_m
     assert result.returncode != 0
     assert result.stdout == ""
     assert "SmokeCheckError: Calculator MCP exposed unexpected tool names." in result.stderr
+    assert not _loopback_port_is_open(http_port)
 
 
 def test_mcp_discovery_failure_does_not_leak_underlying_secret(
@@ -1265,7 +1403,7 @@ def test_mcp_template_readmes_cover_runtime_contract(rendered_mcp: Path) -> None
         "they do not satisfy",
         "Optional custom endpoints continue to use the provider-native variables in `.env.example`.",
         "Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and `LANGSMITH_PROJECT`.",
-        "Both development services bind to loopback by default.",
+        "All three development processes bind to loopback by default.",
         "`LANGGRAPH_HOST` controls LangGraph from the launching shell. `FRONTEND_HOST` controls Vite from that shell or `frontend/.env`.",
         "set `VITE_LANGGRAPH_API_URL` in `frontend/.env` to the public LangGraph API URL.",
         "Keep MCP URLs, headers, and credentials out of Vite variables.",

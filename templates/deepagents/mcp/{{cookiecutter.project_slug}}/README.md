@@ -1,8 +1,8 @@
 # {{ cookiecutter.project_name }}
 
 This AgentSeek project runs a DeepAgents graph with MCP Tools from validated
-`stdio` or Streamable HTTP connections. It includes a local calculator server,
-a model-free smoke check, and a streamed React UI.
+`stdio` or Streamable HTTP connections. It includes the same local calculator
+tools over both transports, a model-free smoke check, and a streamed React UI.
 
 ## Run the project for the first time
 
@@ -33,15 +33,19 @@ uvx agentseek dev --dry-run
 uvx agentseek dev
 ```
 
-The smoke task discovers `calculator_add` and `calculator_multiply`, validates
-the add-tool schema, and checks `37 + 58 = 95`. It does not call a model.
+The smoke task starts or reuses the local Streamable HTTP calculator, discovers
+`calculator_add`, `calculator_multiply`, `calculator_http_add`, and
+`calculator_http_multiply`, validates both invoked tool schemas, and checks
+`37 + 58 = 95` over stdio plus `37 × 58 = 2146` over HTTP. It does not call a
+model, and it stops the HTTP server when it started that process itself.
 `agentseek info`, `agentseek doctor`, and the dry run inspect the lifecycle before
-the last command starts LangGraph and Vite.
+the last command starts the calculator HTTP server, LangGraph, and Vite.
 
-Open `http://127.0.0.1:{{ cookiecutter.frontend_port }}` after both services
-start. Sending a message invokes your configured hosted model. The template's
-local verification covers lifecycle startup, MCP discovery, and the calculator;
-it does not claim a hosted chat was executed without a real provider key.
+Open `http://127.0.0.1:{{ cookiecutter.frontend_port }}` after all three
+processes start. Sending a message invokes your configured hosted model. The
+template's local verification covers lifecycle startup, both MCP transports,
+and the calculator; it does not claim a hosted chat was executed without a real
+provider key.
 
 Stop `uvx agentseek dev` with `Ctrl-C`. The command only starts local development
 processes, so no additional cleanup is required.
@@ -67,6 +71,10 @@ example shows the supported `stdio` and Streamable HTTP shapes together:
       "args": ["-m", "{{ cookiecutter.project_slug }}.calculator_server"],
       "env": {"CALCULATOR_MODE": "${CALCULATOR_MODE}"}
     },
+    "calculator_http": {
+      "transport": "http",
+      "url": "http://127.0.0.1:{{ cookiecutter.calculator_http_port }}/mcp"
+    },
     "billing": {
       "transport": "http",
       "url": "${BILLING_MCP_URL}",
@@ -87,10 +95,16 @@ must connect and expose at least one tool. If any server fails or returns no
 tools, graph creation fails without a partial tool set.
 
 `tool_name_prefix=True` publishes `<server>_<tool>` names. The local tools are
-therefore `calculator_add` and `calculator_multiply`. The smoke task checks the
-complete discovered tool-name tuple, schema, and calculation. Adding, removing,
-or replacing any server changes the complete discovered tool-name tuple, so
-update the calculator smoke contract at the same time.
+therefore `calculator_add`, `calculator_multiply`, `calculator_http_add`, and
+`calculator_http_multiply`. The smoke task checks the complete discovered
+tool-name tuple and performs a real invocation through each transport. Adding,
+removing, or replacing any server changes the complete discovered tool-name
+tuple, so update the calculator smoke contract at the same time.
+
+The lifecycle starts `calculator_http_server` on loopback and checks its public
+`/health` route. The MCP protocol remains at `/mcp`. To use a remote HTTP tool
+service instead, replace `calculator_http` and use environment references for
+its URL or headers, such as `${BILLING_MCP_URL}` and `${BILLING_MCP_TOKEN}`.
 
 Final names must be unique and cannot replace the enabled DeepAgents built-ins:
 `write_todos`, `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep`, or
@@ -135,8 +149,8 @@ Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
 
 ### Development hosts
 
-Both development services bind to loopback by default. For a one-run remote or
-container bind, opt in from the launching shell:
+All three development processes bind to loopback by default. For a one-run
+remote or container bind of LangGraph and Vite, opt in from the launching shell:
 
 ```bash
 LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 uvx agentseek dev

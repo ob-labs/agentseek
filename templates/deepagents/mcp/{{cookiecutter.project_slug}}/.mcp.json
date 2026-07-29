@@ -7,6 +7,10 @@
         "-m",
         "{{ cookiecutter.project_slug }}.calculator_server"
       ]
+    },
+    "calculator_http": {
+      "transport": "http",
+      "url": "http://127.0.0.1:{{ cookiecutter.calculator_http_port }}/mcp"
     }
   }
 }

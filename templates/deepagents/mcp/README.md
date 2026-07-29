@@ -1,8 +1,9 @@
 # DeepAgents MCP template
 
 This template scaffolds a DeepAgents application around a strict MCP Tools
-boundary. It includes a local calculator MCP server, model-free smoke coverage,
-a streamed React UI, and an AgentSeek lifecycle specification.
+boundary. It includes local calculator MCP servers over stdio and Streamable
+HTTP, model-free smoke coverage, a streamed React UI, and an AgentSeek lifecycle
+specification.
 
 ## Architecture
 
@@ -50,6 +51,10 @@ A Streamable HTTP server uses the adapter's `http` transport value:
 }
 ```
 
+The generated default config declares `calculator` over stdio and
+`calculator_http` at `http://127.0.0.1:8765/mcp`. Its AgentSeek lifecycle starts
+the HTTP server and checks `http://127.0.0.1:8765/health`.
+
 `${ENV_VAR}` references are interpolated in commands, arguments, environment
 values, URLs, and headers. Every reference must resolve.
 `${PYTHON_EXECUTABLE}` is reserved and always resolves to the current Python
@@ -59,8 +64,8 @@ it.
 Configuration and discovery are all-or-nothing. Every configured server must
 connect and expose at least one tool. If any server fails or returns no tools,
 graph creation fails without a partial tool set. `tool_name_prefix=True`
-exposes tools as `<server>_<tool>`, such as `calculator_add` or
-`billing_charge_card`. Final names must be unique and cannot replace the
+exposes tools as `<server>_<tool>`, such as `calculator_add`,
+`calculator_http_multiply`, or `billing_charge_card`. Final names must be unique and cannot replace the
 enabled DeepAgents built-ins: `write_todos`, `ls`, `read_file`, `write_file`,
 `edit_file`, `glob`, `grep`, or `execute`. The `task` tool is disabled by this
 template's harness profile and is not reserved.
@@ -77,8 +82,10 @@ and harness profile APIs are characterized for that exact runtime. Before
 upgrading DeepAgents, rerun and update the real built-in collision
 characterization, reserved-name set, and profile regressions together.
 
-The smoke task checks the complete discovered tool-name tuple, schema, and
-calculation. Adding, removing, or replacing any server changes the complete
+The smoke task starts or reuses the local HTTP server, checks the complete
+discovered tool-name tuple, and performs a real calculator invocation through
+both stdio and Streamable HTTP. It stops the HTTP server when it started that
+process itself. Adding, removing, or replacing any server changes the complete
 discovered tool-name tuple, so update the calculator smoke contract at the same
 time.
 
@@ -91,10 +98,11 @@ continue to use the provider-native variables in `.env.example`. Optional
 LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
 `LANGSMITH_PROJECT`.
 
-Both development services bind to loopback by default. `LANGGRAPH_HOST` controls
-LangGraph from the launching shell. `FRONTEND_HOST` controls Vite from that
-shell or `frontend/.env`. Do not add these controls to the root `.env`; it is
-reserved for application, model, MCP, and tracing settings.
+All three development processes bind to loopback by default. `LANGGRAPH_HOST`
+controls LangGraph from the launching shell. `FRONTEND_HOST` controls Vite from
+that shell or `frontend/.env`. The calculator HTTP server remains loopback-only.
+Do not add these controls to the root `.env`; it is reserved for application,
+model, MCP, and tracing settings.
 
 The frontend derives `http://<browser-host>:2024` by default. For an HTTPS
 frontend or a reverse proxy that changes the backend's public scheme, port, or

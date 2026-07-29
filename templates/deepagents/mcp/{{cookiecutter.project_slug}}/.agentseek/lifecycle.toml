@@ -40,12 +40,18 @@ url = "http://127.0.0.1:{{ cookiecutter.langgraph_port }}"
 [services.frontend]
 url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 
+[services.calculator-http]
+url = "http://127.0.0.1:{{ cookiecutter.calculator_http_port }}/health"
+
 [processes.langgraph]
 command = ["sh", "-lc", "uv run langgraph dev --port {{ cookiecutter.langgraph_port }} --no-browser --host \"${LANGGRAPH_HOST:-127.0.0.1}\""]
 
 [processes.frontend]
 command = ["npm", "run", "dev"]
 cwd = "frontend"
+
+[processes.calculator-http]
+command = ["uv", "run", "python", "-m", "{{ cookiecutter.project_slug }}.calculator_http_server", "--host", "127.0.0.1", "--port", "{{ cookiecutter.calculator_http_port }}"]
 
 [checks.langgraph]
 type = "http"
@@ -59,6 +65,12 @@ target = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 timeout = 2
 attempts = 3
 
+[checks.calculator-http]
+type = "http"
+target = "http://127.0.0.1:{{ cookiecutter.calculator_http_port }}/health"
+timeout = 2
+attempts = 10
+
 [tasks.sync]
 description = "Install Python dependencies with uv."
 command = ["uv", "sync"]
@@ -68,5 +80,5 @@ description = "Install frontend dependencies."
 command = ["npm", "install", "--prefix", "frontend"]
 
 [tasks.mcp-smoke]
-description = "Verify MCP discovery, schema conversion, and calculator invocation without a model key."
+description = "Verify real stdio and Streamable HTTP MCP discovery and invocation without a model key."
 command = ["uv", "run", "python", "-m", "{{ cookiecutter.project_slug }}.mcp_smoke"]
