@@ -24,7 +24,7 @@ class MCPConfigError(ValueError):
 class StdioConnection(TypedDict):
     transport: Literal["stdio"]
     command: str
-    args: NotRequired[list[str]]
+    args: list[str]
     env: NotRequired[dict[str, str]]
 
 
@@ -145,6 +145,12 @@ def _validate_resolved_connections(value: dict[str, Any]) -> None:
             raise MCPConfigError(f"Expected an absolute http or https URL at {json_path}.url")
 
 
+def _normalize_connections(value: dict[str, Any]) -> None:
+    for connection in value["mcpServers"].values():
+        if connection["transport"] == "stdio":
+            connection.setdefault("args", [])
+
+
 def _resolve(value: Any, environment: Mapping[str, str], json_path: str) -> Any:
     if isinstance(value, str):
 
@@ -182,5 +188,6 @@ def load_mcp_config(path: Path, environ: Mapping[str, str] | None = None) -> MCP
     validated = _validate_config(unresolved)
     environment = os.environ if environ is None else environ
     resolved = _resolve(validated, environment, "$")
+    _normalize_connections(resolved)
     _validate_resolved_connections(resolved)
     return MCPConfig(servers=cast(dict[str, StdioConnection | HttpConnection], resolved["mcpServers"]))

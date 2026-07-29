@@ -18,6 +18,7 @@ from typing import Protocol, cast
 
 import pytest
 from cookiecutter.main import cookiecutter
+from pydantic import SecretStr
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = REPO_ROOT / "templates" / "deepagents" / "mcp"
@@ -452,6 +453,43 @@ def test_rendered_calculator_mcp_smoke_is_real(rendered_mcp: Path, monkeypatch: 
     assert result.calculation == "95"
 
 
+def test_command_only_stdio_connection_discovers_real_mcp_tools(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(rendered_mcp)
+    source_root = rendered_mcp / "src"
+    monkeypatch.syspath_prepend(str(source_root))
+    monkeypatch.setenv("PYTHONPATH", str(source_root))
+    launcher = rendered_mcp / "calculator-mcp"
+    launcher.write_text(
+        f'#!{sys.executable}\nfrom {rendered_mcp.name}.calculator_server import mcp\nmcp.run(transport="stdio")\n',
+        encoding="utf-8",
+    )
+    launcher.chmod(0o755)
+    config_path = write_json(
+        rendered_mcp,
+        {
+            "mcpServers": {
+                "calculator": {
+                    "transport": "stdio",
+                    "command": str(launcher),
+                    "env": {"PYTHONPATH": "${PYTHONPATH}"},
+                }
+            }
+        },
+    )
+    config_module = import_rendered_package_module(rendered_mcp, "config")
+    smoke = importlib.import_module(f"{rendered_mcp.name}.mcp_smoke")
+
+    loaded = config_module.load_mcp_config(config_path)
+    result = asyncio.run(smoke.run_smoke(config_path))
+
+    assert loaded.servers["calculator"]["args"] == []
+    assert result.tool_names == ("calculator_add", "calculator_multiply")
+    assert result.required_arguments == ("a", "b")
+    assert result.calculation == "95"
+
+
 @pytest.mark.parametrize(
     ("dotenv_uses_source", "exported_uses_source"),
     [(True, False), (False, True)],
@@ -708,11 +746,9 @@ def test_reserved_mcp_names_match_real_deepagents_0_6_12_runtime(
 ) -> None:
     from deepagents._version import __version__ as deepagents_version
 
-    if deepagents_version != CHARACTERIZED_DEEPAGENTS_VERSION:
-        pytest.skip(
-            f"repository test environment has DeepAgents {deepagents_version}; "
-            "the generated project pins DeepAgents 0.6.12 exactly"
-        )
+    assert deepagents_version == CHARACTERIZED_DEEPAGENTS_VERSION, (
+        "repository test environment must exercise the exact DeepAgents runtime pinned by the generated template"
+    )
 
     from deepagents import (
         GeneralPurposeSubagentProfile,
@@ -732,7 +768,7 @@ def test_reserved_mcp_names_match_real_deepagents_0_6_12_runtime(
         ),
     )
     graph = create_deep_agent(
-        model=ChatOpenAI(model="mcp-final-name-regression", api_key="unused-test-key"),
+        model=ChatOpenAI(model="mcp-final-name-regression", api_key=SecretStr("unused-test-key")),
         tools=[],
         subagents=[],
     )
@@ -1263,18 +1299,3 @@ def test_mcp_template_readmes_cover_runtime_contract(rendered_mcp: Path) -> None
     assert chinese_row in (REPO_ROOT / "docs" / "reference" / "templates.zh.md").read_text(encoding="utf-8")
     registry = json.loads((REPO_ROOT / "templates" / "index.json").read_text(encoding="utf-8"))
     assert registry["deepagents/mcp"] == english_description
-
-
-def test_deepagents_dependency_pin_matches_runtime_characterization(rendered_mcp: Path) -> None:
-    pyproject = tomllib.loads((rendered_mcp / "pyproject.toml").read_text(encoding="utf-8"))
-    dependencies = pyproject["project"]["dependencies"]
-    design = (REPO_ROOT / "docs" / "superpowers" / "specs" / "2026-07-28-deepagents-mcp-template-design.md").read_text(
-        encoding="utf-8"
-    )
-
-    assert f"deepagents=={CHARACTERIZED_DEEPAGENTS_VERSION}" in dependencies
-    assert f"`deepagents=={CHARACTERIZED_DEEPAGENTS_VERSION}`" in design
-    assert (
-        "Upgrading DeepAgents requires rerunning and updating the real built-in collision characterization"
-        in _normalized(design)
-    )

@@ -97,7 +97,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "deepagents", specifier = ">=0.5.3" },
+    { name = "deepagents", specifier = "==0.6.12" },
     { name = "langchain-mcp-adapters", specifier = ">=0.3,<0.4" },
     { name = "langchain-openai", specifier = ">=0.3.0" },
     { name = "mcp", specifier = ">=1.28,<2" },
@@ -771,7 +771,7 @@ wheels = [
 
 [[package]]
 name = "deepagents"
-version = "0.6.10"
+version = "0.6.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain" },
@@ -781,9 +781,9 @@ dependencies = [
     { name = "langsmith" },
     { name = "wcmatch" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/78/ab/3225f47404d401559ab67819b3b20833cdefe7e283e39f796d6019c7dfa7/deepagents-0.6.10.tar.gz", hash = "sha256:bce9f8e6b7870fe1bba5e5a128588e6f38df810f60695e01dd568e6e62e74a89", size = 203631, upload-time = "2026-06-13T06:19:48.694Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/db/a6acdc72a9e90c3f07ed10de35c951734a02d4facb693bb59684ad368801/deepagents-0.6.12.tar.gz", hash = "sha256:1f281c0bc5a63132f62e2ee345c1dc593b23188da6e23016401f6879fbe54b5f", size = 211364, upload-time = "2026-06-25T17:26:52.775Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1f/81/49f1a98434b462aa60a07ef5a98437bd6a4445219b91c459e1e7e5d5564e/deepagents-0.6.10-py3-none-any.whl", hash = "sha256:21486ba213f027f7f2d5b4822bf6099f806a1d325dd33e93d3f5b9e857b2ea89", size = 228251, upload-time = "2026-06-13T06:19:47.499Z" },
+    { url = "https://files.pythonhosted.org/packages/98/49/af7219b3c13520fee047bb807cfaefba17f8e4584c551d946773589a4f08/deepagents-0.6.12-py3-none-any.whl", hash = "sha256:28b8fa0119ca0a689e3e18e288c4634e4046062acfc87a1cb34289d3af3a1c88", size = 236120, upload-time = "2026-06-25T17:26:51.736Z" },
 ]
 
 [[package]]

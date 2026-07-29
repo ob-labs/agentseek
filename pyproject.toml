@@ -42,7 +42,7 @@ dev = [
     "ruff>=0.14.14",
     "mkdocs>=1.6.1",
     "mkdocstrings[python]>=1.0.2",
-    "deepagents>=0.5.3",
+    "deepagents==0.6.12",
     "langchain-openai>=0.3.0",
     "langchain-mcp-adapters>=0.3,<0.4",
     "mcp>=1.28,<2",

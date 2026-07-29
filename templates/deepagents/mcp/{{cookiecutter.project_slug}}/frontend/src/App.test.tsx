@@ -147,14 +147,20 @@ describe("App", () => {
     expect(screen.getByText("The calculator returned 42.")).toBeTruthy();
   });
 
-  it("renders planning-shaped mixed ai content as a collapsed agent plan block", () => {
+  it("renders structured reasoning beside mixed ai text and tool calls", () => {
     streamState.messages = [
       { id: "human-1", type: "human", content: "Add 19 and 23." },
       {
         id: "ai-1",
         type: "ai",
-        content:
-          "## SESSION INTENT\nUse the calculator tool.\n\n## SUMMARY\nThe user requested a specific multi-step workflow.",
+        content: [
+          {
+            type: "reasoning",
+            reasoning:
+              "## SESSION INTENT\nUse the calculator tool.\n\n## SUMMARY\nThe user requested a specific multi-step workflow.",
+          },
+          { type: "text", text: "I will use the calculator." },
+        ],
         tool_calls: [
           {
             id: "call-1",
@@ -177,18 +183,24 @@ describe("App", () => {
     expect(screen.getByText("Agent plan")).toBeTruthy();
     expect(screen.getByText("SESSION INTENT")).toBeTruthy();
     expect(screen.getByText("Agent plan").closest("details")?.hasAttribute("open")).toBe(false);
+    expect(screen.getByText("I will use the calculator.")).toBeTruthy();
     expect(screen.getByText("mcp/calculator_add")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
   });
 
-  it("renders a standalone planning message as a collapsed agent plan block", () => {
+  it("renders a standalone reasoning block as a collapsed agent plan block", () => {
     streamState.messages = [
       { id: "human-1", type: "human", content: "Add 19 and 23." },
       {
         id: "ai-1",
         type: "ai",
-        content:
-          "## SESSION INTENT\nUse the calculator tool.\n\n## SUMMARY\nThe user requested a specific multi-step workflow.",
+        content: [
+          {
+            type: "reasoning",
+            reasoning:
+              "## SESSION INTENT\nUse the calculator tool.\n\n## SUMMARY\nThe user requested a specific multi-step workflow.",
+          },
+        ],
       },
       {
         id: "ai-2",
@@ -235,6 +247,25 @@ describe("App", () => {
     expect(screen.getByText("Calculation:")).toBeTruthy();
     expect(screen.getByText("mcp/calculator_multiply")).toBeTruthy();
     expect(screen.getByText("42")).toBeTruthy();
+  });
+
+  it("keeps a final answer with summary headings visible as assistant prose", () => {
+    streamState.messages = [
+      { id: "human-1", type: "human", content: "Summarize the completed calculation." },
+      {
+        id: "ai-1",
+        type: "ai",
+        content:
+          "## Summary\nThe calculator returned 42.\n\n## Next Steps\nUse the result in the report.",
+      },
+    ];
+
+    render(<App />);
+
+    expect(screen.queryByText("Agent plan")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Summary" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Next Steps" })).toBeTruthy();
+    expect(screen.getByText("The calculator returned 42.")).toBeTruthy();
   });
 
   it("renders a successful prefixed MCP tool call from streamed messages", () => {

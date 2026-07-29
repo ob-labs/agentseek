@@ -21,8 +21,6 @@ type StreamState = {
   todos?: TodoItem[];
 };
 
-const PLAN_MARKERS = ["SESSION INTENT", "SUMMARY", "NEXT STEPS", "ARTIFACTS"];
-
 function messageText(content: unknown): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
@@ -39,6 +37,22 @@ function messageText(content: unknown): string {
   return "";
 }
 
+function reasoningText(content: unknown): string {
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((part) => {
+      if (typeof part !== "object" || part === null || !("type" in part)) return "";
+      if (part.type === "reasoning" && "reasoning" in part) {
+        return String(part.reasoning ?? "");
+      }
+      if (part.type === "thinking" && "thinking" in part) {
+        return String(part.thinking ?? "");
+      }
+      return "";
+    })
+    .join("");
+}
+
 // Walk all messages in stream order, producing a flat list of "rows" to render.
 // A row is either a human/ai prose message, an open or completed tool card
 // (matched to its tool_call_id), or nothing (a tool message that's been folded
@@ -47,12 +61,6 @@ type Row =
   | { kind: "prose"; key: string; type: "human" | "ai"; body: string }
   | { kind: "plan"; key: string; body: string }
   | { kind: "card"; key: string; card: ToolCard };
-
-function isPlanLikeBody(body: string): boolean {
-  const normalized = body.toUpperCase();
-  const markerHits = PLAN_MARKERS.filter((marker) => normalized.includes(marker)).length;
-  return markerHits >= 2 || (markerHits >= 1 && /the user requested/i.test(body));
-}
 
 function buildRows(messages: Message[]): Row[] {
   const rows: Row[] = [];
@@ -68,18 +76,22 @@ function buildRows(messages: Message[]): Row[] {
     } else if (msg.type === "ai") {
       const calls = msg.tool_calls ?? [];
       const body = messageText(msg.content);
+      const reasoning = reasoningText(msg.content).trim();
       const trimmedBody = body.trim();
+      if (reasoning) {
+        rows.push({
+          kind: "plan",
+          key: `${msg.id ?? `p-${rows.length}`}-reasoning`,
+          body: reasoning,
+        });
+      }
       if (trimmedBody) {
-        if (isPlanLikeBody(trimmedBody)) {
-          rows.push({ kind: "plan", key: msg.id ?? `p-${rows.length}`, body: trimmedBody });
-        } else {
-          rows.push({
-            kind: "prose",
-            key: msg.id ?? `a-${rows.length}`,
-            type: "ai",
-            body: trimmedBody,
-          });
-        }
+        rows.push({
+          kind: "prose",
+          key: msg.id ?? `a-${rows.length}`,
+          type: "ai",
+          body: trimmedBody,
+        });
       }
       if (calls.length > 0) {
         // Open a new card per call. Pending until its tool message arrives.
