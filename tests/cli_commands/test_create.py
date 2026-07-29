@@ -422,6 +422,26 @@ def test_quote_directory_for_shell_is_copy_paste_safe_in_cmd(tmp_path: Path) -> 
     assert Path(result.stdout.strip()).resolve() == target.resolve()
 
 
+@pytest.mark.skipif(os.name != "nt", reason="requires cmd.exe")
+def test_quote_directory_for_shell_preserves_percent_names_in_cmd(tmp_path: Path) -> None:
+    target = tmp_path / "review%AGENTSEEK_PERCENT_PROBE%directory"
+    target.mkdir()
+    command = create_module._directory_change_command(str(target))
+    script = tmp_path / "copy-paste-percent.cmd"
+    script.write_text(f"@echo off\n{command}\ncd\n", encoding="utf-8")
+
+    result = subprocess.run(  # noqa: S603
+        ["cmd.exe", "/d", "/c", str(script)],  # noqa: S607
+        capture_output=True,
+        check=False,
+        text=True,
+        env={**os.environ, "AGENTSEEK_PERCENT_PROBE": "expanded"},
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert Path(result.stdout.strip()).resolve() == target.resolve()
+
+
 def _assert_no_next_steps(output: str) -> None:
     assert "Created " not in output
     assert "Next:" not in output
