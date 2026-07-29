@@ -400,6 +400,23 @@ def test_quote_directory_for_shell_uses_the_current_platform_convention() -> Non
     assert create_module._quote_directory_for_shell(path) == expected
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows command-shell verification")
+def test_quote_directory_for_shell_is_copy_pasteable_for_cmd_metacharacters(tmp_path: Path) -> None:
+    project = tmp_path / "review&probe"
+    project.mkdir()
+    quoted = create_module._quote_directory_for_shell(str(project))
+
+    result = subprocess.run(
+        ["cmd.exe", "/d", "/s", "/c", f"cd /d {quoted} && cd"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert Path(result.stdout.strip()).resolve() == project.resolve()
+
+
 def _assert_no_next_steps(output: str) -> None:
     assert "Created " not in output
     assert "Next:" not in output
