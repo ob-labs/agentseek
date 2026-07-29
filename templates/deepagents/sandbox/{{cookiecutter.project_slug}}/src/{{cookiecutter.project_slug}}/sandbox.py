@@ -52,6 +52,11 @@ def _daytona_backend_with_workspace(sandbox: Any, workspace: str) -> Any:
                 return "/" + path.removeprefix(self.workspace + "/")
             return path
 
+        def _logicalize_result_paths(self, result: Any, attribute: str) -> Any:
+            for item in getattr(result, attribute, None) or []:
+                item["path"] = self._logical_path(item.get("path"))
+            return result
+
         def execute(self, command: str, *, timeout: int | None = None) -> Any:
             command_in_workspace = f"cd {shlex.quote(self.workspace)} && {command}"
             if timeout is None:
@@ -73,10 +78,12 @@ def _daytona_backend_with_workspace(sandbox: Any, workspace: str) -> Any:
             return responses
 
         def ls(self, path: str) -> Any:
-            return super().ls(self._resolve_path(path))
+            result = super().ls(self._resolve_path(path))
+            return self._logicalize_result_paths(result, "entries")
 
         async def als(self, path: str) -> Any:
-            return await super().als(self._resolve_path(path))
+            result = await super().als(self._resolve_path(path))
+            return self._logicalize_result_paths(result, "entries")
 
         def read(self, file_path: str, offset: int = 0, limit: int = 2000) -> Any:
             return super().read(self._resolve_path(file_path), offset, limit)
@@ -121,40 +128,38 @@ def _daytona_backend_with_workspace(sandbox: Any, workspace: str) -> Any:
             return result
 
         def glob(self, pattern: str, path: str | None = None) -> Any:
-            return super().glob(pattern, self._resolve_path(path or "/"))
+            result = super().glob(pattern, self._resolve_path(path or "/"))
+            return self._logicalize_result_paths(result, "matches")
 
         async def aglob(self, pattern: str, path: str | None = None) -> Any:
-            return await super().aglob(pattern, self._resolve_path(path or "/"))
+            result = await super().aglob(pattern, self._resolve_path(path or "/"))
+            return self._logicalize_result_paths(result, "matches")
 
         def grep(
             self,
             pattern: str,
             path: str | None = None,
             glob: str | None = None,
-            *,
-            max_count: int | None = None,
         ) -> Any:
-            return super().grep(
+            result = super().grep(
                 pattern,
                 self._resolve_path(path or "/"),
                 glob,
-                max_count=max_count,
             )
+            return self._logicalize_result_paths(result, "matches")
 
         async def agrep(
             self,
             pattern: str,
             path: str | None = None,
             glob: str | None = None,
-            *,
-            max_count: int | None = None,
         ) -> Any:
-            return await super().agrep(
+            result = await super().agrep(
                 pattern,
                 self._resolve_path(path or "/"),
                 glob,
-                max_count=max_count,
             )
+            return self._logicalize_result_paths(result, "matches")
 
     return WorkspaceDaytonaSandbox(sandbox=sandbox, workspace=workspace)
 

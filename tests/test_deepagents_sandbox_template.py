@@ -480,6 +480,92 @@ def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest
     assert events == ["create", ("delete", sandbox)]
 
 
+def test_daytona_workspace_adapter_preserves_grep_contract(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[str, str, str | None, str | None]] = []
+
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+        def grep(self, pattern, path=None, glob=None):
+            calls.append(("grep", pattern, path, glob))
+            return types.SimpleNamespace(matches=[])
+
+        async def agrep(self, pattern, path=None, glob=None):
+            calls.append(("agrep", pattern, path, glob))
+            return types.SimpleNamespace(matches=[])
+
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    backend = module._daytona_backend_with_workspace(object(), "/home/daytona")
+
+    backend.grep("needle", "/src", "*.py")
+    asyncio.run(backend.agrep("needle", "/src", "*.py"))
+
+    assert calls == [
+        ("grep", "needle", "/home/daytona/src", "*.py"),
+        ("agrep", "needle", "/home/daytona/src", "*.py"),
+    ]
+
+
+def test_daytona_workspace_adapter_reports_logical_file_tool_paths(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+        def ls(self, path):
+            return types.SimpleNamespace(entries=[{"path": f"{path}/hello.py", "is_dir": False}])
+
+        async def als(self, path):
+            return self.ls(path)
+
+        def glob(self, pattern, path=None):
+            return types.SimpleNamespace(matches=[{"path": f"{path}/app.py", "is_dir": False}])
+
+        async def aglob(self, pattern, path=None):
+            return self.glob(pattern, path)
+
+        def grep(self, pattern, path=None, glob=None):
+            return types.SimpleNamespace(matches=[{"path": f"{path}/app.py", "line": 1, "text": pattern}])
+
+        async def agrep(self, pattern, path=None, glob=None):
+            return self.grep(pattern, path, glob)
+
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    backend = module._daytona_backend_with_workspace(object(), "/home/daytona")
+
+    results = [
+        backend.ls("/").entries[0]["path"],
+        asyncio.run(backend.als("/")).entries[0]["path"],
+        backend.glob("*.py", "/src").matches[0]["path"],
+        asyncio.run(backend.aglob("*.py", "/src")).matches[0]["path"],
+        backend.grep("needle", "/src").matches[0]["path"],
+        asyncio.run(backend.agrep("needle", "/src")).matches[0]["path"],
+    ]
+
+    assert results == [
+        "/hello.py",
+        "/hello.py",
+        "/src/app.py",
+        "/src/app.py",
+        "/src/app.py",
+        "/src/app.py",
+    ]
+
+
 def test_langsmith_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[object] = []
     remote = types.SimpleNamespace(name="sandbox-id")
