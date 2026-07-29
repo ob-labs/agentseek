@@ -406,8 +406,8 @@ def test_quote_directory_for_shell_is_copy_pasteable_for_cmd_metacharacters(tmp_
     project.mkdir()
     quoted = create_module._quote_directory_for_shell(str(project))
 
-    result = subprocess.run(
-        ["cmd.exe", "/d", "/s", "/c", f"cd /d {quoted} && cd"],
+    result = subprocess.run(  # noqa: S603
+        ["cmd.exe", "/d", "/s", "/c", f"cd /d {quoted} && cd"],  # noqa: S607
         check=False,
         capture_output=True,
         text=True,
