@@ -9,7 +9,7 @@
   <a href="https://github.com/ob-labs/agentseek/releases"><img alt="GitHub 发布版本" src="https://img.shields.io/github/v/release/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://pypi.org/project/agentseek/"><img alt="PyPI 版本" src="https://img.shields.io/pypi/v/agentseek?style=flat-square&logo=pypi" /></a>
   <a href="https://pypi.org/project/agentseek/"><img alt="Python 版本" src="https://img.shields.io/pypi/pyversions/agentseek?style=flat-square&logo=python" /></a>
-  <a href="https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain"><img alt="构建状态" src="https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain"><img alt="构建状态" src="https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main&style=flat-square" /></a>
   <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="贡献者" src="https://img.shields.io/github/contributors/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://github.com/ob-labs/agentseek/issues"><img alt="待处理 Issue" src="https://img.shields.io/github/issues/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/ob-labs/agentseek?style=flat-square" /></a>
@@ -171,10 +171,14 @@ agentseek create deepagents/research --describe
 
 欢迎查看 **《Deep Agents 实战》**：一门基于 AgentSeek 实验的免费 LangChain /
 DeepAgents 课程，见[课程仓库](https://github.com/datawhalechina/deepagents-in-action/)。
+你也可以阅读[文档](https://ob-labs.github.io/agentseek/zh/)，参与
+[GitHub Discussions](https://github.com/ob-labs/agentseek/discussions)，
+[浏览或提交 Issue](https://github.com/ob-labs/agentseek/issues)，或参照
+[贡献指南](https://github.com/ob-labs/agentseek/blob/HEAD/CONTRIBUTING.md)。
 
 <div align="center">
   <a href="https://github.com/ob-labs/agentseek/discussions"><img alt="GitHub Discussions" src="https://img.shields.io/badge/GitHub-Discussions-181717?style=for-the-badge&logo=github" /></a>
-  <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="为 AgentSeek 贡献" src="https://img.shields.io/badge/Contribute-AgentSeek-0ea5e9?style=for-the-badge" /></a>
+  <a href="https://github.com/ob-labs/agentseek/blob/HEAD/CONTRIBUTING.md"><img alt="为 AgentSeek 贡献" src="https://img.shields.io/badge/Contribute-AgentSeek-0ea5e9?style=for-the-badge" /></a>
 </div>
 
 ---

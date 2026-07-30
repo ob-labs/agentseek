@@ -9,7 +9,7 @@
   <a href="https://github.com/ob-labs/agentseek/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://pypi.org/project/agentseek/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/agentseek?style=flat-square&logo=pypi" /></a>
   <a href="https://pypi.org/project/agentseek/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/agentseek?style=flat-square&logo=python" /></a>
-  <a href="https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain"><img alt="Build status" src="https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain"><img alt="Build status" src="https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main&style=flat-square" /></a>
   <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://github.com/ob-labs/agentseek/issues"><img alt="Open issues" src="https://img.shields.io/github/issues/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE"><img alt="License" src="https://img.shields.io/github/license/ob-labs/agentseek?style=flat-square" /></a>
@@ -180,10 +180,14 @@ agentseek create deepagents/research --describe
 
 Explore **Deep Agents in Action**, a free LangChain / DeepAgents course with
 AgentSeek labs, in the [course repository](https://github.com/datawhalechina/deepagents-in-action/).
+Read the [documentation](https://ob-labs.github.io/agentseek/), join
+[GitHub Discussions](https://github.com/ob-labs/agentseek/discussions),
+[browse or report an issue](https://github.com/ob-labs/agentseek/issues), or
+follow the [contribution guide](https://github.com/ob-labs/agentseek/blob/HEAD/CONTRIBUTING.md).
 
 <div align="center">
   <a href="https://github.com/ob-labs/agentseek/discussions"><img alt="GitHub Discussions" src="https://img.shields.io/badge/GitHub-Discussions-181717?style=for-the-badge&logo=github" /></a>
-  <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="Contribute to AgentSeek" src="https://img.shields.io/badge/Contribute-AgentSeek-0ea5e9?style=for-the-badge" /></a>
+  <a href="https://github.com/ob-labs/agentseek/blob/HEAD/CONTRIBUTING.md"><img alt="Contribute to AgentSeek" src="https://img.shields.io/badge/Contribute-AgentSeek-0ea5e9?style=for-the-badge" /></a>
 </div>
 
 ---
