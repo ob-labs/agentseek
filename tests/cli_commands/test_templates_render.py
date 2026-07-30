@@ -500,7 +500,7 @@ def _assert_agentic_rag_variant(
     TEMPLATES,
     ids=[f"{t}/{n}" for t, n, _ in TEMPLATES],
 )
-def test_template_renders_without_unrendered_jinja(  # noqa: C901 - one integration assertion block per template family
+def test_template_renders_without_unrendered_jinja(
     type_name: str,
     template_name: str,
     template_dir: Path,
