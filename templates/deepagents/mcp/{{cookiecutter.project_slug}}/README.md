@@ -41,6 +41,28 @@ model, and it stops the HTTP server when it started that process itself.
 `agentseek info`, `agentseek doctor`, and the dry run inspect the lifecycle before
 the last command starts the calculator HTTP server, LangGraph, and Vite.
 
+### Verified workflow
+
+This exact sequence was last verified on 2026-07-30 against a fresh render. The
+run produced these checkpoints:
+
+- `task sync` created `.venv` and installed the generated Python package.
+- `task frontend` installed the React UI dependencies with no reported
+  vulnerabilities.
+- `task mcp-smoke` discovered both MCP connections, returned `95` over stdio,
+  and returned `2146` over Streamable HTTP.
+- `info` identified `deepagents/mcp`, all three services, and all three tasks.
+- `doctor` reported every required tool, path, environment value, and process
+  working directory as `ok`.
+- `dev --dry-run` printed the three process commands and their loopback URLs.
+- `dev` started LangGraph, Vite, and the calculator HTTP server. LangGraph
+  `/docs`, the Vite root, and calculator `/health` returned HTTP `200`; `Ctrl-C`
+  stopped all three processes.
+
+The verification used a placeholder model credential because this sequence does
+not send a chat message. It proves setup, lifecycle startup, and both real MCP
+transports; it does not prove that a hosted model accepts your credential.
+
 Open `http://127.0.0.1:{{ cookiecutter.frontend_port }}` after all three
 processes start. Sending a message invokes your configured hosted model. The
 template's local verification covers lifecycle startup, both MCP transports,
