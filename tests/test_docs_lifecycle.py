@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,97 @@ LIFECYCLE_REFERENCES = (
 )
 LIFECYCLE_V2_SPEC_URL = "https://github.com/ob-labs/agentseek/blob/main/specs/lifecycle-v2-service-discovery.md"
 ROOT_DOTENV_EXAMPLE = ROOT / ".env.example"
+ROOT_READMES = (
+    ROOT / "README.md",
+    ROOT / "README.zh.md",
+)
+
+CANONICAL_RESEARCH_WALKTHROUGH = (
+    "uv tool install agentseek",
+    "agentseek create deepagents/research --no-input",
+    "cd research_deepagent",
+    "agentseek info",
+    "cp .env.example .env",
+    "cp frontend/.env.example frontend/.env",
+    "$EDITOR .env",
+    "agentseek task --list",
+    "agentseek task sync",
+    "agentseek task frontend",
+    "agentseek doctor",
+    "agentseek dev --dry-run",
+    "agentseek dev",
+    "agentseek doctor --live",
+)
+
+README_SECTION_MARKERS = {
+    "README.md": (
+        "## Experience the local ADLC",
+        "## What is AgentSeek?",
+        "## Agent Development Lifecycle",
+        "## Observability throughout the loop",
+        "## Guided templates",
+        "## Core concepts and commands",
+        "## Documentation",
+        "## Development",
+        "## Community and course",
+        "## License",
+    ),
+    "README.zh.md": (
+        "## 体验本地 ADLC",
+        "## 什么是 AgentSeek？",
+        "## Agent 开发生命周期",
+        "## 贯穿全流程的可观测性",
+        "## 引导式模板",
+        "## 核心概念与命令",
+        "## 文档",
+        "## 开发",
+        "## 社区与课程",
+        "## License",
+    ),
+}
+
+README_REQUIRED_TEXT = {
+    "README.md": (
+        "AgentSeek 0.1.1",
+        "releases/tag/v0.1.0",
+        "native LangGraph backend",
+        "React frontend",
+        "agentseek info --json",
+        "AGENTSEEK_CONSOLE=true",
+        "LangSmith",
+        "agentseek create --list-templates",
+        "agentseek create --list-templates --filter deepagents",
+        "agentseek create deepagents/research --describe",
+        "diagram/agentseek-readme/agentseek-architecture-en.svg",
+        "diagram/agentseek-readme/agentseek-adlc-en.svg",
+    ),
+    "README.zh.md": (
+        "AgentSeek 0.1.1",
+        "releases/tag/v0.1.0",
+        "原生 LangGraph 后端",
+        "React 前端",
+        "agentseek info --json",
+        "AGENTSEEK_CONSOLE=true",
+        "LangSmith",
+        "agentseek create --list-templates",
+        "agentseek create --list-templates --filter deepagents",
+        "agentseek create deepagents/research --describe",
+        "diagram/agentseek-readme/agentseek-architecture-zh.svg",
+        "diagram/agentseek-readme/agentseek-adlc-zh.svg",
+    ),
+}
+
+
+def _bash_commands(text: str) -> list[str]:
+    """Return non-comment command lines from fenced bash examples."""
+    commands: list[str] = []
+    for block in re.findall(r"```bash\n(.*?)```", text, flags=re.DOTALL):
+        commands.extend(
+            line.strip()
+            for line in block.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
+    return commands
 
 
 def _public_template_readmes() -> list[Path]:
@@ -63,6 +155,32 @@ def test_core_quickstarts_show_lifecycle_task_discovery() -> None:
 
     for doc in docs:
         assert "agentseek task" in doc.read_text(encoding="utf-8"), doc
+
+
+@pytest.mark.parametrize("readme", ROOT_READMES)
+def test_root_readmes_keep_the_current_research_walkthrough_in_order(readme: Path) -> None:
+    """The root walkthrough must follow the shipped research lifecycle exactly."""
+    commands = _bash_commands(readme.read_text(encoding="utf-8"))
+    positions = [commands.index(command) for command in CANONICAL_RESEARCH_WALKTHROUGH]
+
+    assert positions == sorted(positions), readme
+
+
+@pytest.mark.parametrize("readme", ROOT_READMES)
+def test_root_readmes_keep_localized_adlc_structure_and_current_runtime_truth(readme: Path) -> None:
+    """Both landing pages describe the same current local ADLC without future claims."""
+    text = readme.read_text(encoding="utf-8")
+    markers = README_SECTION_MARKERS[readme.name]
+    positions = [text.index(marker) for marker in markers]
+
+    assert positions == sorted(positions), readme
+    for required in README_REQUIRED_TEXT[readme.name]:
+        assert required in text, (readme, required)
+
+    assert "AgentSeek API" not in text, readme
+    assert "langgraph-dev" not in text, readme
+    assert "agentseek task observability" not in text, readme
+    assert not re.search(r"seekdb", text, flags=re.IGNORECASE), readme
 
 
 def test_root_dotenv_example_matches_runtime_alias_contract() -> None:
