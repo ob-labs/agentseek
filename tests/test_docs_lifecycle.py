@@ -49,7 +49,7 @@ README_HERO_BADGE_PAIRS = (
     ),
     (
         "https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain",
-        "https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main&style=flat-square",
+        "https://img.shields.io/github/actions/workflow/status/ob-labs/agentseek/main.yml?branch=main&style=flat-square&label=CI",
     ),
     (
         "https://github.com/ob-labs/agentseek/graphs/contributors",
@@ -305,9 +305,7 @@ def test_root_readmes_keep_the_shared_banner_contract(readme: Path) -> None:
 
 def test_root_readme_heroes_keep_matching_badge_targets_and_images() -> None:
     """Language variants must keep an identical ordered linked-badge contract."""
-    english_badges, chinese_badges = (
-        _hero_badge_pairs(readme.read_text(encoding="utf-8")) for readme in ROOT_READMES
-    )
+    english_badges, chinese_badges = (_hero_badge_pairs(readme.read_text(encoding="utf-8")) for readme in ROOT_READMES)
 
     assert english_badges == chinese_badges
     assert {target for target, _source in english_badges} == {target for target, _source in chinese_badges}

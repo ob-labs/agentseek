@@ -9,7 +9,7 @@
   <a href="https://github.com/ob-labs/agentseek/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://pypi.org/project/agentseek/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/agentseek?style=flat-square&logo=pypi" /></a>
   <a href="https://pypi.org/project/agentseek/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/agentseek?style=flat-square&logo=python" /></a>
-  <a href="https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain"><img alt="Build status" src="https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main&style=flat-square" /></a>
+  <a href="https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/ob-labs/agentseek/main.yml?branch=main&style=flat-square&label=CI" /></a>
   <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://github.com/ob-labs/agentseek/issues"><img alt="Open issues" src="https://img.shields.io/github/issues/ob-labs/agentseek?style=flat-square" /></a>
   <a href="https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE"><img alt="License" src="https://img.shields.io/github/license/ob-labs/agentseek?style=flat-square" /></a>
