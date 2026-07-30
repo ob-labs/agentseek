@@ -184,13 +184,19 @@ def _bash_commands(text: str) -> list[str]:
     return commands
 
 
-def _hero_badge_pairs(text: str) -> list[tuple[str, str]]:
-    """Extract the ordered linked badge images from the centered README hero."""
+def _hero_badges_html(text: str) -> str:
+    """Return the linked-badge block from the centered README hero."""
     hero_start = text.index('<div align="center">')
     heading_end = text.index("</h1>", hero_start)
     badges_start = text.index("<p>\n", heading_end)
     badges_end = text.index("</p>", badges_start)
-    badges = text[badges_start:badges_end]
+
+    return text[badges_start:badges_end]
+
+
+def _hero_badge_pairs(text: str) -> list[tuple[str, str]]:
+    """Extract the ordered linked badge images from the centered README hero."""
+    badges = _hero_badges_html(text)
 
     return re.findall(r'<a href="([^"]+)"><img alt="[^"]+" src="([^"]+)" /></a>', badges)
 
@@ -327,6 +333,14 @@ def test_root_readme_heroes_keep_matching_badge_targets_and_images() -> None:
     assert english_badges == chinese_badges
     assert {target for target, _source in english_badges} == {target for target, _source in chinese_badges}
     assert {source for _target, source in english_badges} == {source for _target, source in chinese_badges}
+
+
+@pytest.mark.parametrize("readme", ROOT_READMES)
+def test_root_readme_heroes_split_badges_into_balanced_rows(readme: Path) -> None:
+    """The badge strip must render as an intentional five-plus-four layout."""
+    badge_rows = _hero_badges_html(readme.read_text(encoding="utf-8")).split("<br />")
+
+    assert [row.count('<a href="') for row in badge_rows] == [5, 4], readme
 
 
 @pytest.mark.parametrize("readme", ROOT_READMES)
