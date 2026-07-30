@@ -84,6 +84,7 @@ README_REQUIRED_TEXT = {
     "README.zh.md": (
         "AgentSeek 0.1.1",
         "releases/tag/v0.1.0",
+        "发现、创建、审视、配置、检查、运行、观测和迭代",
         "原生 LangGraph 后端",
         "React 前端",
         "agentseek info --json",
@@ -179,6 +180,8 @@ def test_root_readmes_keep_localized_adlc_structure_and_current_runtime_truth(re
 
     assert "AgentSeek API" not in text, readme
     assert "langgraph-dev" not in text, readme
+    assert "sync-langgraph" not in text, readme
+    assert "frontend-dev" not in text, readme
     assert "agentseek task observability" not in text, readme
     assert not re.search(r"seekdb", text, flags=re.IGNORECASE), readme
 

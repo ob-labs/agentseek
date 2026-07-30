@@ -6,7 +6,7 @@
 [![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
 
 AgentSeek 是面向本地 Agent 应用开发的 template-first 工具包。它为可编辑的生成项目
-提供一条可预期的生命周期：发现、创建、检查、配置、验证、运行、观测和迭代。
+提供一条可预期的生命周期：发现、创建、审视、配置、检查、运行、观测和迭代。
 
 AgentSeek 0.1.1 从不可变的
 [`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0)
