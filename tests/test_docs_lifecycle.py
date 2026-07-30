@@ -114,7 +114,6 @@ README_SECTION_MARKERS = {
         "## 🌐 Next Steps & Community",
         "## 🛠️ Development",
         "### Contributing",
-        "## 📈 Star History",
         "## 📄 License",
     ),
     "README.zh.md": (
@@ -128,9 +127,13 @@ README_SECTION_MARKERS = {
         "## 🌐 下一步与社区",
         "## 🛠️ 开发",
         "### 贡献",
-        "## 📈 Star 历史",
         "## 📄 许可证",
     ),
+}
+
+README_STAR_HISTORY_TEXT = {
+    "README.md": ("Star History",),
+    "README.zh.md": ("Star 历史",),
 }
 
 README_REQUIRED_TEXT = {
@@ -291,8 +294,6 @@ def test_root_readmes_keep_the_shared_banner_contract(readme: Path) -> None:
     badge_pairs = _hero_badge_pairs(text)
 
     assert text.startswith('<div align="center">'), readme
-    assert "https://contrib.rocks/image?repo=ob-labs/agentseek&max=400" in text, readme
-    assert "https://api.star-history.com/svg?repos=ob-labs/agentseek&type=Date" in text, readme
     assert "oceanbase/seekdb" not in text, readme
     assert badge_pairs == list(README_HERO_BADGE_PAIRS), readme
     assert len(badge_pairs) == 9, readme
@@ -301,6 +302,22 @@ def test_root_readmes_keep_the_shared_banner_contract(readme: Path) -> None:
     for anchor in README_ANCHORS:
         assert f'<a id="{anchor}"></a>' in text, (readme, anchor)
         assert f"](#{anchor})" in text, (readme, anchor)
+
+
+@pytest.mark.parametrize("readme", ROOT_READMES)
+def test_root_readmes_keep_contributor_wall_without_star_history(readme: Path) -> None:
+    """Contribution sections must show contributors without a Star History embed."""
+    text = readme.read_text(encoding="utf-8")
+    contributor_wall = re.search(
+        r'<a href="https://github\.com/ob-labs/agentseek/graphs/contributors">'
+        r'<img alt="[^"]+" src="https://contrib\.rocks/image\?repo=ob-labs/agentseek&max=400" /></a>',
+        text,
+    )
+
+    assert contributor_wall is not None, readme
+    assert "star-history.com" not in text, readme
+    for forbidden in README_STAR_HISTORY_TEXT[readme.name]:
+        assert forbidden not in text, (readme, forbidden)
 
 
 def test_root_readme_heroes_keep_matching_badge_targets_and_images() -> None:

@@ -215,16 +215,6 @@ Contributions, fixes, and template improvements are welcome.
 
 ---
 
-## 📈 Star History
-
-<div align="center">
-  <a href="https://www.star-history.com/#ob-labs/agentseek&Date"><img alt="AgentSeek Star History Chart" src="https://api.star-history.com/svg?repos=ob-labs/agentseek&type=Date" /></a>
-</div>
-
-If AgentSeek is useful to you, star the repository to support the project.
-
----
-
 ## 📄 License
 
 [Apache-2.0](https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE)

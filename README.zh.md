@@ -206,16 +206,6 @@ make docs-test
 
 ---
 
-## 📈 Star 历史
-
-<div align="center">
-  <a href="https://www.star-history.com/#ob-labs/agentseek&Date"><img alt="AgentSeek Star 历史图表" src="https://api.star-history.com/svg?repos=ob-labs/agentseek&type=Date" /></a>
-</div>
-
-如果 AgentSeek 对你有帮助，欢迎点亮 Star 支持项目。
-
----
-
 ## 📄 许可证
 
 [Apache-2.0](https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE)
