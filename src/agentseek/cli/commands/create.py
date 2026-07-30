@@ -85,7 +85,9 @@ REPO_URL = "https://github.com/ob-labs/agentseek"
 REPO_GIT_URL = f"{REPO_URL}.git"
 # The directory inside the repo that holds all cookiecutter templates.
 TEMPLATES_DIR = "templates"
-EXPLICIT_TEMPLATE_REPO_CACHE_DIR = "agentseek-explicit-catalogs"
+# Keep this name compact: the cache also contains a 64-character repository
+# digest and a 40-character commit SHA, so long names can exceed MAX_PATH.
+EXPLICIT_TEMPLATE_REPO_CACHE_DIR = ".as"
 EXPLICIT_CATALOG_METADATA = ".agentseek-catalog-metadata.json"
 EXPLICIT_CATALOG_REPOSITORY_DIR = "repository"
 EXPLICIT_CATALOG_SCHEMA_VERSION = 1
@@ -784,10 +786,14 @@ def _fetch_and_publish_explicit_catalog(
     cache_entry: Path,
     coordinate: _ExplicitCatalogCoordinate,
 ) -> _PreparedCatalog:
-    with tempfile.TemporaryDirectory(prefix=".catalog-", dir=digest_dir) as temporary:
-        staging_root = Path(temporary).resolve(strict=True)
-        if staging_root.parent != digest_dir or _path_is_link_like(staging_root):
+    # Keep the staging tree directly below the controlled namespace rather
+    # than below the digest and commit path. The latter exceeds Windows
+    # MAX_PATH for otherwise valid Cookiecutter cache locations.
+    with tempfile.TemporaryDirectory(prefix=".catalog-", dir=namespace) as temporary:
+        staging_directory = Path(temporary)
+        if staging_directory.parent != namespace or _path_is_link_like(staging_directory):
             _reject_explicit_catalog("catalog staging directory escaped its coordinate")
+        staging_root = staging_directory.resolve(strict=True)
         candidate = _ensure_controlled_cache_directory(staging_root, "candidate")
         cloned_root = candidate / EXPLICIT_CATALOG_REPOSITORY_DIR
         _clone_explicit_repository(coordinate.fetch_url, coordinate.commit, cloned_root)
@@ -1565,11 +1571,26 @@ def _print_created_next_steps(generated: Path | None, *, base_dir: Path) -> None
     display_path = _display_generated_path(generated, base_dir=base_dir)
     typer.echo(f"Created {display_path}")
     typer.echo()
-    typer.echo("Next:")
-    typer.echo(f"  cd {shlex.quote(display_path)}")
+    typer.echo("Next (PowerShell):" if os.name == "nt" else "Next:")
+    typer.echo(f"  {_directory_change_command(display_path)}")
     typer.echo("  agentseek info")
     typer.echo("  agentseek task --list")
     typer.echo("  agentseek doctor")
+
+
+def _quote_directory_for_shell(path: str) -> str:
+    if os.name == "nt":
+        # cmd.exe expands %NAME% even inside double quotes. PowerShell single
+        # quotes and -LiteralPath preserve valid Windows directory names.
+        return "'" + path.replace("'", "''") + "'"
+    return shlex.quote(path)
+
+
+def _directory_change_command(path: str) -> str:
+    """Return a copy-pasteable directory-change command for the supported shell."""
+
+    command = "Set-Location -LiteralPath" if os.name == "nt" else "cd"
+    return f"{command} {_quote_directory_for_shell(path)}"
 
 
 def _display_generated_path(generated: Path, *, base_dir: Path) -> str:

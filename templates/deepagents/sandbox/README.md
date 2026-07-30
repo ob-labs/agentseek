@@ -98,6 +98,15 @@ gracefully with Ctrl+C so the remote sandbox is deleted. If a cleanup warning
 appears or the process is killed, check the provider dashboard and delete any
 active sandbox manually.
 
+## Workspace paths
+
+The Daytona backend obtains its writable directory with `sandbox.get_work_dir()`
+and makes it the logical root for DeepAgents file tools. Thus `hello.py` and
+`/hello.py` both resolve inside the Daytona workspace (normally
+`/home/daytona/hello.py`), rather than the unwritable filesystem root.
+File tools report `/hello.py`, while shell commands must use the
+workspace-relative form: `python hello.py`, not `python /hello.py`.
+
 ## Cookiecutter variables
 
 | Variable                 | Default            | Description                          |

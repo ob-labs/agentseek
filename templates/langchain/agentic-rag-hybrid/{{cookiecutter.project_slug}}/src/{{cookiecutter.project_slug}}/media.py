@@ -101,7 +101,7 @@ def extract_archive_safely(
                     max_members,
                 )
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                with zf.open(member) as source_fh, destination.open("wb") as destination_fh:
+                with zf.open(member) as source_fh, destination.open("wb") as destination_fh:  # encoding-check: binary
                     shutil.copyfileobj(source_fh, destination_fh)
         return target
     if suffix in SUPPORTED_ARCHIVE_SUFFIXES - {".zip"}:

@@ -102,7 +102,7 @@ def _load_webapp_module(rendered: Path, monkeypatch: pytest.MonkeyPatch, cleanup
 
 
 def test_rendered_dependencies_include_both_sandbox_integrations(rendered_sandbox: Path) -> None:
-    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text())
+    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text(encoding="utf-8"))
     dependencies = project["project"]["dependencies"]
     assert "langchain-daytona>=0.0.7" in dependencies
     assert "langsmith[sandbox]" in dependencies
@@ -110,13 +110,13 @@ def test_rendered_dependencies_include_both_sandbox_integrations(rendered_sandbo
 
 
 def test_rendered_langgraph_uses_custom_http_app(rendered_sandbox: Path) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     assert config["http"]["app"] == f"./src/{rendered_sandbox.name}/webapp.py:app"
     assert (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").is_file()
 
 
 def test_rendered_frontend_test_mock_allows_stream_errors(rendered_sandbox: Path) -> None:
-    test_source = (rendered_sandbox / "frontend" / "src" / "App.test.tsx").read_text()
+    test_source = (rendered_sandbox / "frontend" / "src" / "App.test.tsx").read_text(encoding="utf-8")
 
     assert "type MockStreamState = {" in test_source
     assert "error: string | null;" in test_source
@@ -153,8 +153,8 @@ def test_rendered_webapp_lifespan_always_invokes_agent_cleanup(
 def test_rendered_descriptions_default_to_daytona_and_keep_langsmith_as_an_alternative(
     rendered_sandbox: Path,
 ) -> None:
-    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text())
-    agent_source = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text()
+    project = tomllib.loads((rendered_sandbox / "pyproject.toml").read_text(encoding="utf-8"))
+    agent_source = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text(encoding="utf-8")
     agent_docstring = ast.get_docstring(ast.parse(agent_source))
 
     for description in (project["project"]["description"], agent_docstring):
@@ -166,9 +166,9 @@ def test_rendered_descriptions_default_to_daytona_and_keep_langsmith_as_an_alter
 def test_generated_configuration_defaults_to_daytona_and_warns_about_langsmith_charges(
     rendered_sandbox: Path,
 ) -> None:
-    env_text = (rendered_sandbox / ".env.example").read_text()
-    lifecycle = tomllib.loads((rendered_sandbox / ".agentseek" / "lifecycle.toml").read_text())
-    readme = (rendered_sandbox / "README.md").read_text()
+    env_text = (rendered_sandbox / ".env.example").read_text(encoding="utf-8")
+    lifecycle = tomllib.loads((rendered_sandbox / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
+    readme = (rendered_sandbox / "README.md").read_text(encoding="utf-8")
 
     assert "AGENTSEEK_SANDBOX_PROVIDER=daytona" in env_text
     assert "DAYTONA_API_KEY=" in env_text
@@ -184,7 +184,7 @@ def test_generated_configuration_defaults_to_daytona_and_warns_about_langsmith_c
 
 def test_template_and_generated_readmes_explain_cleanup_paths(rendered_sandbox: Path) -> None:
     for readme_path in (TEMPLATE / "README.md", rendered_sandbox / "README.md"):
-        readme = " ".join(readme_path.read_text().lower().split())
+        readme = " ".join(readme_path.read_text(encoding="utf-8").lower().split())
         assert "custom server lifespan" in readme
         assert "atexit" in readme
         assert "cleanup warning" in readme
@@ -201,11 +201,11 @@ def test_provider_normalization(rendered_sandbox: Path) -> None:
 
 
 def test_rendered_runtime_is_the_only_sandbox_resource_owner(rendered_sandbox: Path) -> None:
-    agent = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text()
+    agent = (rendered_sandbox / "src" / rendered_sandbox.name / "agent.py").read_text(encoding="utf-8")
     runtime_path = rendered_sandbox / "src" / rendered_sandbox.name / "runtime.py"
     assert runtime_path.is_file()
-    runtime = runtime_path.read_text()
-    webapp = (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").read_text()
+    runtime = runtime_path.read_text(encoding="utf-8")
+    webapp = (rendered_sandbox / "src" / rendered_sandbox.name / "webapp.py").read_text(encoding="utf-8")
 
     assert f"from {rendered_sandbox.name}.runtime import get_backend" in agent
     assert "create_sandbox_backend" not in agent
@@ -228,7 +228,7 @@ def test_rendered_runtime_is_the_only_sandbox_resource_owner(rendered_sandbox: P
 def test_importing_configured_webapp_does_not_initialize_sandbox(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     webapp_path_text, _ = config["http"]["app"].split(":", maxsplit=1)
     webapp_path = Path(webapp_path_text.removeprefix("./"))
     webapp_module_name = ".".join(webapp_path.with_suffix("").parts[1:])
@@ -261,7 +261,7 @@ def test_importing_configured_webapp_does_not_initialize_sandbox(
 def test_invalid_model_configuration_does_not_initialize_sandbox(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
     graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
     package_name = rendered_sandbox.name
@@ -300,7 +300,7 @@ def test_invalid_model_configuration_does_not_initialize_sandbox(
 def test_model_initialization_failure_does_not_initialize_sandbox(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
     graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
     package_name = rendered_sandbox.name
@@ -346,7 +346,7 @@ def test_model_initialization_failure_does_not_initialize_sandbox(
 def test_file_graph_and_package_webapp_share_one_runtime_owner(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    config = json.loads((rendered_sandbox / "langgraph.json").read_text())
+    config = json.loads((rendered_sandbox / "langgraph.json").read_text(encoding="utf-8"))
     graph_path_text, _ = config["graphs"]["sandbox"].split(":", maxsplit=1)
     graph_path = rendered_sandbox / graph_path_text.removeprefix("./")
     assert graph_path.name == "agent.py"
@@ -359,7 +359,7 @@ def test_file_graph_and_package_webapp_share_one_runtime_owner(
     factory_calls = 0
     provider_create_calls: list[object] = []
     events: list[str] = []
-    remote = types.SimpleNamespace(id="sandbox-id")
+    remote = types.SimpleNamespace(id="sandbox-id", get_work_dir=lambda: "/home/daytona")
 
     class FakeDaytona:
         def create(self):
@@ -425,7 +425,16 @@ def test_file_graph_and_package_webapp_share_one_runtime_owner(
 
 def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[object] = []
-    sandbox = object()
+    uploads: list[list[tuple[str, bytes]]] = []
+    commands: list[str] = []
+
+    class FakeSandbox:
+        id = "sandbox-id"
+
+        def get_work_dir(self) -> str:
+            return "/home/daytona"
+
+    sandbox = FakeSandbox()
 
     class FakeDaytona:
         def create(self):
@@ -439,6 +448,13 @@ def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest
         def __init__(self, *, sandbox):
             self.sandbox = sandbox
 
+        def upload_files(self, files):
+            uploads.append(files)
+            return [types.SimpleNamespace(path=path, error=None) for path, _ in files]
+
+        def execute(self, command, *, timeout=None):
+            commands.append(command)
+
     monkeypatch.setenv("DAYTONA_API_KEY", "test-key")
     monkeypatch.setitem(sys.modules, "daytona", types.SimpleNamespace(Daytona=FakeDaytona))
     monkeypatch.setitem(
@@ -449,9 +465,132 @@ def test_daytona_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest
     module = _load_sandbox_module(rendered_sandbox)
     backend, cleanup = module.create_sandbox_backend("daytona")
     assert backend.sandbox is sandbox
+    assert backend.workspace == "/home/daytona"
+    assert module._workspace_path(backend.workspace, "hello.py") == "/home/daytona/hello.py"
+    assert module._workspace_path(backend.workspace, "/hello.py") == "/home/daytona/hello.py"
+    with pytest.raises(ValueError, match="must remain inside"):
+        module._workspace_path(backend.workspace, "../../hello.py")
+    responses = backend.upload_files([("/hello.py", b"print('Hello')\n")])
+    assert uploads == [[("/home/daytona/hello.py", b"print('Hello')\n")]]
+    assert responses[0].path == "/hello.py"
+    backend.execute("python hello.py")
+    assert commands == ["cd /home/daytona && python hello.py"]
     cleanup()
     cleanup()
     assert events == ["create", ("delete", sandbox)]
+
+
+def test_daytona_workspace_adapter_preserves_grep_contract(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[str, str, str | None, str | None]] = []
+
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+        def grep(self, pattern, path=None, glob=None):
+            calls.append(("grep", pattern, path, glob))
+            return types.SimpleNamespace(matches=[])
+
+        async def agrep(self, pattern, path=None, glob=None):
+            calls.append(("agrep", pattern, path, glob))
+            return types.SimpleNamespace(matches=[])
+
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    backend = module._daytona_backend_with_workspace(object(), "/home/daytona")
+
+    backend.grep("needle", "/src", "*.py")
+    asyncio.run(backend.agrep("needle", "/src", "*.py"))
+
+    assert calls == [
+        ("grep", "needle", "/home/daytona/src", "*.py"),
+        ("agrep", "needle", "/home/daytona/src", "*.py"),
+    ]
+
+
+def test_daytona_workspace_adapter_reports_logical_file_tool_paths(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+        def ls(self, path):
+            return types.SimpleNamespace(entries=[{"path": f"{path}/hello.py", "is_dir": False}])
+
+        async def als(self, path):
+            return self.ls(path)
+
+        def glob(self, pattern, path=None):
+            return types.SimpleNamespace(matches=[{"path": "app.py", "is_dir": False}])
+
+        async def aglob(self, pattern, path=None):
+            return self.glob(pattern, path)
+
+        def grep(self, pattern, path=None, glob=None):
+            return types.SimpleNamespace(matches=[{"path": f"{path}/app.py", "line": 1, "text": pattern}])
+
+        async def agrep(self, pattern, path=None, glob=None):
+            return self.grep(pattern, path, glob)
+
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    backend = module._daytona_backend_with_workspace(object(), "/home/daytona")
+
+    results = [
+        backend.ls("/").entries[0]["path"],
+        asyncio.run(backend.als("/")).entries[0]["path"],
+        backend.glob("*.py", "/src").matches[0]["path"],
+        asyncio.run(backend.aglob("*.py", "/src")).matches[0]["path"],
+        backend.grep("needle", "/src").matches[0]["path"],
+        asyncio.run(backend.agrep("needle", "/src")).matches[0]["path"],
+    ]
+
+    assert results == [
+        "/hello.py",
+        "/hello.py",
+        "/src/app.py",
+        "/src/app.py",
+        "/src/app.py",
+        "/src/app.py",
+    ]
+
+
+def test_daytona_workspace_adapter_rejects_glob_matches_outside_workspace(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+        def glob(self, pattern, path=None):
+            return types.SimpleNamespace(matches=[{"path": "../../etc/passwd", "is_dir": False}])
+
+        async def aglob(self, pattern, path=None):
+            return self.glob(pattern, path)
+
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    backend = module._daytona_backend_with_workspace(object(), "/home/daytona")
+
+    with pytest.raises(ValueError, match="must remain inside"):
+        backend.glob("../../etc/passwd", "/src")
+    with pytest.raises(ValueError, match="must remain inside"):
+        asyncio.run(backend.aglob("../../etc/passwd", "/src"))
 
 
 def test_langsmith_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -493,7 +632,7 @@ def test_daytona_adapter_failure_cleans_up_and_reraises(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     events: list[object] = []
-    sandbox = object()
+    sandbox = types.SimpleNamespace(id="sandbox-id", get_work_dir=lambda: "/home/daytona")
 
     class AdapterError(RuntimeError):
         pass
@@ -564,7 +703,7 @@ def test_langsmith_adapter_failure_cleans_up_and_reraises(
 
 
 def test_no_provider_argument_defaults_to_daytona(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    sandbox = object()
+    sandbox = types.SimpleNamespace(id="sandbox-id", get_work_dir=lambda: "/home/daytona")
 
     class FakeDaytona:
         def create(self):
@@ -665,7 +804,7 @@ def test_provider_requires_credential(
 def test_cleanup_suppresses_provider_delete_errors_and_emits_safe_warning(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    sandbox = types.SimpleNamespace(id="sandbox-123")
+    sandbox = types.SimpleNamespace(id="sandbox-123", get_work_dir=lambda: "/home/daytona")
     delete_calls = 0
 
     class DeleteError(RuntimeError):
@@ -717,7 +856,7 @@ def test_cleanup_suppresses_provider_delete_errors_and_emits_safe_warning(
 def test_cleanup_is_idempotent_when_two_threads_call_concurrently(
     rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    sandbox = types.SimpleNamespace(id="sandbox-123")
+    sandbox = types.SimpleNamespace(id="sandbox-123", get_work_dir=lambda: "/home/daytona")
     delete_calls = 0
     delete_count_lock = threading.Lock()
     callers_ready = threading.Barrier(3)

@@ -143,6 +143,7 @@ def _assert_langchain_default_template(generated: Path) -> None:
     env_text = (generated / ".env.example").read_text(encoding="utf-8")
     compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
     dev_text = (generated / "src" / generated.name / "dev.py").read_text(encoding="utf-8")
+    process_group_text = (generated / "src" / generated.name / "process_group.py").read_text(encoding="utf-8")
     feishu_text = (generated / "src" / generated.name / "feishu.py").read_text(encoding="utf-8")
     wecom_text = (generated / "src" / generated.name / "wecom.py").read_text(encoding="utf-8")
     pyproject_text = (generated / "pyproject.toml").read_text(encoding="utf-8")
@@ -156,6 +157,9 @@ def _assert_langchain_default_template(generated: Path) -> None:
     assert "${OCEANBASE_SEEKDB_IMAGE:-quay.io/oceanbase/seekdb:latest}" in compose_text
     assert "agentseek task frontend" in dev_text
     assert "npm install --prefix frontend" not in dev_text
+    assert "from .process_group import" in dev_text
+    assert "CREATE_NEW_PROCESS_GROUP" in process_group_text
+    assert "AssignProcessToJobObject" in process_group_text
     assert 'serve-wecom = "my_langchain_agent.wecom:main"' in pyproject_text
     assert '"bub-wecom"' in pyproject_text
     assert '["bub", "gateway", "--enable-channel", "wecom"]' in wecom_text
@@ -400,6 +404,49 @@ def _assert_agentic_rag_hybrid_template(generated: Path, lifecycle_data: dict[st
     assert "openinference-instrumentation-langchain" in pyproject_text
 
 
+def _assert_agentic_rag_template(generated: Path, lifecycle_data: dict[str, Any]) -> None:
+    lifecycle_text = (generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8")
+    env_text = (generated / ".env.example").read_text(encoding="utf-8")
+    compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+    gitignore_text = (generated / ".gitignore").read_text(encoding="utf-8")
+    pyproject_text = (generated / "pyproject.toml").read_text(encoding="utf-8")
+    agent_text = (generated / "src" / "my_rag_agent" / "agent.py").read_text(encoding="utf-8")
+    ingest_text = (generated / "src" / "my_rag_agent" / "ingest.py").read_text(encoding="utf-8")
+    helper_text = (generated / "src" / "my_rag_agent" / "vector_store.py").read_text(encoding="utf-8")
+    smoke_test = (generated / "tests" / "test_seekdb_embedded.py").read_text(encoding="utf-8")
+    assert set(lifecycle_data["processes"]) == {"backend", "frontend"}
+    assert "docker" not in lifecycle_data["tools"]["required"]
+    assert "docker compose" not in lifecycle_text
+    assert lifecycle_data["tasks"]["seekdb-docker"]["command"] == ["docker", "compose", "up", "-d", "seekdb"]
+    assert lifecycle_data["tasks"]["embedded-smoke"]["command"] == [
+        "uv",
+        "run",
+        "--extra",
+        "dev",
+        "python",
+        "-m",
+        "pytest",
+    ]
+    assert "SEEKDB_MODE=embedded" in env_text
+    assert "SEEKDB_PATH=~/.agentseek/agentic-rag/my_rag_agent/seekdb" in env_text
+    assert "./.seekdb-docker-data:/var/lib/oceanbase" in compose_text
+    assert ".seekdb-docker-data/" in gitignore_text
+    assert ".seekdb-data/" not in gitignore_text
+    assert "pytest>=8.2" in pyproject_text
+    assert "path" in helper_text and "SEEKDB_MODE" in helper_text
+    assert "get_vector_store" in agent_text
+    assert "get_vector_store" in ingest_text
+    assert "from my_rag_agent.vector_store import get_vector_store" in agent_text
+    assert "from my_rag_agent.vector_store import get_vector_store" in ingest_text
+    assert "from .vector_store" not in agent_text
+    assert "DeterministicEmbeddings" in smoke_test
+    assert "subprocess.run" in smoke_test
+    assert "shutil.rmtree" in smoke_test
+    assert "similarity_search" in smoke_test
+    assert "agentseek task seekdb-docker" in (generated / "README.md").read_text(encoding="utf-8")
+    assert "agentseek task embedded-smoke" in (generated / "README.md").read_text(encoding="utf-8")
+
+
 def _assert_frontend_package_json(generated: Path) -> None:
     """Validate package.json when the rendered template includes a frontend."""
     frontend_package = generated / "frontend" / "package.json"
@@ -433,6 +480,19 @@ def test_at_least_one_template_discovered() -> None:
         "No templates discovered under templates/. Either the templates root "
         "moved or _local_templates_root() can no longer find it."
     )
+
+
+def _assert_agentic_rag_variant(
+    type_name: str,
+    template_name: str,
+    generated: Path,
+    lifecycle_data: dict[str, Any],
+) -> None:
+    template = (type_name, template_name)
+    if template == ("langchain", "agentic-rag-hybrid"):
+        _assert_agentic_rag_hybrid_template(generated, lifecycle_data)
+    elif template == ("langchain", "agentic-rag"):
+        _assert_agentic_rag_template(generated, lifecycle_data)
 
 
 @pytest.mark.parametrize(
@@ -515,8 +575,7 @@ def test_template_renders_without_unrendered_jinja(  # noqa: C901 - one integrat
     if (type_name, template_name) == ("langchain", "agentic-rag-openvino"):
         _assert_agentic_rag_openvino_template(generated)
 
-    if (type_name, template_name) == ("langchain", "agentic-rag-hybrid"):
-        _assert_agentic_rag_hybrid_template(generated, lifecycle_data)
+    _assert_agentic_rag_variant(type_name, template_name, generated, lifecycle_data)
 
     _assert_frontend_package_json(generated)
 

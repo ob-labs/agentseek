@@ -1,16 +1,27 @@
 from __future__ import annotations
 
 import importlib
+import json
 import os
+import subprocess
 import sys
+import tomllib
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from typer.testing import CliRunner
 
 import agentseek.cli.lifecycle.core as lifecycle_core
 from tests.cli_commands.helpers import build_command_app
+
+pytestmark = pytest.mark.usefixtures("create_symlink")
+
+
+def _toml_string(value: str | Path) -> str:
+    """Return a TOML basic-string literal for a dynamic test value."""
+
+    return json.dumps(str(value), ensure_ascii=False)
 
 
 def _write_lifecycle_spec(root: Path) -> None:
@@ -53,8 +64,8 @@ target = "http://127.0.0.1:5173"
 
 [tasks.version]
 description = "Write a task marker."
-command = ["__PYTHON__", "-c", "from pathlib import Path; Path('task.done').write_text('ok', encoding='utf-8')"]
-""".lstrip().replace("__PYTHON__", sys.executable),
+command = [__PYTHON__, "-c", "from pathlib import Path; Path('task.done').write_text('ok', encoding='utf-8')"]
+""".lstrip().replace("__PYTHON__", _toml_string(sys.executable)),
         encoding="utf-8",
     )
 
@@ -78,8 +89,11 @@ def _write_v2_lifecycle_spec(
 ) -> None:
     spec_dir = root / ".agentseek"
     spec_dir.mkdir()
-    env_file_line = f'env_file = "{env_file}"\n' if env_file is not None else ""
-    required_paths = f'required = ["{required_path}"]' if required_path is not None else "required = []"
+    env_file_line = f"env_file = {_toml_string(env_file)}\n" if env_file is not None else ""
+    required_paths = f"required = [{_toml_string(required_path)}]" if required_path is not None else "required = []"
+    python_executable = _toml_string(sys.executable)
+    process_cwd_toml = _toml_string(process_cwd)
+    task_cwd_toml = _toml_string(task_cwd)
     (spec_dir / "lifecycle.toml").write_text(
         f"""
 version = 2
@@ -93,16 +107,32 @@ name = "Operational Paths"
 required = true
 
 [processes.web]
-command = ["{sys.executable}", "-c", "print('unreachable')"]
-cwd = "{process_cwd}"
+command = [{python_executable}, "-c", "print('unreachable')"]
+cwd = {process_cwd_toml}
 
 [tasks.run]
 description = "Run a marker task."
-command = ["{sys.executable}", "-c", "print('unreachable')"]
-cwd = "{task_cwd}"
+command = [{python_executable}, "-c", "print('unreachable')"]
+cwd = {task_cwd_toml}
 """.lstrip(),
         encoding="utf-8",
     )
+
+
+def test_toml_string_escapes_windows_executable_paths() -> None:
+    executable = r"C:\Program Files\Python\python.exe"
+
+    parsed = tomllib.loads(f"command = [{_toml_string(executable)}]")
+
+    assert parsed["command"] == [executable]
+
+
+def test_toml_string_preserves_non_bmp_windows_paths() -> None:
+    executable = "C:\\Program Files\\Python-\U0001f600\\python.exe"
+
+    parsed = tomllib.loads(f"command = [{_toml_string(executable)}]")
+
+    assert parsed["command"] == [executable]
 
 
 def _swap_with_outside_symlink(path: Path, outside: Path) -> None:
@@ -165,7 +195,7 @@ def test_info_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
 
     assert result.exit_code == 0, result.stdout + result.stderr
     assert "Lifecycle spec: " in result.stdout
-    assert ".agentseek/lifecycle.toml" in result.stdout
+    assert str(Path(".agentseek") / "lifecycle.toml") in result.stdout
     assert "Template: test/default" in result.stdout
     assert "Name: Spec Project" in result.stdout
     assert "seekdb: mysql://127.0.0.1:2884/phoenix" in result.stdout
@@ -296,8 +326,9 @@ def test_doctor_live_handles_legacy_http_runtime_error_as_failed_check(
 def test_doctor_live_runs_v2_check_through_the_shared_http_path(tmp_path: Path, monkeypatch) -> None:
     spec_dir = tmp_path / ".agentseek"
     spec_dir.mkdir()
+    python_executable = _toml_string(sys.executable)
     (spec_dir / "lifecycle.toml").write_text(
-        f'''\
+        f"""\
 version = 2
 template = "test/live-check"
 name = "V2 Live Check"
@@ -310,13 +341,13 @@ primary = true
 description = "Application."
 
 [processes.app]
-command = ["{sys.executable}", "-c", "print('unreachable')"]
+command = [{python_executable}, "-c", "print('unreachable')"]
 provides = ["app"]
 
 [checks.app]
 target = "http://127.0.0.1:8080/health"
 service = "app"
-''',
+""",
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
@@ -466,9 +497,9 @@ def test_task_reports_missing_cwd(tmp_path: Path, monkeypatch) -> None:
 
 [tasks.missing_cwd]
 description = "Run from a missing directory."
-command = ["__PYTHON__", "-c", "print('unreachable')"]
+command = [__PYTHON__, "-c", "print('unreachable')"]
 cwd = "missing-dir"
-""".replace("__PYTHON__", sys.executable),
+""".replace("__PYTHON__", _toml_string(sys.executable)),
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
@@ -482,11 +513,6 @@ cwd = "missing-dir"
 
 def test_task_child_process_does_not_inherit_env_file(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
-    spec_path = tmp_path / ".agentseek" / "lifecycle.toml"
-    spec_path.write_text(
-        spec_path.read_text(encoding="utf-8").replace(sys.executable, Path(sys.executable).as_posix()),
-        encoding="utf-8",
-    )
     (tmp_path / ".env").write_text(
         (
             "BUB_MODEL=dotenv-model\n"
@@ -739,13 +765,14 @@ def test_v2_operational_path_preflights_all_process_cwds_before_starting_childre
 ) -> None:
     _write_v2_lifecycle_spec(tmp_path, process_cwd="first")
     spec_path = tmp_path / ".agentseek" / "lifecycle.toml"
+    python_executable = _toml_string(sys.executable)
     spec_path.write_text(
         spec_path.read_text(encoding="utf-8")
-        + f'''
+        + f"""
 [processes.worker]
-command = ["{sys.executable}", "-c", "print('unreachable')"]
+command = [{python_executable}, "-c", "print('unreachable')"]
 cwd = "second"
-''',
+""",
         encoding="utf-8",
     )
     (tmp_path / "first").mkdir()
@@ -784,13 +811,14 @@ def test_v2_dev_terminates_started_child_when_later_process_cwd_swap_is_rejected
 ) -> None:
     _write_v2_lifecycle_spec(tmp_path, process_cwd="first")
     spec_path = tmp_path / ".agentseek" / "lifecycle.toml"
+    python_executable = _toml_string(sys.executable)
     spec_path.write_text(
         spec_path.read_text(encoding="utf-8")
-        + f'''\
+        + f"""\
 [processes.worker]
-command = ["{sys.executable}", "-c", "print('unreachable')"]
+command = [{python_executable}, "-c", "print('unreachable')"]
 cwd = "second"
-''',
+""",
         encoding="utf-8",
     )
     (tmp_path / "first").mkdir()
@@ -798,21 +826,21 @@ cwd = "second"
     second.mkdir()
     outside = tmp_path.parent / f"{tmp_path.name}-outside-partial-startup"
     outside.mkdir()
-    started_process = object()
+    started_process = cast("subprocess.Popen[bytes]", object())
     popen_calls: list[object] = []
     terminated: list[object] = []
     wait_entered = False
 
-    def start_first_process(*args: object, **kwargs: object) -> object:
+    def start_first_process(*args: object, **kwargs: object) -> subprocess.Popen[bytes]:
         del args, kwargs
         popen_calls.append(started_process)
         _swap_with_outside_symlink(second, outside)
         return started_process
 
-    def record_terminate(process: object) -> None:
+    def record_terminate(process: lifecycle_core.ManagedProcess) -> None:
         terminated.append(process)
 
-    def fail_wait(processes: list[object]) -> None:
+    def fail_wait(processes: list[lifecycle_core.ManagedProcess]) -> None:
         nonlocal wait_entered
         del processes
         wait_entered = True
@@ -828,7 +856,8 @@ cwd = "second"
 
     _assert_confined_rejection(result, outside, "processes.worker.cwd")
     assert popen_calls == [started_process]
-    assert terminated == [started_process]
+    assert len(terminated) == 1
+    assert cast("lifecycle_core.ManagedProcess", terminated[0]).process is started_process
     assert not wait_entered
 
 
@@ -846,7 +875,7 @@ def test_v1_path_compatibility_keeps_runtime_joins_and_symlinks(tmp_path: Path, 
     spec_path.write_text(
         spec_path
         .read_text(encoding="utf-8")
-        .replace('env_file = ".env"', f'env_file = "{outside_env}"')
+        .replace('env_file = ".env"', f"env_file = {_toml_string(outside_env)}")
         .replace(
             'required = ["frontend/package.json", "frontend/node_modules"]',
             f'required = ["../{outside.name}/required.txt"]',
@@ -871,7 +900,7 @@ def test_v1_path_compatibility_keeps_runtime_joins_and_symlinks(tmp_path: Path, 
     monkeypatch.setattr(
         lifecycle_core.subprocess,
         "Popen",
-        lambda command, *, cwd, start_new_session: seen.append(Path(cwd)),
+        lambda command, *, cwd, **kwargs: seen.append(Path(cwd)),
     )
     monkeypatch.delenv("BUB_MODEL", raising=False)
     assert required[0].status == "ok"

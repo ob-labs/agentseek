@@ -43,6 +43,9 @@ from agentseek.cli.lifecycle.discovery import (
 from agentseek.cli.lifecycle.normalize import normalize_lifecycle
 from agentseek.cli.lifecycle.safety import UnsafeProjectPathError
 
+pytestmark = pytest.mark.usefixtures("create_symlink")
+
+
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "lifecycle"
 
 

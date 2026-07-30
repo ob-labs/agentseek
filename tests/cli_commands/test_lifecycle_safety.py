@@ -18,6 +18,8 @@ from agentseek.cli.lifecycle.safety import (
     validate_service_url,
 )
 
+pytestmark = pytest.mark.usefixtures("create_symlink")
+
 
 @pytest.mark.parametrize("value", ["frontend_2", "service-1", "a1"])
 def test_validate_identifier_accepts_lifecycle_identifiers(value: str) -> None:

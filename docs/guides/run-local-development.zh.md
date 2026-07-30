@@ -54,7 +54,7 @@ url = "http://127.0.0.1:5173"
 agentseek dev --skip-check
 ```
 
-使用 `Ctrl+C` 停止本地开发栈。
+使用 `Ctrl+C` 停止本地开发栈。在 Windows 上，AgentSeek 也会停止为该开发栈启动的整棵子进程树。
 
 ## 下一步
 

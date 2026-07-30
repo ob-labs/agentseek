@@ -7,41 +7,22 @@ Usage:
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_core.documents import Document
-from langchain_oceanbase.embedding_utils import DefaultEmbeddingFunctionAdapter
-from langchain_oceanbase.vectorstores import OceanbaseVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-load_dotenv()
+from {{ cookiecutter.project_slug }}.vector_store import get_vector_store
 
-EMBEDDING_DIM = 384
+load_dotenv()
 
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
     chunk_overlap=200,
     add_start_index=True,
 )
-
-
-def _get_vector_store() -> OceanbaseVectorStore:
-    return OceanbaseVectorStore(
-        embedding_function=DefaultEmbeddingFunctionAdapter(),
-        table_name=os.getenv("VECTOR_TABLE_NAME", "{{ cookiecutter.vector_table_name }}"),
-        connection_args={
-            "host": os.getenv("SEEKDB_HOST", "127.0.0.1"),
-            "port": os.getenv("SEEKDB_PORT", "2881"),
-            "user": os.getenv("SEEKDB_USER", "root"),
-            "password": os.getenv("SEEKDB_PASSWORD", ""),
-            "db_name": os.getenv("SEEKDB_DB_NAME", "test"),
-        },
-        vidx_metric_type="l2",
-        embedding_dim=EMBEDDING_DIM,
-    )
 
 
 def load_directory(directory: Path) -> list[Document]:
@@ -93,7 +74,7 @@ def main() -> None:
     splits = text_splitter.split_documents(all_docs)
     print(f"Split {len(all_docs)} document(s) into {len(splits)} chunks.")
 
-    vector_store = _get_vector_store()
+    vector_store = get_vector_store()
     ids = vector_store.add_documents(splits)
     print(f"Indexed {len(ids)} chunks into table '{vector_store.table_name}'.")
 

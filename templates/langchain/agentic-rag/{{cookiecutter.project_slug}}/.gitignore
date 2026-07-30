@@ -1,5 +1,5 @@
 .env
-.seekdb-data/
+.seekdb-docker-data/
 node_modules/
 __pycache__/
 *.pyc

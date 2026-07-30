@@ -19,6 +19,12 @@ repos:
   # Use local ruff (from uv) to avoid fetching from GitHub
   - repo: local
     hooks:
+      - id: explicit-text-encoding
+        name: explicit-text-encoding
+        entry: uv run python scripts/check_text_encoding.py
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: ruff-check
         name: ruff-check
         entry: uv run ruff check

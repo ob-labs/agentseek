@@ -14,6 +14,7 @@ import tempfile
 import time
 import uuid
 import zlib
+from base64 import urlsafe_b64encode
 from collections.abc import Mapping
 from contextlib import suppress
 from dataclasses import dataclass, field
@@ -48,7 +49,9 @@ _REPOSITORY_SEGMENT_PATTERN = re.compile(r"[A-Za-z0-9_.-]+\Z")
 _WINDOWS_RESERVED_NAMES = frozenset(
     {"CON", "PRN", "AUX", "NUL"} | {f"COM{index}" for index in range(1, 10)} | {f"LPT{index}" for index in range(1, 10)}
 )
-_CACHE_NAMESPACE = "agentseek-locked-catalogs"
+# The coordinate itself is a SHA-256 digest. Keep its containing namespace
+# compact so cache paths remain usable on Windows after template extraction.
+_CACHE_NAMESPACE = ".l"
 _CACHE_METADATA = ".agentseek-catalog-metadata.json"
 _CACHE_SCHEMA_VERSION = 1
 _CACHE_LOCK_TIMEOUT_SECONDS = 30.0
@@ -338,13 +341,13 @@ def _ensure_child_directory(parent: Path, name: str) -> Path:
 def _cache_layout(cache_root: Path, lock: CatalogLock, key: str) -> tuple[Path, Path, Path]:
     root = _ensure_cache_root(cache_root)
     namespace = _ensure_child_directory(root, _CACHE_NAMESPACE)
-    repository_digest = hashlib.sha256(lock.catalog_repository.encode()).hexdigest()
-    repository_dir = _ensure_child_directory(namespace, repository_digest)
-    commit_dir = _ensure_child_directory(repository_dir, lock.catalog_commit)
-    lock_dir = _ensure_child_directory(commit_dir, lock.digest)
-    key_digest = hashlib.sha256(key.encode()).hexdigest()
-    cache_entry = lock_dir / key_digest
-    lock_path = lock_dir / f".{key_digest}.lock"
+    coordinate = "\x00".join((lock.catalog_repository, lock.catalog_commit, lock.digest, key))
+    # URL-safe Base64 retains the full SHA-256 identity in 43 filename-safe
+    # characters, leaving room for the extracted template on Windows.
+    coordinate_digest = urlsafe_b64encode(hashlib.sha256(coordinate.encode()).digest()).decode().rstrip("=")
+    lock_dir = _ensure_child_directory(namespace, coordinate_digest)
+    cache_entry = lock_dir / "template"
+    lock_path = lock_dir / ".lock"
     if _path_is_link_like(cache_entry) or _path_is_link_like(lock_path):
         _fail("cache coordinate must not be link-like")
     return lock_dir, cache_entry, lock_path
@@ -724,7 +727,9 @@ def _move_stale_entry(cache_entry: Path, parent: Path) -> Path | None:
         return None
     if _path_is_link_like(cache_entry):
         _fail("stale cache entry must not be link-like")
-    stale = parent / f".{cache_entry.name}.stale-{uuid.uuid4().hex}"
+    # The coordinate lock serializes publishers, so a compact 64-bit suffix
+    # is sufficient for stale-entry isolation and leaves Windows path headroom.
+    stale = parent / f".s-{uuid.uuid4().hex[:16]}"
     if stale.parent != parent or _path_lexists(stale):
         _fail("stale cache destination is not confined")
     cache_entry.replace(stale)
@@ -827,11 +832,14 @@ def _download_archive(lock: CatalogLock, destination: Path) -> None:
                 temporary.unlink()
 
 
-def _fetch_and_publish(lock_dir: Path, cache_entry: Path, lock: CatalogLock, key: str) -> Path:
-    with tempfile.TemporaryDirectory(prefix=".catalog-", dir=lock_dir) as temporary:
-        staging = Path(temporary).resolve(strict=True)
-        if staging.parent != lock_dir or _path_is_link_like(staging):
+def _fetch_and_publish(namespace: Path, lock_dir: Path, cache_entry: Path, lock: CatalogLock, key: str) -> Path:
+    # Staging below the compact namespace avoids adding the 64-character
+    # coordinate hash to every extracted path on Windows.
+    with tempfile.TemporaryDirectory(prefix=".catalog-", dir=namespace) as temporary:
+        staging_directory = Path(temporary)
+        if staging_directory.parent != namespace or _path_is_link_like(staging_directory):
             _fail("catalog staging directory escaped its coordinate")
+        staging = staging_directory.resolve(strict=True)
         archive_path = staging / "catalog.tar.gz"
         _download_archive(lock, archive_path)
         candidate = staging / "candidate"
@@ -858,6 +866,7 @@ def prepare_locked_template(lock: CatalogLock, key: str, cache_root: Path) -> Pa
     if key not in lock.templates:
         _fail(f"template {key!r} is not present in the embedded registry")
     lock_dir, cache_entry, lock_path = _cache_layout(cache_root, lock, key)
+    namespace = lock_dir.parent
     cached = _validated_cache(cache_entry, lock, key)
     if cached is not None:
         return cached
@@ -868,7 +877,7 @@ def prepare_locked_template(lock: CatalogLock, key: str, cache_root: Path) -> Pa
             cached = _validated_cache(cache_entry, lock, key)
             if cached is not None:
                 return cached
-            return _fetch_and_publish(lock_dir, cache_entry, lock, key)
+            return _fetch_and_publish(namespace, lock_dir, cache_entry, lock, key)
     except FileLockTimeout:
         cached = _validated_cache(cache_entry, lock, key)
         if cached is not None:

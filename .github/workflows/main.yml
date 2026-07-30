@@ -25,6 +25,31 @@ jobs:
       - name: Run lint and type check
         run: make lint typecheck
 
+  cross-platform-tests-and-type-check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+
+      - name: Check typing
+        shell: bash
+        run: uv run ty check src tests
+
+      - name: Run tests
+        run: uv run python -m pytest --doctest-modules
+
   tests-and-type-check:
     runs-on: ubuntu-latest
     strategy:
@@ -100,6 +125,34 @@ jobs:
 
       - name: Run contrib package checks
         run: make check-contrib
+
+  agentic-rag-template-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+
+      - name: Render langchain/agentic-rag template
+        run: |
+          set -euo pipefail
+          smoke_root="${RUNNER_TEMP}/agentseek-rag-smoke"
+          mkdir -p "${smoke_root}"
+          cd "${smoke_root}"
+          uv run --project "${GITHUB_WORKSPACE}" agentseek create "${GITHUB_WORKSPACE}/templates/langchain/agentic-rag" --no-input
+          echo "AGENTSEEK_RAG_SMOKE_PROJECT=${smoke_root}/my_rag_agent" >> "${GITHUB_ENV}"
+
+      - name: Run rendered agentic RAG template tests
+        run: |
+          set -euo pipefail
+          cd "${AGENTSEEK_RAG_SMOKE_PROJECT}"
+          uv sync --extra dev
+          uv run python -m pytest
 
   agentic-rag-hybrid-template-smoke:
     runs-on: ubuntu-latest

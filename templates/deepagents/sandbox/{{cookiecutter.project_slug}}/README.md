@@ -57,6 +57,16 @@ fallback. Stop it gracefully with Ctrl+C so the remote sandbox is deleted. If
 a cleanup warning appears or the process is killed, check the provider
 dashboard and delete any active sandbox manually.
 
+## Workspace paths
+
+For Daytona, the generated agent obtains the sandbox's writable directory with
+`sandbox.get_work_dir()` and treats it as the root for file tools and commands.
+For example, `hello.py` and `/hello.py` resolve to
+`<daytona-work-dir>/hello.py` (normally `/home/daytona/hello.py`), never to
+the host root `/hello.py`. Keep project files inside this workspace.
+File tools report logical paths such as `/hello.py`; in shell commands, use
+the workspace-relative form instead: `python hello.py`, not `python /hello.py`.
+
 ## Switch to LangSmith Sandbox
 
 > **Billing:** LangSmith Sandbox is an alternative provider and its sandbox

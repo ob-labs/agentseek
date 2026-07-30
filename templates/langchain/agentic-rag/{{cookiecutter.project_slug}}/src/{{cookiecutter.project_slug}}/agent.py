@@ -9,12 +9,10 @@ from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain.tools import tool
-from langchain_oceanbase.embedding_utils import DefaultEmbeddingFunctionAdapter
-from langchain_oceanbase.vectorstores import OceanbaseVectorStore
+
+from {{ cookiecutter.project_slug }}.vector_store import get_vector_store
 
 load_dotenv()
-
-EMBEDDING_DIM = 384
 
 SYSTEM_PROMPT = "{{ cookiecutter.system_prompt }}"
 
@@ -89,28 +87,7 @@ if _stream_chunk_timeout_env not in (None, ""):
     else:
         STREAM_CHUNK_TIMEOUT_S = None if _parsed_timeout <= 0 else _parsed_timeout
 
-# --- Vector store ---
-SEEKDB_HOST = os.getenv("SEEKDB_HOST", "127.0.0.1")
-SEEKDB_PORT = os.getenv("SEEKDB_PORT", "2881")
-SEEKDB_USER = os.getenv("SEEKDB_USER", "root")
-SEEKDB_PASSWORD = os.getenv("SEEKDB_PASSWORD", "")
-SEEKDB_DB_NAME = os.getenv("SEEKDB_DB_NAME", "test")
-VECTOR_TABLE_NAME = os.getenv("VECTOR_TABLE_NAME", "{{ cookiecutter.vector_table_name }}")
-
-embeddings = DefaultEmbeddingFunctionAdapter()
-vector_store = OceanbaseVectorStore(
-    embedding_function=embeddings,
-    table_name=VECTOR_TABLE_NAME,
-    connection_args={
-        "host": SEEKDB_HOST,
-        "port": SEEKDB_PORT,
-        "user": SEEKDB_USER,
-        "password": SEEKDB_PASSWORD,
-        "db_name": SEEKDB_DB_NAME,
-    },
-    vidx_metric_type="l2",
-    embedding_dim=EMBEDDING_DIM,
-)
+vector_store = get_vector_store()
 
 
 @tool(response_format="content_and_artifact")

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import os
 import shlex
 import shutil
 import signal
@@ -11,7 +10,7 @@ import subprocess
 import sys
 import textwrap
 import time
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -30,6 +29,7 @@ from agentseek.cli.lifecycle.errors import (
     LifecycleVersionUnsupportedError,
     exit_project_error,
 )
+from agentseek.cli.lifecycle.process_group import ManagedProcess, manage, spawn_kwargs, terminate
 from agentseek.cli.lifecycle.safety import UnsafeProjectPathError, resolve_confined_project_path
 from agentseek.cli.lifecycle.spec import (
     LIFECYCLE_SPEC_FILE,
@@ -277,15 +277,11 @@ def dev(project: LifecycleProject, *, dry_run: bool) -> None:
     _ensure_required_inputs(project)
     for name, process in project.spec.processes.items():
         _operational_path(project, process.cwd, allow_dot=True, field=f"processes.{name}.cwd")
-    processes: list[subprocess.Popen[bytes]] = []
-    try:
+    processes: list[ManagedProcess] = []
+    with _supervise_processes(processes):
         for process in project.spec.processes.values():
             processes.append(_spawn_process(process, project=project))
-    except Exception:
-        for started_process in processes:
-            _terminate(started_process)
-        raise
-    _wait_for_processes(processes)
+        _wait_for_processes(processes)
 
 
 def _discover_spec(root: Path) -> tuple[Path, Path] | None:
@@ -507,7 +503,7 @@ def _render_command(command: Sequence[str]) -> str:
     return " ".join(shlex.quote(part) for part in command)
 
 
-def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject) -> subprocess.Popen[bytes]:
+def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject) -> ManagedProcess:
     executable = shutil.which(process.command[0])
     if executable is None:
         exit_project_error(
@@ -517,11 +513,16 @@ def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject)
     command = (executable, *process.command[1:])
     print(f"$ {_render_command(command)}")
     cwd = _operational_path(project, process.cwd, allow_dot=True, field=_process_cwd_field(project, process))
-    return subprocess.Popen(  # noqa: S603
-        command,
-        cwd=str(cwd),
-        start_new_session=True,
+    popen = cast("Any", subprocess.Popen)
+    child = cast(
+        "subprocess.Popen[bytes]",
+        popen(
+            command,
+            cwd=str(cwd),
+            **spawn_kwargs(),
+        ),
     )
+    return manage(child)
 
 
 def _run_command(command: Sequence[str], *, project: LifecycleProject, cwd: str) -> int:
@@ -540,42 +541,45 @@ def _run_command(command: Sequence[str], *, project: LifecycleProject, cwd: str)
     return subprocess.call((executable, *command[1:]), cwd=operational_cwd)  # noqa: S603
 
 
-def _wait_for_processes(processes: list[subprocess.Popen[bytes]]) -> None:
-    def _shutdown(*_args: object) -> None:
-        for process in processes:
-            _terminate(process)
-        raise SystemExit(0)
-
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(sig, _shutdown)
-
-    try:
+def _wait_for_processes(processes: list[ManagedProcess]) -> None:
+    with _supervise_processes(processes):
         while True:
             exit_codes = [process.poll() for process in processes]
             finished = [code for code in exit_codes if code is not None]
             if finished:
-                for process in processes:
-                    _terminate(process)
                 raise SystemExit(next(code for code in finished if code is not None) or 0)
             time.sleep(1.0)
+
+
+@contextlib.contextmanager
+def _supervise_processes(processes: Sequence[ManagedProcess]) -> Generator[None, None, None]:
+    def _shutdown(*_args: object) -> None:
+        raise SystemExit(0)
+
+    previous_handlers: list[tuple[int, object]] = []
+
+    try:
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            previous_handlers.append((sig, signal.signal(sig, _shutdown)))
+        yield
     finally:
-        for process in processes:
+        try:
+            for sig, _handler in reversed(previous_handlers):
+                signal.signal(sig, signal.SIG_IGN)
+            _terminate_all(processes)
+        finally:
+            for sig, handler in reversed(previous_handlers):
+                signal.signal(sig, cast("Any", handler))
+
+
+def _terminate_all(processes: Sequence[ManagedProcess]) -> None:
+    for process in processes:
+        with contextlib.suppress(OSError):
             _terminate(process)
 
 
-def _terminate(process: subprocess.Popen[bytes]) -> None:
-    if process.poll() is not None:
-        return
-    try:
-        os.killpg(process.pid, signal.SIGTERM)
-    except ProcessLookupError:
-        return
-    deadline = time.monotonic() + 10
-    while process.poll() is None and time.monotonic() < deadline:
-        time.sleep(0.2)
-    if process.poll() is None:
-        with contextlib.suppress(ProcessLookupError):
-            os.killpg(process.pid, signal.SIGKILL)
+def _terminate(process: ManagedProcess) -> None:
+    terminate(process)
 
 
 def _check(status: str, name: str, detail: str, fix: str = "") -> CheckResult:

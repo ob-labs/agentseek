@@ -55,7 +55,8 @@ before processes start.
 agentseek dev --skip-check
 ```
 
-Use `Ctrl+C` to stop the local development stack.
+Use `Ctrl+C` to stop the local development stack. On Windows, AgentSeek also
+stops the child-process tree started for the development stack.
 
 ## Next
 

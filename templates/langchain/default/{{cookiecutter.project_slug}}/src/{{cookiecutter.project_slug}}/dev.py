@@ -9,10 +9,13 @@ import shutil
 import signal
 import subprocess
 import time
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping, Sequence
 from pathlib import Path
+from typing import Any, cast
 
 import typer
+
+from .process_group import ManagedProcess, manage, spawn_kwargs, terminate
 
 DEFAULT_AGENT_URL = "http://127.0.0.1:{{ cookiecutter.gateway_port }}/agent"
 DEFAULT_FRONTEND_PORT = "{{ cookiecutter.frontend_port }}"
@@ -49,30 +52,27 @@ def _build_env(root: Path) -> dict[str, str]:
     return env
 
 
-def _spawn(cmd: list[str], *, cwd: Path, env: Mapping[str, str]) -> subprocess.Popen[bytes]:
+def _spawn(cmd: list[str], *, cwd: Path, env: Mapping[str, str]) -> ManagedProcess:
     rendered = " ".join(shlex.quote(part) for part in cmd)
     typer.echo(f"$ {rendered}")
-    return subprocess.Popen(  # noqa: S603
+    popen = cast("Any", subprocess.Popen)
+    child = cast("subprocess.Popen[bytes]", popen(  # noqa: S603
         cmd,
         cwd=str(cwd),
         env=dict(env),
-        start_new_session=True,
-    )
+        **spawn_kwargs(),
+    ))
+    return manage(child)
 
 
-def _terminate(proc: subprocess.Popen[bytes]) -> None:
-    if proc.poll() is not None:
-        return
-    try:
-        os.killpg(proc.pid, signal.SIGTERM)
-    except ProcessLookupError:
-        return
-    deadline = time.monotonic() + SHUTDOWN_GRACE_SECONDS
-    while proc.poll() is None and time.monotonic() < deadline:
-        time.sleep(0.2)
-    if proc.poll() is None:
-        with contextlib.suppress(ProcessLookupError):
-            os.killpg(proc.pid, signal.SIGKILL)
+def _terminate(proc: ManagedProcess) -> None:
+    terminate(proc, grace_seconds=SHUTDOWN_GRACE_SECONDS)
+
+
+def _terminate_all(processes: list[ManagedProcess]) -> None:
+    for process in processes:
+        with contextlib.suppress(OSError):
+            _terminate(process)
 
 
 def _validate_frontend(frontend_dir: Path) -> None:
@@ -95,26 +95,37 @@ def main() -> None:
     env = _build_env(root)
     npm = _require_binary("npm")
 
-    gateway = _spawn(["bub", "gateway", "--enable-channel", "ag-ui"], cwd=root, env=env)
-    frontend = _spawn([npm, "run", "dev"], cwd=frontend_dir, env=env)
+    processes: list[ManagedProcess] = []
+    with _supervise_processes(processes):
+        gateway = _spawn(["bub", "gateway", "--enable-channel", "ag-ui"], cwd=root, env=env)
+        processes.append(gateway)
+        frontend = _spawn([npm, "run", "dev"], cwd=frontend_dir, env=env)
+        processes.append(frontend)
 
-    def _shutdown(*_args: object) -> None:
-        _terminate(frontend)
-        _terminate(gateway)
-        raise SystemExit(0)
-
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(sig, _shutdown)
-
-    try:
         while True:
             gateway_code = gateway.poll()
             frontend_code = frontend.poll()
             if gateway_code is not None or frontend_code is not None:
-                _terminate(frontend)
-                _terminate(gateway)
                 raise SystemExit(gateway_code or frontend_code or 0)
             time.sleep(1.0)
+
+
+@contextlib.contextmanager
+def _supervise_processes(processes: Sequence[ManagedProcess]) -> Generator[None, None, None]:
+    def _shutdown(*_args: object) -> None:
+        raise SystemExit(0)
+
+    previous_handlers: list[tuple[int, object]] = []
+
+    try:
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            previous_handlers.append((sig, signal.signal(sig, _shutdown)))
+        yield
     finally:
-        _terminate(frontend)
-        _terminate(gateway)
+        try:
+            for sig, _handler in reversed(previous_handlers):
+                signal.signal(sig, signal.SIG_IGN)
+            _terminate_all(list(reversed(processes)))
+        finally:
+            for sig, handler in reversed(previous_handlers):
+                signal.signal(sig, cast(Any, handler))

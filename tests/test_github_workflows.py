@@ -28,6 +28,18 @@ def test_hybrid_template_smoke_runs_rendered_project_tests() -> None:
     assert "uv run python -m pytest" in text
 
 
+def test_agentic_rag_template_smoke_runs_rendered_project_tests() -> None:
+    """The agentic RAG template should prove embedded add-and-retrieve after rendering."""
+    workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "main.yml"
+    text = workflow.read_text(encoding="utf-8")
+
+    assert "agentic-rag-template-smoke:" in text
+    assert 'agentseek create "${GITHUB_WORKSPACE}/templates/langchain/agentic-rag" --no-input' in text
+    assert 'cd "${AGENTSEEK_RAG_SMOKE_PROJECT}"' in text
+    assert "uv sync --extra dev" in text
+    assert "uv run python -m pytest" in text
+
+
 def test_hybrid_template_smoke_builds_rendered_frontend() -> None:
     """The hybrid smoke should install and production-build the rendered frontend."""
     workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "main.yml"

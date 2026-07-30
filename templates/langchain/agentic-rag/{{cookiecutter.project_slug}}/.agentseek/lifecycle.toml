@@ -4,7 +4,7 @@ name = "{{ cookiecutter.project_name }}"
 env_file = ".env"
 
 [tools]
-required = ["uv", "node", "npm", "docker"]
+required = ["uv", "node", "npm"]
 
 [paths]
 required = [
@@ -26,15 +26,25 @@ default = "{{ cookiecutter.default_model }}"
 description = "Model id passed to LangChain chat model initialization."
 aliases = ["BUB_MODEL"]
 
-[env.SEEKDB_HOST]
+[env.SEEKDB_MODE]
 required = true
+default = "embedded"
+description = "seekdb mode: embedded (default) or server (explicit Docker/remote mode)."
+
+[env.SEEKDB_PATH]
+required = true
+default = "{{ cookiecutter.seekdb_path }}"
+description = "Data directory for embedded seekdb; keep it outside the generated project."
+
+[env.SEEKDB_HOST]
+required = false
 default = "127.0.0.1"
-description = "seekdb host used by the vector store."
+description = "Optional server-mode seekdb host."
 
 [env.SEEKDB_PORT]
-required = true
+required = false
 default = "2881"
-description = "seekdb MySQL-compatible port."
+description = "Optional server-mode seekdb MySQL-compatible port."
 
 [env.SEEKDB_USER]
 required = true
@@ -67,11 +77,8 @@ url = "http://127.0.0.1:2024"
 [services.frontend]
 url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 
-[processes.seekdb]
-command = ["docker", "compose", "up", "seekdb"]
-
 [processes.backend]
-command = ["sh", "-lc", "i=0; until docker compose exec -T seekdb mysql -h127.0.0.1 -P2881 -uroot -e 'SELECT 1'; do i=$((i + 1)); if [ \"$i\" -ge 60 ]; then exit 1; fi; sleep 2; done && uv run langgraph dev --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}"]
+command = ["sh", "-lc", "uv run langgraph dev --no-browser --host ${LANGGRAPH_HOST:-127.0.0.1}"]
 
 [processes.frontend]
 command = ["npm", "run", "dev"]
@@ -97,9 +104,17 @@ command = ["uv", "sync"]
 description = "Install frontend dependencies."
 command = ["npm", "install", "--prefix", "frontend"]
 
-[tasks.seekdb]
-description = "Start the bundled seekdb container."
-command = ["docker", "compose", "up", "-d"]
+[tasks.embedded-smoke]
+description = "Run the embedded seekdb smoke test."
+command = ["uv", "run", "--extra", "dev", "python", "-m", "pytest"]
+
+[tasks.seekdb-docker]
+description = "Start the optional seekdb Docker server (set SEEKDB_MODE=server)."
+command = ["docker", "compose", "up", "-d", "seekdb"]
+
+[tasks.seekdb-docker-stop]
+description = "Stop the optional seekdb Docker server."
+command = ["docker", "compose", "down"]
 
 [tasks.seekdb-skills]
 description = "Install recommended OceanBase seekdb agent skills."

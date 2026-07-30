@@ -13,7 +13,7 @@ def test_scan_images_returns_supported_files_in_stable_order(tmp_path: Path) -> 
     (tmp_path / "b.png").write_bytes(b"fake")
     (tmp_path / "a.jpg").write_bytes(b"fake")
     (tmp_path / ".hidden.jpg").write_bytes(b"fake")
-    (tmp_path / "notes.txt").write_text("not image")
+    (tmp_path / "notes.txt").write_text("not image", encoding="utf-8")
 
     assert [path.name for path in scan_images(tmp_path)] == ["a.jpg", "b.png"]
 

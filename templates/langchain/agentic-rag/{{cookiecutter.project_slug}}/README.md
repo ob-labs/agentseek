@@ -15,7 +15,6 @@ $EDITOR .env
 
 agentseek task sync
 agentseek task frontend
-agentseek task seekdb
 
 agentseek info
 agentseek doctor
@@ -25,6 +24,14 @@ agentseek dev
 
 Use `agentseek task --list` to see lifecycle helper tasks. The generated
 project declares the development stack in `.agentseek/lifecycle.toml`.
+
+The default mode uses embedded OceanBase seekdb in-process. Ingest and the
+backend share `SEEKDB_PATH`, which defaults outside the project tree so native
+database writes do not trigger LangGraph reloads.
+
+To explicitly use the optional Docker server instead, set `SEEKDB_MODE=server`
+in `.env`, then run `agentseek task seekdb-docker`. Stop it with
+`agentseek task seekdb-docker-stop`.
 
 For optional coding-agent assistance around OceanBase seekdb, run:
 
@@ -91,6 +98,16 @@ Documents are split into 1000-character chunks with 200-character overlap,
 embedded via `DefaultEmbeddingFunctionAdapter` from `langchain-oceanbase`
 (384-dim, runs locally, no API key), and indexed into the configured
 OceanBase seekdb table.
+
+## Test
+
+The generated smoke test starts a real embedded seekdb in a child process,
+adds deterministic document embeddings, and retrieves the expected document
+without Docker or hosted APIs:
+
+```bash
+agentseek task embedded-smoke
+```
 
 ## Run
 
