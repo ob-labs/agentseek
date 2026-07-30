@@ -52,9 +52,22 @@ def _daytona_backend_with_workspace(sandbox: Any, workspace: str) -> Any:
                 return "/" + path.removeprefix(self.workspace + "/")
             return path
 
-        def _logicalize_result_paths(self, result: Any, attribute: str) -> Any:
+        def _logicalize_result_paths(
+            self,
+            result: Any,
+            attribute: str,
+            *,
+            base_path: str | None = None,
+        ) -> Any:
             for item in getattr(result, attribute, None) or []:
-                item["path"] = self._logical_path(item.get("path"))
+                item_path = item.get("path")
+                if item_path is not None and base_path is not None and not posixpath.isabs(item_path):
+                    item_path = posixpath.normpath(posixpath.join(base_path, item_path))
+                    if item_path != self.workspace and not item_path.startswith(self.workspace + "/"):
+                        raise ValueError(
+                            "Sandbox file paths must remain inside the writable workspace."
+                        )
+                item["path"] = self._logical_path(item_path)
             return result
 
         def execute(self, command: str, *, timeout: int | None = None) -> Any:
@@ -128,12 +141,14 @@ def _daytona_backend_with_workspace(sandbox: Any, workspace: str) -> Any:
             return result
 
         def glob(self, pattern: str, path: str | None = None) -> Any:
-            result = super().glob(pattern, self._resolve_path(path or "/"))
-            return self._logicalize_result_paths(result, "matches")
+            base_path = self._resolve_path(path or "/")
+            result = super().glob(pattern, base_path)
+            return self._logicalize_result_paths(result, "matches", base_path=base_path)
 
         async def aglob(self, pattern: str, path: str | None = None) -> Any:
-            result = await super().aglob(pattern, self._resolve_path(path or "/"))
-            return self._logicalize_result_paths(result, "matches")
+            base_path = self._resolve_path(path or "/")
+            result = await super().aglob(pattern, base_path)
+            return self._logicalize_result_paths(result, "matches", base_path=base_path)
 
         def grep(
             self,

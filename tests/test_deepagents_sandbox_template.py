@@ -528,7 +528,7 @@ def test_daytona_workspace_adapter_reports_logical_file_tool_paths(
             return self.ls(path)
 
         def glob(self, pattern, path=None):
-            return types.SimpleNamespace(matches=[{"path": f"{path}/app.py", "is_dir": False}])
+            return types.SimpleNamespace(matches=[{"path": "app.py", "is_dir": False}])
 
         async def aglob(self, pattern, path=None):
             return self.glob(pattern, path)
@@ -564,6 +564,33 @@ def test_daytona_workspace_adapter_reports_logical_file_tool_paths(
         "/src/app.py",
         "/src/app.py",
     ]
+
+
+def test_daytona_workspace_adapter_rejects_glob_matches_outside_workspace(
+    rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class FakeBackend:
+        def __init__(self, *, sandbox):
+            self.sandbox = sandbox
+
+        def glob(self, pattern, path=None):
+            return types.SimpleNamespace(matches=[{"path": "../../etc/passwd", "is_dir": False}])
+
+        async def aglob(self, pattern, path=None):
+            return self.glob(pattern, path)
+
+    monkeypatch.setitem(
+        sys.modules,
+        "langchain_daytona",
+        types.SimpleNamespace(DaytonaSandbox=FakeBackend),
+    )
+    module = _load_sandbox_module(rendered_sandbox)
+    backend = module._daytona_backend_with_workspace(object(), "/home/daytona")
+
+    with pytest.raises(ValueError, match="must remain inside"):
+        backend.glob("../../etc/passwd", "/src")
+    with pytest.raises(ValueError, match="must remain inside"):
+        asyncio.run(backend.aglob("../../etc/passwd", "/src"))
 
 
 def test_langsmith_backend_and_cleanup(rendered_sandbox: Path, monkeypatch: pytest.MonkeyPatch) -> None:
