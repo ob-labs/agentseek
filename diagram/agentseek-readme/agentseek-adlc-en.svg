@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">AgentSeek agent development lifecycle</title>
+  <desc id="diagram-desc">An eight-stage horizontal lifecycle from Discover through Iterate. Templates span Discover and Create, observability spans Inspect through Iterate, and a labeled return path leads from Iterate back to Inspect.</desc>
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.6"/>
+    </pattern>
+    <linearGradient id="template-gradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4c1d95" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#312e81" stop-opacity="0.54"/>
+    </linearGradient>
+    <linearGradient id="observability-gradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#083344" stop-opacity="0.8"/>
+      <stop offset="0.55" stop-color="#064e3b" stop-opacity="0.76"/>
+      <stop offset="1" stop-color="#134e4a" stop-opacity="0.7"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow-cyan" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrow-emerald" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#34d399"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .eyebrow { fill: #67e8f9; font-size: 12px; font-weight: 700; letter-spacing: 2px; }
+      .title { fill: #f8fafc; font-size: 26px; font-weight: 750; }
+      .subtitle { fill: #94a3b8; font-size: 13px; }
+      .band-title { fill: #f8fafc; font-size: 14px; font-weight: 750; }
+      .band-copy { fill: #cbd5e1; font-size: 11px; }
+      .stage-number { fill: #94a3b8; font-size: 10px; font-weight: 750; }
+      .stage-title { fill: #f8fafc; font-size: 15px; font-weight: 750; }
+      .stage-copy { fill: #cbd5e1; font-size: 10.5px; }
+      .return-label { fill: #6ee7b7; font-size: 15px; font-weight: 750; }
+      .return-copy { fill: #a7f3d0; font-size: 11px; }
+      .micro { fill: #94a3b8; font-size: 10px; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="720" fill="#0f172a"/>
+  <rect x="0" y="0" width="1280" height="720" fill="url(#grid)"/>
+  <circle cx="1140" cy="70" r="190" fill="#0e7490" opacity="0.07"/>
+  <circle cx="130" cy="680" r="220" fill="#4f46e5" opacity="0.06"/>
+
+  <text x="34" y="40" class="eyebrow">AGENT DEVELOPMENT LIFECYCLE</text>
+  <text x="34" y="72" class="title">Create once. Iterate through the project you already own.</text>
+  <text x="34" y="96" class="subtitle">Eight predictable local stages, with templates at the start and observability through every working stage.</text>
+
+  <!-- Lifecycle-spanning bands -->
+  <g id="templates-band" data-role="stage-band" data-span="discover create">
+    <rect x="34" y="148" width="276" height="72" rx="12" fill="#0f172a"/>
+    <rect x="34" y="148" width="276" height="72" rx="12" fill="url(#template-gradient)" stroke="#a78bfa" stroke-width="1.4"/>
+    <circle cx="58" cy="184" r="8" fill="#a78bfa"/>
+    <text x="76" y="181" class="band-title">Templates · Discover + Create</text>
+    <text x="76" y="202" class="band-copy">choose a goal, render an editable project</text>
+    <path d="M 97 220 V 300 M 247 220 V 300" fill="none" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="4 5" opacity="0.8"/>
+  </g>
+
+  <g id="observability-band" data-role="stage-band" data-span="inspect configure check run observe iterate">
+    <rect x="334" y="148" width="876" height="72" rx="12" fill="#0f172a"/>
+    <rect x="334" y="148" width="876" height="72" rx="12" fill="url(#observability-gradient)" stroke="#34d399" stroke-width="1.4"/>
+    <circle cx="358" cy="184" r="8" fill="#34d399"/>
+    <text x="376" y="181" class="band-title">Observability · Inspect through Iterate</text>
+    <text x="376" y="202" class="band-copy">topology · readiness · live health · lifecycle signals · optional run tracing</text>
+    <path d="M 397 220 V 300 M 547 220 V 300 M 697 220 V 300 M 847 220 V 300 M 997 220 V 300 M 1147 220 V 300" fill="none" stroke="#34d399" stroke-width="1.2" stroke-dasharray="4 5" opacity="0.8"/>
+  </g>
+
+  <!-- Forward path, below the opaque stage boxes -->
+  <path id="discover-to-create" data-role="stage-connector" data-from="discover" data-to="create" d="M 160 358 H 184" fill="none" stroke="#22d3ee" stroke-width="2.3" marker-end="url(#arrow-cyan)"/>
+  <path id="create-to-inspect" data-role="stage-connector" data-from="create" data-to="inspect" d="M 310 358 H 334" fill="none" stroke="#22d3ee" stroke-width="2.3" marker-end="url(#arrow-cyan)"/>
+  <path id="inspect-to-configure" data-role="stage-connector" data-from="inspect" data-to="configure" d="M 460 358 H 484" fill="none" stroke="#22d3ee" stroke-width="2.3" marker-end="url(#arrow-cyan)"/>
+  <path id="configure-to-check" data-role="stage-connector" data-from="configure" data-to="check" d="M 610 358 H 634" fill="none" stroke="#22d3ee" stroke-width="2.3" marker-end="url(#arrow-cyan)"/>
+  <path id="check-to-run" data-role="stage-connector" data-from="check" data-to="run" d="M 760 358 H 784" fill="none" stroke="#22d3ee" stroke-width="2.3" marker-end="url(#arrow-cyan)"/>
+  <path id="run-to-observe" data-role="stage-connector" data-from="run" data-to="observe" d="M 910 358 H 934" fill="none" stroke="#22d3ee" stroke-width="2.3" marker-end="url(#arrow-cyan)"/>
+  <path id="observe-to-iterate" data-role="stage-connector" data-from="observe" data-to="iterate" d="M 1060 358 H 1084" fill="none" stroke="#22d3ee" stroke-width="2.3" marker-end="url(#arrow-cyan)"/>
+
+  <!-- Explicit iteration return: arrowhead lands on Inspect -->
+  <path id="iterate-to-inspect" data-role="return-connector" data-from="iterate" data-to="inspect" d="M 1210 358 H 1238 V 648 H 397 V 416" fill="none" stroke="#34d399" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow-emerald)" filter="url(#glow)"/>
+
+  <!-- Stages -->
+  <g id="discover" data-role="lifecycle-stage">
+    <rect x="34" y="300" width="126" height="116" rx="12" fill="#0f172a"/>
+    <rect x="34" y="300" width="126" height="116" rx="12" fill="#312e81" fill-opacity="0.62" stroke="#a78bfa" stroke-width="1.5"/>
+    <circle cx="55" cy="322" r="12" fill="#4c1d95" stroke="#a78bfa"/>
+    <text x="55" y="326" text-anchor="middle" class="stage-number">01</text>
+    <text x="97" y="350" text-anchor="middle" class="stage-title">Discover</text>
+    <text x="97" y="376" text-anchor="middle" class="stage-copy">find templates</text>
+    <text x="97" y="392" text-anchor="middle" class="stage-copy">by goal</text>
+  </g>
+
+  <g id="create" data-role="lifecycle-stage">
+    <rect x="184" y="300" width="126" height="116" rx="12" fill="#0f172a"/>
+    <rect x="184" y="300" width="126" height="116" rx="12" fill="#312e81" fill-opacity="0.62" stroke="#a78bfa" stroke-width="1.5"/>
+    <circle cx="205" cy="322" r="12" fill="#4c1d95" stroke="#a78bfa"/>
+    <text x="205" y="326" text-anchor="middle" class="stage-number">02</text>
+    <text x="247" y="350" text-anchor="middle" class="stage-title">Create</text>
+    <text x="247" y="376" text-anchor="middle" class="stage-copy">render editable</text>
+    <text x="247" y="392" text-anchor="middle" class="stage-copy">project</text>
+  </g>
+
+  <g id="inspect" data-role="lifecycle-stage">
+    <rect x="334" y="300" width="126" height="116" rx="12" fill="#0f172a"/>
+    <rect x="334" y="300" width="126" height="116" rx="12" fill="#083344" fill-opacity="0.84" stroke="#22d3ee" stroke-width="2" filter="url(#glow)"/>
+    <circle cx="355" cy="322" r="12" fill="#0e7490" stroke="#67e8f9"/>
+    <text x="355" y="326" text-anchor="middle" class="stage-number">03</text>
+    <text x="397" y="350" text-anchor="middle" class="stage-title">Inspect</text>
+    <text x="397" y="376" text-anchor="middle" class="stage-copy">read declared</text>
+    <text x="397" y="392" text-anchor="middle" class="stage-copy">topology</text>
+  </g>
+
+  <g id="configure" data-role="lifecycle-stage">
+    <rect x="484" y="300" width="126" height="116" rx="12" fill="#0f172a"/>
+    <rect x="484" y="300" width="126" height="116" rx="12" fill="#083344" fill-opacity="0.62" stroke="#22d3ee" stroke-width="1.5"/>
+    <circle cx="505" cy="322" r="12" fill="#155e75" stroke="#22d3ee"/>
+    <text x="505" y="326" text-anchor="middle" class="stage-number">04</text>
+    <text x="547" y="350" text-anchor="middle" class="stage-title">Configure</text>
+    <text x="547" y="376" text-anchor="middle" class="stage-copy">set project</text>
+    <text x="547" y="392" text-anchor="middle" class="stage-copy">environment</text>
+  </g>
+
+  <g id="check" data-role="lifecycle-stage">
+    <rect x="634" y="300" width="126" height="116" rx="12" fill="#0f172a"/>
+    <rect x="634" y="300" width="126" height="116" rx="12" fill="#78350f" fill-opacity="0.38" stroke="#fbbf24" stroke-width="1.5"/>
+    <circle cx="655" cy="322" r="12" fill="#92400e" stroke="#fbbf24"/>
+    <text x="655" y="326" text-anchor="middle" class="stage-number">05</text>
+    <text x="697" y="350" text-anchor="middle" class="stage-title">Check</text>
+    <text x="697" y="376" text-anchor="middle" class="stage-copy">preflight</text>
+    <text x="697" y="392" text-anchor="middle" class="stage-copy">readiness</text>
+  </g>
+
+  <g id="run" data-role="lifecycle-stage">
+    <rect x="784" y="300" width="126" height="116" rx="12" fill="#0f172a"/>
+    <rect x="784" y="300" width="126" height="116" rx="12" fill="#064e3b" fill-opacity="0.5" stroke="#34d399" stroke-width="1.5"/>
+    <circle cx="805" cy="322" r="12" fill="#065f46" stroke="#34d399"/>
+    <text x="805" y="326" text-anchor="middle" class="stage-number">06</text>
+    <text x="847" y="350" text-anchor="middle" class="stage-title">Run</text>
+    <text x="847" y="376" text-anchor="middle" class="stage-copy">start the local</text>
+    <text x="847" y="392" text-anchor="middle" class="stage-copy">stack</text>
+  </g>
+
+  <g id="observe" data-role="lifecycle-stage">
+    <rect x="934" y="300" width="126" height="116" rx="12" fill="#0f172a"/>
+    <rect x="934" y="300" width="126" height="116" rx="12" fill="#064e3b" fill-opacity="0.5" stroke="#34d399" stroke-width="1.5"/>
+    <circle cx="955" cy="322" r="12" fill="#065f46" stroke="#34d399"/>
+    <text x="955" y="326" text-anchor="middle" class="stage-number">07</text>
+    <text x="997" y="350" text-anchor="middle" class="stage-title">Observe</text>
+    <text x="997" y="376" text-anchor="middle" class="stage-copy">health + run</text>
+    <text x="997" y="392" text-anchor="middle" class="stage-copy">traces</text>
+  </g>
+
+  <g id="iterate" data-role="lifecycle-stage">
+    <rect x="1084" y="300" width="126" height="116" rx="12" fill="#0f172a"/>
+    <rect x="1084" y="300" width="126" height="116" rx="12" fill="#064e3b" fill-opacity="0.5" stroke="#34d399" stroke-width="1.5"/>
+    <circle cx="1105" cy="322" r="12" fill="#065f46" stroke="#34d399"/>
+    <text x="1105" y="326" text-anchor="middle" class="stage-number">08</text>
+    <text x="1147" y="350" text-anchor="middle" class="stage-title">Iterate</text>
+    <text x="1147" y="376" text-anchor="middle" class="stage-copy">change generated</text>
+    <text x="1147" y="392" text-anchor="middle" class="stage-copy">code</text>
+  </g>
+
+  <g id="iterate-to-inspect-label" data-role="return-label">
+    <rect x="474" y="570" width="520" height="64" rx="13" fill="#0f172a" stroke="#166534" stroke-width="1.2"/>
+    <text x="734" y="597" text-anchor="middle" class="return-label">Return to Inspect · keep the project</text>
+    <text x="734" y="619" text-anchor="middle" class="return-copy">Iteration reuses the existing project instead of creating it again.</text>
+  </g>
+
+  <text x="34" y="686" class="micro">The loop stays anchored in project-owned source and its declared lifecycle contract.</text>
+</svg>

@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">AgentSeek local lifecycle architecture</title>
+  <desc id="diagram-desc">A left-to-right flow from people and clients through the stable AgentSeek CLI, locked template catalog, editable generated project, and project-owned runtimes and integrations. Observability spans the lifecycle layers.</desc>
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.6"/>
+    </pattern>
+    <linearGradient id="observability-gradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#083344" stop-opacity="0.9"/>
+      <stop offset="0.5" stop-color="#064e3b" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#312e81" stop-opacity="0.8"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow-cyan" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrow-emerald" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 Z" fill="#34d399"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .eyebrow { fill: #67e8f9; font-size: 12px; font-weight: 700; letter-spacing: 2px; }
+      .title { fill: #f8fafc; font-size: 26px; font-weight: 750; }
+      .subtitle { fill: #94a3b8; font-size: 13px; }
+      .region-label { fill: #94a3b8; font-size: 10px; font-weight: 700; letter-spacing: 1.3px; }
+      .node-title { fill: #f8fafc; font-size: 14px; font-weight: 700; }
+      .node-copy { fill: #cbd5e1; font-size: 11px; }
+      .micro { fill: #94a3b8; font-size: 10px; }
+      .integration-title { fill: #f8fafc; font-size: 11px; font-weight: 700; }
+      .chip { fill: #e2e8f0; font-family: "SFMono-Regular", Consolas, monospace; font-size: 10px; font-weight: 650; }
+      .band-title { fill: #ecfeff; font-size: 15px; font-weight: 750; }
+      .band-copy { fill: #bae6fd; font-size: 11px; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="720" fill="#0f172a"/>
+  <rect x="0" y="0" width="1280" height="720" fill="url(#grid)"/>
+  <circle cx="1120" cy="62" r="180" fill="#0e7490" opacity="0.08"/>
+  <circle cx="1050" cy="655" r="220" fill="#4f46e5" opacity="0.06"/>
+
+  <text x="34" y="40" class="eyebrow">AGENTSEEK · LOCAL ADLC</text>
+  <text x="34" y="72" class="title">A stable lifecycle around code you own</text>
+  <text x="34" y="96" class="subtitle">Templates choose the framework and runtime; AgentSeek keeps the local workflow predictable.</text>
+
+  <!-- Ownership regions -->
+  <rect x="32" y="126" width="188" height="390" rx="14" fill="#111c31" stroke="#334155" stroke-width="1.3"/>
+  <rect x="252" y="126" width="204" height="390" rx="14" fill="#082f49" fill-opacity="0.34" stroke="#22d3ee" stroke-width="1.4"/>
+  <rect x="486" y="126" width="184" height="390" rx="14" fill="#451a03" fill-opacity="0.22" stroke="#fbbf24" stroke-width="1.4" stroke-dasharray="7 5"/>
+  <rect x="700" y="126" width="244" height="390" rx="14" fill="#312e81" fill-opacity="0.18" stroke="#a78bfa" stroke-width="1.4"/>
+  <rect x="974" y="108" width="274" height="426" rx="14" fill="#052e2b" fill-opacity="0.32" stroke="#34d399" stroke-width="1.6"/>
+  <text x="48" y="151" class="region-label">PEOPLE &amp; CLIENTS</text>
+  <text x="268" y="151" class="region-label">STABLE INTERFACE</text>
+  <text x="502" y="151" class="region-label">LOCKED INPUT</text>
+  <text x="716" y="151" class="region-label">EDITABLE OUTPUT</text>
+  <text x="990" y="135" class="region-label">PROJECT-OWNED EXECUTION</text>
+
+  <!-- Main left-to-right connectors, painted below nodes -->
+  <path id="actors-to-cli" data-role="flow-connector" data-from="actors" data-to="agentseek-cli" d="M 220 321 H 252" fill="none" stroke="#22d3ee" stroke-width="2.4" marker-end="url(#arrow-cyan)"/>
+  <path id="cli-to-catalog" data-role="flow-connector" data-from="agentseek-cli" data-to="template-catalog" d="M 456 321 H 486" fill="none" stroke="#22d3ee" stroke-width="2.4" marker-end="url(#arrow-cyan)"/>
+  <path id="catalog-to-project" data-role="flow-connector" data-from="template-catalog" data-to="generated-project" d="M 670 321 H 700" fill="none" stroke="#22d3ee" stroke-width="2.4" marker-end="url(#arrow-cyan)"/>
+  <path id="project-to-runtime" data-role="flow-connector" data-from="generated-project" data-to="project-runtime" d="M 944 321 H 974" fill="none" stroke="#22d3ee" stroke-width="2.4" marker-end="url(#arrow-cyan)"/>
+
+  <!-- People and clients -->
+  <g id="actors" data-role="architecture-layer">
+    <rect x="52" y="182" width="148" height="64" rx="9" fill="#0f172a"/>
+    <rect x="52" y="182" width="148" height="64" rx="9" fill="#1e293b" fill-opacity="0.84" stroke="#64748b" stroke-width="1.2"/>
+    <circle cx="73" cy="214" r="8" fill="#22d3ee" opacity="0.9"/>
+    <text x="90" y="219" class="node-title">Developer</text>
+
+    <rect x="52" y="278" width="148" height="64" rx="9" fill="#0f172a"/>
+    <rect x="52" y="278" width="148" height="64" rx="9" fill="#1e293b" fill-opacity="0.84" stroke="#64748b" stroke-width="1.2"/>
+    <circle cx="73" cy="310" r="8" fill="#a78bfa" opacity="0.9"/>
+    <text x="90" y="315" class="node-title">Coding agent</text>
+
+    <rect x="52" y="374" width="148" height="64" rx="9" fill="#0f172a"/>
+    <rect x="52" y="374" width="148" height="64" rx="9" fill="#1e293b" fill-opacity="0.84" stroke="#64748b" stroke-width="1.2"/>
+    <circle cx="73" cy="406" r="8" fill="#34d399" opacity="0.9"/>
+    <text x="90" y="411" class="node-title">Desktop client</text>
+  </g>
+
+  <!-- Stable CLI -->
+  <g id="agentseek-cli" data-role="architecture-layer">
+    <rect x="274" y="182" width="160" height="106" rx="10" fill="#0f172a"/>
+    <rect x="274" y="182" width="160" height="106" rx="10" fill="#083344" fill-opacity="0.86" stroke="#22d3ee" stroke-width="1.8" filter="url(#glow)"/>
+    <text x="354" y="217" text-anchor="middle" class="node-title">Stable AgentSeek CLI</text>
+    <text x="354" y="241" text-anchor="middle" class="node-copy">one lifecycle surface</text>
+    <path d="M 298 259 H 410" fill="none" stroke="#155e75" stroke-width="1"/>
+    <text x="354" y="274" text-anchor="middle" class="micro">human + machine friendly</text>
+
+    <rect x="274" y="322" width="160" height="112" rx="10" fill="#0f172a"/>
+    <rect x="274" y="322" width="160" height="112" rx="10" fill="#0c4a6e" fill-opacity="0.55" stroke="#0891b2" stroke-width="1.2"/>
+    <text x="354" y="352" text-anchor="middle" class="chip">create · info</text>
+    <text x="354" y="377" text-anchor="middle" class="chip">task · doctor · dev</text>
+    <text x="354" y="407" text-anchor="middle" class="node-copy">stable commands</text>
+    <text x="354" y="423" text-anchor="middle" class="micro">not a project runtime</text>
+  </g>
+
+  <!-- Locked template catalog -->
+  <g id="template-catalog" data-role="architecture-layer">
+    <rect x="508" y="201" width="140" height="208" rx="11" fill="#0f172a"/>
+    <rect x="508" y="201" width="140" height="208" rx="11" fill="#78350f" fill-opacity="0.34" stroke="#fbbf24" stroke-width="1.6"/>
+    <path d="M 532 236 H 624 M 532 252 H 608 M 532 268 H 616" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+    <text x="578" y="303" text-anchor="middle" class="node-title">Locked versioned</text>
+    <text x="578" y="322" text-anchor="middle" class="node-title">catalog</text>
+    <text x="578" y="350" text-anchor="middle" class="node-copy">reviewed coordinate</text>
+    <text x="578" y="369" text-anchor="middle" class="node-copy">reproducible source</text>
+    <rect x="530" y="384" width="96" height="20" rx="10" fill="#92400e" fill-opacity="0.7"/>
+    <text x="578" y="398" text-anchor="middle" class="chip">immutable</text>
+  </g>
+
+  <!-- Editable generated project -->
+  <g id="generated-project" data-role="architecture-layer">
+    <rect x="722" y="180" width="200" height="102" rx="10" fill="#0f172a"/>
+    <rect x="722" y="180" width="200" height="102" rx="10" fill="#4c1d95" fill-opacity="0.42" stroke="#a78bfa" stroke-width="1.6"/>
+    <text x="822" y="215" text-anchor="middle" class="node-title">Fully editable</text>
+    <text x="822" y="235" text-anchor="middle" class="node-title">generated project</text>
+    <text x="822" y="260" text-anchor="middle" class="node-copy">source remains yours</text>
+
+    <rect x="722" y="316" width="200" height="96" rx="10" fill="#0f172a"/>
+    <rect x="722" y="316" width="200" height="96" rx="10" fill="#312e81" fill-opacity="0.55" stroke="#818cf8" stroke-width="1.3"/>
+    <text x="822" y="350" text-anchor="middle" class="node-title">Lifecycle contract</text>
+    <text x="822" y="374" text-anchor="middle" class="node-copy">checks · tasks · services</text>
+    <text x="822" y="394" text-anchor="middle" class="node-copy">declared by the template</text>
+
+    <rect x="756" y="447" width="132" height="26" rx="13" fill="#6d28d9" fill-opacity="0.55" stroke="#a78bfa"/>
+    <text x="822" y="465" text-anchor="middle" class="chip">YOU OWN THIS</text>
+  </g>
+
+  <!-- Project-owned runtime and integrations -->
+  <g id="project-runtime" data-role="architecture-layer">
+    <text x="1111" y="165" text-anchor="middle" class="node-title">Project-owned runtime &amp; integrations</text>
+
+    <rect x="994" y="184" width="234" height="126" rx="11" fill="#0f172a"/>
+    <rect x="994" y="184" width="234" height="126" rx="11" fill="#064e3b" fill-opacity="0.5" stroke="#34d399" stroke-width="1.5"/>
+    <text x="1012" y="207" class="region-label">FEATURED PATH</text>
+    <rect x="1012" y="220" width="198" height="34" rx="7" fill="#022c22" stroke="#10b981"/>
+    <text x="1111" y="242" text-anchor="middle" class="node-title">Native LangGraph backend</text>
+    <rect x="1012" y="263" width="198" height="32" rx="7" fill="#082f49" stroke="#22d3ee"/>
+    <text x="1111" y="284" text-anchor="middle" class="node-title">React frontend</text>
+
+    <rect x="994" y="338" width="108" height="136" rx="10" fill="#0f172a"/>
+    <rect x="994" y="338" width="108" height="136" rx="10" fill="#1e293b" fill-opacity="0.82" stroke="#64748b"/>
+    <text x="1048" y="365" text-anchor="middle" class="micro">OTHER RUNTIME</text>
+    <text x="1048" y="382" text-anchor="middle" class="micro">FAMILY</text>
+    <circle cx="1048" cy="414" r="20" fill="#312e81" stroke="#a78bfa" stroke-width="1.3"/>
+    <text x="1048" y="419" text-anchor="middle" class="node-title">Bub</text>
+    <text x="1048" y="453" text-anchor="middle" class="micro">template choice</text>
+
+    <rect x="1118" y="338" width="110" height="136" rx="10" fill="#0f172a"/>
+    <rect x="1118" y="338" width="110" height="136" rx="10" fill="#1e293b" fill-opacity="0.82" stroke="#64748b"/>
+    <text x="1173" y="365" text-anchor="middle" class="micro">INTEGRATIONS</text>
+    <text x="1173" y="390" text-anchor="middle" class="integration-title"><tspan x="1173" y="390">Models · Tools</tspan><tspan x="1173" y="405">· MCP</tspan></text>
+    <path d="M 1138 416 H 1208" fill="none" stroke="#475569"/>
+    <text x="1173" y="442" text-anchor="middle" class="integration-title">External services</text>
+    <text x="1173" y="460" text-anchor="middle" class="micro">project-selected</text>
+  </g>
+
+  <!-- Cross-cutting observability -->
+  <g id="observability-band" data-role="cross-cutting-band" data-span="agentseek-cli template-catalog generated-project project-runtime">
+    <path d="M 354 516 V 570 M 578 516 V 570 M 822 516 V 570 M 1111 534 V 570" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4 5" opacity="0.75"/>
+    <circle cx="354" cy="570" r="4" fill="#22d3ee"/>
+    <circle cx="578" cy="570" r="4" fill="#fbbf24"/>
+    <circle cx="822" cy="570" r="4" fill="#a78bfa"/>
+    <circle cx="1111" cy="570" r="4" fill="#34d399"/>
+    <rect x="252" y="570" width="996" height="86" rx="14" fill="#0f172a"/>
+    <rect x="252" y="570" width="996" height="86" rx="14" fill="url(#observability-gradient)" stroke="#38bdf8" stroke-width="1.4"/>
+    <text x="282" y="605" class="band-title">Observability · lifecycle signals</text>
+    <text x="282" y="629" class="band-copy">Topology, preflight readiness, live service health, CLI spans, and optional run tracing follow the project through the loop.</text>
+    <path d="M 1034 613 H 1205" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrow-emerald)" opacity="0.9"/>
+  </g>
+
+  <text x="34" y="686" class="micro">AgentSeek standardizes the lifecycle interface — generated projects retain runtime and integration ownership.</text>
+</svg>
