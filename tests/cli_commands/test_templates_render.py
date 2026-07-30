@@ -220,6 +220,7 @@ def _assert_agentic_rag_template(generated: Path, lifecycle_data: dict[str, Any]
     lifecycle_text = (generated / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8")
     env_text = (generated / ".env.example").read_text(encoding="utf-8")
     compose_text = (generated / "docker-compose.yml").read_text(encoding="utf-8")
+    gitignore_text = (generated / ".gitignore").read_text(encoding="utf-8")
     pyproject_text = (generated / "pyproject.toml").read_text(encoding="utf-8")
     agent_text = (generated / "src" / "my_rag_agent" / "agent.py").read_text(encoding="utf-8")
     ingest_text = (generated / "src" / "my_rag_agent" / "ingest.py").read_text(encoding="utf-8")
@@ -241,6 +242,8 @@ def _assert_agentic_rag_template(generated: Path, lifecycle_data: dict[str, Any]
     assert "SEEKDB_MODE=embedded" in env_text
     assert "SEEKDB_PATH=~/.agentseek/agentic-rag/my_rag_agent/seekdb" in env_text
     assert "./.seekdb-docker-data:/var/lib/oceanbase" in compose_text
+    assert ".seekdb-docker-data/" in gitignore_text
+    assert ".seekdb-data/" not in gitignore_text
     assert "pytest>=8.2" in pyproject_text
     assert "path" in helper_text and "SEEKDB_MODE" in helper_text
     assert "get_vector_store" in agent_text
