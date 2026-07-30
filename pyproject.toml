@@ -66,6 +66,11 @@ requires = ["pdm-backend", "pdm-build-skills>=0.1.0a3"]
 build-backend = "pdm.backend"
 
 [tool.pdm.build]
+source-includes = [
+    "README.md",
+    "README.zh.md",
+    "diagram/agentseek-readme",
+]
 includes = [
     "src/agentseek",
     "src/agentseek/data/*.json",

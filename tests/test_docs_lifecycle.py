@@ -21,6 +21,7 @@ ROOT_READMES = (
     ROOT / "README.md",
     ROOT / "README.zh.md",
 )
+IMMUTABLE_ASSET_ROOT = "https://raw.githubusercontent.com/ob-labs/agentseek/v0.1.1/diagram/agentseek-readme/"
 
 CANONICAL_RESEARCH_WALKTHROUGH = (
     "uv tool install agentseek",
@@ -54,7 +55,7 @@ README_SECTION_MARKERS = {
     ),
     "README.zh.md": (
         "## 体验本地 ADLC",
-        "## 什么是 AgentSeek？",
+        "## 什么是 AgentSeek？",  # noqa: RUF001 - exact localized heading
         "## Agent 开发生命周期",
         "## 贯穿全流程的可观测性",
         "## 引导式模板",
@@ -78,8 +79,8 @@ README_REQUIRED_TEXT = {
         "agentseek create --list-templates",
         "agentseek create --list-templates --filter deepagents",
         "agentseek create deepagents/research --describe",
-        "diagram/agentseek-readme/agentseek-architecture-en.svg",
-        "diagram/agentseek-readme/agentseek-adlc-en.svg",
+        f"{IMMUTABLE_ASSET_ROOT}agentseek-architecture-en.svg",
+        f"{IMMUTABLE_ASSET_ROOT}agentseek-adlc-en.svg",
     ),
     "README.zh.md": (
         "AgentSeek 0.1.1",
@@ -93,9 +94,14 @@ README_REQUIRED_TEXT = {
         "agentseek create --list-templates",
         "agentseek create --list-templates --filter deepagents",
         "agentseek create deepagents/research --describe",
-        "diagram/agentseek-readme/agentseek-architecture-zh.svg",
-        "diagram/agentseek-readme/agentseek-adlc-zh.svg",
+        f"{IMMUTABLE_ASSET_ROOT}agentseek-architecture-zh.svg",
+        f"{IMMUTABLE_ASSET_ROOT}agentseek-adlc-zh.svg",
     ),
+}
+
+README_LIVE_DOCTOR_COMMENTS = {
+    "README.md": "# In another terminal, after agentseek dev starts, check live services.",
+    "README.zh.md": "# agentseek dev 启动后，在另一个终端中检查实时服务。",  # noqa: RUF001
 }
 
 
@@ -104,9 +110,7 @@ def _bash_commands(text: str) -> list[str]:
     commands: list[str] = []
     for block in re.findall(r"```bash\n(.*?)```", text, flags=re.DOTALL):
         commands.extend(
-            line.strip()
-            for line in block.splitlines()
-            if line.strip() and not line.lstrip().startswith("#")
+            line.strip() for line in block.splitlines() if line.strip() and not line.lstrip().startswith("#")
         )
     return commands
 
@@ -165,6 +169,15 @@ def test_root_readmes_keep_the_current_research_walkthrough_in_order(readme: Pat
     positions = [commands.index(command) for command in CANONICAL_RESEARCH_WALKTHROUGH]
 
     assert positions == sorted(positions), readme
+
+
+@pytest.mark.parametrize("readme", ROOT_READMES)
+def test_root_readmes_explain_that_live_checks_run_in_another_terminal(readme: Path) -> None:
+    """The blocking dev command must not hide how to run the following live check."""
+    text = readme.read_text(encoding="utf-8")
+    expected = f"agentseek dev\n{README_LIVE_DOCTOR_COMMENTS[readme.name]}\nagentseek doctor --live"
+
+    assert expected in text, readme
 
 
 @pytest.mark.parametrize("readme", ROOT_READMES)

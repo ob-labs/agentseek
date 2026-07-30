@@ -41,6 +41,7 @@ agentseek doctor
 # Preview the native commands, run the local stack, and check live services.
 agentseek dev --dry-run
 agentseek dev
+# In another terminal, after agentseek dev starts, check live services.
 agentseek doctor --live
 ```
 
@@ -57,7 +58,7 @@ AgentSeek supplies the stable lifecycle surface around a generated project; it
 does not own that project's source, framework, runtime, or deployment. A
 template selects those pieces, and the generated project remains yours to edit.
 
-![AgentSeek architecture](diagram/agentseek-readme/agentseek-architecture-en.svg)
+![AgentSeek architecture](https://raw.githubusercontent.com/ob-labs/agentseek/v0.1.1/diagram/agentseek-readme/agentseek-architecture-en.svg)
 
 The CLI connects people, coding agents, and desktop clients to a locked,
 versioned template catalog and an editable project lifecycle contract. The
@@ -70,7 +71,7 @@ The local ADLC keeps iteration anchored in the existing project instead of
 starting over: discover, create, inspect, configure, check, run, observe, and
 iterate back to inspect.
 
-![Agent development lifecycle](diagram/agentseek-readme/agentseek-adlc-en.svg)
+![Agent development lifecycle](https://raw.githubusercontent.com/ob-labs/agentseek/v0.1.1/diagram/agentseek-readme/agentseek-adlc-en.svg)
 
 | Stage | Local command or project surface |
 | --- | --- |

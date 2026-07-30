@@ -39,6 +39,7 @@ agentseek doctor
 # 预览原生命令，启动本地栈，并检查正在运行的服务。
 agentseek dev --dry-run
 agentseek dev
+# agentseek dev 启动后，在另一个终端中检查实时服务。
 agentseek doctor --live
 ```
 
@@ -54,7 +55,7 @@ CLI。
 AgentSeek 为生成项目提供稳定的生命周期命令面；它不拥有项目源代码，也不替项目选择
 框架、运行时或部署方式。模板决定这些组成部分，生成后的项目始终可以由你继续编辑。
 
-![AgentSeek 架构](diagram/agentseek-readme/agentseek-architecture-zh.svg)
+![AgentSeek 架构](https://raw.githubusercontent.com/ob-labs/agentseek/v0.1.1/diagram/agentseek-readme/agentseek-architecture-zh.svg)
 
 CLI 连接开发者、编码 Agent 和桌面客户端，连接到锁定且版本化的模板 catalog，以及
 可编辑项目的生命周期契约。项目自己拥有运行时和集成，包括模型、工具、MCP server
@@ -65,7 +66,7 @@ CLI 连接开发者、编码 Agent 和桌面客户端，连接到锁定且版本
 本地 ADLC 将迭代固定在已有项目上，而不是每次重新创建：发现、创建、审视、配置、
 检查、运行、观测，再迭代回到审视。
 
-![Agent 开发生命周期](diagram/agentseek-readme/agentseek-adlc-zh.svg)
+![Agent 开发生命周期](https://raw.githubusercontent.com/ob-labs/agentseek/v0.1.1/diagram/agentseek-readme/agentseek-adlc-zh.svg)
 
 | 阶段 | 本地命令或项目界面 |
 | --- | --- |

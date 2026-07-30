@@ -46,7 +46,7 @@
   <circle cx="130" cy="680" r="220" fill="#4f46e5" opacity="0.06"/>
 
   <text x="34" y="40" class="eyebrow">AGENT 开发生命周期</text>
-  <text x="34" y="72" class="title">只创建一次，在已有的自有项目上持续迭代</text>
+  <text x="34" y="72" class="title">只创建一次，在已有项目中持续迭代</text>
   <text x="34" y="96" class="subtitle">八个可预期的本地阶段：模板负责起点，可观测性贯穿每个实际工作阶段。</text>
 
   <!-- 跨生命周期的带状区域 -->

@@ -14,6 +14,18 @@ from pathlib import Path
 
 _SOURCE_CATALOG_LOCK = Path("src/agentseek/data/catalog-lock.json")
 _WHEEL_CATALOG_LOCK = "agentseek/data/catalog-lock.json"
+_SOURCE_RELEASE_FILES = (
+    Path("README.md"),
+    Path("README.zh.md"),
+    Path("diagram/agentseek-readme/agentseek-adlc-en.svg"),
+    Path("diagram/agentseek-readme/agentseek-adlc-en@2x.png"),
+    Path("diagram/agentseek-readme/agentseek-adlc-zh.svg"),
+    Path("diagram/agentseek-readme/agentseek-adlc-zh@2x.png"),
+    Path("diagram/agentseek-readme/agentseek-architecture-en.svg"),
+    Path("diagram/agentseek-readme/agentseek-architecture-en@2x.png"),
+    Path("diagram/agentseek-readme/agentseek-architecture-zh.svg"),
+    Path("diagram/agentseek-readme/agentseek-architecture-zh@2x.png"),
+)
 _BUILD_SKILL_NAMES = ("friendly-python", "piglet")
 _BUILD_SKILL_SOURCE = {
     "git": "https://github.com/PsiACE/skills.git",
@@ -65,14 +77,19 @@ def lock_version(root: Path) -> str:
     return matches[0]
 
 
-def wheel_version(wheel: Path) -> str:
-    """Return the AgentSeek version from a built wheel's core metadata."""
+def _wheel_metadata(wheel: Path) -> bytes:
+    """Return the single core METADATA payload from *wheel*."""
     with zipfile.ZipFile(wheel) as archive:
         candidates = [name for name in archive.namelist() if name.endswith(".dist-info/METADATA")]
         if len(candidates) != 1:
             message = "wheel must contain exactly one METADATA file"
             raise ReleaseVersionError(message)
-        metadata = email.parser.BytesParser().parsebytes(archive.read(candidates[0]))
+        return archive.read(candidates[0])
+
+
+def wheel_version(wheel: Path) -> str:
+    """Return the AgentSeek version from a built wheel's core metadata."""
+    metadata = email.parser.BytesParser().parsebytes(_wheel_metadata(wheel))
     if metadata.get("Name", "").casefold() != "agentseek":
         message = "wheel metadata does not describe agentseek"
         raise ReleaseVersionError(message)
@@ -83,6 +100,19 @@ def wheel_version(wheel: Path) -> str:
     return version
 
 
+def wheel_readme(wheel: Path) -> bytes:
+    """Return the exact long-description body carried by wheel METADATA."""
+    metadata = _wheel_metadata(wheel)
+    for separator in (b"\r\n\r\n", b"\n\n"):
+        if separator in metadata:
+            body = metadata.partition(separator)[2]
+            if body:
+                return body
+            break
+    message = "wheel METADATA has no README.md long description"
+    raise ReleaseVersionError(message)
+
+
 def source_catalog_lock(root: Path) -> bytes:
     """Return the exact catalog lock bytes committed for the release."""
     try:
@@ -90,6 +120,18 @@ def source_catalog_lock(root: Path) -> bytes:
     except OSError as exc:
         message = "source catalog lock is unavailable"
         raise ReleaseVersionError(message) from exc
+
+
+def source_release_files(root: Path) -> dict[str, bytes]:
+    """Return the exact README and diagram bytes committed for the release."""
+    payload: dict[str, bytes] = {}
+    for relative in _SOURCE_RELEASE_FILES:
+        try:
+            payload[relative.as_posix()] = (root / relative).read_bytes()
+        except OSError as exc:
+            message = f"source release asset {relative.as_posix()} is unavailable"
+            raise ReleaseVersionError(message) from exc
+    return payload
 
 
 def _required_catalog_string(lock: dict[str, object], field: str) -> str:
@@ -239,6 +281,29 @@ def verify_wheel_skill_payload(wheel: Path, skills_root: Path) -> None:
         raise ReleaseVersionError(message)
 
 
+def _verify_wheel_release_files(wheel: Path, catalog_lock: bytes, release_files: dict[str, bytes]) -> None:
+    if wheel_catalog_lock(wheel) != catalog_lock:
+        message = "wheel catalog lock does not match the committed catalog lock"
+        raise ReleaseVersionError(message)
+    if wheel_readme(wheel) != release_files["README.md"]:
+        message = "wheel METADATA long description does not match committed README.md"
+        raise ReleaseVersionError(message)
+
+
+def _verify_sdist_release_files(sdist: Path, catalog_lock: bytes, release_files: dict[str, bytes]) -> None:
+    if sdist_catalog_lock(sdist) != catalog_lock:
+        message = "sdist catalog lock does not match the committed catalog lock"
+        raise ReleaseVersionError(message)
+    verify_build_skill_source(
+        _sdist_member(sdist, "pyproject.toml"),
+        surface="sdist pyproject.toml",
+    )
+    for relative, expected_bytes in release_files.items():
+        if _sdist_member(sdist, relative) != expected_bytes:
+            message = f"sdist {relative} does not match committed source"
+            raise ReleaseVersionError(message)
+
+
 def verify_release_version(
     expected: str,
     *,
@@ -265,17 +330,11 @@ def verify_release_version(
         rendered = ", ".join(f"{surface}={version}" for surface, version in mismatches.items())
         message = f"expected release version {expected}; found {rendered}"
         raise ReleaseVersionError(message)
-    if wheel is not None and wheel_catalog_lock(wheel) != catalog_lock:
-        message = "wheel catalog lock does not match the committed catalog lock"
-        raise ReleaseVersionError(message)
+    release_files = source_release_files(root) if wheel is not None or sdist is not None else {}
+    if wheel is not None:
+        _verify_wheel_release_files(wheel, catalog_lock, release_files)
     if sdist is not None:
-        if sdist_catalog_lock(sdist) != catalog_lock:
-            message = "sdist catalog lock does not match the committed catalog lock"
-            raise ReleaseVersionError(message)
-        verify_build_skill_source(
-            _sdist_member(sdist, "pyproject.toml"),
-            surface="sdist pyproject.toml",
-        )
+        _verify_sdist_release_files(sdist, catalog_lock, release_files)
     if skills_root is not None:
         if wheel is None:
             message = "--skills-root requires --wheel"

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import tarfile
 import zipfile
 from pathlib import Path
@@ -11,12 +12,26 @@ import pytest
 from agentseek.release import verify_release_version, verify_remote_release_tags
 
 _PINNED_SKILLS_REF = "4f09937234d128656fdc8c8658c840ebbf7e28d1"
+_SDIST_RELEASE_FILES = (
+    "README.md",
+    "README.zh.md",
+    "diagram/agentseek-readme/agentseek-adlc-en.svg",
+    "diagram/agentseek-readme/agentseek-adlc-en@2x.png",
+    "diagram/agentseek-readme/agentseek-adlc-zh.svg",
+    "diagram/agentseek-readme/agentseek-adlc-zh@2x.png",
+    "diagram/agentseek-readme/agentseek-architecture-en.svg",
+    "diagram/agentseek-readme/agentseek-architecture-en@2x.png",
+    "diagram/agentseek-readme/agentseek-architecture-zh.svg",
+    "diagram/agentseek-readme/agentseek-architecture-zh@2x.png",
+)
+_SOURCE_RELEASE_ASSETS = {relative: f"fixture for {relative}\n".encode() for relative in _SDIST_RELEASE_FILES}
 
 
 def _pyproject_bytes(version: str, *, skills_ref: str = _PINNED_SKILLS_REF) -> bytes:
     return (
         f'[project]\nname = "agentseek"\nversion = "{version}"\n\n'
         "[tool.pdm.build]\n"
+        'source-includes = ["README.md", "README.zh.md", "diagram/agentseek-readme"]\n'
         "skills = [\n"
         '  { git = "https://github.com/PsiACE/skills.git", '
         f'ref = "{skills_ref}", subpath = "skills", '
@@ -64,6 +79,10 @@ def _write_release_surfaces(
     lock_path = root / "src" / "agentseek" / "data" / "catalog-lock.json"
     lock_path.parent.mkdir(parents=True)
     lock_path.write_bytes(lock_bytes)
+    for relative, content in _SOURCE_RELEASE_ASSETS.items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
     return lock_bytes
 
 
@@ -73,13 +92,18 @@ def _write_wheel(
     *,
     catalog_lock: bytes | None = None,
     include_catalog_lock: bool = True,
+    include_readme: bool = True,
+    readme: bytes | None = None,
     skill_payload: dict[str, bytes] | None = None,
 ) -> Path:
     wheel = root / f"agentseek-{version}-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
+        metadata = f"Metadata-Version: 2.4\nName: agentseek\nVersion: {version}\n\n".encode()
+        if include_readme:
+            metadata += readme if readme is not None else (root / "README.md").read_bytes()
         archive.writestr(
             f"agentseek-{version}.dist-info/METADATA",
-            f"Metadata-Version: 2.4\nName: agentseek\nVersion: {version}\n",
+            metadata,
         )
         if include_catalog_lock:
             archive.writestr(
@@ -99,6 +123,8 @@ def _write_sdist(
     *,
     catalog_lock: bytes | None = None,
     pyproject: bytes | None = None,
+    omitted_release_assets: frozenset[str] = frozenset(),
+    release_asset_overrides: dict[str, bytes] | None = None,
 ) -> Path:
     sdist = root / f"agentseek-{version}.tar.gz"
     prefix = f"agentseek-{version}"
@@ -122,6 +148,10 @@ def _write_sdist(
             if catalog_lock is not None
             else (root / "src" / "agentseek" / "data" / "catalog-lock.json").read_bytes(),
         )
+        for relative in _SDIST_RELEASE_FILES:
+            if relative not in omitted_release_assets:
+                content = (release_asset_overrides or {}).get(relative, (root / relative).read_bytes())
+                add(archive, relative, content)
     return sdist
 
 
@@ -191,6 +221,22 @@ def test_wheel_must_contain_the_catalog_lock(tmp_path: Path) -> None:
         verify_release_version("0.1.0", root=tmp_path, wheel=wheel)
 
 
+def test_wheel_metadata_must_contain_the_committed_readme(tmp_path: Path) -> None:
+    _write_release_surfaces(tmp_path, "0.1.0")
+    wheel = _write_wheel(tmp_path, "0.1.0", include_readme=False)
+
+    with pytest.raises(ValueError, match=r"wheel METADATA has no README\.md long description"):
+        verify_release_version("0.1.0", root=tmp_path, wheel=wheel)
+
+
+def test_wheel_metadata_readme_must_equal_the_committed_bytes(tmp_path: Path) -> None:
+    _write_release_surfaces(tmp_path, "0.1.0")
+    wheel = _write_wheel(tmp_path, "0.1.0", readme=b"# Drifted README\n")
+
+    with pytest.raises(ValueError, match=r"wheel METADATA long description does not match committed README\.md"):
+        verify_release_version("0.1.0", root=tmp_path, wheel=wheel)
+
+
 def test_build_skill_source_must_be_pinned_to_the_reviewed_commit(tmp_path: Path) -> None:
     _write_release_surfaces(tmp_path, "0.1.0")
     (tmp_path / "pyproject.toml").write_bytes(_pyproject_bytes("0.1.0", skills_ref="main"))
@@ -213,6 +259,32 @@ def test_sdist_must_contain_the_committed_catalog_and_pinned_skill_source(tmp_pa
     )
     with pytest.raises(ValueError, match=r"sdist pyproject\.toml build skill source is not pinned"):
         verify_release_version("0.1.0", root=tmp_path, sdist=mutable_source)
+
+
+@pytest.mark.parametrize("relative", _SDIST_RELEASE_FILES)
+def test_sdist_must_contain_every_readme_and_diagram_asset(tmp_path: Path, relative: str) -> None:
+    _write_release_surfaces(tmp_path, "0.1.0")
+    sdist = _write_sdist(
+        tmp_path,
+        "0.1.0",
+        omitted_release_assets=frozenset({relative}),
+    )
+
+    with pytest.raises(ValueError, match=rf"sdist must contain exactly one {re.escape(relative)}"):
+        verify_release_version("0.1.0", root=tmp_path, sdist=sdist)
+
+
+@pytest.mark.parametrize("relative", _SDIST_RELEASE_FILES)
+def test_sdist_readmes_and_diagram_assets_must_equal_the_committed_bytes(tmp_path: Path, relative: str) -> None:
+    _write_release_surfaces(tmp_path, "0.1.0")
+    sdist = _write_sdist(
+        tmp_path,
+        "0.1.0",
+        release_asset_overrides={relative: b"drifted\n"},
+    )
+
+    with pytest.raises(ValueError, match=rf"sdist {re.escape(relative)} does not match committed source"):
+        verify_release_version("0.1.0", root=tmp_path, sdist=sdist)
 
 
 def test_wheel_vendored_skills_must_match_the_pinned_checkout(tmp_path: Path) -> None:

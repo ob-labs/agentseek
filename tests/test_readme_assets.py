@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import struct
 import xml.etree.ElementTree as ET
+import zlib
 from pathlib import Path
 
 import pytest
@@ -12,6 +13,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 ASSET_ROOT = ROOT / "diagram" / "agentseek-readme"
 SVG_NS = "{http://www.w3.org/2000/svg}"
+IMMUTABLE_ASSET_ROOT = "https://raw.githubusercontent.com/ob-labs/agentseek/v0.1.1/diagram/agentseek-readme/"
 
 SVG_ASSETS = {
     "architecture-en": ASSET_ROOT / "agentseek-architecture-en.svg",
@@ -20,9 +22,7 @@ SVG_ASSETS = {
     "adlc-zh": ASSET_ROOT / "agentseek-adlc-zh.svg",
 }
 
-PNG_ASSETS = {
-    name: path.with_name(f"{path.stem}@2x.png") for name, path in SVG_ASSETS.items()
-}
+PNG_ASSETS = {name: path.with_name(f"{path.stem}@2x.png") for name, path in SVG_ASSETS.items()}
 
 REQUIRED_LABELS = {
     "architecture-en": (
@@ -127,7 +127,7 @@ GEOMETRY_ATTRIBUTES = (
 
 def _parse_svg(path: Path) -> ET.Element:
     assert path.is_file(), path
-    return ET.parse(path).getroot()
+    return ET.parse(path).getroot()  # noqa: S314 - only trusted checked-in SVG assets are parsed
 
 
 def _visible_text(root: ET.Element) -> str:
@@ -146,6 +146,33 @@ def _geometry_signature(root: ET.Element) -> tuple[tuple[object, ...], ...]:
     return tuple(signature)
 
 
+def _png_chunks(path: Path) -> list[tuple[bytes, bytes]]:
+    """Parse and validate every chunk in a complete PNG file."""
+    content = path.read_bytes()
+    assert content.startswith(b"\x89PNG\r\n\x1a\n"), path
+
+    chunks: list[tuple[bytes, bytes]] = []
+    offset = 8
+    while True:
+        assert offset + 8 <= len(content), f"{path}: truncated PNG chunk header"
+        length = struct.unpack(">I", content[offset : offset + 4])[0]
+        chunk_type = content[offset + 4 : offset + 8]
+        chunk_end = offset + 12 + length
+        assert chunk_end <= len(content), f"{path}: truncated {chunk_type!r} chunk"
+
+        data = content[offset + 8 : offset + 8 + length]
+        stored_crc = struct.unpack(">I", content[offset + 8 + length : chunk_end])[0]
+        expected_crc = zlib.crc32(data, zlib.crc32(chunk_type)) & 0xFFFFFFFF
+        assert stored_crc == expected_crc, f"{path}: invalid {chunk_type!r} CRC"
+        chunks.append((chunk_type, data))
+        offset = chunk_end
+
+        if chunk_type == b"IEND":
+            assert not data, f"{path}: IEND chunk must be empty"
+            assert offset == len(content), f"{path}: trailing bytes after IEND"
+            return chunks
+
+
 @pytest.mark.parametrize("name", SVG_ASSETS)
 def test_svg_assets_are_responsive_parseable_and_localized(name: str) -> None:
     path = SVG_ASSETS[name]
@@ -155,6 +182,14 @@ def test_svg_assets_are_responsive_parseable_and_localized(name: str) -> None:
     assert root.attrib.get("viewBox") == "0 0 1280 720", path
     assert "width" not in root.attrib, path
     assert "height" not in root.attrib, path
+    assert root.attrib.get("role") == "img", path
+
+    titles = root.findall(f"{SVG_NS}title")
+    descriptions = root.findall(f"{SVG_NS}desc")
+    assert len(titles) == 1 and (titles[0].text or "").strip(), path
+    assert len(descriptions) == 1 and (descriptions[0].text or "").strip(), path
+    labelled_by = root.attrib.get("aria-labelledby", "").split()
+    assert labelled_by == [titles[0].attrib.get("id"), descriptions[0].attrib.get("id")], path
 
     visible_text = _visible_text(root)
     for label in REQUIRED_LABELS[name]:
@@ -174,24 +209,43 @@ def test_png_fallbacks_are_valid_exact_2x_renders(name: str) -> None:
     path = PNG_ASSETS[name]
     assert path.is_file(), path
 
-    header = path.read_bytes()[:24]
-    assert header[:8] == b"\x89PNG\r\n\x1a\n", path
-    assert header[12:16] == b"IHDR", path
-    assert struct.unpack(">II", header[16:24]) == (2560, 1440), path
+    chunks = _png_chunks(path)
+    chunk_types = [chunk_type for chunk_type, _data in chunks]
+    assert b"IHDR" in chunk_types, path
+    assert b"IDAT" in chunk_types, path
+    assert b"IEND" in chunk_types, path
+
+    ihdr_chunks = [data for chunk_type, data in chunks if chunk_type == b"IHDR"]
+    assert len(ihdr_chunks) == 1, path
+    width, height, bit_depth, color_type, compression, filtering, interlace = struct.unpack(">IIBBBBB", ihdr_chunks[0])
+    assert (width, height) == (2560, 1440), path
+    assert (bit_depth, color_type, compression, filtering, interlace) == (8, 6, 0, 0, 0), path
+
+    compressed = b"".join(data for chunk_type, data in chunks if chunk_type == b"IDAT")
+    scanlines = zlib.decompress(compressed)
+    assert len(scanlines) == height * (1 + width * 4), path
 
 
-@pytest.mark.parametrize("readme", (ROOT / "README.md", ROOT / "README.zh.md"))
-def test_root_readme_local_images_exist(readme: Path) -> None:
+@pytest.mark.parametrize(
+    ("readme", "expected_filenames"),
+    (
+        (ROOT / "README.md", ("agentseek-architecture-en.svg", "agentseek-adlc-en.svg")),
+        (ROOT / "README.zh.md", ("agentseek-architecture-zh.svg", "agentseek-adlc-zh.svg")),
+    ),
+)
+def test_root_readme_images_use_immutable_release_urls_and_map_to_local_assets(
+    readme: Path,
+    expected_filenames: tuple[str, str],
+) -> None:
     text = readme.read_text(encoding="utf-8")
-    local_images = [
-        target
-        for target in re.findall(r"!\[[^\]]*\]\(([^)]+)\)", text)
-        if "://" not in target
+    release_images = [
+        target for target in re.findall(r"!\[[^\]]*\]\(([^)]+)\)", text) if target.startswith(IMMUTABLE_ASSET_ROOT)
     ]
 
-    assert len(local_images) == 2, readme
-    for target in local_images:
-        assert (ROOT / target).is_file(), (readme, target)
+    assert release_images == [f"{IMMUTABLE_ASSET_ROOT}{filename}" for filename in expected_filenames], readme
+    for target in release_images:
+        local_asset = ASSET_ROOT / target.removeprefix(IMMUTABLE_ASSET_ROOT)
+        assert local_asset.is_file(), (readme, target)
 
 
 @pytest.mark.parametrize("stem", ("architecture", "adlc"))
