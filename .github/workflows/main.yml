@@ -81,7 +81,7 @@ jobs:
           smoke_root="${RUNNER_TEMP}/agentseek-rag-smoke"
           mkdir -p "${smoke_root}"
           cd "${smoke_root}"
-          uv run --project "${GITHUB_WORKSPACE}" agentseek create langchain/agentic-rag --no-input
+          PYTHONPATH="${GITHUB_WORKSPACE}/src" uv run --project "${GITHUB_WORKSPACE}" agentseek create langchain/agentic-rag --no-input
           echo "AGENTSEEK_RAG_SMOKE_PROJECT=${smoke_root}/my_rag_agent" >> "${GITHUB_ENV}"
 
       - name: Run rendered agentic RAG template tests

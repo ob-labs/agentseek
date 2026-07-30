@@ -35,6 +35,7 @@ def test_agentic_rag_template_smoke_runs_rendered_project_tests() -> None:
 
     assert "agentic-rag-template-smoke:" in text
     assert "agentseek create langchain/agentic-rag --no-input" in text
+    assert 'PYTHONPATH="${GITHUB_WORKSPACE}/src"' in text
     assert 'cd "${AGENTSEEK_RAG_SMOKE_PROJECT}"' in text
     assert "uv sync --extra dev" in text
     assert "uv run python -m pytest" in text
