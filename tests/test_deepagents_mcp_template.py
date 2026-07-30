@@ -8,6 +8,7 @@ import inspect
 import json
 import os
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -164,31 +165,56 @@ def prepare_rendered_mcp_subprocess(rendered: Path, *, server_name: str = "calcu
     return {**os.environ, "PYTHONPATH": str(source_root)}, http_port
 
 
-def test_langgraph_host_override_remains_one_argv_value(rendered_mcp: Path, tmp_path: Path) -> None:
+def _write_fake_python_command(directory: Path, name: str, source: str) -> None:
+    script = directory / f"{name}.py"
+    script.write_text(source, encoding="utf-8")
+    if os.name == "nt":
+        (directory / f"{name}.cmd").write_text(
+            f'@"{sys.executable}" "{script}" %*\n',
+            encoding="utf-8",
+        )
+        return
+    executable = directory / name
+    executable.write_text(f"#!{sys.executable}\n{source}", encoding="utf-8")
+    executable.chmod(0o755)
+
+
+def test_langgraph_launcher_needs_no_shell_and_preserves_host_argv(rendered_mcp: Path, tmp_path: Path) -> None:
     lifecycle = tomllib.loads((rendered_mcp / ".agentseek" / "lifecycle.toml").read_text(encoding="utf-8"))
     command = lifecycle["processes"]["langgraph"]["command"]
     capture_path = tmp_path / "argv.json"
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
-    fake_uv = fake_bin / "uv"
-    fake_uv.write_text(
-        f"#!{sys.executable}\n"
+    _write_fake_python_command(
+        fake_bin,
+        "uv",
+        "import os, sys\n"
+        "arguments = sys.argv[1:]\n"
+        "if arguments[:2] != ['run', 'python']:\n"
+        "    raise SystemExit(f'unexpected uv arguments: {arguments!r}')\n"
+        "os.execv(sys.executable, [sys.executable, *arguments[2:]])\n",
+    )
+    _write_fake_python_command(
+        fake_bin,
+        "langgraph",
         "import json, os, sys\n"
         "from pathlib import Path\n"
         "Path(os.environ['ARGV_CAPTURE']).write_text(json.dumps(sys.argv[1:]), encoding='utf-8')\n",
-        encoding="utf-8",
     )
-    fake_uv.chmod(0o755)
     hostile_host = "127.0.0.1 --allow-blocking *.json"
     environment = {
         **os.environ,
         "ARGV_CAPTURE": str(capture_path),
         "LANGGRAPH_HOST": hostile_host,
-        "PATH": f"{fake_bin}{os.pathsep}{os.environ.get('PATH', '')}",
+        "PATH": str(fake_bin),
+        "PYTHONPATH": str(rendered_mcp / "src"),
     }
+    executable = shutil.which(command[0], path=environment["PATH"])
+    if executable is None:
+        pytest.fail(f"lifecycle depends on unavailable executable: {command[0]}")
 
     completed = subprocess.run(  # noqa: S603 - executes rendered lifecycle through a controlled fake uv
-        command,
+        [executable, *command[1:]],
         cwd=rendered_mcp,
         env=environment,
         check=False,
@@ -198,8 +224,6 @@ def test_langgraph_host_override_remains_one_argv_value(rendered_mcp: Path, tmp_
 
     assert completed.returncode == 0, completed.stderr
     assert json.loads(capture_path.read_text(encoding="utf-8")) == [
-        "run",
-        "langgraph",
         "dev",
         "--port",
         "2024",

@@ -274,9 +274,11 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
         "description": "Bind address for the Vite development server.",
     }
     assert lifecycle_data["processes"]["langgraph"]["command"] == [
-        "sh",
-        "-lc",
-        'uv run langgraph dev --port 2024 --no-browser --host "${LANGGRAPH_HOST:-127.0.0.1}"',
+        "uv",
+        "run",
+        "python",
+        "-m",
+        f"{generated.name}.langgraph_dev",
     ]
     frontend = generated / "frontend"
     assert (frontend / "package.json").is_file()
@@ -337,7 +339,7 @@ def _assert_deepagents_mcp_template(generated: Path, lifecycle_data: dict[str, A
     readme_text = (generated / "README.md").read_text(encoding="utf-8")
     assert "Run `agentseek task sync`, `agentseek task frontend`, and" in readme_text
     assert "`agentseek task mcp-smoke`, then inspect with `agentseek doctor`" in readme_text
-    assert "development services with `agentseek dev`." in readme_text
+    assert "all three development services with `agentseek dev`." in readme_text
     assert "agentseek task mcp-smoke" in readme_text
     assert "LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev" in readme_text
     assert "`frontend/.env`" in readme_text

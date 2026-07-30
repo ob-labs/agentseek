@@ -54,8 +54,8 @@ processes, so no additional cleanup is required.
 
 If AgentSeek is already installed in your active environment, you can omit the
 `uvx` prefix. Run `agentseek task sync`, `agentseek task frontend`, and
-`agentseek task mcp-smoke`, then inspect with `agentseek doctor` and start both
-development services with `agentseek dev`.
+`agentseek task mcp-smoke`, then inspect with `agentseek doctor`.
+Start all three development services with `agentseek dev`.
 
 ## Configure MCP servers
 

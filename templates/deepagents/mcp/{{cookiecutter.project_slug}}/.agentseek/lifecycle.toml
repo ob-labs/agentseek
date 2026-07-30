@@ -44,7 +44,7 @@ url = "http://127.0.0.1:{{ cookiecutter.frontend_port }}"
 url = "http://127.0.0.1:{{ cookiecutter.calculator_http_port }}/health"
 
 [processes.langgraph]
-command = ["sh", "-lc", "uv run langgraph dev --port {{ cookiecutter.langgraph_port }} --no-browser --host \"${LANGGRAPH_HOST:-127.0.0.1}\""]
+command = ["uv", "run", "python", "-m", "{{ cookiecutter.project_slug }}.langgraph_dev"]
 
 [processes.frontend]
 command = ["npm", "run", "dev"]
