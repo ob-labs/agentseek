@@ -31,13 +31,22 @@ _HTTP_SERVER_NAME = "calculator_http"
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
 _HTTP_SERVER_ENVIRONMENT_NAMES = frozenset(
     {
+        "appdata",
+        "homedrive",
+        "homepath",
+        "localappdata",
         "path",
+        "pathext",
+        "processor_architecture",
         "pythonhome",
         "pythonpath",
+        "systemdrive",
         "systemroot",
         "temp",
         "tmp",
         "tmpdir",
+        "username",
+        "userprofile",
         "windir",
     }
 )

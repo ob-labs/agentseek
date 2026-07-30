@@ -165,18 +165,20 @@ def prepare_rendered_mcp_subprocess(rendered: Path, *, server_name: str = "calcu
     return {**os.environ, "PYTHONPATH": str(source_root)}, http_port
 
 
-def _write_fake_python_command(directory: Path, name: str, source: str) -> None:
+def _write_python_command(directory: Path, name: str, source: str) -> Path:
     script = directory / f"{name}.py"
     script.write_text(source, encoding="utf-8")
     if os.name == "nt":
-        (directory / f"{name}.cmd").write_text(
+        executable = directory / f"{name}.cmd"
+        executable.write_text(
             f'@"{sys.executable}" "{script}" %*\n',
             encoding="utf-8",
         )
-        return
+        return executable
     executable = directory / name
     executable.write_text(f"#!{sys.executable}\n{source}", encoding="utf-8")
     executable.chmod(0o755)
+    return executable
 
 
 def test_langgraph_launcher_needs_no_shell_and_preserves_host_argv(rendered_mcp: Path, tmp_path: Path) -> None:
@@ -185,7 +187,7 @@ def test_langgraph_launcher_needs_no_shell_and_preserves_host_argv(rendered_mcp:
     capture_path = tmp_path / "argv.json"
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
-    _write_fake_python_command(
+    _write_python_command(
         fake_bin,
         "uv",
         "import os, sys\n"
@@ -194,7 +196,7 @@ def test_langgraph_launcher_needs_no_shell_and_preserves_host_argv(rendered_mcp:
         "    raise SystemExit(f'unexpected uv arguments: {arguments!r}')\n"
         "os.execv(sys.executable, [sys.executable, *arguments[2:]])\n",
     )
-    _write_fake_python_command(
+    _write_python_command(
         fake_bin,
         "langgraph",
         "import json, os, sys\n"
@@ -539,9 +541,20 @@ def test_http_smoke_child_environment_excludes_application_secrets(
         smoke.os,
         "environ",
         {
+            "APPDATA": r"C:\Users\runner\AppData\Roaming",
+            "HOMEDRIVE": "C:",
+            "HOMEPATH": r"\Users\runner",
+            "LOCALAPPDATA": r"C:\Users\runner\AppData\Local",
             "PATH": "/trusted/bin",
+            "PATHEXT": ".COM;.EXE;.BAT;.CMD",
+            "PROCESSOR_ARCHITECTURE": "AMD64",
             "PYTHONPATH": "/project/src",
+            "SYSTEMDRIVE": "C:",
+            "SYSTEMROOT": r"C:\Windows",
+            "TEMP": r"C:\Users\runner\AppData\Local\Temp",
             "TMPDIR": runtime_temp,
+            "USERNAME": "runner",
+            "USERPROFILE": r"C:\Users\runner",
             "AGENTSEEK_MODEL_API_KEY": "model-secret",
             "LANGSMITH_API_KEY": "trace-secret",
             "BILLING_MCP_TOKEN": "tool-secret",
@@ -556,9 +569,20 @@ def test_http_smoke_child_environment_excludes_application_secrets(
         asyncio.run(launch_http_server())
 
     assert captured["env"] == {
+        "APPDATA": r"C:\Users\runner\AppData\Roaming",
+        "HOMEDRIVE": "C:",
+        "HOMEPATH": r"\Users\runner",
+        "LOCALAPPDATA": r"C:\Users\runner\AppData\Local",
         "PATH": "/trusted/bin",
+        "PATHEXT": ".COM;.EXE;.BAT;.CMD",
+        "PROCESSOR_ARCHITECTURE": "AMD64",
         "PYTHONPATH": "/project/src",
+        "SYSTEMDRIVE": "C:",
+        "SYSTEMROOT": r"C:\Windows",
+        "TEMP": r"C:\Users\runner\AppData\Local\Temp",
         "TMPDIR": runtime_temp,
+        "USERNAME": "runner",
+        "USERPROFILE": r"C:\Users\runner",
     }
 
 
@@ -610,12 +634,11 @@ def test_command_only_stdio_connection_discovers_real_mcp_tools(
     source_root = rendered_mcp / "src"
     monkeypatch.syspath_prepend(str(source_root))
     monkeypatch.setenv("PYTHONPATH", str(source_root))
-    launcher = rendered_mcp / "calculator-mcp"
-    launcher.write_text(
-        f'#!{sys.executable}\nfrom {rendered_mcp.name}.calculator_server import mcp\nmcp.run(transport="stdio")\n',
-        encoding="utf-8",
+    launcher = _write_python_command(
+        rendered_mcp,
+        "calculator-mcp",
+        f'from {rendered_mcp.name}.calculator_server import mcp\nmcp.run(transport="stdio")\n',
     )
-    launcher.chmod(0o755)
     config_path = write_json(
         rendered_mcp,
         {
