@@ -1,9 +1,34 @@
-# AgentSeek
+<div align="center">
 
-[中文](README.zh.md) | English
+<h1>AgentSeek</h1>
 
-[![License](https://img.shields.io/github/license/ob-labs/agentseek.svg)](LICENSE)
-[![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
+<p><strong>Discover · Create · Run · Observe · Iterate</strong></p>
+
+<p>
+  <a href="https://github.com/ob-labs/agentseek/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ob-labs/agentseek?style=flat-square&logo=github" /></a>
+  <a href="https://github.com/ob-labs/agentseek/releases"><img alt="GitHub release" src="https://img.shields.io/github/v/release/ob-labs/agentseek?style=flat-square" /></a>
+  <a href="https://pypi.org/project/agentseek/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/agentseek?style=flat-square&logo=pypi" /></a>
+  <a href="https://pypi.org/project/agentseek/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/agentseek?style=flat-square&logo=python" /></a>
+  <a href="https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain"><img alt="Build status" src="https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/ob-labs/agentseek?style=flat-square" /></a>
+  <a href="https://github.com/ob-labs/agentseek/issues"><img alt="Open issues" src="https://img.shields.io/github/issues/ob-labs/agentseek?style=flat-square" /></a>
+  <a href="https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE"><img alt="License" src="https://img.shields.io/github/license/ob-labs/agentseek?style=flat-square" /></a>
+  <a href="https://ob-labs.github.io/agentseek/"><img alt="Documentation" src="https://img.shields.io/badge/docs-AgentSeek-0ea5e9?style=flat-square" /></a>
+</p>
+
+<p>Template-first tooling for editable local agent applications and their complete development lifecycle.</p>
+
+<p><a href="README.md">English</a> · <a href="README.zh.md">中文</a></p>
+
+[Experience the local ADLC](#experience-adlc) · [What is AgentSeek?](#what-is-agentseek) · [Lifecycle](#agent-development-lifecycle) · [Guided templates](#guided-templates) · [Community](#community)
+
+[Development](#development)
+
+<p>⭐ <a href="https://github.com/ob-labs/agentseek/stargazers">Star AgentSeek to follow its progress.</a></p>
+
+<hr />
+
+</div>
 
 AgentSeek is a template-first toolkit for local agent application development.
 It gives editable generated projects one predictable lifecycle: discover,
@@ -13,6 +38,8 @@ AgentSeek 0.1.1 resolves lifecycle-v2 templates from the immutable
 [`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0).
 The CLI lists templates from its embedded registry snapshot and fetches named
 template content at the exact locked commit.
+
+<a id="experience-adlc"></a>
 
 ## Experience the local ADLC
 
@@ -52,6 +79,8 @@ while the frontend resolves to `npm run dev` in `frontend/`.
 For a one-off run, use `uvx agentseek create deepagents/research --no-input`
 instead of installing the CLI.
 
+<a id="what-is-agentseek"></a>
+
 ## What is AgentSeek?
 
 AgentSeek supplies the stable lifecycle surface around a generated project; it
@@ -64,6 +93,8 @@ The CLI connects people, coding agents, and desktop clients to a locked,
 versioned template catalog and an editable project lifecycle contract. The
 project then owns its runtimes and integrations, including models, tools, MCP
 servers, and external services.
+
+<a id="agent-development-lifecycle"></a>
 
 ## Agent Development Lifecycle
 
@@ -106,6 +137,8 @@ and lifecycle events. Optional LangSmith tracing, configured through the
 settings already present in `deepagents/research`, answers what the agent did
 inside an individual run.
 
+<a id="guided-templates"></a>
+
 ## Guided templates
 
 Choose by goal, then inspect a specific template before creating it. AgentSeek
@@ -141,7 +174,23 @@ agentseek create deepagents/research --describe
 - [Reference](https://ob-labs.github.io/agentseek/reference/)
 - [Concepts](https://ob-labs.github.io/agentseek/concepts/)
 
-## Development
+<a id="community"></a>
+
+## 🌐 Next Steps & Community
+
+Explore **Deep Agents in Action**, a free LangChain / DeepAgents course with
+AgentSeek labs, in the [course repository](https://github.com/datawhalechina/deepagents-in-action/).
+
+<div align="center">
+  <a href="https://github.com/ob-labs/agentseek/discussions"><img alt="GitHub Discussions" src="https://img.shields.io/badge/GitHub-Discussions-181717?style=for-the-badge&logo=github" /></a>
+  <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="Contribute to AgentSeek" src="https://img.shields.io/badge/Contribute-AgentSeek-0ea5e9?style=for-the-badge" /></a>
+</div>
+
+---
+
+<a id="development"></a>
+
+## 🛠️ Development
 
 ```bash
 git clone https://github.com/ob-labs/agentseek.git
@@ -152,12 +201,26 @@ make test
 make docs-test
 ```
 
-## Community and course
+### Contributing
 
-Explore **Deep Agents in Action**, a free LangChain / DeepAgents course with
-AgentSeek labs, in the [course repository](https://github.com/datawhalechina/deepagents-in-action/).
-Join or follow project discussion through [GitHub Discussions](https://github.com/ob-labs/agentseek/discussions).
+Contributions, fixes, and template improvements are welcome.
 
-## License
+<div align="center">
+  <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="AgentSeek contributors" src="https://contrib.rocks/image?repo=ob-labs/agentseek&max=400" /></a>
+</div>
 
-[Apache-2.0](LICENSE)
+---
+
+## 📈 Star History
+
+<div align="center">
+  <a href="https://www.star-history.com/#ob-labs/agentseek&Date"><img alt="AgentSeek Star History Chart" src="https://api.star-history.com/svg?repos=ob-labs/agentseek&type=Date" /></a>
+</div>
+
+If AgentSeek is useful to you, star the repository to support the project.
+
+---
+
+## 📄 License
+
+[Apache-2.0](https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE)

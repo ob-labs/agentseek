@@ -22,6 +22,24 @@ ROOT_READMES = (
     ROOT / "README.zh.md",
 )
 IMMUTABLE_ASSET_ROOT = "https://raw.githubusercontent.com/ob-labs/agentseek/v0.1.1/diagram/agentseek-readme/"
+README_BANNER_TARGETS = (
+    "https://github.com/ob-labs/agentseek/stargazers",
+    "https://github.com/ob-labs/agentseek/releases",
+    "https://pypi.org/project/agentseek/",
+    "https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain",
+    "https://github.com/ob-labs/agentseek/graphs/contributors",
+    "https://github.com/ob-labs/agentseek/issues",
+    "https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE",
+    "https://ob-labs.github.io/agentseek/",
+)
+README_ANCHORS = (
+    "experience-adlc",
+    "what-is-agentseek",
+    "agent-development-lifecycle",
+    "guided-templates",
+    "community",
+    "development",
+)
 
 CANONICAL_RESEARCH_WALKTHROUGH = (
     "uv tool install agentseek",
@@ -49,9 +67,11 @@ README_SECTION_MARKERS = {
         "## Guided templates",
         "## Core concepts and commands",
         "## Documentation",
-        "## Development",
-        "## Community and course",
-        "## License",
+        "## 🌐 Next Steps & Community",
+        "## 🛠️ Development",
+        "### Contributing",
+        "## 📈 Star History",
+        "## 📄 License",
     ),
     "README.zh.md": (
         "## 体验本地 ADLC",
@@ -61,9 +81,11 @@ README_SECTION_MARKERS = {
         "## 引导式模板",
         "## 核心概念与命令",
         "## 文档",
-        "## 开发",
-        "## 社区与课程",
-        "## License",
+        "## 🌐 下一步与社区",
+        "## 🛠️ 开发",
+        "### 贡献",
+        "## 📈 Star 历史",
+        "## 📄 许可证",
     ),
 }
 
@@ -197,6 +219,22 @@ def test_root_readmes_keep_localized_adlc_structure_and_current_runtime_truth(re
     assert "frontend-dev" not in text, readme
     assert "agentseek task observability" not in text, readme
     assert not re.search(r"seekdb", text, flags=re.IGNORECASE), readme
+
+
+@pytest.mark.parametrize("readme", ROOT_READMES)
+def test_root_readmes_keep_the_shared_banner_and_contribution_contract(readme: Path) -> None:
+    """Both landing pages expose the same AgentSeek project entry points."""
+    text = readme.read_text(encoding="utf-8")
+
+    assert text.startswith('<div align="center">'), readme
+    assert "https://contrib.rocks/image?repo=ob-labs/agentseek&max=400" in text, readme
+    assert "https://api.star-history.com/svg?repos=ob-labs/agentseek&type=Date" in text, readme
+    assert "oceanbase/seekdb" not in text, readme
+    for target in README_BANNER_TARGETS:
+        assert target in text, (readme, target)
+    for anchor in README_ANCHORS:
+        assert f'<a id="{anchor}"></a>' in text, (readme, anchor)
+        assert f"](#{anchor})" in text, (readme, anchor)
 
 
 def test_root_dotenv_example_matches_runtime_alias_contract() -> None:

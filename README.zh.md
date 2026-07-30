@@ -1,9 +1,34 @@
-# AgentSeek
+<div align="center">
 
-中文 | [English](README.md)
+<h1>AgentSeek</h1>
 
-[![License](https://img.shields.io/github/license/ob-labs/agentseek.svg)](LICENSE)
-[![CI](https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain)
+<p><strong>发现 · 创建 · 运行 · 观测 · 迭代</strong></p>
+
+<p>
+  <a href="https://github.com/ob-labs/agentseek/stargazers"><img alt="GitHub Star" src="https://img.shields.io/github/stars/ob-labs/agentseek?style=flat-square&logo=github" /></a>
+  <a href="https://github.com/ob-labs/agentseek/releases"><img alt="GitHub 发布版本" src="https://img.shields.io/github/v/release/ob-labs/agentseek?style=flat-square" /></a>
+  <a href="https://pypi.org/project/agentseek/"><img alt="PyPI 版本" src="https://img.shields.io/pypi/v/agentseek?style=flat-square&logo=pypi" /></a>
+  <a href="https://pypi.org/project/agentseek/"><img alt="Python 版本" src="https://img.shields.io/pypi/pyversions/agentseek?style=flat-square&logo=python" /></a>
+  <a href="https://github.com/ob-labs/agentseek/actions/workflows/main.yml?query=branch%3Amain"><img alt="构建状态" src="https://github.com/ob-labs/agentseek/actions/workflows/main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="贡献者" src="https://img.shields.io/github/contributors/ob-labs/agentseek?style=flat-square" /></a>
+  <a href="https://github.com/ob-labs/agentseek/issues"><img alt="待处理 Issue" src="https://img.shields.io/github/issues/ob-labs/agentseek?style=flat-square" /></a>
+  <a href="https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/ob-labs/agentseek?style=flat-square" /></a>
+  <a href="https://ob-labs.github.io/agentseek/"><img alt="文档" src="https://img.shields.io/badge/docs-AgentSeek-0ea5e9?style=flat-square" /></a>
+</p>
+
+<p>面向可编辑本地 Agent 应用及其完整开发生命周期的 template-first 工具。</p>
+
+<p><a href="README.md">English</a> · <a href="README.zh.md">中文</a></p>
+
+[体验本地 ADLC](#experience-adlc) · [什么是 AgentSeek？](#what-is-agentseek) · [开发生命周期](#agent-development-lifecycle) · [引导式模板](#guided-templates) · [社区](#community)
+
+[开发](#development)
+
+<p>⭐ <a href="https://github.com/ob-labs/agentseek/stargazers">为 AgentSeek 点亮 Star，关注项目进展。</a></p>
+
+<hr />
+
+</div>
 
 AgentSeek 是面向本地 Agent 应用开发的 template-first 工具包。它为可编辑的生成项目
 提供一条可预期的生命周期：发现、创建、审视、配置、检查、运行、观测和迭代。
@@ -12,6 +37,8 @@ AgentSeek 0.1.1 从不可变的
 [`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0)
 解析 lifecycle-v2 模板。CLI 用内嵌注册表快照列出模板；命名模板内容只按精确锁定的
 commit 获取。
+
+<a id="experience-adlc"></a>
 
 ## 体验本地 ADLC
 
@@ -50,6 +77,8 @@ agentseek doctor --live
 如果只想临时试用，可用 `uvx agentseek create deepagents/research --no-input` 代替安装
 CLI。
 
+<a id="what-is-agentseek"></a>
+
 ## 什么是 AgentSeek？
 
 AgentSeek 为生成项目提供稳定的生命周期命令面；它不拥有项目源代码，也不替项目选择
@@ -60,6 +89,8 @@ AgentSeek 为生成项目提供稳定的生命周期命令面；它不拥有项�
 CLI 连接开发者、编码 Agent 和桌面客户端，连接到锁定且版本化的模板 catalog，以及
 可编辑项目的生命周期契约。项目自己拥有运行时和集成，包括模型、工具、MCP server
 和外部服务。
+
+<a id="agent-development-lifecycle"></a>
 
 ## Agent 开发生命周期
 
@@ -97,6 +128,8 @@ AGENTSEEK_CONSOLE=true agentseek doctor --live
 本地 CLI spans 和生命周期事件。可选的 LangSmith tracing 使用
 `deepagents/research` 已有的设置，回答一次运行内部 Agent 做了什么。
 
+<a id="guided-templates"></a>
+
 ## 引导式模板
 
 按目标选择，再在创建前查看具体模板。AgentSeek 维护了许多模板，你不必记住整份
@@ -132,7 +165,23 @@ agentseek create deepagents/research --describe
 - [参考](https://ob-labs.github.io/agentseek/zh/reference/)
 - [概念](https://ob-labs.github.io/agentseek/zh/concepts/)
 
-## 开发
+<a id="community"></a>
+
+## 🌐 下一步与社区
+
+欢迎查看 **《Deep Agents 实战》**：一门基于 AgentSeek 实验的免费 LangChain /
+DeepAgents 课程，见[课程仓库](https://github.com/datawhalechina/deepagents-in-action/)。
+
+<div align="center">
+  <a href="https://github.com/ob-labs/agentseek/discussions"><img alt="GitHub Discussions" src="https://img.shields.io/badge/GitHub-Discussions-181717?style=for-the-badge&logo=github" /></a>
+  <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="为 AgentSeek 贡献" src="https://img.shields.io/badge/Contribute-AgentSeek-0ea5e9?style=for-the-badge" /></a>
+</div>
+
+---
+
+<a id="development"></a>
+
+## 🛠️ 开发
 
 ```bash
 git clone https://github.com/ob-labs/agentseek.git
@@ -143,12 +192,26 @@ make test
 make docs-test
 ```
 
-## 社区与课程
+### 贡献
 
-欢迎查看 **《Deep Agents 实战》**：一门基于 AgentSeek 实验的免费 LangChain /
-DeepAgents 课程，见[课程仓库](https://github.com/datawhalechina/deepagents-in-action/)。也可以通过
-[GitHub Discussions](https://github.com/ob-labs/agentseek/discussions) 参与或关注项目讨论。
+欢迎提交改进、修复和模板贡献。
 
-## License
+<div align="center">
+  <a href="https://github.com/ob-labs/agentseek/graphs/contributors"><img alt="AgentSeek 贡献者" src="https://contrib.rocks/image?repo=ob-labs/agentseek&max=400" /></a>
+</div>
 
-[Apache-2.0](LICENSE)
+---
+
+## 📈 Star 历史
+
+<div align="center">
+  <a href="https://www.star-history.com/#ob-labs/agentseek&Date"><img alt="AgentSeek Star 历史图表" src="https://api.star-history.com/svg?repos=ob-labs/agentseek&type=Date" /></a>
+</div>
+
+如果 AgentSeek 对你有帮助，欢迎点亮 Star 支持项目。
+
+---
+
+## 📄 许可证
+
+[Apache-2.0](https://github.com/ob-labs/agentseek/blob/HEAD/LICENSE)
