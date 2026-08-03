@@ -200,7 +200,12 @@ def validate_project_relative_path(value: str, *, allow_dot: bool = False) -> st
 def _path_is_lexically_unsafe(value: str, *, allow_dot: bool) -> bool:
     if not value.strip() or "\x00" in value:
         return True
-    if Path(value).is_absolute() or ntpath.isabs(value) or ntpath.splitdrive(value)[0]:
+    if (
+        value.startswith(("/", "\\"))
+        or Path(value).is_absolute()
+        or ntpath.isabs(value)
+        or ntpath.splitdrive(value)[0]
+    ):
         return True
     segments = re.split(r"[/\\]", value)
     if all(segment in {"", "."} for segment in segments):

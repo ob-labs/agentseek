@@ -12,9 +12,11 @@ from republic import StreamEvent
 from typer.testing import CliRunner
 
 from agentseek.cli import (
+    CliMode,
     apply_agentseek_agent_command_layout,
     apply_agentseek_runtime_command_layout,
     register_app_profile_options,
+    resolve_cli_mode,
 )
 from agentseek.cli.commands import chat as chat_module
 
@@ -89,6 +91,14 @@ def test_task_help_is_available_outside_lifecycle_project() -> None:
     assert result.exit_code == 0
     assert "Usage: agentseek task" in result.output
     assert ".agentseek/lifecycle.toml" in result.output
+
+
+def test_resolve_cli_mode_reads_only_root_options() -> None:
+    assert resolve_cli_mode(["agentseek", "--mode", "agent", "create"]) is CliMode.AGENT
+    assert resolve_cli_mode(["agentseek", "--mode=agent", "create"]) is CliMode.AGENT
+    assert resolve_cli_mode(["agentseek", "create", "bub", "--mode", "agent"]) is CliMode.CLI
+    assert resolve_cli_mode(["agentseek", "create", "bub", "--mode=nope"]) is CliMode.CLI
+    assert resolve_cli_mode(["agentseek", "--", "--mode", "agent"]) is CliMode.CLI
 
 
 # ---------------------------------------------------------------------------

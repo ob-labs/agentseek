@@ -33,6 +33,8 @@ def resolve_cli_mode(argv: list[str]) -> CliMode:
     """Resolve the requested root CLI profile from raw process arguments."""
     args = argv[1:]
     for index, arg in enumerate(args):
+        if arg == "--" or not arg.startswith("-"):
+            break
         if arg == "--mode" and index + 1 < len(args):
             return _parse_cli_mode(args[index + 1])
         if arg.startswith("--mode="):

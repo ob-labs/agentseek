@@ -146,6 +146,16 @@ async def _http_server_is_ready(host: str, port: int) -> bool:
         await writer.wait_closed()
 
 
+async def _http_server_accepts_connections(host: str, port: int) -> bool:
+    try:
+        _reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=0.25)
+    except (OSError, TimeoutError):
+        return False
+    writer.close()
+    await writer.wait_closed()
+    return True
+
+
 async def _wait_for_http_server(host: str, port: int, process: asyncio.subprocess.Process) -> None:
     for _attempt in range(100):
         if await _http_server_is_ready(host, port):
@@ -167,6 +177,14 @@ async def _stop_http_server(process: asyncio.subprocess.Process) -> None:
         await process.wait()
 
 
+async def _wait_for_http_server_stopped(host: str, port: int) -> None:
+    for _attempt in range(50):
+        if not await _http_server_accepts_connections(host, port):
+            return
+        await asyncio.sleep(0.1)
+    raise SmokeCheckError("Calculator HTTP MCP server did not stop.")
+
+
 @asynccontextmanager
 async def _ensure_calculator_http_server(config: MCPConfig) -> AsyncIterator[None]:
     host, port = _calculator_http_address(config)
@@ -176,7 +194,7 @@ async def _ensure_calculator_http_server(config: MCPConfig) -> AsyncIterator[Non
 
     if not __package__:
         raise SmokeCheckError("Could not resolve the calculator HTTP server module.")
-    process = await asyncio.create_subprocess_exec(  # noqa: S603 - current interpreter and bundled module
+    process = await asyncio.create_subprocess_exec(
         sys.executable,
         "-m",
         f"{__package__}.calculator_http_server",
@@ -193,6 +211,7 @@ async def _ensure_calculator_http_server(config: MCPConfig) -> AsyncIterator[Non
         yield
     finally:
         await _stop_http_server(process)
+        await _wait_for_http_server_stopped(host, port)
 
 
 async def run_smoke(config_path: Path) -> SmokeResult:
