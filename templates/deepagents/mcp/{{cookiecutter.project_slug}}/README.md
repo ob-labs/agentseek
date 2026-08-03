@@ -155,7 +155,10 @@ the lifecycle readiness check. Optional custom endpoints continue to use the
 provider-native variables in `.env.example`.
 
 Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
-`LANGSMITH_PROJECT`.
+`LANGSMITH_PROJECT`. Set `LANGSMITH_ENDPOINT` when your LangSmith API key
+belongs to the APAC or another non-default region (for example
+`https://apac.api.smith.langchain.com`); otherwise traces may fail to upload
+to the cloud.
 
 | Variable | Purpose |
 | --- | --- |
@@ -168,6 +171,7 @@ Optional LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
 | `LANGSMITH_TRACING` | Set `true` to enable optional LangSmith tracing. |
 | `LANGSMITH_API_KEY` | LangSmith credential when tracing is enabled. |
 | `LANGSMITH_PROJECT` | Optional LangSmith project name. |
+| `LANGSMITH_ENDPOINT` | Required for APAC or other non-default LangSmith regions; e.g. `https://apac.api.smith.langchain.com`. |
 
 ### Development hosts
 

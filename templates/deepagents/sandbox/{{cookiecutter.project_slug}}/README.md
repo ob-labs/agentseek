@@ -103,5 +103,9 @@ LANGSMITH_API_KEY=<your-langsmith-api-key>
 LANGSMITH_PROJECT=my-sandbox-agent
 ```
 
+For APAC or other non-default LangSmith regions, also set `LANGSMITH_ENDPOINT`
+(e.g. `https://apac.api.smith.langchain.com`); otherwise traces may fail to
+upload to the cloud.
+
 The frontend reads `frontend/.env.example` values after copying them to
 `frontend/.env` or when equivalent shell variables are present.

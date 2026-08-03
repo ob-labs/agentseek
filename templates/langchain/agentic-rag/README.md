@@ -118,7 +118,9 @@ LANGGRAPH_HOST=0.0.0.0 FRONTEND_HOST=0.0.0.0 agentseek dev
 - The agent pattern (`create_agent` + tool) allows the LLM to perform
   multi-step retrieval — complex queries trigger multiple searches
   autonomously, unlike a fixed two-step RAG chain.
-- LangSmith tracing is opt-in via `LANGSMITH_TRACING=true` in `.env`.
+- LangSmith tracing is opt-in via `LANGSMITH_TRACING=true` in `.env`. Set
+  `LANGSMITH_ENDPOINT` when your LangSmith API key belongs to the APAC or
+  another non-default region (e.g. `https://apac.api.smith.langchain.com`).
 - Remote development is opt-in: `LANGGRAPH_HOST` and `FRONTEND_HOST` stay
   `127.0.0.1` by default and can be set to `0.0.0.0` from the shell on trusted
   networks.

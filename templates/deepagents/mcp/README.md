@@ -96,7 +96,10 @@ to the selected provider adapter. Provider-native API keys remain direct-runtime
 fallbacks; they do not satisfy `agentseek doctor`. Optional custom endpoints
 continue to use the provider-native variables in `.env.example`. Optional
 LangSmith tracing uses `LANGSMITH_TRACING`, `LANGSMITH_API_KEY`, and
-`LANGSMITH_PROJECT`.
+`LANGSMITH_PROJECT`. Set `LANGSMITH_ENDPOINT` when your LangSmith API key
+belongs to the APAC or another non-default region (for example
+`https://apac.api.smith.langchain.com`); otherwise traces may fail to upload
+to the cloud.
 
 All three development processes bind to loopback by default. `LANGGRAPH_HOST`
 controls LangGraph from the launching shell. `FRONTEND_HOST` controls Vite from

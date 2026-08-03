@@ -128,6 +128,10 @@ AGENTSEEK_CONSOLE=true agentseek doctor --live
 它不会包含环境变量值或原始 process/task command。`AGENTSEEK_CONSOLE=true` 会启用
 本地 CLI spans 和生命周期事件。可选的 LangSmith tracing 使用
 `deepagents/research` 已有的设置，回答一次运行内部 Agent 做了什么。
+当你的 LangSmith API key 属于 APAC 或其他非默认区域时，需要显式设置
+`LANGSMITH_ENDPOINT`（例如 `https://apac.api.smith.langchain.com`），否则 tracing
+可能无法上传到云端。完整的配置与排查方法见
+[可观测性与追踪指南](docs/guides/observability-tracing.zh.md)。
 
 <a id="guided-templates"></a>
 
