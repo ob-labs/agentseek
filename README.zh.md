@@ -127,7 +127,11 @@ AGENTSEEK_CONSOLE=true agentseek doctor --live
 `info --json` 会给出规范化服务、参考链接和安全动作，例如哪个 URL 可以直接打开；
 它不会包含环境变量值或原始 process/task command。`AGENTSEEK_CONSOLE=true` 会启用
 本地 CLI spans 和生命周期事件。可选的 LangSmith tracing 使用
-`deepagents/research` 已有的设置，回答一次运行内部 Agent 做了什么。
+`deepagents/research` 已有的设置，回答一次运行内部 Agent 做了什么。**如果你的
+LangSmith API key 属于 APAC 区域，请设置
+`LANGSMITH_ENDPOINT=https://apac.api.smith.langchain.com`** — 否则 traces 可能在
+本地 Studio 可见但无法上传到云端看板。详见[可观测性和追踪指南](docs/guides/observability-tracing.zh.md)
+中的完整排查清单。
 
 <a id="guided-templates"></a>
 

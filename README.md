@@ -136,7 +136,11 @@ as which URL can be opened directly. It never includes environment values or
 raw process or task commands. `AGENTSEEK_CONSOLE=true` enables local CLI spans
 and lifecycle events. Optional LangSmith tracing, configured through the
 settings already present in `deepagents/research`, answers what the agent did
-inside an individual run.
+inside an individual run. **If your LangSmith API key belongs to the APAC
+region, set `LANGSMITH_ENDPOINT=https://apac.api.smith.langchain.com`** —
+otherwise traces may appear in local Studio but fail to reach the cloud
+dashboard. See the [observability and tracing guide](docs/guides/observability-tracing.md)
+for a full checklist.
 
 <a id="guided-templates"></a>
 
