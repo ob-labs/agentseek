@@ -217,6 +217,17 @@ def test_info_lists_lifecycle_tasks_and_task_discovery_hint(tmp_path: Path, monk
     assert "agentseek task --list" in result.stdout
 
 
+def test_info_describes_agentseek_api_runtime(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["info"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "App: http://127.0.0.1:5173 (runtime: agentseek-api)" in result.stdout
+    assert "langgraph dev" not in result.stdout
+
+
 def test_doctor_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
     _write_project_inputs(tmp_path)
@@ -296,6 +307,29 @@ def test_doctor_live_accepts_2xx_and_3xx_statuses(tmp_path: Path, monkeypatch) -
 
         assert result.exit_code == 0, result.stdout + result.stderr
         assert "ok   app: http://127.0.0.1:5173 is reachable." in result.stdout
+
+
+def test_doctor_live_reports_migrated_service_health(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    _write_project_inputs(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    class FakeResponse:
+        status_code = 204
+
+    requested: list[str] = []
+
+    def get(url: str, *, timeout: float) -> FakeResponse:
+        del timeout
+        requested.append(url)
+        return FakeResponse()
+
+    monkeypatch.setattr(lifecycle_core.httpx, "get", get)
+    result = CliRunner().invoke(build_command_app(), ["doctor", "--live"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert requested == ["http://127.0.0.1:5173"]
+    assert "ok   app: http://127.0.0.1:5173 is reachable." in result.stdout
 
 
 @pytest.mark.parametrize(
@@ -404,6 +438,17 @@ def test_dev_dry_run_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> N
     assert "App: http://127.0.0.1:5173 (runtime: agentseek-api)" in result.stdout
     assert "seekdb: mysql://127.0.0.1:2884/phoenix" in result.stdout
     assert "Seekdb:" not in result.stdout
+
+
+def test_dev_dry_run_uses_agentseek_api_as_backend(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["dev", "--dry-run"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "runtime: agentseek-api" in result.stdout
+    assert "langgraph dev" not in result.stdout
 
 
 def test_dev_skip_check_still_enforces_required_inputs(tmp_path: Path, monkeypatch) -> None:
