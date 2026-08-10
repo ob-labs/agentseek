@@ -97,8 +97,9 @@ adapters. Add provider-specific keys only when the selected SDK requires them.
 Document how runtime code maps aliases and which value wins.
 
 Declare the same required names under `[env.*]` in the lifecycle file. AgentSeek
-uses those declarations for readiness checks; it does not inject `.env` into
-child processes.
+uses those declarations for readiness checks. During `agentseek dev`, the
+project `.env` is also passed to long-running child processes, with exported
+shell variables taking precedence.
 
 ## 5. Define The Lifecycle
 

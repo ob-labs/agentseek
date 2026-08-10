@@ -169,6 +169,11 @@ docs/hub.zh.md
 /.superpowers/
 /specs/plans/
 
+# Local rendered templates and runtime artifacts
+/my_*/
+/.cookiecutter-replay/
+/catalog-lock-sync-analysis.md
+
 # mypy
 .mypy_cache/
 .dmypy.json

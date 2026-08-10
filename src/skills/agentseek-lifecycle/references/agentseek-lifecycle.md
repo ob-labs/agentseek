@@ -24,13 +24,13 @@ Projects may expose additional spec tasks. Run them through `agentseek task`.
 - Declare tools under `[tools]` with a `required` list.
 - Declare file and directory prerequisites under `[paths]` with a `required` list.
 - Declare only environment variables AgentSeek should check under `[env.<name>]`. Defaults are lower priority than `env_file` and shell variables.
-- Use top-level `env_file` only when AgentSeek should read a project-local env file for declared env checks. AgentSeek does not inject that file into child processes.
+- Use top-level `env_file` when AgentSeek should read a project-local env file for checks and development processes. During `agentseek dev`, values from this file are passed to child processes; explicitly exported shell variables take precedence.
 - Put public service URLs under `[services.<name>]`.
 - Put long-running process commands under `[processes.<name>]`. Do not declare process-level environment overrides.
 - Put task commands under `[tasks.<name>]`. Task `cwd` values are project-relative and must exist before the task starts.
 
 Version 1 deliberately does not support optional tool/path checks, TCP checks,
-process env overrides, multiple env files, env file injection, or env interpolation.
+process env overrides, multiple env files, or env interpolation.
 
 ## Command Semantics
 

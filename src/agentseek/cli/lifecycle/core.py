@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import os
 import shlex
 import shutil
 import signal
@@ -19,6 +20,7 @@ import httpx
 import typer
 from duty import Collection
 from duty._internal.collection import Duty
+from dotenv import dotenv_values
 from pydantic import Field, create_model
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -227,7 +229,8 @@ def print_info(project: LifecycleProject, *, verbose: bool) -> None:
     print("Entrypoints")
     print("  Dev: agentseek dev")
     for name, service in spec.services.items():
-        print(f"  {_display_name(name)}: {service.url}")
+        runtime = f" (runtime: {service.tech})" if service.tech else ""
+        print(f"  {_display_name(name)}: {service.url}{runtime}")
     print()
     print("Environment")
     if spec.env_file:
@@ -270,7 +273,8 @@ def dev(project: LifecycleProject, *, dry_run: bool) -> None:
     for name, process in project.spec.processes.items():
         print(f"  {_display_name(name)}: {_render_command(process.command)}")
     for name, service in project.spec.services.items():
-        print(f"  {_display_name(name)}: {service.url}")
+        runtime = f" (runtime: {service.tech})" if service.tech else ""
+        print(f"  {_display_name(name)}: {service.url}{runtime}")
     if dry_run:
         return
 
@@ -503,6 +507,23 @@ def _render_command(command: Sequence[str]) -> str:
     return " ".join(shlex.quote(part) for part in command)
 
 
+def _process_environment(project: LifecycleProject) -> dict[str, str]:
+    """Build a child environment from the project dotenv file and shell.
+
+    The shell is intentionally applied last so explicit exported values keep
+    precedence over project-local defaults and secrets.
+    """
+
+    env_file = _env_file_path(project)
+    environment = (
+        {key: value for key, value in dotenv_values(env_file).items() if value is not None}
+        if env_file is not None
+        else {}
+    )
+    environment.update(os.environ)
+    return environment
+
+
 def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject) -> ManagedProcess:
     executable = shutil.which(process.command[0])
     if executable is None:
@@ -519,6 +540,7 @@ def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject)
         popen(
             command,
             cwd=str(cwd),
+            env=_process_environment(project),
             **spawn_kwargs(),
         ),
     )

@@ -91,7 +91,7 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 | Section | Purpose |
 | --- | --- |
-| `env_file` | Optional project-local env file used only for declared environment checks. It is not injected into child processes. |
+| `env_file` | Optional project-local env file used for declared checks and `agentseek dev` child processes. Shell variables take precedence. |
 | `tools` | Required executables used by the project. |
 | `paths` | Required local files or directories. |
 | `env.<name>` | Environment variables AgentSeek should check. Defaults are lower priority than `env_file` and shell variables. |
@@ -112,10 +112,10 @@ AgentSeek checks environment requirements from lifecycle defaults, the optional
 lifecycle default < env_file < shell environment
 ```
 
-Only keys declared under `[env.<name>]` and their aliases are read from
-`env_file`. Templates do not need to declare every runtime variable a project
-may use. AgentSeek does not pass the env file or lifecycle defaults to child
-processes.
+Only keys declared under `[env.<name>]` and their aliases are used for
+readiness checks. During `agentseek dev`, values from the project `env_file`
+are passed to long-running child processes, with the current shell environment
+applied last. Lifecycle defaults are not injected into child processes.
 
 ## Lifecycle v1 first-phase scope
 

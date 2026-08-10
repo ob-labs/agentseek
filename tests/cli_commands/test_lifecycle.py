@@ -50,6 +50,7 @@ aliases = ["BUB_OPENAI_API_KEY"]
 
 [services.app]
 url = "http://127.0.0.1:5173"
+tech = "agentseek-api"
 
 [services.seekdb]
 url = "mysql://127.0.0.1:2884/phoenix"
@@ -400,6 +401,7 @@ def test_dev_dry_run_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> N
     assert "Startup plan" in result.stdout
     assert "Web: python -m http.server 5173" in result.stdout
     assert "App: http://127.0.0.1:5173" in result.stdout
+    assert "App: http://127.0.0.1:5173 (runtime: agentseek-api)" in result.stdout
     assert "seekdb: mysql://127.0.0.1:2884/phoenix" in result.stdout
     assert "Seekdb:" not in result.stdout
 
@@ -547,6 +549,39 @@ def test_task_child_process_does_not_inherit_env_file(tmp_path: Path, monkeypatc
     assert captured_child_environ["BUB_OPENAI_API_KEY"] == "shell-key"
     assert "EXTRA_DOTENV" not in captured_child_environ
     assert "AGENTSEEK_SECRET" not in captured_child_environ
+
+
+def test_dev_child_process_inherits_env_file_with_shell_precedence(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    (tmp_path / ".env").write_text(
+        "SEEKDB_URL=mysql+aiomysql://dotenv.example/test\nDOTENV_ONLY=from-dotenv\nOVERRIDE=from-dotenv\n",
+        encoding="utf-8",
+    )
+    captured_child_environ: dict[str, str] | None = None
+
+    class FakeProcess:
+        def poll(self) -> int | None:
+            return None
+
+    def fake_popen(command: object, *, cwd: object, env: dict[str, str], **kwargs: object) -> FakeProcess:
+        nonlocal captured_child_environ
+        del command, cwd, kwargs
+        captured_child_environ = env
+        return FakeProcess()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OVERRIDE", "from-shell")
+    monkeypatch.setattr(lifecycle_core.shutil, "which", lambda _tool: sys.executable)
+    monkeypatch.setattr(lifecycle_core.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(lifecycle_core, "manage", lambda process: process)
+
+    project = lifecycle_core.discover_lifecycle_project(tmp_path)
+    lifecycle_core._spawn_process(project.spec.processes["web"], project=project)
+
+    assert captured_child_environ is not None
+    assert captured_child_environ["SEEKDB_URL"] == "mysql+aiomysql://dotenv.example/test"
+    assert captured_child_environ["DOTENV_ONLY"] == "from-dotenv"
+    assert captured_child_environ["OVERRIDE"] == "from-shell"
     assert "BUB_SECRET" not in captured_child_environ
 
 

@@ -50,6 +50,7 @@ dependencies = [
     { name = "logfire" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "python-dotenv" },
     { name = "typer" },
 ]
 
