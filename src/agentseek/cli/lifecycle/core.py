@@ -20,7 +20,6 @@ import httpx
 import typer
 from duty import Collection
 from duty._internal.collection import Duty
-from dotenv import dotenv_values
 from pydantic import Field, create_model
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -515,13 +514,28 @@ def _process_environment(project: LifecycleProject) -> dict[str, str]:
     """
 
     env_file = _env_file_path(project)
-    environment = (
-        {key: value for key, value in dotenv_values(env_file).items() if value is not None}
-        if env_file is not None
-        else {}
-    )
+    environment = _read_env_file(env_file) if env_file is not None else {}
     environment.update(os.environ)
     return environment
+
+
+def _read_env_file(path: Path) -> dict[str, str]:
+    """Read the simple KEY=VALUE dotenv form used by generated templates."""
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+        key, separator, value = line.partition("=")
+        if not separator or not key.isidentifier():
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        values[key] = value
+    return values
 
 
 def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject) -> ManagedProcess:
