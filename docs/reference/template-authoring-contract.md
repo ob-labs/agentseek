@@ -88,8 +88,10 @@ lifecycle default < env_file < shell environment
 ```
 
 Lifecycle defaults and `.env` values validate readiness. AgentSeek does not
-inject them into child processes. Process commands must load their runtime
-environment themselves.
+inject lifecycle defaults into child processes. The project `env_file` is
+passed to long-running `agentseek dev` child processes, and shell variables
+take precedence. Process commands may load any additional runtime
+configuration themselves.
 
 ## Task Names
 

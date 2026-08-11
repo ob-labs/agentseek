@@ -41,8 +41,8 @@ agentseek task frontend
 
 在 `.env` 或运行 AgentSeek 的环境里，设置所选模板需要的模型和 provider 凭证。
 
-AgentSeek 只把 `.env` 用作模板声明的生命周期环境检查来源。
-它不会把 `.env` 自动传给子进程。
+AgentSeek 使用 `.env` 检查模板声明的生命周期环境需求。在 `agentseek dev`
+期间，它也会传给长运行子进程；显式导出的 shell 变量优先。
 
 ## 检查并运行
 

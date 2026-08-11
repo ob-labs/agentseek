@@ -141,7 +141,7 @@ def _v1_services_and_checks(
                 kind=None,
                 display=None,
                 primary=None,
-                tech=None,
+                tech=service.tech,
             )
         )
     check_targets: dict[str, str | None] = {}

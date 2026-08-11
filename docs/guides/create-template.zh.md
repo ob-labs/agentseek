@@ -88,7 +88,8 @@ AGENTSEEK_API_BASE=
 
 应用在多个原生 provider adapter 之间切换时，增加 `AGENTSEEK_MODEL_PROVIDER`。只有所选 SDK 确实要求时，才增加 provider 专属密钥。文档必须说明运行时代码如何映射别名，以及冲突时谁优先。
 
-在 lifecycle 文件的 `[env.*]` 中声明同一组必需名称。AgentSeek 用这些声明检查就绪状态，不会把 `.env` 注入子进程。
+在 lifecycle 文件的 `[env.*]` 中声明同一组必需名称。AgentSeek 用这些声明检查
+就绪状态；`agentseek dev` 会把项目 `.env` 传给长运行子进程，shell 变量优先。
 
 ## 5. 定义生命周期
 

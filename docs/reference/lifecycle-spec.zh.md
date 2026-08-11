@@ -91,7 +91,7 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 | 段落 | 作用 |
 | --- | --- |
-| `env_file` | 可选项目本地 env 文件，只用于声明的环境检查。它不会注入子进程。 |
+| `env_file` | 可选项目本地 env 文件，用于声明的环境检查和 `agentseek dev` 子进程。shell 变量优先。 |
 | `tools` | 项目需要的可执行文件。 |
 | `paths` | 必需的本地文件或目录。 |
 | `env.<name>` | AgentSeek 应检查的环境变量。默认值优先级低于 `env_file` 和 shell 变量。 |
@@ -111,9 +111,9 @@ AgentSeek 从生命周期默认值、可选 `env_file` 和当前进程环境检�
 lifecycle default < env_file < shell environment
 ```
 
-只有 `[env.<name>]` 下声明的 key 及其 aliases 会从 `env_file` 读取。
-模板不需要声明项目可能使用的每一个运行时变量。AgentSeek 不会把 env 文件或
-生命周期默认值传给子进程。
+只有 `[env.<name>]` 下声明的 key 及其 aliases 会从 `env_file` 读取以检查就绪。
+模板不需要声明项目可能使用的每一个运行时变量。`agentseek dev` 会把项目 env
+文件传给长运行子进程，当前 shell 环境最后应用；生命周期默认值不会注入子进程。
 
 ## 生命周期 v1 第一阶段范围
 

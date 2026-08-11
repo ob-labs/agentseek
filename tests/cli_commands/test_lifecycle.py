@@ -599,7 +599,7 @@ def test_task_child_process_does_not_inherit_env_file(tmp_path: Path, monkeypatc
 def test_dev_child_process_inherits_env_file_with_shell_precedence(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
     (tmp_path / ".env").write_text(
-        "SEEKDB_URL=mysql+aiomysql://dotenv.example/test\nDOTENV_ONLY=from-dotenv\nOVERRIDE=from-dotenv\n",
+        'SEEKDB_URL=mysql+aiomysql://dotenv.example/test\nDOTENV_ONLY="from dotenv # value\\nnext"\nOVERRIDE=from-dotenv # comment\nexport EXPORTED=value\n',
         encoding="utf-8",
     )
     captured_child_environ: dict[str, str] | None = None
@@ -625,9 +625,35 @@ def test_dev_child_process_inherits_env_file_with_shell_precedence(tmp_path: Pat
 
     assert captured_child_environ is not None
     assert captured_child_environ["SEEKDB_URL"] == "mysql+aiomysql://dotenv.example/test"
-    assert captured_child_environ["DOTENV_ONLY"] == "from-dotenv"
+    assert captured_child_environ["DOTENV_ONLY"] == "from dotenv # value\nnext"
+    assert captured_child_environ["EXPORTED"] == "value"
     assert captured_child_environ["OVERRIDE"] == "from-shell"
     assert "BUB_SECRET" not in captured_child_environ
+
+
+def test_dev_child_process_applies_dotenv_values_to_a_real_process(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    (tmp_path / ".env").write_text(
+        'CHILD_VALUE="from dotenv # value\\nnext"\n',
+        encoding="utf-8",
+    )
+    output = tmp_path / "child-value.txt"
+    monkeypatch.chdir(tmp_path)
+    project = lifecycle_core.discover_lifecycle_project(tmp_path)
+    process = project.spec.processes["web"].model_copy(
+        update={
+            "command": (
+                sys.executable,
+                "-c",
+                "from pathlib import Path; import os; Path('child-value.txt').write_text(os.environ['CHILD_VALUE'])",
+            )
+        }
+    )
+
+    child = lifecycle_core._spawn_process(process, project=project)
+
+    assert child.wait(timeout=5) == 0
+    assert output.read_text(encoding="utf-8") == "from dotenv # value\nnext"
 
 
 @pytest.mark.parametrize("command", (["info"], ["doctor"]))

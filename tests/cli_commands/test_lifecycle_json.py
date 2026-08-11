@@ -101,6 +101,7 @@ name = "Legacy Project"
 
 [services.api]
 url = "http://user:password@127.0.0.1:8000/private"
+tech = "agentseek-api"
 
 [processes.app]
 command = ["python", "PROCESS_SECRET_MUST_NOT_APPEAR"]
@@ -172,7 +173,7 @@ def test_info_json_emits_exact_representative_v1_contract(tmp_path: Path, monkey
         '{"project":{"template":null,"name":"Legacy Project","description":null,"guide":null},'
         '"metadata_complete":false,"environment":[],"services":'
         '[{"id":"api","name":null,"description":null,"url":null,"kind":null,"display":null,'
-        '"primary":null,"tech":null,"providers":[],"check_ids":[],"links":[]}],'
+        '"primary":null,"tech":"agentseek-api","providers":[],"check_ids":[],"links":[]}],'
         '"checks":[{"id":"probe","service_id":null,"type":"http","target":null,"state":"not_run"}],'
         '"tasks":[{"id":"setup","description":null,"starts":[],"stops":[]}],"actions":[],"warnings":'
         '[{"code":"lifecycle_v1_metadata_incomplete","message":"Lifecycle v1 metadata is incomplete.",'

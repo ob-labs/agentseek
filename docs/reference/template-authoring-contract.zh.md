@@ -79,7 +79,8 @@ sources:
 lifecycle default < env_file < shell environment
 ```
 
-生命周期默认值和 `.env` 只用于检查就绪状态。AgentSeek 不会把它们注入子进程，process command 必须自行加载运行环境。
+生命周期默认值只用于检查就绪状态，不会注入子进程。`agentseek dev` 会把项目
+`.env` 传给长运行子进程，且 shell 变量优先；process command 仍可自行加载额外运行配置。
 
 ## Task 命名
 
