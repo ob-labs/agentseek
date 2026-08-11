@@ -1338,12 +1338,43 @@ def _load_cookiecutter_context(template_dir: Path) -> dict[str, object] | None:
     return data
 
 
+def _template_layout_hints(template_dir: Path) -> list[str]:
+    """Derive the project layout a template will generate.
+
+    Cookiecutter renders every entry under *template_dir* except
+    ``cookiecutter.json``.  Directories are listed with a trailing ``/`` and
+    expanded one level so ``--describe`` surfaces the key generated-project
+    structure without walking the whole tree.
+    """
+    if not template_dir.is_dir():
+        return []
+    try:
+        entries = sorted(template_dir.iterdir(), key=lambda p: (not p.is_dir(), p.name))
+    except OSError:
+        return []
+    hints: list[str] = []
+    for entry in entries:
+        if entry.name == "cookiecutter.json":
+            continue
+        if entry.is_dir():
+            hints.append(f"{entry.name}/")
+            try:
+                children = sorted(entry.iterdir(), key=lambda p: (not p.is_dir(), p.name))
+            except OSError:
+                children = []
+            for child in children[:20]:
+                hints.append(f"  {child.name}{'/' if child.is_dir() else ''}")
+        else:
+            hints.append(entry.name)
+    return hints
+
+
 def _describe_template(
     source: TemplateSource,
     *,
     catalog: _PreparedCatalog,
 ) -> None:
-    """Print template spec, description, and cookiecutter variables.
+    """Print template spec, description, cookiecutter variables, and layout hints.
 
     Does **not** run cookiecutter or create any files.
     """
@@ -1374,17 +1405,22 @@ def _describe_template(
     context = _load_cookiecutter_context(template_dir)
     if context is None:
         typer.echo("  Cookiecutter variables: (none)")
-        typer.echo()
-        return
+    else:
+        typer.echo(f"  Cookiecutter variables ({len(context)}):")
+        for key, value in context.items():
+            display_key = _terminal_safe(str(key))
+            display = _terminal_safe(value) if isinstance(value, str) else json.dumps(value)
+            # Truncate long values for readability.
+            if len(display) > 80:
+                display = display[:77] + "..."
+            typer.echo(f"    {display_key}: {display}")
 
-    typer.echo(f"  Cookiecutter variables ({len(context)}):")
-    for key, value in context.items():
-        display_key = _terminal_safe(str(key))
-        display = _terminal_safe(value) if isinstance(value, str) else json.dumps(value)
-        # Truncate long values for readability.
-        if len(display) > 80:
-            display = display[:77] + "..."
-        typer.echo(f"    {display_key}: {display}")
+    layout = _template_layout_hints(template_dir)
+    if layout:
+        typer.echo("  Generated project layout:")
+        for line in layout:
+            typer.echo(f"    {_terminal_safe(line)}")
+
     typer.echo()
 
 

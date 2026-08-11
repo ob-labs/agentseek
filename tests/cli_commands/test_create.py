@@ -775,6 +775,23 @@ def test_describe_prints_template_info(monkeypatch, tmp_path: Path) -> None:
     assert "called" not in captured
 
 
+def test_describe_prints_generated_layout_hints(monkeypatch, tmp_path: Path) -> None:
+    """``--describe`` should show the project layout the template will generate."""
+    _use_local_default_catalog(monkeypatch)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/default", "--describe"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Generated project layout" in result.output
+    assert "{{cookiecutter.project_slug}}/" in result.output
+    assert "pyproject.toml" in result.output
+    _assert_no_next_steps(result.output)
+
+
 def test_describe_does_not_create_files(monkeypatch, tmp_path: Path) -> None:
     """``--describe`` must not run cookiecutter or create any files."""
     _use_local_default_catalog(monkeypatch)
