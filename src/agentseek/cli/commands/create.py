@@ -1453,8 +1453,7 @@ def create(ctx: typer.Context) -> None:
     if args.spec and _is_external_spec(args.spec):
         if listing_mode:
             typer.echo(
-                "Listing templates cannot be combined with a direct template source "
-                "(URL or absolute path).",
+                "Listing templates cannot be combined with a direct template source (URL or absolute path).",
                 err=True,
             )
             raise typer.Exit(2)
