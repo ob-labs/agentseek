@@ -78,7 +78,17 @@ app = typer.Typer(
 KNOWN_TYPES: tuple[str, ...] = ("bub", "deepagents", "langchain")
 DEFAULT_TYPE = "bub"
 
-_TEMPLATE_LIST_SENTINEL = "__list__"
+
+class _TemplateListSentinel:
+    """Sentinel marking ``--template`` passed without a value (list mode).
+
+    A plain object instead of a string so it can never collide with a
+    user-supplied ``--template`` value such as ``__list__``, which must stay
+    usable as a Cookiecutter ``directory`` for direct sources.
+    """
+
+
+_TEMPLATE_LIST_SENTINEL = _TemplateListSentinel()
 
 # The canonical GitHub repo URL used when templates are not found locally.
 REPO_URL = "https://github.com/ob-labs/agentseek"
@@ -1436,7 +1446,7 @@ def _choose_template_name(
 def create(ctx: typer.Context) -> None:
     """Scaffold a new agent project from a pre-built template."""
     args = _parse_new_args(ctx)
-    listing_mode = args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL
+    listing_mode = args.list_templates or args.template is _TEMPLATE_LIST_SENTINEL
 
     # --- --filter is only meaningful when listing templates ---
     if args.filter is not None and not listing_mode:
