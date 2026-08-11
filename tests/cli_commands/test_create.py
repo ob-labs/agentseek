@@ -222,6 +222,51 @@ def test_filter_without_list_mode_is_rejected(monkeypatch, tmp_path: Path) -> No
     assert generated == [], "cookiecutter must not run when --filter is used outside listing mode"
 
 
+def test_list_templates_with_url_spec_rejects_without_cookiecutter(monkeypatch, tmp_path: Path) -> None:
+    """Listing flags combined with a URL spec must fail instead of invoking Cookiecutter."""
+    generated: list[Path] = []
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
+        generated.append(output_dir)
+        return output_dir / "fake-project"
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "https://example.com/template.git", "--list-templates", "--filter", "needle", "--no-input"],
+    )
+
+    assert result.exit_code == 2, result.output
+    assert "direct template source" in result.output
+    assert generated == [], "cookiecutter must not run for a URL spec in listing mode"
+
+
+def test_list_templates_with_absolute_path_spec_rejects_without_cookiecutter(monkeypatch, tmp_path: Path) -> None:
+    """Listing flags combined with an absolute-path spec must fail instead of invoking Cookiecutter."""
+    generated: list[Path] = []
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
+        generated.append(output_dir)
+        return output_dir / "fake-project"
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    absolute_template = tmp_path / "my-template"
+    absolute_template.mkdir()
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", str(absolute_template), "--list-templates", "--filter", "needle", "--no-input"],
+    )
+
+    assert result.exit_code == 2, result.output
+    assert "direct template source" in result.output
+    assert generated == [], "cookiecutter must not run for an absolute-path spec in listing mode"
+
+
 def test_template_flag_no_value_lists_all_templates() -> None:
     """``agentseek create --template`` (no value) should list all templates."""
     result = _runner().invoke(build_command_app(), ["create", "--template"])

@@ -1436,18 +1436,28 @@ def _choose_template_name(
 def create(ctx: typer.Context) -> None:
     """Scaffold a new agent project from a pre-built template."""
     args = _parse_new_args(ctx)
+    listing_mode = args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL
+
     # --- --filter is only meaningful when listing templates ---
-    if args.filter is not None and not (args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL):
+    if args.filter is not None and not listing_mode:
         typer.echo(
             "--filter requires --list-templates (or --template without a value).",
             err=True,
         )
         raise typer.Exit(2)
+
     output_dir = args.output_dir if args.output_dir is not None else Path.cwd()
     explicit_catalog = _explicit_catalog_coordinate(args)
 
     # --- External spec (URL or absolute path) → passthrough to cookiecutter ---
     if args.spec and _is_external_spec(args.spec):
+        if listing_mode:
+            typer.echo(
+                "Listing templates cannot be combined with a direct template source "
+                "(URL or absolute path).",
+                err=True,
+            )
+            raise typer.Exit(2)
         _handle_external_spec(args)
         return
 
@@ -1455,7 +1465,7 @@ def create(ctx: typer.Context) -> None:
     project_type, template_name = _split_spec(args)
 
     # --- --list-templates or --template (no value) ---
-    if args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL:
+    if listing_mode:
         _validate_optional_project_type(project_type)
         catalog = _catalog_for_request(args, explicit_catalog)
         _show_templates(
