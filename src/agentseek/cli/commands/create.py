@@ -1338,12 +1338,50 @@ def _load_cookiecutter_context(template_dir: Path) -> dict[str, object] | None:
     return data
 
 
+def _template_layout_hints(template_dir: Path) -> list[str]:
+    """Derive the project layout a template will generate.
+
+    Cookiecutter renders only the templated project directory — the child
+    whose name contains ``cookiecutter`` and Jinja2 braces (e.g.
+    ``{{cookiecutter.project_slug}}``) — and ignores everything else at the
+    template root: ``cookiecutter.json``, the ``hooks/`` directory, and
+    author-facing metadata such as a root ``README.md``.  Directories are
+    listed with a trailing ``/`` and expanded one level so ``--describe``
+    surfaces the key generated-project structure without walking the whole
+    tree.
+    """
+    if not template_dir.is_dir():
+        return []
+    try:
+        entries = sorted(template_dir.iterdir(), key=lambda p: p.name)
+    except OSError:
+        return []
+    # Cookiecutter's selection semantics (see cookiecutter.find.find_template):
+    # the project template is the child whose name carries the cookiecutter
+    # context variable, e.g. "{{cookiecutter.project_slug}}".
+    project_root = next(
+        (entry for entry in entries if "cookiecutter" in entry.name and "{{" in entry.name and "}}" in entry.name),
+        None,
+    )
+    if project_root is None or not project_root.is_dir():
+        return []
+    hints = [f"{project_root.name}/"]
+    try:
+        children = sorted(project_root.iterdir(), key=lambda p: (not p.is_dir(), p.name))
+    except OSError:
+        return hints
+    # Cap per-directory expansion so hints stay readable.
+    for child in children[:20]:
+        hints.append(f"  {child.name}{'/' if child.is_dir() else ''}")
+    return hints
+
+
 def _describe_template(
     source: TemplateSource,
     *,
     catalog: _PreparedCatalog,
 ) -> None:
-    """Print template spec, description, and cookiecutter variables.
+    """Print template spec, description, cookiecutter variables, and layout hints.
 
     Does **not** run cookiecutter or create any files.
     """
@@ -1374,17 +1412,23 @@ def _describe_template(
     context = _load_cookiecutter_context(template_dir)
     if context is None:
         typer.echo("  Cookiecutter variables: (none)")
-        typer.echo()
-        return
+    else:
+        typer.echo(f"  Cookiecutter variables ({len(context)}):")
+        for key, value in context.items():
+            display_key = _terminal_safe(str(key))
+            # Keep non-string values (lists, dicts) terminal-safe too.
+            display = _terminal_safe(json.dumps(value) if not isinstance(value, str) else value)
+            # Truncate long values for readability.
+            if len(display) > 80:
+                display = display[:77] + "..."
+            typer.echo(f"    {display_key}: {display}")
 
-    typer.echo(f"  Cookiecutter variables ({len(context)}):")
-    for key, value in context.items():
-        display_key = _terminal_safe(str(key))
-        display = _terminal_safe(value) if isinstance(value, str) else json.dumps(value)
-        # Truncate long values for readability.
-        if len(display) > 80:
-            display = display[:77] + "..."
-        typer.echo(f"    {display_key}: {display}")
+    layout = _template_layout_hints(template_dir)
+    if layout:
+        typer.echo("  Generated project layout:")
+        for line in layout:
+            typer.echo(f"    {_terminal_safe(line)}")
+
     typer.echo()
 
 
