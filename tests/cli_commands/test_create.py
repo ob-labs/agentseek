@@ -200,6 +200,28 @@ def test_list_templates_filter_no_match_prints_empty_result(monkeypatch, tmp_pat
     assert "langchain/chat" not in result.output
 
 
+def test_filter_without_list_mode_is_rejected(monkeypatch, tmp_path: Path) -> None:
+    """``--filter`` outside listing mode must fail instead of silently generating a project."""
+    _use_local_default_catalog(monkeypatch)
+    generated: list[Path] = []
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
+        generated.append(output_dir)
+        return output_dir / "fake-project"
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/default", "--filter", "definitely-does-not-match", "--no-input"],
+    )
+
+    assert result.exit_code == 2, result.output
+    assert "--filter requires --list-templates" in result.output
+    assert generated == [], "cookiecutter must not run when --filter is used outside listing mode"
+
+
 def test_template_flag_no_value_lists_all_templates() -> None:
     """``agentseek create --template`` (no value) should list all templates."""
     result = _runner().invoke(build_command_app(), ["create", "--template"])

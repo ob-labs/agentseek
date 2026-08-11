@@ -1436,6 +1436,13 @@ def _choose_template_name(
 def create(ctx: typer.Context) -> None:
     """Scaffold a new agent project from a pre-built template."""
     args = _parse_new_args(ctx)
+    # --- --filter is only meaningful when listing templates ---
+    if args.filter is not None and not (args.list_templates or args.template == _TEMPLATE_LIST_SENTINEL):
+        typer.echo(
+            "--filter requires --list-templates (or --template without a value).",
+            err=True,
+        )
+        raise typer.Exit(2)
     output_dir = args.output_dir if args.output_dir is not None else Path.cwd()
     explicit_catalog = _explicit_catalog_coordinate(args)
 
