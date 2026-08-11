@@ -267,6 +267,27 @@ def test_list_templates_with_absolute_path_spec_rejects_without_cookiecutter(mon
     assert generated == [], "cookiecutter must not run for an absolute-path spec in listing mode"
 
 
+def test_template_flag_no_value_with_url_spec_rejects_without_cookiecutter(monkeypatch, tmp_path: Path) -> None:
+    """Bare ``--template`` (list mode) combined with a URL spec must fail without Cookiecutter."""
+    generated: list[Path] = []
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
+        generated.append(output_dir)
+        return output_dir / "fake-project"
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "https://example.com/template.git", "--template", "--no-input"],
+    )
+
+    assert result.exit_code == 2, result.output
+    assert "direct template source" in result.output
+    assert generated == [], "cookiecutter must not run for a URL spec in listing mode"
+
+
 def test_template_flag_no_value_lists_all_templates() -> None:
     """``agentseek create --template`` (no value) should list all templates."""
     result = _runner().invoke(build_command_app(), ["create", "--template"])
@@ -621,6 +642,36 @@ def test_create_with_url_spec_passes_through(monkeypatch, tmp_path: Path) -> Non
     source = captured["source"]
     assert isinstance(source, TemplateSource)
     assert source.template == "https://github.com/foo/bar.git"
+    assert captured["output_dir"] == tmp_path
+    assert captured["no_input"] is True
+    _assert_next_steps(result.output, project_path=Path("external project"))
+
+
+def test_create_with_url_spec_and_template_value_passes_directory(monkeypatch, tmp_path: Path) -> None:
+    """``--template <value>`` with a URL spec is a cookiecutter directory, not list mode."""
+    captured: dict[str, object] = {}
+
+    def fake_runner(source: TemplateSource, *, output_dir: Path, no_input: bool) -> Path:
+        captured["source"] = source
+        captured["output_dir"] = output_dir
+        captured["no_input"] = no_input
+        target = output_dir / "external project"
+        target.mkdir(parents=True, exist_ok=True)
+        return target
+
+    monkeypatch.setattr(create_module, "_run_cookiecutter", fake_runner)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "https://github.com/foo/bar.git", "--template", "subdir", "--no-input"],
+    )
+
+    assert result.exit_code == 0, result.output
+    source = captured["source"]
+    assert isinstance(source, TemplateSource)
+    assert source.template == "https://github.com/foo/bar.git"
+    assert source.directory == "subdir"
     assert captured["output_dir"] == tmp_path
     assert captured["no_input"] is True
     _assert_next_steps(result.output, project_path=Path("external project"))
