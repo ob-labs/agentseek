@@ -775,6 +775,54 @@ def test_describe_prints_template_info(monkeypatch, tmp_path: Path) -> None:
     assert "called" not in captured
 
 
+def test_describe_prints_generated_layout_hints(monkeypatch, tmp_path: Path) -> None:
+    """``--describe`` should show the project layout the template will generate."""
+    _use_local_default_catalog(monkeypatch)
+    monkeypatch.chdir(tmp_path)
+
+    result = _runner().invoke(
+        build_command_app(),
+        ["create", "bub/default", "--describe"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Generated project layout" in result.output
+    assert "{{cookiecutter.project_slug}}/" in result.output
+    assert "pyproject.toml" in result.output
+    # cookiecutter.json is config, not part of the generated project layout.
+    assert "cookiecutter.json" not in result.output
+    _assert_no_next_steps(result.output)
+
+
+def test_template_layout_hints_uses_cookiecutter_project_dir(tmp_path: Path) -> None:
+    """Layout hints derive from the templated project dir, not the template root."""
+    template = tmp_path / "template"
+    template.mkdir()
+    (template / "cookiecutter.json").write_text('{"project_slug": "demo"}', encoding="utf-8")
+    # Author-facing metadata at the template root must not appear in the layout.
+    (template / "README.md").write_text("template docs", encoding="utf-8")
+    (template / "hooks").mkdir()
+    project_root = template / "{{cookiecutter.project_slug}}"
+    project_root.mkdir()
+    (project_root / "src").mkdir()
+    (project_root / "pyproject.toml").write_text("", encoding="utf-8")
+
+    hints = create_module._template_layout_hints(template)
+
+    assert hints == ["{{cookiecutter.project_slug}}/", "  src/", "  pyproject.toml"]
+    assert "README.md" not in hints
+
+
+def test_template_layout_hints_empty_without_templated_dir(tmp_path: Path) -> None:
+    """A template without a cookiecutter project dir yields no layout hints."""
+    template = tmp_path / "template"
+    template.mkdir()
+    (template / "cookiecutter.json").write_text("{}", encoding="utf-8")
+    (template / "README.md").write_text("template docs", encoding="utf-8")
+
+    assert create_module._template_layout_hints(template) == []
+
+
 def test_describe_does_not_create_files(monkeypatch, tmp_path: Path) -> None:
     """``--describe`` must not run cookiecutter or create any files."""
     _use_local_default_catalog(monkeypatch)
