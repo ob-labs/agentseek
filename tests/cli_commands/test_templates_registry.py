@@ -49,6 +49,13 @@ def test_all_cookiecutter_templates_are_registered() -> None:
     assert not missing, f"template(s) missing from templates/index.json: {missing}"
 
 
+def test_registered_templates_point_to_cookiecutter_directories() -> None:
+    """Every registry key points to a template directory with cookiecutter.json."""
+    stale = sorted(_registered_templates() - _template_dirs())
+
+    assert not stale, f"stale templates/index.json key(s): {stale}"
+
+
 def test_registry_contains_expected_template_keys() -> None:
     """The shared registry advertises the template set published from main."""
     missing = sorted(EXPECTED_TEMPLATE_KEYS - _registered_templates())
