@@ -656,6 +656,32 @@ def test_dev_child_process_applies_dotenv_values_to_a_real_process(tmp_path: Pat
     assert output.read_text(encoding="utf-8") == "from dotenv # value\nnext"
 
 
+def test_empty_shell_value_falls_back_to_dotenv_for_readiness_and_spawned_child(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path, env_file=".env")
+    (tmp_path / ".env").write_text("API_KEY=from-dotenv\n", encoding="utf-8")
+    output = tmp_path / "child-api-key.txt"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("API_KEY", "")
+
+    project = lifecycle_core.discover_lifecycle_project(tmp_path)
+    process = project.spec.processes["web"].model_copy(
+        update={
+            "command": (
+                sys.executable,
+                "-c",
+                "from pathlib import Path; import os; "
+                "Path('child-api-key.txt').write_text(os.environ['API_KEY'], encoding='utf-8')",
+            )
+        }
+    )
+
+    assert lifecycle_core._env_requirement_source(project, "API_KEY", project.spec.env["API_KEY"]) == ".env"
+    child = lifecycle_core._spawn_process(process, project=project)
+
+    assert child.wait(timeout=5) == 0
+    assert output.read_text(encoding="utf-8") == "from-dotenv"
+
+
 @pytest.mark.parametrize("command", (["info"], ["doctor"]))
 def test_v2_operational_path_env_file_symlink_swap_rejects_before_file_access(
     tmp_path: Path,

@@ -18,11 +18,11 @@ from typing import Any, cast
 
 import httpx
 import typer
+from dotenv import dotenv_values
 from duty import Collection
 from duty._internal.collection import Duty
 from pydantic import Field, create_model
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic_settings.sources.providers.dotenv import dotenv_values
 
 from agentseek.cli.lifecycle.errors import (
     LifecycleNotFoundError,
@@ -520,7 +520,7 @@ def _process_environment(project: LifecycleProject) -> dict[str, str]:
         if env_file is not None
         else {}
     )
-    environment.update(os.environ)
+    environment.update({key: value for key, value in os.environ.items() if value})
     return environment
 
 

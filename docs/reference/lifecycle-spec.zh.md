@@ -111,6 +111,9 @@ AgentSeek 从生命周期默认值、可选 `env_file` 和当前进程环境检�
 lifecycle default < env_file < shell environment
 ```
 
+显式导出的空 shell 值视为未设置，因此就绪检查和启动的子进程都会一致地
+使用下一个非空来源。
+
 只有 `[env.<name>]` 下声明的 key 及其 aliases 会从 `env_file` 读取以检查就绪。
 模板不需要声明项目可能使用的每一个运行时变量。`agentseek dev` 会把项目 env
 文件传给长运行子进程，当前 shell 环境最后应用；生命周期默认值不会注入子进程。

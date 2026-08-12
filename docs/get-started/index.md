@@ -46,7 +46,8 @@ Set the model and provider credentials required by the selected template in
 
 `.env` is used by AgentSeek only for lifecycle environment checks declared by
 the template. During `agentseek dev`, it is passed to long-running child
-processes; exported shell variables take precedence.
+processes; non-empty exported shell variables take precedence, while an empty
+exported value is treated as unset.
 
 ## Check and run
 

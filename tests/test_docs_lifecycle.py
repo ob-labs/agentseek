@@ -382,3 +382,15 @@ def test_lifecycle_references_describe_authored_v2_loading(reference: Path) -> N
         "`agentseek-ai/agentseek-templates`" in row and "`version = 2`" in row for row in table_rows
     )
     assert has_v2_catalog_row, reference
+
+
+@pytest.mark.parametrize(
+    "guide",
+    (ROOT / "docs" / "guides" / "choose-template.md", ROOT / "docs" / "guides" / "choose-template.zh.md"),
+)
+def test_choose_template_guides_match_locked_catalog_runtime(guide: Path) -> None:
+    """The guides must describe the lifecycle command shipped by the locked catalog."""
+    text = guide.read_text(encoding="utf-8")
+
+    assert "langgraph dev" in text, guide
+    assert "agentseek-api dev" not in text, guide

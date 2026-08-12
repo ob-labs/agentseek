@@ -112,6 +112,9 @@ AgentSeek checks environment requirements from lifecycle defaults, the optional
 lifecycle default < env_file < shell environment
 ```
 
+An empty exported shell value is treated as unset, so the next non-empty
+source is used consistently by readiness checks and spawned child processes.
+
 Only keys declared under `[env.<name>]` and their aliases are used for
 readiness checks. During `agentseek dev`, values from the project `env_file`
 are passed to long-running child processes, with the current shell environment

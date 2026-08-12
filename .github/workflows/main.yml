@@ -25,6 +25,27 @@ jobs:
       - name: Run lint and type check
         run: make lint typecheck
 
+  minimum-supported-cli:
+    name: Minimum supported CLI import
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.13"
+
+      - name: Run CLI with the declared dependency floor
+        run: |
+          set -euo pipefail
+          export UV_CACHE_DIR="$(mktemp -d)/uv-cache"
+          uv run --python 3.13 --isolated --no-project \
+            --with-editable . \
+            --with pydantic-settings==2.0.0 \
+            agentseek --help
+
   cross-platform-tests-and-type-check:
     runs-on: ${{ matrix.os }}
     strategy:
