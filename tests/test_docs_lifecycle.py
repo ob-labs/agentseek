@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from agentseek.cli.lifecycle.compatibility import MINIMUM_AGENTSEEK_API_VERSION
+
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES_ROOT = ROOT / "templates"
 TEMPLATE_INDEX = TEMPLATES_ROOT / "index.json"
@@ -394,3 +396,45 @@ def test_choose_template_guides_match_locked_catalog_runtime(guide: Path) -> Non
 
     assert "langgraph dev" in text, guide
     assert "agentseek-api dev" not in text, guide
+
+
+@pytest.mark.parametrize(
+    "reference",
+    (
+        *LIFECYCLE_REFERENCES,
+        ROOT / "src" / "skills" / "agentseek-lifecycle" / "references" / "agentseek-lifecycle.md",
+    ),
+)
+def test_lifecycle_references_define_the_immutable_environment_boundary(reference: Path) -> None:
+    """Lifecycle references must describe the one-time child environment contract."""
+    text = reference.read_text(encoding="utf-8")
+    lines = text.splitlines()
+
+    assert "immutable snapshot" in text
+    assert "`KEY=`" in text
+    assert "`KEY`" in text
+    assert "malformed dotenv" in text
+    assert "exit 2" in text
+    assert f"`agentseek-api >= {MINIMUM_AGENTSEEK_API_VERSION}`" in text
+    assert any("`agentseek dev`" in line and "snapshot" in line for line in lines)
+    assert any("`agentseek task`" in line and "`env_file`" in line for line in lines)
+    assert "multiple env files, or env interpolation." not in text
+    assert "多个 env 文件或 env 插值" not in text
+
+
+@pytest.mark.parametrize(
+    "reference",
+    (
+        ROOT / "docs" / "guides" / "create-template.md",
+        ROOT / "docs" / "guides" / "create-template.zh.md",
+        ROOT / "docs" / "reference" / "template-authoring-contract.md",
+        ROOT / "docs" / "reference" / "template-authoring-contract.zh.md",
+    ),
+)
+def test_template_authoring_requires_a_compatible_released_api(reference: Path) -> None:
+    """Template authors must pin a released runtime API with direct process argv."""
+    text = reference.read_text(encoding="utf-8")
+
+    assert f"`agentseek-api >= {MINIMUM_AGENTSEEK_API_VERSION}`" in text
+    assert "exact published version" in text
+    assert "direct argv" in text

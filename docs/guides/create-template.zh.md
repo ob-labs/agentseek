@@ -137,6 +137,13 @@ command = ["uv", "sync"]
 
 Python 或 backend 依赖统一使用 `sync`，独立 frontend 依赖树使用 `frontend`。所有长时间运行的本地进程都放在 `[processes.*]` 下，让 `agentseek dev` 管理文档中的完整开发环境。
 
+### 已发布 API 契约
+
+运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中 pin 一个
+exact published version。生命周期 process command 使用 direct argv。shell wrapper、重复
+dotenv 加载，以及 editable 或本地 API checkout 都不满足发布契约。精确版本 pin 与 catalog
+digest 在后续 template/catalog 阶段交付，不由 AgentSeek core 提供。
+
 Server 默认绑定 loopback。支持远程开发时，增加并说明 host override。浏览器 frontend 必须根据浏览器地址推导 backend host，或接受显式 public API URL。
 
 ## 6. 编写两层 README

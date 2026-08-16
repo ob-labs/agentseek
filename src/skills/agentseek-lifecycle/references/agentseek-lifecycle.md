@@ -24,13 +24,20 @@ Projects may expose additional spec tasks. Run them through `agentseek task`.
 - Declare tools under `[tools]` with a `required` list.
 - Declare file and directory prerequisites under `[paths]` with a `required` list.
 - Declare only environment variables AgentSeek should check under `[env.<name>]`. Defaults are lower priority than `env_file` and shell variables.
-- Use top-level `env_file` when AgentSeek should read a project-local env file for checks and development processes. During `agentseek dev`, values from this file are passed to child processes; explicitly exported shell variables take precedence.
+- `agentseek dev` resolves `env_file` once, overlays non-empty launch values, and reuses one immutable snapshot for checks and all long-running child processes.
+- Lifecycle defaults are readiness-only. A dotenv `KEY=` remains present and empty; bare `KEY` contributes no child assignment.
+- A missing, undecodable, or malformed dotenv returns `exit 2` before any child starts; no partial snapshot or value-bearing diagnostic is allowed.
+- `agentseek task` does not inherit lifecycle `env_file`.
+- Child commands receive final values, not source instructions. An agentseek-api child using this contract requires `agentseek-api >= 0.2.2`.
+- Keep process commands as direct argv arrays; do not add shell wrappers to repair precedence.
 - Put public service URLs under `[services.<name>]`.
 - Put long-running process commands under `[processes.<name>]`. Do not declare process-level environment overrides.
 - Put task commands under `[tasks.<name>]`. Task `cwd` values are project-relative and must exist before the task starts.
 
 Version 1 deliberately does not support optional tool/path checks, TCP checks,
-process env overrides, multiple env files, or env interpolation.
+process env overrides, or multiple env files. It adds no lifecycle-schema
+interpolation mode: a configured `env_file` uses the supported python-dotenv
+file-local interpolation semantics.
 
 ## Command Semantics
 

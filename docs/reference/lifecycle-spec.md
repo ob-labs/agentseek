@@ -6,6 +6,8 @@ runs: no
 verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/lifecycle/spec.py
+  - src/agentseek/cli/lifecycle/environment.py
+  - src/agentseek/cli/lifecycle/compatibility.py
   - src/agentseek/cli/lifecycle/core.py
   - src/agentseek/cli/lifecycle/authored.py
   - src/agentseek/cli/lifecycle/normalize.py
@@ -91,7 +93,7 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 | Section | Purpose |
 | --- | --- |
-| `env_file` | Optional project-local env file used for declared checks and `agentseek dev` child processes. Shell variables take precedence. |
+| `env_file` | Optional project-local dotenv file resolved once by `agentseek dev` for declared checks and long-running child processes. |
 | `tools` | Required executables used by the project. |
 | `paths` | Required local files or directories. |
 | `env.<name>` | Environment variables AgentSeek should check. Defaults are lower priority than `env_file` and shell variables. |
@@ -105,27 +107,42 @@ than `0` and no greater than `300`; `attempts` is a positive integer.
 
 ## Environment Checks
 
-AgentSeek checks environment requirements from lifecycle defaults, the optional
-`env_file`, and the current process environment:
+AgentSeek resolves one immutable snapshot per non-dry-run `agentseek dev`
+invocation. The snapshot is created from the project `env_file` and non-empty
+launch environment values:
 
 ```text
-lifecycle default < env_file < shell environment
+lifecycle env_file < non-empty launch environment
 ```
 
-An empty exported shell value is treated as unset, so the next non-empty
-source is used consistently by readiness checks and spawned child processes.
+In a lifecycle dotenv, `KEY=` is a present empty assignment, while bare `KEY`
+assigns nothing. An empty raw launch value is omitted before the snapshot is
+created, so a dotenv value can fill it. Once a key is present in the snapshot,
+including as `""`, it is final at the child boundary.
 
-Only keys declared under `[env.<name>]` and their aliases are used for
-readiness checks. During `agentseek dev`, values from the project `env_file`
-are passed to long-running child processes, with the current shell environment
-applied last. Lifecycle defaults are not injected into child processes.
+Readiness, the internal preflight, and every long-running child consume the
+same snapshot. Lifecycle defaults may satisfy readiness but never enter the
+snapshot. Only declared `[env.<name>]` keys and aliases participate in
+readiness checks. The child receives only final values: AgentSeek does not send
+source paths, provenance, or instructions to repeat resolution. A child may
+fill absent keys from its own lower sources but may not replace inherited
+present keys. `agentseek task` does not inherit lifecycle `env_file`; its
+behavior is unchanged.
+
+Lifecycle processes using the API completion contract require
+`agentseek-api >= 0.2.2`. `agentseek dev --dry-run` prints the plan without
+reading the lifecycle dotenv. A missing, undecodable, or malformed dotenv
+creates no partial snapshot, starts no child, and returns `exit 2` with a
+value-free diagnostic; bare `KEY` remains valid syntax.
 
 ## Lifecycle v1 first-phase scope
 
 Version 1 supports required tools, required paths, project environment
 requirements, HTTP live checks, long-running processes, and one-shot tasks.
 It does not support optional tool/path checks, TCP checks, process env
-overrides, multiple env files, or env interpolation.
+overrides, or multiple env files. It adds no lifecycle-schema interpolation
+mode: a configured `env_file` uses the supported python-dotenv file-local
+interpolation semantics.
 
 ## Lifecycle v2 authored fields
 

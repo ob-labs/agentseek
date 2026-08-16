@@ -6,6 +6,8 @@ runs: no
 verified_on: 2026-07-28
 sources:
   - src/agentseek/cli/lifecycle/spec.py
+  - src/agentseek/cli/lifecycle/environment.py
+  - src/agentseek/cli/lifecycle/compatibility.py
   - src/agentseek/cli/lifecycle/core.py
   - src/agentseek/cli/lifecycle/authored.py
   - src/agentseek/cli/lifecycle/normalize.py
@@ -91,7 +93,7 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 | 段落 | 作用 |
 | --- | --- |
-| `env_file` | 可选项目本地 env 文件，用于声明的环境检查和 `agentseek dev` 子进程。shell 变量优先。 |
+| `env_file` | 可选的项目本地 dotenv 文件，由 `agentseek dev` 解析一次，用于声明的环境检查和长运行子进程。 |
 | `tools` | 项目需要的可执行文件。 |
 | `paths` | 必需的本地文件或目录。 |
 | `env.<name>` | AgentSeek 应检查的环境变量。默认值优先级低于 `env_file` 和 shell 变量。 |
@@ -105,23 +107,33 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 ## 环境检查
 
-AgentSeek 从生命周期默认值、可选 `env_file` 和当前进程环境检查环境需求：
+每次非 dry-run 的 `agentseek dev` 调用都会解析一个 immutable snapshot。该快照由
+项目 `env_file` 与非空的启动环境值创建：
 
 ```text
-lifecycle default < env_file < shell environment
+lifecycle env_file < non-empty launch environment
 ```
 
-显式导出的空 shell 值视为未设置，因此就绪检查和启动的子进程都会一致地
-使用下一个非空来源。
+在生命周期 dotenv 中，`KEY=` 表示一个存在但为空的赋值；裸 `KEY` 不产生赋值。
+原始启动值为空时，会在创建快照前省略，因此 dotenv 值可以补上它。键一旦出现在
+snapshot 中，即使值为 `""`，在 child boundary 也不再可替换。
 
-只有 `[env.<name>]` 下声明的 key 及其 aliases 会从 `env_file` 读取以检查就绪。
-模板不需要声明项目可能使用的每一个运行时变量。`agentseek dev` 会把项目 env
-文件传给长运行子进程，当前 shell 环境最后应用；生命周期默认值不会注入子进程。
+readiness、内部 preflight 与每个长运行 child 都使用同一个 snapshot。生命周期默认值
+可以满足 readiness，但绝不会进入 snapshot。只有声明在 `[env.<name>]` 的 key 及其
+aliases 会参与 readiness 检查。child 只接收最终值；AgentSeek 不传递源路径、provenance
+或要求再次解析的指令。child 可以从自己的低优先级来源补齐缺失 key，但不能替换已继承
+的 key。`agentseek task` 不继承生命周期 `env_file`，其行为保持不变。
+
+使用 API completion contract 的生命周期进程需要
+`agentseek-api >= 0.2.2`。`agentseek dev --dry-run` 只打印计划，不读取生命周期
+dotenv。缺失、无法解码或 malformed dotenv 会在任何 child 启动前返回 `exit 2`，不创建
+部分 snapshot，且诊断不得包含值；裸 `KEY` 仍是有效语法。
 
 ## 生命周期 v1 第一阶段范围
 
 Version 1 支持必需工具、必需路径、项目环境需求、HTTP live 检查、长运行进程和一次性任务。
-它不支持可选 tool/path 检查、TCP 检查、进程级环境覆盖、多个 env 文件或 env 插值。
+它不支持可选 tool/path 检查、TCP 检查、进程级环境覆盖或多个 env 文件。生命周期 schema
+不新增独立插值模式：配置的 `env_file` 仍采用受支持的 python-dotenv 文件内插值语义。
 
 ## 生命周期 v2 编写字段
 

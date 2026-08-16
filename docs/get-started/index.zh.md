@@ -41,8 +41,9 @@ agentseek task frontend
 
 在 `.env` 或运行 AgentSeek 的环境里，设置所选模板需要的模型和 provider 凭证。
 
-AgentSeek 使用 `.env` 检查模板声明的生命周期环境需求。在 `agentseek dev`
-期间，它也会传给长运行子进程；非空的显式 shell 变量优先，空值视为未设置。
+对于 `agentseek dev`，AgentSeek 只读取一次项目 `env_file`，只覆盖一次非空启动变量，
+并将同一个 immutable snapshot 复用于 readiness 和每个长运行进程。生命周期默认值仅用于
+检查。一次性的 `agentseek task` 命令保留其正常启动环境，不继承 `env_file`。
 
 ## 检查并运行
 

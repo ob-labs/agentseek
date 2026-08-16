@@ -150,6 +150,15 @@ Use `sync` for Python or backend dependencies and `frontend` for a separate
 frontend dependency tree. Put all long-running local processes under
 `[processes.*]` so `agentseek dev` owns the documented development stack.
 
+### Released API contract
+
+Templates that run agentseek-api require `agentseek-api >= 0.2.2` and pin one
+exact published version in the generated dependency file. Lifecycle process
+commands use direct argv. Shell wrappers, duplicated dotenv loading, and
+editable or local API checkouts do not satisfy the release contract. The exact
+version pin and catalog digest are delivered in the later template/catalog
+stage, not by AgentSeek core.
+
 Servers bind to loopback by default. If remote development is supported, add
 documented host overrides. A browser frontend must derive the backend host from
 the browser location or accept an explicit public API URL.

@@ -73,14 +73,20 @@ sources:
 `_agentseek_source_ref`。它们必须指向 catalog release 配对的 core 仓库与精确
 依赖快照；常规模板修改不能把它们替换为 catalog 仓库或可变分支。
 
-生命周期检查的环境变量优先级：
+仅用于 readiness 的环境变量优先级：
 
 ```text
 lifecycle default < env_file < shell environment
 ```
 
-生命周期默认值只用于检查就绪状态，不会注入子进程。`agentseek dev` 会把项目
-`.env` 传给长运行子进程，且 shell 变量优先；process command 仍可自行加载额外运行配置。
+对于 `agentseek dev`，AgentSeek 只解析一次 `env_file`，只覆盖一次非空启动值，并将一个
+immutable snapshot 传给 readiness 和所有长运行 child。生命周期默认值只验证 readiness，
+不会进入 child snapshot；`agentseek task` 保留其正常启动环境，不继承生命周期 `env_file`。
+
+运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中 pin 一个
+exact published version。生命周期 process command 使用 direct argv。shell wrapper、重复
+dotenv 加载，以及 editable 或本地 API checkout 都不满足发布契约。精确版本 pin 与 catalog
+digest 在后续 template/catalog 阶段交付，不由 AgentSeek core 提供。
 
 ## Task 命名
 
