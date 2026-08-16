@@ -46,9 +46,21 @@ def parse_lifecycle_dotenv(
     for binding in bindings:
         if binding.key is None:
             continue
+        if "\x00" in binding.key or "=" in binding.key:
+            raise LifecycleDotenvError(
+                path,
+                "has an invalid variable name",
+                line=binding.original.line,
+            )
         value = (
             None if binding.value is None else "".join(atom.resolve(context) for atom in parse_variables(binding.value))
         )
+        if value is not None and "\x00" in value:
+            raise LifecycleDotenvError(
+                path,
+                "contains a NUL character in a resolved value",
+                line=binding.original.line,
+            )
         values[binding.key] = value
         context[binding.key] = value
     return values

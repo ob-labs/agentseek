@@ -5,12 +5,63 @@ from typing import cast
 import pytest
 
 import agentseek.cli.lifecycle.environment as environment_module
+from agentseek.cli.lifecycle.dotenv_adapter import parse_lifecycle_dotenv
 from agentseek.cli.lifecycle.environment import (
     EnvironmentOrigin,
     LifecycleDotenvError,
     LifecycleEnvironmentSnapshot,
     resolve_lifecycle_environment,
 )
+
+
+@pytest.mark.parametrize(
+    ("contents", "category", "canary"),
+    [
+        ("NUL_KEY_CANARY\x00TAIL=value\n", "variable name", "NUL_KEY_CANARY"),
+        ("'EQUALS_KEY_CANARY=TAIL'=value\n", "variable name", "EQUALS_KEY_CANARY"),
+        ("SAFE=${AMBIENT}\n", "resolved value", "NUL_VALUE_CANARY"),
+    ],
+    ids=["nul-key", "equals-key", "resolved-value"],
+)
+def test_dotenv_adapter_rejects_subprocess_incompatible_bindings_without_echoing_content(
+    tmp_path,
+    contents,
+    category,
+    canary,
+) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(LifecycleDotenvError) as raised:
+        parse_lifecycle_dotenv(
+            env_file,
+            ambient={"AMBIENT": f"prefix\x00{canary}"},
+        )
+
+    diagnostic = str(raised.value)
+    assert raised.value.line == 1
+    assert category in diagnostic
+    assert canary not in diagnostic
+    assert "\x00" not in diagnostic
+    assert "\\x00" not in diagnostic
+
+
+def test_dotenv_adapter_preserves_physical_order_empty_and_unicode_values(tmp_path) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "BASE=模型\nDEPENDENT=${BASE}/路径\nEQUALS_VALUE=left=right\nEXPLICIT_EMPTY=\nVALUELESS\n",
+        encoding="utf-8",
+    )
+
+    values = parse_lifecycle_dotenv(env_file, ambient={"BASE": "ambient"})
+
+    assert values == {
+        "BASE": "模型",
+        "DEPENDENT": "模型/路径",
+        "EQUALS_VALUE": "left=right",
+        "EXPLICIT_EMPTY": "",
+        "VALUELESS": None,
+    }
 
 
 def test_snapshot_applies_only_nonempty_launch_values_over_dotenv(tmp_path, monkeypatch) -> None:
@@ -35,8 +86,9 @@ def test_snapshot_applies_only_nonempty_launch_values_over_dotenv(tmp_path, monk
 
 def test_snapshot_preserves_dotenv_empty_and_omits_valueless_binding(tmp_path, monkeypatch) -> None:
     env_file = tmp_path / ".env"
-    env_file.write_text("EXPLICIT_EMPTY=\nVALUELESS\n", encoding="utf-8")
+    env_file.write_text("EXPLICIT_EMPTY=\nUNICODE=模型/路径\nVALUELESS\n", encoding="utf-8")
     monkeypatch.delenv("EXPLICIT_EMPTY", raising=False)
+    monkeypatch.delenv("UNICODE", raising=False)
     monkeypatch.delenv("VALUELESS", raising=False)
 
     snapshot = resolve_lifecycle_environment(env_file=env_file)
@@ -44,6 +96,8 @@ def test_snapshot_preserves_dotenv_empty_and_omits_valueless_binding(tmp_path, m
     assert "EXPLICIT_EMPTY" in snapshot.values
     assert snapshot.values["EXPLICIT_EMPTY"] == ""
     assert snapshot.origins["EXPLICIT_EMPTY"] is EnvironmentOrigin.ENV_FILE
+    assert snapshot.values["UNICODE"] == "模型/路径"
+    assert snapshot.origins["UNICODE"] is EnvironmentOrigin.ENV_FILE
     assert "VALUELESS" not in snapshot.values
     assert "VALUELESS" not in snapshot.origins
 
@@ -147,6 +201,23 @@ def test_resolver_rejects_malformed_dotenv_without_partial_snapshot(
 
     assert raised.value.line == 2
     assert "must-not-leak" not in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    "contents",
+    [
+        "NUL_KEY_CANARY\x00TAIL=value\n",
+        "'EQUALS_KEY_CANARY=TAIL'=value\n",
+        "SAFE=value\x00NUL_VALUE_CANARY\n",
+    ],
+    ids=["nul-key", "equals-key", "resolved-value"],
+)
+def test_snapshot_rejects_subprocess_incompatible_dotenv_binding_without_partial_result(tmp_path, contents) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(LifecycleDotenvError):
+        resolve_lifecycle_environment(env_file=env_file, launch_environment={})
 
 
 def test_resolver_rejects_missing_and_invalid_utf8_sources(tmp_path) -> None:
