@@ -157,14 +157,17 @@ def _run_agentseek(
             raise RuntimeError(message) from None
         with suppress(ProcessLookupError):
             process.send_signal(signal.SIGTERM)
+        requires_force_kill = False
         try:
             process.wait(timeout=graceful_shutdown_timeout_seconds)
         except subprocess.TimeoutExpired:
-            _terminate_tracked_posix_process_group(
-                helper_process_marker,
-                grace_seconds=helper_process_group_grace_seconds,
-                reap_timeout_seconds=fallback_reap_timeout_seconds,
-            )
+            requires_force_kill = True
+        _terminate_tracked_posix_process_group(
+            helper_process_marker,
+            grace_seconds=helper_process_group_grace_seconds,
+            reap_timeout_seconds=fallback_reap_timeout_seconds,
+        )
+        if requires_force_kill:
             _kill_and_reap_agentseek(process, timeout_seconds=fallback_reap_timeout_seconds)
         message = "agentseek dev exceeded the lifecycle-contract timeout"
         raise TimeoutError(message) from None
