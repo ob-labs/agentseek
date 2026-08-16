@@ -3,10 +3,16 @@ title: Lifecycle Spec
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-07-28
+verified_on: 2026-08-17
 sources:
   - src/agentseek/cli/lifecycle/spec.py
+  - src/agentseek/cli/lifecycle/environment.py
+  - src/agentseek/cli/lifecycle/dotenv_adapter.py
+  - src/agentseek/cli/lifecycle/compatibility.py
   - src/agentseek/cli/lifecycle/core.py
+  - src/agentseek/cli/commands/dev.py
+  - src/agentseek/cli/commands/doctor.py
+  - src/agentseek/cli/commands/info.py
   - src/agentseek/cli/lifecycle/authored.py
   - src/agentseek/cli/lifecycle/normalize.py
   - src/agentseek/cli/lifecycle/json_output.py
@@ -91,7 +97,7 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 | Section | Purpose |
 | --- | --- |
-| `env_file` | Optional project-local env file used only for declared environment checks. It is not injected into child processes. |
+| `env_file` | Optional project-local dotenv file resolved once by non-dry-run `agentseek dev` for declared checks and long-running child processes. |
 | `tools` | Required executables used by the project. |
 | `paths` | Required local files or directories. |
 | `env.<name>` | Environment variables AgentSeek should check. Defaults are lower priority than `env_file` and shell variables. |
@@ -105,24 +111,48 @@ than `0` and no greater than `300`; `attempts` is a positive integer.
 
 ## Environment Checks
 
-AgentSeek checks environment requirements from lifecycle defaults, the optional
-`env_file`, and the current process environment:
+AgentSeek resolves one immutable snapshot per non-dry-run `agentseek dev`
+invocation. It captures the launch environment once, then creates the snapshot
+from the project `env_file` and non-empty captured launch environment values:
 
 ```text
-lifecycle default < env_file < shell environment
+lifecycle env_file < non-empty captured launch environment
 ```
 
-Only keys declared under `[env.<name>]` and their aliases are read from
-`env_file`. Templates do not need to declare every runtime variable a project
-may use. AgentSeek does not pass the env file or lifecycle defaults to child
-processes.
+Bounded python-dotenv resolves physical bindings in order and falls back to the
+captured launch environment. In a lifecycle dotenv, `KEY=` is a present empty
+assignment, while bare `KEY` assigns nothing. An empty raw launch value is
+omitted before the snapshot is created, so a dotenv value can fill it.
+
+Readiness, the internal preflight, and every long-running child consume the
+same snapshot. Lifecycle defaults may satisfy readiness but never enter the
+snapshot. Only declared `[env.<name>]` keys and aliases participate in
+readiness checks. AgentSeek guarantees only the initial child environment/snapshot,
+which contains resolved values, not source paths, provenance, or instructions
+to repeat resolution. Compatible child configuration completion may fill absent
+keys but must not replace inherited present keys. Arbitrary child code can
+mutate its own process environment; the prohibition against
+duplicated override-loading is an authoring rule, not an AgentSeek enforcement
+claim. `agentseek task` does not inherit lifecycle `env_file`; its behavior is
+unchanged.
+
+Lifecycle processes using the API completion contract require
+`agentseek-api >= 0.2.2`. `agentseek dev --dry-run` prints the plan without
+reading the lifecycle dotenv. The missing, undecodable, or malformed dotenv
+guarantee applies only to non-dry-run `agentseek dev`: it creates no partial
+snapshot, starts no child, and returns `exit 2` with a value-free diagnostic;
+bare `KEY` remains valid syntax. Standalone `agentseek info` reports dotenv status without
+creating a snapshot. Standalone `agentseek doctor --strict`
+renders readiness failures, such as a missing dotenv, and returns `exit 1`.
 
 ## Lifecycle v1 first-phase scope
 
 Version 1 supports required tools, required paths, project environment
 requirements, HTTP live checks, long-running processes, and one-shot tasks.
 It does not support optional tool/path checks, TCP checks, process env
-overrides, multiple env files, or env interpolation.
+overrides, or multiple env files. It adds no lifecycle-schema interpolation
+mode: for a configured `env_file`, bounded python-dotenv resolves physical
+bindings in order and falls back to the captured launch environment.
 
 ## Lifecycle v2 authored fields
 

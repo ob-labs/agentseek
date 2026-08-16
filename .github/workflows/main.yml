@@ -25,6 +25,28 @@ jobs:
       - name: Run lint and type check
         run: make lint typecheck
 
+  minimum-supported-cli:
+    name: Minimum supported CLI import
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.13"
+
+      - name: Run CLI with the declared dependency floor
+        run: |
+          set -euo pipefail
+          export UV_CACHE_DIR="$(mktemp -d)/uv-cache"
+          uv run --python 3.13 --isolated --no-project \
+            --with-editable . \
+            --with pydantic-settings==2.0.0 \
+            --with python-dotenv==1.0.0 \
+            agentseek --help
+
   cross-platform-tests-and-type-check:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -73,6 +95,31 @@ jobs:
 
       - name: Check typing
         run: make typecheck
+
+  agentseek-api-lifecycle-contract:
+    name: Published agentseek-api lifecycle contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+
+      - name: Verify the exact published API floor through agentseek dev
+        run: |
+          set -euo pipefail
+          api_version="$(uv run --frozen python -c 'from agentseek.cli.lifecycle.compatibility import MINIMUM_AGENTSEEK_API_VERSION; print(MINIMUM_AGENTSEEK_API_VERSION)')"
+          test "${api_version}" = "0.2.2"
+          export PYTHONPATH=
+          export UV_CACHE_DIR="${RUNNER_TEMP}/agentseek-api-contract-cache"
+          uv run --python 3.12 --isolated --no-project \
+            --with-editable . \
+            --with "agentseek-api==${api_version}" \
+            python scripts/check_agentseek_api_lifecycle_contract.py
 
   legacy-template-compatibility:
     if: ${{ github.event_name == 'push' || startsWith(github.head_ref, 'release/') }}

@@ -6,7 +6,13 @@ from typing import Annotated
 
 import typer
 
-from agentseek.cli.lifecycle import load_lifecycle_project, run_lifecycle_task
+from agentseek.cli.lifecycle import (
+    LifecycleDotenvError,
+    load_lifecycle_project,
+    resolve_project_environment,
+    run_lifecycle_task,
+)
+from agentseek.cli.lifecycle.errors import exit_project_error
 
 app = typer.Typer(
     name="dev",
@@ -29,9 +35,17 @@ def dev(
 ) -> None:
     """Run the local app defined by the lifecycle spec."""
     project = load_lifecycle_project()
-    if not skip_check and not dry_run:
-        run_lifecycle_task(project, "doctor", strict=True)
-    run_lifecycle_task(project, "dev", dry_run=dry_run)
+    if dry_run:
+        run_lifecycle_task(project, "dev", dry_run=True)
+        return
+
+    try:
+        environment = resolve_project_environment(project)
+    except LifecycleDotenvError as exc:
+        exit_project_error("Invalid lifecycle environment.", str(exc))
+    if not skip_check:
+        run_lifecycle_task(project, "doctor", strict=True, environment=environment)
+    run_lifecycle_task(project, "dev", dry_run=False, environment=environment)
 
 
 __all__ = ["app"]

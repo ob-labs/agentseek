@@ -44,8 +44,11 @@ agentseek task frontend
 Set the model and provider credentials required by the selected template in
 `.env` or the environment used to run AgentSeek.
 
-`.env` is used by AgentSeek only for lifecycle environment checks declared by
-the template. It is not automatically passed to child processes.
+For non-dry-run `agentseek dev`, AgentSeek reads the project `env_file` once, overlays
+non-empty launch variables once, and reuses that immutable snapshot for
+readiness and every long-running process. Lifecycle defaults are checks only.
+One-shot `agentseek task` commands keep their normal launch environment and do
+not inherit `env_file`.
 
 ## Check and run
 

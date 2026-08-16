@@ -153,7 +153,7 @@ def test_v2_constants_and_public_exports_are_versioned_and_typed() -> None:
     assert package_spec is AuthoredLifecycleSpec
 
 
-def test_lifecycle_package_exports_only_the_safe_normalization_boundary() -> None:
+def test_lifecycle_package_exports_the_lifecycle_environment_boundary() -> None:
     import agentseek.cli.lifecycle as lifecycle
 
     assert lifecycle.NormalizedLifecycleProject is NormalizedLifecycleProject
@@ -161,16 +161,21 @@ def test_lifecycle_package_exports_only_the_safe_normalization_boundary() -> Non
     assert lifecycle.normalize_lifecycle is normalize_lifecycle
     assert lifecycle.__all__ == [
         "LIFECYCLE_SPEC_FILE",
+        "MINIMUM_AGENTSEEK_API_VERSION",
         "REQUIRED_COMMANDS",
         "SUPPORTED_LIFECYCLE_VERSION",
         "SUPPORTED_LIFECYCLE_VERSIONS",
         "AuthoredLifecycleSpec",
+        "EnvironmentOrigin",
+        "LifecycleDotenvError",
+        "LifecycleEnvironmentSnapshot",
         "LifecycleProject",
         "NormalizationWarning",
         "NormalizedLifecycleProject",
         "lifecycle_spec_exists",
         "load_lifecycle_project",
         "normalize_lifecycle",
+        "resolve_project_environment",
         "run_lifecycle_task",
         "run_task_cli",
     ]

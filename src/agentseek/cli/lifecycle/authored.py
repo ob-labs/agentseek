@@ -69,6 +69,7 @@ class _EnvRequirementV2(EnvRequirement):
 
 class ServiceV1(SpecModel):
     url: str
+    tech: str | None = None
 
 
 class ProcessV1(SpecModel):

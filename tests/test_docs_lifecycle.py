@@ -8,12 +8,21 @@ from pathlib import Path
 
 import pytest
 
+from agentseek.cli.lifecycle.compatibility import MINIMUM_AGENTSEEK_API_VERSION
+
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES_ROOT = ROOT / "templates"
 TEMPLATE_INDEX = TEMPLATES_ROOT / "index.json"
 LIFECYCLE_REFERENCES = (
     ROOT / "docs" / "reference" / "lifecycle-spec.md",
     ROOT / "docs" / "reference" / "lifecycle-spec.zh.md",
+)
+LIFECYCLE_SNAPSHOT_SUMMARIES = (
+    ROOT / "docs" / "get-started" / "index.md",
+    ROOT / "docs" / "get-started" / "index.zh.md",
+    ROOT / "docs" / "reference" / "template-authoring-contract.md",
+    ROOT / "docs" / "reference" / "template-authoring-contract.zh.md",
+    *LIFECYCLE_REFERENCES,
 )
 LIFECYCLE_V2_SPEC_URL = "https://github.com/ob-labs/agentseek/blob/main/specs/lifecycle-v2-service-discovery.md"
 ROOT_DOTENV_EXAMPLE = ROOT / ".env.example"
@@ -382,3 +391,163 @@ def test_lifecycle_references_describe_authored_v2_loading(reference: Path) -> N
         "`agentseek-ai/agentseek-templates`" in row and "`version = 2`" in row for row in table_rows
     )
     assert has_v2_catalog_row, reference
+
+
+@pytest.mark.parametrize(
+    "guide",
+    (ROOT / "docs" / "guides" / "choose-template.md", ROOT / "docs" / "guides" / "choose-template.zh.md"),
+)
+def test_choose_template_guides_match_locked_catalog_runtime(guide: Path) -> None:
+    """The guides must describe the lifecycle command shipped by the locked catalog."""
+    text = guide.read_text(encoding="utf-8")
+
+    assert "langgraph dev" in text, guide
+    assert "agentseek-api dev" not in text, guide
+
+
+@pytest.mark.parametrize(
+    "reference",
+    (
+        *LIFECYCLE_REFERENCES,
+        ROOT / "src" / "skills" / "agentseek-lifecycle" / "references" / "agentseek-lifecycle.md",
+    ),
+)
+def test_lifecycle_references_define_the_immutable_environment_boundary(reference: Path) -> None:
+    """Lifecycle references must describe the one-time child environment contract."""
+    text = reference.read_text(encoding="utf-8")
+    lines = text.splitlines()
+
+    assert "immutable snapshot" in text
+    assert "`KEY=`" in text
+    assert "`KEY`" in text
+    assert "malformed dotenv" in text
+    assert "exit 2" in text
+    assert "`agentseek info`" in text
+    assert "`agentseek doctor --strict`" in text
+    assert "exit 1" in text
+    if reference.name.endswith(".zh.md"):
+        assert "非 dry-run" in text
+        assert "dotenv 状态" in text
+        assert "物理绑定出现的顺序" in text
+        assert "已捕获的启动环境" in text
+        assert "初始子进程环境/快照" in text
+        assert "任意子进程代码" in text
+    else:
+        assert "non-dry-run" in text
+        assert "dotenv status" in text
+        assert "physical bindings in order" in text
+        assert "captured launch environment" in text
+        assert "initial child environment/snapshot" in text
+        assert "arbitrary child code" in text.lower()
+    assert f"`agentseek-api >= {MINIMUM_AGENTSEEK_API_VERSION}`" in text
+    assert any("`agentseek dev`" in line and "snapshot" in line for line in lines)
+    assert any("`agentseek task`" in line and "`env_file`" in line for line in lines)
+    assert "multiple env files, or env interpolation." not in text
+    assert "多个 env 文件或 env 插值" not in text
+
+
+@pytest.mark.parametrize(
+    "reference",
+    (
+        ROOT / "docs" / "guides" / "create-template.md",
+        ROOT / "docs" / "guides" / "create-template.zh.md",
+        ROOT / "docs" / "reference" / "template-authoring-contract.md",
+        ROOT / "docs" / "reference" / "template-authoring-contract.zh.md",
+    ),
+)
+def test_template_authoring_requires_a_compatible_released_api(reference: Path) -> None:
+    """Template authors must pin a released runtime API with direct process argv."""
+    text = reference.read_text(encoding="utf-8")
+
+    assert f"`agentseek-api >= {MINIMUM_AGENTSEEK_API_VERSION}`" in text
+    assert "exact published version" in text
+    assert "direct argv" in text
+
+
+@pytest.mark.parametrize(
+    ("guide", "former_generic_guidance"),
+    (
+        (
+            ROOT / "docs" / "guides" / "create-template.md",
+            "During `agentseek dev`, the\n"
+            "project `.env` is also passed to long-running child processes, with exported\n"
+            "shell variables taking precedence.",
+        ),
+        (
+            ROOT / "docs" / "guides" / "create-template.zh.md",
+            "在 lifecycle 文件的 `[env.*]` 中声明同一组必需名称。AgentSeek 用这些声明检查\n"
+            "就绪状态\uff1b`agentseek dev` 会把项目 `.env` 传给长运行子进程\uff0cshell 变量优先。",
+        ),
+    ),
+)
+def test_template_guides_define_the_one_time_dev_environment_boundary(
+    guide: Path,
+    former_generic_guidance: str,
+) -> None:
+    """Template guides must not describe dotenv as a generic child pass-through."""
+    text = guide.read_text(encoding="utf-8")
+
+    assert "immutable snapshot" in text
+    assert "`KEY=`" in text
+    assert "`agentseek task`" in text
+    assert "`env_file`" in text
+    assert former_generic_guidance not in text
+
+
+@pytest.mark.parametrize("reference", LIFECYCLE_SNAPSHOT_SUMMARIES)
+def test_lifecycle_snapshot_summaries_explicitly_exclude_dry_run(reference: Path) -> None:
+    """Every public snapshot summary must reserve resolution for non-dry-run dev."""
+    text = reference.read_text(encoding="utf-8")
+    qualification = "非 dry-run" if reference.name.endswith(".zh.md") else "non-dry-run"
+
+    assert qualification in text
+    assert "`agentseek dev`" in text
+    if reference in LIFECYCLE_REFERENCES:
+        env_file_row = next(line for line in text.splitlines() if line.startswith("| `env_file`"))
+
+        assert qualification in env_file_row
+        assert "`agentseek dev`" in env_file_row
+
+
+@pytest.mark.parametrize(
+    "reference",
+    (
+        ROOT / "docs" / "guides" / "create-template.zh.md",
+        ROOT / "docs" / "reference" / "template-authoring-contract.zh.md",
+    ),
+)
+def test_chinese_template_authoring_localizes_release_contract_terms(reference: Path) -> None:
+    """Chinese authoring guidance keeps only the required English contract phrases."""
+    text = reference.read_text(encoding="utf-8")
+
+    assert "\uff08immutable snapshot\uff09" in text
+    assert "\uff08exact published version\uff09" in text
+    assert "\uff08direct argv\uff09" in text
+    assert "editable" not in text
+    assert "checkout" not in text
+    assert re.search(r"\bpin\b", text) is None
+    assert "digest" not in text
+
+
+@pytest.mark.parametrize(
+    "reference",
+    (
+        ROOT / "docs" / "get-started" / "index.zh.md",
+        ROOT / "docs" / "guides" / "create-template.zh.md",
+        ROOT / "docs" / "reference" / "lifecycle-spec.zh.md",
+        ROOT / "docs" / "reference" / "template-authoring-contract.zh.md",
+    ),
+)
+def test_chinese_lifecycle_docs_do_not_code_switch_nonmandatory_parenthetical_terms(reference: Path) -> None:
+    """Chinese lifecycle prose keeps only the required English contract parentheticals."""
+    text = reference.read_text(encoding="utf-8")
+
+    for term in (
+        "\uff08non-dry-run\uff09",
+        "\uff08captured launch environment\uff09",
+        "\uff08physical bindings in order\uff09",
+        "\uff08initial child environment/snapshot\uff09",
+        "\uff08arbitrary child code\uff09",
+        "\uff08dotenv status\uff09",
+    ):
+        assert term not in text

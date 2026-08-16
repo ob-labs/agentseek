@@ -81,15 +81,28 @@ core repository and exact dependency snapshot recorded by the catalog release;
 normal template changes must not replace them with the catalog repository or a
 mutable branch.
 
-Environment resolution for lifecycle checks:
+Readiness-only environment resolution:
 
 ```text
 lifecycle default < env_file < shell environment
 ```
 
-Lifecycle defaults and `.env` values validate readiness. AgentSeek does not
-inject them into child processes. Process commands must load their runtime
-environment themselves.
+For non-dry-run `agentseek dev`, AgentSeek resolves `env_file` once, overlays non-empty
+launch values once, and passes one immutable snapshot to readiness and every
+long-running child. Lifecycle defaults validate readiness only and never enter
+the child snapshot; `agentseek task` keeps its normal launch environment and
+does not inherit lifecycle `env_file`. AgentSeek guarantees only the initial
+child environment/snapshot; compatible child configuration completion may fill
+absent keys but must not replace inherited present keys. Arbitrary child code can
+mutate its own process environment.
+
+Templates that run agentseek-api require `agentseek-api >= 0.2.2` and pin one
+exact published version in the generated dependency file. Lifecycle process
+commands use direct argv. Shell wrappers, duplicated dotenv or override
+loading, and editable or local API checkouts do not satisfy the release
+contract. The duplicated override-loading prohibition is an authoring rule,
+not an AgentSeek enforcement claim. The exact version pin and catalog digest
+are delivered in the later template/catalog stage, not by AgentSeek core.
 
 ## Task Names
 

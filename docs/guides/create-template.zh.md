@@ -21,7 +21,7 @@ sources:
 
 ## 前置条件
 
-- 本地已有独立 catalog checkout，并已完成 `uv sync`。
+- 本地已有独立 catalog 检出副本，并已完成 `uv sync`。
 - 已明确生成应用的目标，并找到一个运行时相近的现有模板。
 - 已选择唯一的 `type/name` spec。除非同时扩展 CLI 的类型支持，否则复用 `bub`、`deepagents` 或 `langchain`。
 
@@ -88,7 +88,11 @@ AGENTSEEK_API_BASE=
 
 应用在多个原生 provider adapter 之间切换时，增加 `AGENTSEEK_MODEL_PROVIDER`。只有所选 SDK 确实要求时，才增加 provider 专属密钥。文档必须说明运行时代码如何映射别名，以及冲突时谁优先。
 
-在 lifecycle 文件的 `[env.*]` 中声明同一组必需名称。AgentSeek 用这些声明检查就绪状态，不会把 `.env` 注入子进程。
+在 lifecycle 文件的 `[env.*]` 中声明同一组必需名称。AgentSeek 用这些声明检查
+就绪状态。对于非 dry-run 的 `agentseek dev`，它只读取一次 `env_file`，只覆盖一次
+非空启动值，并将同一个不可变快照（immutable snapshot）复用于就绪检查和所有长运行
+子进程。生命周期默认值只用于检查；dotenv 中的 `KEY=` 表示存在但为空，裸 `KEY` 不产生
+赋值。一次性的 `agentseek task` 命令保留正常启动环境，不继承 `env_file`。
 
 ## 5. 定义生命周期
 
@@ -135,6 +139,14 @@ command = ["uv", "sync"]
 ```
 
 Python 或 backend 依赖统一使用 `sync`，独立 frontend 依赖树使用 `frontend`。所有长时间运行的本地进程都放在 `[processes.*]` 下，让 `agentseek dev` 管理文档中的完整开发环境。
+
+### 已发布 API 契约
+
+运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中固定一个
+已发布的精确版本（exact published version）。生命周期进程命令使用直接参数数组
+（direct argv）。Shell 包装、重复 dotenv 加载，以及可编辑安装或本地 API 检出副本都不
+满足发布契约。精确版本固定与模板目录摘要在后续模板目录阶段交付，不由 AgentSeek
+core 提供。
 
 Server 默认绑定 loopback。支持远程开发时，增加并说明 host override。浏览器 frontend 必须根据浏览器地址推导 backend host，或接受显式 public API URL。
 

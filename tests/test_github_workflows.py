@@ -2,7 +2,38 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+
+def _job_block(workflow: str, job_name: str) -> str:
+    match = re.search(
+        rf"^  {re.escape(job_name)}:\n.*?(?=^  [a-zA-Z0-9_-]+:|\Z)",
+        workflow,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    assert match, f"workflow does not define job {job_name!r}"
+    return match.group()
+
+
+def test_published_api_lifecycle_contract_uses_declared_floors() -> None:
+    workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "main.yml"
+    text = workflow.read_text(encoding="utf-8")
+
+    minimum_supported_cli = _job_block(text, "minimum-supported-cli")
+    assert "uv run --python 3.13 --isolated --no-project" in minimum_supported_cli
+    assert "--with-editable ." in minimum_supported_cli
+    assert "--with pydantic-settings==2.0.0" in minimum_supported_cli
+    assert "--with python-dotenv==1.0.0" in minimum_supported_cli
+    assert "agentseek --help" in minimum_supported_cli
+
+    api_contract = _job_block(text, "agentseek-api-lifecycle-contract")
+    assert "uv run --python 3.12 --isolated --no-project" in api_contract
+    assert "--with-editable ." in api_contract
+    assert 'test "${api_version}" = "0.2.2"' in api_contract
+    assert "export PYTHONPATH=" in api_contract
+    assert '--with "agentseek-api==${api_version}"' in api_contract
+    assert "scripts/check_agentseek_api_lifecycle_contract.py" in api_contract
 
 
 def test_phoenix_smoke_verifies_multiple_trace_markers() -> None:

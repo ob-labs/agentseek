@@ -8,11 +8,14 @@ import sys
 import tomllib
 from pathlib import Path
 from typing import Any, cast
+from unittest.mock import Mock
 
 import pytest
 from typer.testing import CliRunner
 
 import agentseek.cli.lifecycle.core as lifecycle_core
+import agentseek.cli.lifecycle.environment as lifecycle_environment
+from agentseek.cli.lifecycle.environment import EnvironmentOrigin, LifecycleEnvironmentSnapshot
 from tests.cli_commands.helpers import build_command_app
 
 pytestmark = pytest.mark.usefixtures("create_symlink")
@@ -50,6 +53,7 @@ aliases = ["BUB_OPENAI_API_KEY"]
 
 [services.app]
 url = "http://127.0.0.1:5173"
+tech = "agentseek-api"
 
 [services.seekdb]
 url = "mysql://127.0.0.1:2884/phoenix"
@@ -216,6 +220,27 @@ def test_info_lists_lifecycle_tasks_and_task_discovery_hint(tmp_path: Path, monk
     assert "agentseek task --list" in result.stdout
 
 
+def test_info_succeeds_before_configured_optional_dotenv_exists(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path, env_file="missing.env")
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["info"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "Env file: missing.env (missing)" in result.stdout
+
+
+def test_info_describes_agentseek_api_runtime(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["info"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "App: http://127.0.0.1:5173 (runtime: agentseek-api)" in result.stdout
+    assert "langgraph dev" not in result.stdout
+
+
 def test_doctor_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
     _write_project_inputs(tmp_path)
@@ -275,6 +300,8 @@ def test_doctor_reports_missing_required_inputs(tmp_path: Path, monkeypatch) -> 
     assert "fail .env: .env is missing." in result.stdout
     assert "fail BUB_API_KEY: BUB_API_KEY or BUB_OPENAI_API_KEY is not configured." in result.stdout
     assert "fail frontend/node_modules: frontend/node_modules is missing." in result.stdout
+    assert "Invalid lifecycle environment" not in result.stderr
+    assert "Traceback" not in result.stdout + result.stderr
 
 
 def test_doctor_live_accepts_2xx_and_3xx_statuses(tmp_path: Path, monkeypatch) -> None:
@@ -295,6 +322,29 @@ def test_doctor_live_accepts_2xx_and_3xx_statuses(tmp_path: Path, monkeypatch) -
 
         assert result.exit_code == 0, result.stdout + result.stderr
         assert "ok   app: http://127.0.0.1:5173 is reachable." in result.stdout
+
+
+def test_doctor_live_reports_migrated_service_health(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    _write_project_inputs(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    class FakeResponse:
+        status_code = 204
+
+    requested: list[str] = []
+
+    def get(url: str, *, timeout: float) -> FakeResponse:
+        del timeout
+        requested.append(url)
+        return FakeResponse()
+
+    monkeypatch.setattr(lifecycle_core.httpx, "get", get)
+    result = CliRunner().invoke(build_command_app(), ["doctor", "--live"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert requested == ["http://127.0.0.1:5173"]
+    assert "ok   app: http://127.0.0.1:5173 is reachable." in result.stdout
 
 
 @pytest.mark.parametrize(
@@ -400,19 +450,32 @@ def test_dev_dry_run_dispatches_lifecycle_spec(tmp_path: Path, monkeypatch) -> N
     assert "Startup plan" in result.stdout
     assert "Web: python -m http.server 5173" in result.stdout
     assert "App: http://127.0.0.1:5173" in result.stdout
+    assert "App: http://127.0.0.1:5173 (runtime: agentseek-api)" in result.stdout
     assert "seekdb: mysql://127.0.0.1:2884/phoenix" in result.stdout
     assert "Seekdb:" not in result.stdout
 
 
+def test_dev_dry_run_uses_agentseek_api_as_backend(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(build_command_app(), ["dev", "--dry-run"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "runtime: agentseek-api" in result.stdout
+    assert "langgraph dev" not in result.stdout
+
+
 def test_dev_skip_check_still_enforces_required_inputs(tmp_path: Path, monkeypatch) -> None:
     _write_lifecycle_spec(tmp_path)
+    (tmp_path / ".env").write_text("", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
 
     result = CliRunner().invoke(build_command_app(), ["dev", "--skip-check"])
 
     assert result.exit_code == 2
     assert "Project is not ready to run." in result.stderr
-    assert "fail .env: .env is missing." in result.stdout
+    assert "fail .env" not in result.stdout
     assert "fail BUB_API_KEY: BUB_API_KEY or BUB_OPENAI_API_KEY is not configured." in result.stdout
 
 
@@ -527,6 +590,7 @@ def test_task_child_process_does_not_inherit_env_file(tmp_path: Path, monkeypatc
     def fake_call(command: object, *, cwd: object, **kwargs: Any) -> int:
         nonlocal captured_child_environ
         del command, cwd
+        assert "env" not in kwargs
         captured_child_environ = dict(kwargs.get("env", os.environ))
         return 0
 
@@ -547,7 +611,332 @@ def test_task_child_process_does_not_inherit_env_file(tmp_path: Path, monkeypatc
     assert captured_child_environ["BUB_OPENAI_API_KEY"] == "shell-key"
     assert "EXTRA_DOTENV" not in captured_child_environ
     assert "AGENTSEEK_SECRET" not in captured_child_environ
+
+
+def test_dev_resolves_once_for_readiness_and_every_child(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path, env_file=".env")
+    spec_path = tmp_path / ".agentseek" / "lifecycle.toml"
+    spec_path.write_text(
+        spec_path.read_text(encoding="utf-8")
+        + f"""
+[processes.worker]
+command = [{_toml_string(sys.executable)}, "-c", "print('worker')"]
+cwd = "."
+""",
+        encoding="utf-8",
+    )
+    env_file = tmp_path / ".env"
+    env_file.write_text("API_KEY=initial\nSNAPSHOT_SENTINEL=initial-dependent\n", encoding="utf-8")
+    parse_calls: list[Path] = []
+    child_environments: list[dict[str, str]] = []
+    snapshots: list[LifecycleEnvironmentSnapshot] = []
+    real_parse = lifecycle_environment.parse_lifecycle_dotenv
+    real_ensure = lifecycle_core._ensure_required_inputs
+    real_spawn = lifecycle_core._spawn_process
+    real_static_checks = lifecycle_core._static_checks
+
+    def counting_parse(path: Path, *, ambient):
+        parse_calls.append(path)
+        return real_parse(path, ambient=ambient)
+
+    def ensure_then_change(project, *, environment) -> None:
+        snapshots.append(environment)
+        real_ensure(project, environment=environment)
+        env_file.write_text("API_KEY=changed-after-readiness\nSNAPSHOT_SENTINEL=changed\n", encoding="utf-8")
+
+    def static_checks_with_identity(project, *, environment):
+        snapshots.append(environment)
+        return real_static_checks(project, environment=environment)
+
+    def spawn_with_identity(process, *, project, environment):
+        snapshots.append(environment)
+        return real_spawn(process, project=project, environment=environment)
+
+    class FinishedProcess:
+        def poll(self) -> int:
+            return 0
+
+    def capture_popen(command, *, cwd, env, **kwargs):
+        del command, cwd, kwargs
+        child_environments.append(dict(env))
+        if len(child_environments) == 1:
+            env_file.write_text("API_KEY=changed-between-children\n", encoding="utf-8")
+        return FinishedProcess()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("API_KEY", raising=False)
+    monkeypatch.delenv("SNAPSHOT_SENTINEL", raising=False)
+    monkeypatch.setattr(lifecycle_environment, "parse_lifecycle_dotenv", counting_parse)
+    monkeypatch.setattr(lifecycle_core, "_ensure_required_inputs", ensure_then_change)
+    monkeypatch.setattr(lifecycle_core, "_spawn_process", spawn_with_identity)
+    monkeypatch.setattr(lifecycle_core, "_static_checks", static_checks_with_identity)
+    monkeypatch.setattr(lifecycle_core.subprocess, "Popen", capture_popen)
+    monkeypatch.setattr(lifecycle_core, "manage", lambda process: process)
+    monkeypatch.setattr(lifecycle_core, "_terminate", lambda process: None)
+
+    result = CliRunner().invoke(build_command_app(), ["dev"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert parse_calls == [env_file]
+    assert len(snapshots) == 5
+    assert all(snapshot is snapshots[0] for snapshot in snapshots)
+    assert len(child_environments) == 2
+    assert [env["API_KEY"] for env in child_environments] == ["initial", "initial"]
+    assert [env["SNAPSHOT_SENTINEL"] for env in child_environments] == [
+        "initial-dependent",
+        "initial-dependent",
+    ]
+
+
+def test_dotenv_explicit_empty_remains_present_in_dev_child(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path, env_file=".env")
+    (tmp_path / ".env").write_text("API_KEY=configured\nEXPLICIT_EMPTY=\n", encoding="utf-8")
+    captured: list[dict[str, str]] = []
+
+    class FinishedProcess:
+        def poll(self) -> int:
+            return 0
+
+    def capture_popen(command, *, cwd, env, **kwargs):
+        del command, cwd, kwargs
+        captured.append(dict(env))
+        return FinishedProcess()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("EXPLICIT_EMPTY", raising=False)
+    monkeypatch.setattr(lifecycle_core.subprocess, "Popen", capture_popen)
+    monkeypatch.setattr(lifecycle_core, "manage", lambda process: process)
+    monkeypatch.setattr(lifecycle_core, "_terminate", lambda process: None)
+
+    result = CliRunner().invoke(build_command_app(), ["dev", "--skip-check"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert captured[0]["EXPLICIT_EMPTY"] == ""
+
+
+def test_lifecycle_default_is_readiness_only_and_absent_from_dev_child(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path)
+    spec_path = tmp_path / ".agentseek" / "lifecycle.toml"
+    spec_path.write_text(
+        spec_path.read_text(encoding="utf-8").replace(
+            "[env.API_KEY]\nrequired = true",
+            '[env.API_KEY]\nrequired = true\ndefault = "readiness-default"',
+        ),
+        encoding="utf-8",
+    )
+    captured: list[dict[str, str]] = []
+
+    class FinishedProcess:
+        def poll(self) -> int:
+            return 0
+
+    def capture_popen(command, *, cwd, env, **kwargs):
+        del command, cwd, kwargs
+        captured.append(dict(env))
+        return FinishedProcess()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("API_KEY", raising=False)
+    monkeypatch.setattr(lifecycle_core.subprocess, "Popen", capture_popen)
+    monkeypatch.setattr(lifecycle_core, "manage", lambda process: process)
+    monkeypatch.setattr(lifecycle_core, "_terminate", lambda process: None)
+
+    result = CliRunner().invoke(build_command_app(), ["dev"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "API_KEY is configured" in result.stdout
+    assert "API_KEY" not in captured[0]
+
+
+def test_dev_dry_run_does_not_resolve_environment(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path, env_file=".env")
+    monkeypatch.chdir(tmp_path)
+
+    def fail_resolve(project):
+        del project
+        raise AssertionError("dry-run resolved environment")  # noqa: TRY003
+
+    monkeypatch.setattr(lifecycle_core, "resolve_project_environment", fail_resolve)
+    monkeypatch.setattr("agentseek.cli.commands.dev.resolve_project_environment", fail_resolve)
+
+    result = CliRunner().invoke(build_command_app(), ["dev", "--dry-run"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "Startup plan" in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("contents", "binary"),
+    [
+        ('SECRET=must-not-leak\nBROKEN "value"\nAFTER=value\n', False),
+        ('SECRET=must-not-leak\nUNTERMINATED="value\n', False),
+        (b"SECRET=must-not-leak\nTOKEN=\xff\n", True),
+    ],
+)
+def test_invalid_lifecycle_dotenv_exits_2_before_any_child(
+    tmp_path: Path,
+    monkeypatch,
+    contents,
+    binary: bool,
+) -> None:
+    _write_v2_lifecycle_spec(tmp_path, env_file=".env")
+    env_file = tmp_path / ".env"
+    if binary:
+        env_file.write_bytes(contents)
+    else:
+        env_file.write_text(contents, encoding="utf-8")
+    popen_calls: list[object] = []
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        lifecycle_core.subprocess,
+        "Popen",
+        lambda *args, **kwargs: popen_calls.append((args, kwargs)),
+    )
+
+    result = CliRunner().invoke(build_command_app(), ["dev", "--skip-check"])
+    rendered = result.stdout + result.stderr
+
+    assert result.exit_code == 2
+    assert popen_calls == []
+    assert "must-not-leak" not in rendered
+    assert "Traceback" not in rendered
+
+
+def test_missing_lifecycle_dotenv_exits_2_before_any_child(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path, env_file="missing.env")
+    monkeypatch.chdir(tmp_path)
+    popen = Mock(side_effect=AssertionError("child started"))
+    monkeypatch.setattr(lifecycle_core.subprocess, "Popen", popen)
+
+    result = CliRunner().invoke(build_command_app(), ["dev", "--skip-check"])
+    rendered = result.stdout + result.stderr
+
+    assert result.exit_code == 2
+    assert popen.call_count == 0
+    assert "missing.env" in rendered
+    assert "Traceback" not in rendered
+
+
+def test_spawn_process_uses_direct_argv_and_snapshot_without_shell(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path)
+    project = lifecycle_core.discover_lifecycle_project(tmp_path)
+    process = project.spec.processes["web"].model_copy(
+        update={"command": ("python tool", "--label", "value with spaces")}
+    )
+    snapshot = LifecycleEnvironmentSnapshot(
+        values={"UNICODE_VALUE": "值"},
+        origins={"UNICODE_VALUE": EnvironmentOrigin.ENV_FILE},
+    )
+    captured: dict[str, object] = {}
+
+    def capture_popen(command, *, cwd, env, **kwargs):
+        captured.update(command=command, cwd=cwd, env=env, kwargs=kwargs)
+        return cast("subprocess.Popen[bytes]", object())
+
+    monkeypatch.setattr(lifecycle_core.shutil, "which", lambda _executable: "/tools/python tool")
+    monkeypatch.setattr(lifecycle_core, "spawn_kwargs", lambda: {"creationflags": 512})
+    monkeypatch.setattr(lifecycle_core.subprocess, "Popen", capture_popen)
+    monkeypatch.setattr(lifecycle_core, "manage", lambda child: child)
+
+    lifecycle_core._spawn_process(process, project=project, environment=snapshot)
+
+    assert captured["command"] == ("/tools/python tool", "--label", "value with spaces")
+    assert captured["env"] == {"UNICODE_VALUE": "值"}
+    assert cast("dict[str, object]", captured["kwargs"])["creationflags"] == 512
+    assert "shell" not in cast("dict[str, object]", captured["kwargs"])
+
+
+def test_dev_child_process_inherits_env_file_with_shell_precedence(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    (tmp_path / ".env").write_text(
+        'SEEKDB_URL=mysql+aiomysql://dotenv.example/test\nDOTENV_ONLY="from dotenv # value\\nnext"\nOVERRIDE=from-dotenv # comment\nexport EXPORTED=value\n',
+        encoding="utf-8",
+    )
+    captured_child_environ: dict[str, str] | None = None
+
+    class FakeProcess:
+        def poll(self) -> int | None:
+            return None
+
+    def fake_popen(command: object, *, cwd: object, env: dict[str, str], **kwargs: object) -> FakeProcess:
+        nonlocal captured_child_environ
+        del command, cwd, kwargs
+        captured_child_environ = env
+        return FakeProcess()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OVERRIDE", "from-shell")
+    monkeypatch.setattr(lifecycle_core.shutil, "which", lambda _tool: sys.executable)
+    monkeypatch.setattr(lifecycle_core.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(lifecycle_core, "manage", lambda process: process)
+
+    project = lifecycle_core.discover_lifecycle_project(tmp_path)
+    environment = lifecycle_core.resolve_project_environment(project)
+    lifecycle_core._spawn_process(
+        project.spec.processes["web"],
+        project=project,
+        environment=environment,
+    )
+
+    assert captured_child_environ is not None
+    assert captured_child_environ["SEEKDB_URL"] == "mysql+aiomysql://dotenv.example/test"
+    assert captured_child_environ["DOTENV_ONLY"] == "from dotenv # value\nnext"
+    assert captured_child_environ["EXPORTED"] == "value"
+    assert captured_child_environ["OVERRIDE"] == "from-shell"
     assert "BUB_SECRET" not in captured_child_environ
+
+
+def test_dev_child_process_applies_dotenv_values_to_a_real_process(tmp_path: Path, monkeypatch) -> None:
+    _write_lifecycle_spec(tmp_path)
+    (tmp_path / ".env").write_text(
+        'CHILD_VALUE="from dotenv # value\\nnext"\n',
+        encoding="utf-8",
+    )
+    output = tmp_path / "child-value.txt"
+    monkeypatch.chdir(tmp_path)
+    project = lifecycle_core.discover_lifecycle_project(tmp_path)
+    process = project.spec.processes["web"].model_copy(
+        update={
+            "command": (
+                sys.executable,
+                "-c",
+                "from pathlib import Path; import os; Path('child-value.txt').write_text(os.environ['CHILD_VALUE'])",
+            )
+        }
+    )
+    environment = lifecycle_core.resolve_project_environment(project)
+
+    child = lifecycle_core._spawn_process(process, project=project, environment=environment)
+
+    assert child.wait(timeout=5) == 0
+    assert output.read_text(encoding="utf-8") == "from dotenv # value\nnext"
+
+
+def test_empty_shell_value_falls_back_to_dotenv_for_readiness_and_spawned_child(tmp_path: Path, monkeypatch) -> None:
+    _write_v2_lifecycle_spec(tmp_path, env_file=".env")
+    (tmp_path / ".env").write_text("API_KEY=from-dotenv\n", encoding="utf-8")
+    output = tmp_path / "child-api-key.txt"
+    child_script = (
+        "from pathlib import Path; import os; "
+        "Path('child-api-key.txt').write_text(os.environ['API_KEY'], encoding='utf-8')"
+    )
+    spec_path = tmp_path / ".agentseek" / "lifecycle.toml"
+    original_command = f'command = [{_toml_string(sys.executable)}, "-c", "print(\'unreachable\')"]'
+    replacement_command = f'command = [{_toml_string(sys.executable)}, "-c", {_toml_string(child_script)}]'
+    lifecycle_text = spec_path.read_text(encoding="utf-8")
+    assert original_command in lifecycle_text
+    spec_path.write_text(
+        lifecycle_text.replace(original_command, replacement_command),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("API_KEY", "")
+
+    result = CliRunner().invoke(build_command_app(), ["dev"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "API_KEY is configured" in result.stdout
+    assert output.read_text(encoding="utf-8") == "from-dotenv"
 
 
 @pytest.mark.parametrize("command", (["info"], ["doctor"]))
@@ -574,7 +963,7 @@ def test_v2_operational_path_env_file_symlink_swap_rejects_before_file_access(
     assert escaped not in accessed
 
 
-def test_v2_operational_path_dev_env_settings_symlink_swap_rejects_before_reader(
+def test_v2_operational_path_dev_env_snapshot_symlink_swap_rejects_before_reader(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -582,26 +971,25 @@ def test_v2_operational_path_dev_env_settings_symlink_swap_rejects_before_reader
     env_dir = tmp_path / "settings"
     env_dir.mkdir()
     (env_dir / ".env").write_text("API_KEY=inside\n", encoding="utf-8")
-    outside = tmp_path.parent / f"{tmp_path.name}-outside-env-settings"
+    outside = tmp_path.parent / f"{tmp_path.name}-outside-env-snapshot"
     outside.mkdir()
     escaped = outside / ".env"
     escaped.write_text("API_KEY=outside\n", encoding="utf-8")
     _swap_after_lifecycle_load(monkeypatch, env_dir, outside)
     read_paths: list[Path | None] = []
 
-    def record_settings(project, *, env_file: Path | None, defaults: bool) -> dict[str, str]:
-        del project, defaults
-        read_paths.append(env_file)
+    def record_dotenv_read(path: Path | None, *, ambient):
+        del ambient
+        read_paths.append(path)
         return {}
 
-    monkeypatch.setattr(lifecycle_core, "_env_file_checks", lambda project: [])
-    monkeypatch.setattr(lifecycle_core, "_env_settings_values", record_settings)
+    monkeypatch.setattr(lifecycle_environment, "parse_lifecycle_dotenv", record_dotenv_read)
     monkeypatch.chdir(tmp_path)
 
     result = CliRunner().invoke(build_command_app(), ["dev", "--skip-check"])
 
     _assert_confined_rejection(result, escaped, "env_file")
-    assert read_paths == [None]
+    assert read_paths == []
 
 
 @pytest.mark.parametrize("command", (["doctor"], ["dev", "--skip-check"]))
@@ -674,8 +1062,8 @@ def test_v2_operational_path_process_cwd_symlink_swap_after_readiness_rejects_be
     outside.mkdir()
     original = lifecycle_core._ensure_required_inputs
 
-    def ensure_then_swap(project) -> None:
-        original(project)
+    def ensure_then_swap(project, *, environment) -> None:
+        original(project, environment=environment)
         _swap_with_outside_symlink(runtime, outside)
 
     popen_called = False
@@ -784,9 +1172,9 @@ cwd = "second"
     sentinel_ran = False
     calls: list[object] = []
 
-    def ensure_then_swap(project) -> None:
+    def ensure_then_swap(project, *, environment) -> None:
         nonlocal sentinel_ran
-        original(project)
+        original(project, environment=environment)
         sentinel_ran = True
         _swap_with_outside_symlink(second, outside)
 
@@ -905,12 +1293,16 @@ def test_v1_path_compatibility_keeps_runtime_joins_and_symlinks(tmp_path: Path, 
     monkeypatch.delenv("BUB_MODEL", raising=False)
     assert required[0].status == "ok"
     assert env_file == outside_env
-    assert lifecycle_core._env_requirement_source(project, "BUB_MODEL", project.spec.env["BUB_MODEL"]) == str(
-        outside_env
-    )
+    environment = lifecycle_core.resolve_project_environment(project)
+    assert lifecycle_core._env_requirement_source(
+        project,
+        "BUB_MODEL",
+        project.spec.env["BUB_MODEL"],
+        environment=environment,
+    ) == str(outside_env)
     assert lifecycle_core._resolve_operational_path(project, process.cwd, allow_dot=True) == tmp_path / process.cwd
     assert lifecycle_core._run_command(task.command, project=project, cwd=task.cwd) == 0
-    lifecycle_core._spawn_process(process, project=project)
+    lifecycle_core._spawn_process(process, project=project, environment=environment)
     assert seen == [tmp_path / "frontend", tmp_path / f"../{outside.name}"]
 
 

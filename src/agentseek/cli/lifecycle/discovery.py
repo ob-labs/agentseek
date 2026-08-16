@@ -671,7 +671,6 @@ def _v1_postconditions_hold(project: NormalizedLifecycleProject) -> bool:
         or service.kind is not None
         or service.display is not None
         or service.primary is not None
-        or service.tech is not None
         or service.providers
         or service.check_ids
         or service.links

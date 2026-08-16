@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 def test_agentseek_command_shows_help() -> None:
     command = shutil.which("agentseek")
@@ -43,6 +45,61 @@ def test_agentseek_invalid_mode_exits_without_traceback() -> None:
     assert result.returncode == 2
     assert "Unsupported CLI mode: nope" in result.stderr
     assert "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize(
+    ("dotenv_contents", "canary"),
+    [
+        ("NUL_KEY_CANARY\x00TAIL=value\n", "NUL_KEY_CANARY"),
+        ("'EQUALS_KEY_CANARY=TAIL'=value\n", "EQUALS_KEY_CANARY"),
+        ("SAFE=value\x00NUL_VALUE_CANARY\n", "NUL_VALUE_CANARY"),
+    ],
+    ids=["nul-key", "equals-key", "resolved-value"],
+)
+def test_agentseek_dev_rejects_subprocess_incompatible_dotenv_before_starting_child(
+    tmp_path: Path,
+    dotenv_contents: str,
+    canary: str,
+) -> None:
+    command = [sys.executable, "-m", "agentseek"]
+    spec_dir = tmp_path / ".agentseek"
+    spec_dir.mkdir()
+    marker = tmp_path / "child.started"
+    child_command = [
+        sys.executable,
+        "-c",
+        "from pathlib import Path; Path('child.started').write_text('started', encoding='utf-8')",
+    ]
+    (spec_dir / "lifecycle.toml").write_text(
+        "\n".join([
+            "version = 2",
+            'template = "test/invalid-dotenv-environment"',
+            'name = "Invalid dotenv environment"',
+            'env_file = "lifecycle.env"',
+            "",
+            "[processes.app]",
+            f"command = {json.dumps(child_command)}",
+        ]),
+        encoding="utf-8",
+    )
+    (tmp_path / "lifecycle.env").write_text(dotenv_contents, encoding="utf-8")
+
+    result = subprocess.run(  # noqa: S603
+        [*command, "dev", "--skip-check"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    output = result.stdout + result.stderr
+    assert result.returncode == 2
+    assert not marker.exists()
+    assert "Invalid lifecycle environment." in result.stderr
+    assert canary not in output
+    assert "\x00" not in output
+    assert "\\x00" not in output
+    assert "Traceback" not in output
 
 
 def test_agentseek_task_does_not_inherit_dotenv_secrets(tmp_path: Path) -> None:

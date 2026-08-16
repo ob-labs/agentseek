@@ -22,6 +22,12 @@ from duty._internal.collection import Duty
 from pydantic import Field, create_model
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from agentseek.cli.lifecycle.environment import (
+    EnvironmentOrigin,
+    LifecycleDotenvError,
+    LifecycleEnvironmentSnapshot,
+    resolve_lifecycle_environment,
+)
 from agentseek.cli.lifecycle.errors import (
     LifecycleNotFoundError,
     LifecycleTomlError,
@@ -121,6 +127,8 @@ def run_lifecycle_task(project: LifecycleProject, name: str, **kwargs: object) -
         )
     try:
         task.run(**kwargs)
+    except LifecycleDotenvError as exc:
+        exit_project_error("Invalid lifecycle environment.", str(exc))
     except _UnsafeOperationalPathError as exc:
         exit_project_error(
             f"Invalid lifecycle {exc.field} path.",
@@ -166,21 +174,34 @@ def _lifecycle_collection(project: LifecycleProject) -> Collection:
         Duty(
             name="info",
             description="Print project summary.",
-            function=lambda _ctx, verbose=False: print_info(project, verbose=verbose),
+            function=lambda _ctx, verbose=False, environment=None: print_info(
+                project,
+                verbose=verbose,
+                environment=environment,
+            ),
         )
     )
     collection.add(
         Duty(
             name="doctor",
             description="Check local project readiness.",
-            function=lambda _ctx, live=False, strict=False: doctor(project, live=live, strict=strict),
+            function=lambda _ctx, live=False, strict=False, environment=None: doctor(
+                project,
+                live=live,
+                strict=strict,
+                environment=environment,
+            ),
         )
     )
     collection.add(
         Duty(
             name="dev",
             description="Run local development.",
-            function=lambda _ctx, dry_run=False: dev(project, dry_run=dry_run),
+            function=lambda _ctx, dry_run=False, environment=None: dev(
+                project,
+                dry_run=dry_run,
+                environment=environment,
+            ),
         )
     )
     return collection
@@ -215,7 +236,12 @@ def _display_name(name: str) -> str:
     return name.title()
 
 
-def print_info(project: LifecycleProject, *, verbose: bool) -> None:
+def print_info(
+    project: LifecycleProject,
+    *,
+    verbose: bool,
+    environment: LifecycleEnvironmentSnapshot | None = None,
+) -> None:
     """Print a project summary derived from the lifecycle spec."""
     spec = project.spec
     print("Project")
@@ -227,7 +253,8 @@ def print_info(project: LifecycleProject, *, verbose: bool) -> None:
     print("Entrypoints")
     print("  Dev: agentseek dev")
     for name, service in spec.services.items():
-        print(f"  {_display_name(name)}: {service.url}")
+        runtime = f" (runtime: {service.tech})" if service.tech else ""
+        print(f"  {_display_name(name)}: {service.url}{runtime}")
     print()
     print("Environment")
     if spec.env_file:
@@ -235,7 +262,12 @@ def print_info(project: LifecycleProject, *, verbose: bool) -> None:
         present = env_file.is_file()
         print(f"  Env file: {spec.env_file} ({'present' if present else 'missing'})")
     for name, requirement in spec.env.items():
-        source = _env_requirement_source(project, name, requirement)
+        source = _env_requirement_source(
+            project,
+            name,
+            requirement,
+            environment=environment,
+        )
         print(f"  {name}: {f'set ({source})' if source else 'missing'}")
     print()
     if spec.tasks:
@@ -252,9 +284,15 @@ def print_info(project: LifecycleProject, *, verbose: bool) -> None:
         _print_verbose_info(project)
 
 
-def doctor(project: LifecycleProject, *, live: bool, strict: bool) -> None:
+def doctor(
+    project: LifecycleProject,
+    *,
+    live: bool,
+    strict: bool,
+    environment: LifecycleEnvironmentSnapshot | None = None,
+) -> None:
     """Run local readiness checks derived from the lifecycle spec."""
-    results = _static_checks(project)
+    results = _static_checks(project, environment=environment)
     if live:
         results.extend(_live_checks(project))
     _print_checks(results)
@@ -264,23 +302,30 @@ def doctor(project: LifecycleProject, *, live: bool, strict: bool) -> None:
         raise SystemExit(1)
 
 
-def dev(project: LifecycleProject, *, dry_run: bool) -> None:
+def dev(
+    project: LifecycleProject,
+    *,
+    dry_run: bool,
+    environment: LifecycleEnvironmentSnapshot | None = None,
+) -> None:
     """Start local development processes declared in the lifecycle spec."""
     print("Startup plan")
     for name, process in project.spec.processes.items():
         print(f"  {_display_name(name)}: {_render_command(process.command)}")
     for name, service in project.spec.services.items():
-        print(f"  {_display_name(name)}: {service.url}")
+        runtime = f" (runtime: {service.tech})" if service.tech else ""
+        print(f"  {_display_name(name)}: {service.url}{runtime}")
     if dry_run:
         return
 
-    _ensure_required_inputs(project)
+    environment = environment if environment is not None else resolve_project_environment(project)
+    _ensure_required_inputs(project, environment=environment)
     for name, process in project.spec.processes.items():
         _operational_path(project, process.cwd, allow_dot=True, field=f"processes.{name}.cwd")
     processes: list[ManagedProcess] = []
     with _supervise_processes(processes):
         for process in project.spec.processes.values():
-            processes.append(_spawn_process(process, project=project))
+            processes.append(_spawn_process(process, project=project, environment=environment))
         _wait_for_processes(processes)
 
 
@@ -292,14 +337,18 @@ def _discover_spec(root: Path) -> tuple[Path, Path] | None:
     return None
 
 
-def _static_checks(project: LifecycleProject) -> list[CheckResult]:
+def _static_checks(
+    project: LifecycleProject,
+    *,
+    environment: LifecycleEnvironmentSnapshot | None = None,
+) -> list[CheckResult]:
     checks = [
         _check("ok" if project.path.is_file() else "fail", project.path.name, "Lifecycle spec is present."),
     ]
     checks.extend(_tool_checks(project.spec.required_tools))
     checks.extend(_path_checks(project))
     checks.extend(_env_file_checks(project))
-    checks.extend(_env_checks(project))
+    checks.extend(_env_checks(project, environment=environment))
     checks.extend(_process_cwd_checks(project))
     return checks
 
@@ -350,10 +399,22 @@ def _env_file_checks(project: LifecycleProject) -> list[CheckResult]:
     ]
 
 
-def _env_checks(project: LifecycleProject) -> list[CheckResult]:
+def _env_checks(
+    project: LifecycleProject,
+    *,
+    environment: LifecycleEnvironmentSnapshot | None = None,
+) -> list[CheckResult]:
     results: list[CheckResult] = []
     for name, requirement in project.spec.env.items():
-        configured = _env_requirement_source(project, name, requirement) is not None
+        configured = (
+            _env_requirement_source(
+                project,
+                name,
+                requirement,
+                environment=environment,
+            )
+            is not None
+        )
         if not requirement.required and not configured:
             continue
         status = "ok" if configured else ("fail" if requirement.required else "ok")
@@ -411,19 +472,41 @@ def _check_target(check: CheckV1 | CheckV2) -> bool:
     return 200 <= response.status_code < 400
 
 
-def _ensure_required_inputs(project: LifecycleProject) -> None:
-    failing = [item for item in _static_checks(project) if item.status == "fail"]
+def _ensure_required_inputs(
+    project: LifecycleProject,
+    *,
+    environment: LifecycleEnvironmentSnapshot,
+) -> None:
+    failing = [item for item in _static_checks(project, environment=environment) if item.status == "fail"]
     if failing:
         _print_checks(failing)
         exit_project_error("Project is not ready to run.", "Fix failing checks or use `agentseek doctor` for details.")
 
 
-def _env_requirement_source(project: LifecycleProject, name: str, requirement: EnvRequirement) -> str | None:
-    environment = _env_settings_values(project, env_file=None, defaults=False)
-    if environment.get(name):
+def _env_requirement_source(
+    project: LifecycleProject,
+    name: str,
+    requirement: EnvRequirement,
+    *,
+    environment: LifecycleEnvironmentSnapshot | None = None,
+) -> str | None:
+    if environment is not None:
+        for key in requirement.keys(name):
+            if not environment.values.get(key):
+                continue
+            origin = environment.origins[key]
+            if origin is EnvironmentOrigin.LAUNCH_ENVIRONMENT:
+                return "environment"
+            return project.spec.env_file or "env_file"
+        if requirement.default:
+            return "default"
+        return None
+
+    launch_values = _env_settings_values(project, env_file=None, defaults=False)
+    if launch_values.get(name):
         return "environment"
-    env_file = _env_settings_values(project, env_file=_env_file_path(project), defaults=False)
-    if env_file.get(name):
+    dotenv_values = _env_settings_values(project, env_file=_env_file_path(project), defaults=False)
+    if dotenv_values.get(name):
         return project.spec.env_file or "env_file"
     if requirement.default:
         return "default"
@@ -465,6 +548,19 @@ def _env_file_path(project: LifecycleProject) -> Path | None:
     return _operational_path(project, project.spec.env_file, allow_dot=False, field="env_file")
 
 
+def resolve_project_environment(project: LifecycleProject) -> LifecycleEnvironmentSnapshot:
+    """Resolve the one environment snapshot owned by this lifecycle invocation."""
+
+    try:
+        env_file = _env_file_path(project)
+    except _UnsafeOperationalPathError as exc:
+        exit_project_error(
+            f"Invalid lifecycle {exc.field} path.",
+            f"Update {exc.field} in {LIFECYCLE_SPEC_FILE}.",
+        )
+    return resolve_lifecycle_environment(env_file=env_file)
+
+
 def _resolve_operational_path(project: LifecycleProject, value: str, *, allow_dot: bool) -> Path:
     """Resolve a runtime lifecycle path while preserving v1 joins."""
     if isinstance(project.spec, LifecycleSpecV2):
@@ -503,7 +599,12 @@ def _render_command(command: Sequence[str]) -> str:
     return " ".join(shlex.quote(part) for part in command)
 
 
-def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject) -> ManagedProcess:
+def _spawn_process(
+    process: ProcessV1 | ProcessV2,
+    *,
+    project: LifecycleProject,
+    environment: LifecycleEnvironmentSnapshot,
+) -> ManagedProcess:
     executable = shutil.which(process.command[0])
     if executable is None:
         exit_project_error(
@@ -519,6 +620,7 @@ def _spawn_process(process: ProcessV1 | ProcessV2, *, project: LifecycleProject)
         popen(
             command,
             cwd=str(cwd),
+            env=environment.as_subprocess_env(),
             **spawn_kwargs(),
         ),
     )
@@ -622,6 +724,7 @@ __all__ = [
     "discover_lifecycle_project",
     "lifecycle_spec_exists",
     "load_lifecycle_project",
+    "resolve_project_environment",
     "run_lifecycle_task",
     "run_task_cli",
 ]

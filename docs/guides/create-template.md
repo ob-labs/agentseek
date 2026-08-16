@@ -97,8 +97,12 @@ adapters. Add provider-specific keys only when the selected SDK requires them.
 Document how runtime code maps aliases and which value wins.
 
 Declare the same required names under `[env.*]` in the lifecycle file. AgentSeek
-uses those declarations for readiness checks; it does not inject `.env` into
-child processes.
+uses those declarations for readiness checks. For non-dry-run `agentseek dev`,
+it reads `env_file` once, overlays non-empty launch values once, and reuses one
+immutable snapshot for readiness and all long-running child processes.
+Lifecycle defaults remain checks only. A dotenv `KEY=` is present and empty,
+while bare `KEY` assigns nothing. One-shot `agentseek task` commands keep their
+normal launch environment and do not inherit `env_file`.
 
 ## 5. Define The Lifecycle
 
@@ -148,6 +152,15 @@ command = ["uv", "sync"]
 Use `sync` for Python or backend dependencies and `frontend` for a separate
 frontend dependency tree. Put all long-running local processes under
 `[processes.*]` so `agentseek dev` owns the documented development stack.
+
+### Released API contract
+
+Templates that run agentseek-api require `agentseek-api >= 0.2.2` and pin one
+exact published version in the generated dependency file. Lifecycle process
+commands use direct argv. Shell wrappers, duplicated dotenv loading, and
+editable or local API checkouts do not satisfy the release contract. The exact
+version pin and catalog digest are delivered in the later template/catalog
+stage, not by AgentSeek core.
 
 Servers bind to loopback by default. If remote development is supported, add
 documented host overrides. A browser frontend must derive the backend host from
