@@ -160,8 +160,8 @@ def test_lifecycle_package_exports_the_lifecycle_environment_boundary() -> None:
     assert lifecycle.NormalizationWarning is NormalizationWarning
     assert lifecycle.normalize_lifecycle is normalize_lifecycle
     assert lifecycle.__all__ == [
-        "MINIMUM_AGENTSEEK_API_VERSION",
         "LIFECYCLE_SPEC_FILE",
+        "MINIMUM_AGENTSEEK_API_VERSION",
         "REQUIRED_COMMANDS",
         "SUPPORTED_LIFECYCLE_VERSION",
         "SUPPORTED_LIFECYCLE_VERSIONS",
