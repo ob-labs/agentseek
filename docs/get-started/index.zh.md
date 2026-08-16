@@ -41,7 +41,7 @@ agentseek task frontend
 
 在 `.env` 或运行 AgentSeek 的环境里，设置所选模板需要的模型和 provider 凭证。
 
-对于 `agentseek dev`，AgentSeek 只读取一次项目 `env_file`，只覆盖一次非空启动变量，
+对于非 dry-run 的 `agentseek dev`，AgentSeek 只读取一次项目 `env_file`，只覆盖一次非空启动变量，
 并将同一个不可变快照（immutable snapshot）复用于就绪检查和每个长运行进程。生命周期
 默认值仅用于检查。一次性的 `agentseek task` 命令保留其正常启动环境，不继承 `env_file`。
 

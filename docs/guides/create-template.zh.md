@@ -21,7 +21,7 @@ sources:
 
 ## 前置条件
 
-- 本地已有独立 catalog checkout，并已完成 `uv sync`。
+- 本地已有独立 catalog 检出副本，并已完成 `uv sync`。
 - 已明确生成应用的目标，并找到一个运行时相近的现有模板。
 - 已选择唯一的 `type/name` spec。除非同时扩展 CLI 的类型支持，否则复用 `bub`、`deepagents` 或 `langchain`。
 
@@ -144,9 +144,9 @@ Python 或 backend 依赖统一使用 `sync`，独立 frontend 依赖树使用 `
 
 运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中固定一个
 已发布的精确版本（exact published version）。生命周期进程命令使用直接参数数组
-（direct argv）。Shell 包装、重复 dotenv 加载，以及 editable 或本地 API checkout 都不
-满足发布契约。精确版本 pin 与 catalog digest 在后续 template/catalog 阶段交付，不由
-AgentSeek core 提供。
+（direct argv）。Shell 包装、重复 dotenv 加载，以及可编辑安装或本地 API 检出副本都不
+满足发布契约。精确版本固定与模板目录摘要在后续模板目录阶段交付，不由 AgentSeek
+core 提供。
 
 Server 默认绑定 loopback。支持远程开发时，增加并说明 host override。浏览器 frontend 必须根据浏览器地址推导 backend host，或接受显式 public API URL。
 

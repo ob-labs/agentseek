@@ -79,18 +79,17 @@ sources:
 lifecycle default < env_file < shell environment
 ```
 
-对于 `agentseek dev`，AgentSeek 只解析一次 `env_file`，只覆盖一次非空启动值，并将一个
+对于非 dry-run 的 `agentseek dev`，AgentSeek 只解析一次 `env_file`，只覆盖一次非空启动值，并将一个
 不可变快照（immutable snapshot）传给就绪检查和所有长运行子进程。生命周期默认值只验证
 就绪检查，不会进入子进程快照；`agentseek task` 保留其正常启动环境，不继承生命周期
-`env_file`。AgentSeek 只保证初始子进程环境/快照
-（initial child environment/snapshot）：兼容的子进程配置补全可以填入缺失 key，
+`env_file`。AgentSeek 只保证初始子进程环境/快照：兼容的子进程配置补全可以填入缺失 key，
 但不得替换继承的已有 key；任意子进程代码仍可自行修改其进程环境。
 
 运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中固定一个
 已发布的精确版本（exact published version）。生命周期进程命令使用直接参数数组
-（direct argv）。Shell 包装、重复 dotenv 或覆盖加载，以及 editable 或本地 API checkout
+（direct argv）。Shell 包装、重复 dotenv 或覆盖加载，以及可编辑安装或本地 API 检出副本
 都不满足发布契约。禁止重复覆盖加载是模板编写约束，不表示 AgentSeek 会对任意子进程
-强制执行。精确版本 pin 与 catalog digest 在后续 template/catalog 阶段交付，不由 AgentSeek
+强制执行。精确版本固定与模板目录摘要在后续模板目录阶段交付，不由 AgentSeek
 core 提供。
 
 ## Task 命名
@@ -147,11 +146,11 @@ core 提供。
 
 | 检查 | 命令或依据 |
 | --- | --- |
-| 完整 catalog 契约 | 在独立 catalog checkout 中运行 `make check`。 |
+| 完整 catalog 契约 | 在独立 catalog 检出副本中运行 `make check`。 |
 | 注册表与自包含 | Catalog 测试要求注册表与目录完全一致、只含普通文件/目录，并确保每个模板子树自包含。 |
 | 默认渲染和生命周期 smoke | Catalog 测试渲染每个注册模板，并用配对 core 快照验证严格 lifecycle v2。 |
 | 生成项目检查 | 使用 `agentseek create <absolute-template-path> --no-input` 渲染本地模板。 |
-| Core 文档 | 本规范变化时，在 AgentSeek core checkout 中运行 `make docs-test`。 |
+| Core 文档 | 本规范变化时，在 AgentSeek core 检出副本中运行 `make docs-test`。 |
 
 ## 相关页面
 

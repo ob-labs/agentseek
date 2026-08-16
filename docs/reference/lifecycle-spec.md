@@ -97,7 +97,7 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 | Section | Purpose |
 | --- | --- |
-| `env_file` | Optional project-local dotenv file resolved once by `agentseek dev` for declared checks and long-running child processes. |
+| `env_file` | Optional project-local dotenv file resolved once by non-dry-run `agentseek dev` for declared checks and long-running child processes. |
 | `tools` | Required executables used by the project. |
 | `paths` | Required local files or directories. |
 | `env.<name>` | Environment variables AgentSeek should check. Defaults are lower priority than `env_file` and shell variables. |

@@ -87,7 +87,7 @@ Readiness-only environment resolution:
 lifecycle default < env_file < shell environment
 ```
 
-For `agentseek dev`, AgentSeek resolves `env_file` once, overlays non-empty
+For non-dry-run `agentseek dev`, AgentSeek resolves `env_file` once, overlays non-empty
 launch values once, and passes one immutable snapshot to readiness and every
 long-running child. Lifecycle defaults validate readiness only and never enter
 the child snapshot; `agentseek task` keeps its normal launch environment and

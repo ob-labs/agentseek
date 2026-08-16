@@ -44,7 +44,7 @@ agentseek task frontend
 Set the model and provider credentials required by the selected template in
 `.env` or the environment used to run AgentSeek.
 
-For `agentseek dev`, AgentSeek reads the project `env_file` once, overlays
+For non-dry-run `agentseek dev`, AgentSeek reads the project `env_file` once, overlays
 non-empty launch variables once, and reuses that immutable snapshot for
 readiness and every long-running process. Lifecycle defaults are checks only.
 One-shot `agentseek task` commands keep their normal launch environment and do
