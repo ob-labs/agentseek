@@ -34,7 +34,7 @@
 AgentSeek 是面向本地 Agent 应用开发的 template-first 工具包。它为可编辑的生成项目
 提供一条可预期的生命周期：发现、创建、审视、配置、检查、运行、观测和迭代。
 
-AgentSeek 0.1.1 从不可变的
+AgentSeek 0.1.2 从不可变的
 [`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0)
 解析 lifecycle-v2 模板。CLI 用内嵌注册表快照列出模板；命名模板内容只按精确锁定的
 commit 获取。
