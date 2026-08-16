@@ -5,13 +5,14 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
-import signal
 import sys
 import time
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 import pytest
+
+_POSIX_SIGKILL_NUMBER = 9
 
 _BLOCKED_SEPARATE_SESSION_HELPER = """
 import json
@@ -90,7 +91,7 @@ def _force_stop(pid: int) -> None:
     if not _process_is_running(pid):
         return
     try:
-        os.kill(pid, signal.SIGKILL)
+        os.kill(pid, _POSIX_SIGKILL_NUMBER)
     except ProcessLookupError:
         return
 
