@@ -1,5 +1,6 @@
 """Lifecycle public API."""
 
+from agentseek.cli.lifecycle.compatibility import MINIMUM_AGENTSEEK_API_VERSION
 from agentseek.cli.lifecycle.core import (
     LifecycleProject,
     lifecycle_spec_exists,
@@ -24,6 +25,7 @@ from agentseek.cli.lifecycle.spec import (
 )
 
 __all__ = [
+    "MINIMUM_AGENTSEEK_API_VERSION",
     "LIFECYCLE_SPEC_FILE",
     "REQUIRED_COMMANDS",
     "SUPPORTED_LIFECYCLE_VERSION",

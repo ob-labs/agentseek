@@ -5,6 +5,18 @@ from __future__ import annotations
 from pathlib import Path
 
 
+def test_published_api_lifecycle_contract_uses_declared_floors() -> None:
+    workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "main.yml"
+    text = workflow.read_text(encoding="utf-8")
+
+    assert "--with python-dotenv==1.0.0" in text
+    assert "agentseek-api-lifecycle-contract:" in text
+    assert "scripts/check_agentseek_api_lifecycle_contract.py" in text
+    assert 'test "${api_version}" = "0.2.2"' in text
+    assert '--with "agentseek-api==${api_version}"' in text
+    assert "export PYTHONPATH=" in text
+
+
 def test_phoenix_smoke_verifies_multiple_trace_markers() -> None:
     """The Phoenix smoke job must prove more than one persisted trace."""
     workflow = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "main.yml"
