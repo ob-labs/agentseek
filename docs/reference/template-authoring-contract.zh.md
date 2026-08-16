@@ -80,13 +80,18 @@ lifecycle default < env_file < shell environment
 ```
 
 对于 `agentseek dev`，AgentSeek 只解析一次 `env_file`，只覆盖一次非空启动值，并将一个
-immutable snapshot 传给 readiness 和所有长运行 child。生命周期默认值只验证 readiness，
-不会进入 child snapshot；`agentseek task` 保留其正常启动环境，不继承生命周期 `env_file`。
+不可变快照（immutable snapshot）传给就绪检查和所有长运行子进程。生命周期默认值只验证
+就绪检查，不会进入子进程快照；`agentseek task` 保留其正常启动环境，不继承生命周期
+`env_file`。AgentSeek 只保证初始子进程环境/快照
+（initial child environment/snapshot）：兼容的子进程配置补全可以填入缺失 key，
+但不得替换继承的已有 key；任意子进程代码仍可自行修改其进程环境。
 
-运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中 pin 一个
-exact published version。生命周期 process command 使用 direct argv。shell wrapper、重复
-dotenv 加载，以及 editable 或本地 API checkout 都不满足发布契约。精确版本 pin 与 catalog
-digest 在后续 template/catalog 阶段交付，不由 AgentSeek core 提供。
+运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中固定一个
+已发布的精确版本（exact published version）。生命周期进程命令使用直接参数数组
+（direct argv）。Shell 包装、重复 dotenv 或覆盖加载，以及 editable 或本地 API checkout
+都不满足发布契约。禁止重复覆盖加载是模板编写约束，不表示 AgentSeek 会对任意子进程
+强制执行。精确版本 pin 与 catalog digest 在后续 template/catalog 阶段交付，不由 AgentSeek
+core 提供。
 
 ## Task 命名
 

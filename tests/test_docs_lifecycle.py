@@ -411,10 +411,19 @@ def test_lifecycle_references_define_the_immutable_environment_boundary(referenc
     lines = text.splitlines()
 
     assert "immutable snapshot" in text
+    assert "non-dry-run" in text
     assert "`KEY=`" in text
     assert "`KEY`" in text
     assert "malformed dotenv" in text
     assert "exit 2" in text
+    assert "`agentseek info`" in text
+    assert "dotenv status" in text
+    assert "`agentseek doctor --strict`" in text
+    assert "exit 1" in text
+    assert "physical bindings in order" in text
+    assert "captured launch environment" in text
+    assert "initial child environment/snapshot" in text
+    assert "arbitrary child code" in text.lower()
     assert f"`agentseek-api >= {MINIMUM_AGENTSEEK_API_VERSION}`" in text
     assert any("`agentseek dev`" in line and "snapshot" in line for line in lines)
     assert any("`agentseek task`" in line and "`env_file`" in line for line in lines)
@@ -438,3 +447,20 @@ def test_template_authoring_requires_a_compatible_released_api(reference: Path) 
     assert f"`agentseek-api >= {MINIMUM_AGENTSEEK_API_VERSION}`" in text
     assert "exact published version" in text
     assert "direct argv" in text
+
+
+@pytest.mark.parametrize(
+    "guide",
+    (
+        ROOT / "docs" / "guides" / "create-template.md",
+        ROOT / "docs" / "guides" / "create-template.zh.md",
+    ),
+)
+def test_template_guides_define_the_one_time_dev_environment_boundary(guide: Path) -> None:
+    """Template guides must not describe dotenv as a generic child pass-through."""
+    text = guide.read_text(encoding="utf-8")
+
+    assert "immutable snapshot" in text
+    assert "`KEY=`" in text
+    assert "`agentseek task`" in text
+    assert "`env_file`" in text

@@ -3,12 +3,16 @@ title: 生命周期规范
 type: reference
 audience: [A2]
 runs: no
-verified_on: 2026-07-28
+verified_on: 2026-08-17
 sources:
   - src/agentseek/cli/lifecycle/spec.py
   - src/agentseek/cli/lifecycle/environment.py
+  - src/agentseek/cli/lifecycle/dotenv_adapter.py
   - src/agentseek/cli/lifecycle/compatibility.py
   - src/agentseek/cli/lifecycle/core.py
+  - src/agentseek/cli/commands/dev.py
+  - src/agentseek/cli/commands/doctor.py
+  - src/agentseek/cli/commands/info.py
   - src/agentseek/cli/lifecycle/authored.py
   - src/agentseek/cli/lifecycle/normalize.py
   - src/agentseek/cli/lifecycle/json_output.py
@@ -107,33 +111,40 @@ command = ["npm", "install", "--prefix", "frontend"]
 
 ## 环境检查
 
-每次非 dry-run 的 `agentseek dev` 调用都会解析一个 immutable snapshot。该快照由
-项目 `env_file` 与非空的启动环境值创建：
+每次非 dry-run（non-dry-run）的 `agentseek dev` 调用都会只创建一次不可变快照（immutable snapshot）。
+它会先捕获启动环境（captured launch environment），再用项目 `env_file` 与其中的非空值创建该快照：
 
 ```text
-lifecycle env_file < non-empty launch environment
+lifecycle env_file < non-empty captured launch environment
 ```
 
-在生命周期 dotenv 中，`KEY=` 表示一个存在但为空的赋值；裸 `KEY` 不产生赋值。
-原始启动值为空时，会在创建快照前省略，因此 dotenv 值可以补上它。键一旦出现在
-snapshot 中，即使值为 `""`，在 child boundary 也不再可替换。
+受限的 python-dotenv 会按文件中物理绑定出现的顺序（physical bindings in order）解析，
+并在文件内没有值时回退到已捕获的启动环境。在生命周期 dotenv 中，`KEY=` 表示一个
+存在但为空的赋值；裸 `KEY` 不产生赋值。原始启动值为空时，会在创建快照前省略，因此
+dotenv 值可以补上它。
 
-readiness、内部 preflight 与每个长运行 child 都使用同一个 snapshot。生命周期默认值
-可以满足 readiness，但绝不会进入 snapshot。只有声明在 `[env.<name>]` 的 key 及其
-aliases 会参与 readiness 检查。child 只接收最终值；AgentSeek 不传递源路径、provenance
-或要求再次解析的指令。child 可以从自己的低优先级来源补齐缺失 key，但不能替换已继承
-的 key。`agentseek task` 不继承生命周期 `env_file`，其行为保持不变。
+就绪检查、内部预检与每个长运行子进程都使用同一个快照。生命周期默认值可以满足
+就绪检查，但绝不会进入快照。只有声明在 `[env.<name>]` 的 key 及其 aliases 会参与
+就绪检查。AgentSeek 只保证初始子进程环境/快照（initial child environment/snapshot）：
+其中只有已解析的值，不包含源路径、provenance 或要求再次解析的指令。兼容的子进程配置
+补全可以填入缺失 key，但不得替换继承的已有 key。任意子进程代码（arbitrary child code）
+仍可自行修改其进程环境；禁止重复加载覆盖配置只是模板编写约束，不是 AgentSeek 的
+强制保证。`agentseek task` 不继承生命周期 `env_file`，其行为保持不变。
 
 使用 API completion contract 的生命周期进程需要
 `agentseek-api >= 0.2.2`。`agentseek dev --dry-run` 只打印计划，不读取生命周期
-dotenv。缺失、无法解码或 malformed dotenv 会在任何 child 启动前返回 `exit 2`，不创建
-部分 snapshot，且诊断不得包含值；裸 `KEY` 仍是有效语法。
+dotenv。缺失、无法解码或 malformed dotenv 的严格保证只适用于非 dry-run 的
+`agentseek dev`：它会在任何子进程启动前返回 `exit 2`，不创建部分快照，且诊断不得
+包含值；裸 `KEY` 仍是有效语法。单独运行 `agentseek info` 仍会报告 dotenv 状态
+（dotenv status），不会创建快照。单独严格运行 `agentseek doctor --strict` 会渲染
+就绪失败（例如 dotenv 缺失），并返回 `exit 1`。
 
 ## 生命周期 v1 第一阶段范围
 
 Version 1 支持必需工具、必需路径、项目环境需求、HTTP live 检查、长运行进程和一次性任务。
 它不支持可选 tool/path 检查、TCP 检查、进程级环境覆盖或多个 env 文件。生命周期 schema
-不新增独立插值模式：配置的 `env_file` 仍采用受支持的 python-dotenv 文件内插值语义。
+不新增独立插值模式：配置的 `env_file` 使用受限的 python-dotenv，按文件中物理绑定出现的
+顺序解析，并回退到已捕获的启动环境。
 
 ## 生命周期 v2 编写字段
 

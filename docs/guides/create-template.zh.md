@@ -89,7 +89,10 @@ AGENTSEEK_API_BASE=
 应用在多个原生 provider adapter 之间切换时，增加 `AGENTSEEK_MODEL_PROVIDER`。只有所选 SDK 确实要求时，才增加 provider 专属密钥。文档必须说明运行时代码如何映射别名，以及冲突时谁优先。
 
 在 lifecycle 文件的 `[env.*]` 中声明同一组必需名称。AgentSeek 用这些声明检查
-就绪状态；`agentseek dev` 会把项目 `.env` 传给长运行子进程，shell 变量优先。
+就绪状态。对于非 dry-run 的 `agentseek dev`，它只读取一次 `env_file`，只覆盖一次
+非空启动值，并将同一个不可变快照（immutable snapshot）复用于就绪检查和所有长运行
+子进程。生命周期默认值只用于检查；dotenv 中的 `KEY=` 表示存在但为空，裸 `KEY` 不产生
+赋值。一次性的 `agentseek task` 命令保留正常启动环境，不继承 `env_file`。
 
 ## 5. 定义生命周期
 
@@ -139,10 +142,11 @@ Python 或 backend 依赖统一使用 `sync`，独立 frontend 依赖树使用 `
 
 ### 已发布 API 契约
 
-运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中 pin 一个
-exact published version。生命周期 process command 使用 direct argv。shell wrapper、重复
-dotenv 加载，以及 editable 或本地 API checkout 都不满足发布契约。精确版本 pin 与 catalog
-digest 在后续 template/catalog 阶段交付，不由 AgentSeek core 提供。
+运行 agentseek-api 的模板需要 `agentseek-api >= 0.2.2`，并在生成的依赖文件中固定一个
+已发布的精确版本（exact published version）。生命周期进程命令使用直接参数数组
+（direct argv）。Shell 包装、重复 dotenv 加载，以及 editable 或本地 API checkout 都不
+满足发布契约。精确版本 pin 与 catalog digest 在后续 template/catalog 阶段交付，不由
+AgentSeek core 提供。
 
 Server 默认绑定 loopback。支持远程开发时，增加并说明 host override。浏览器 frontend 必须根据浏览器地址推导 backend host，或接受显式 public API URL。
 

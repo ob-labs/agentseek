@@ -97,9 +97,12 @@ adapters. Add provider-specific keys only when the selected SDK requires them.
 Document how runtime code maps aliases and which value wins.
 
 Declare the same required names under `[env.*]` in the lifecycle file. AgentSeek
-uses those declarations for readiness checks. During `agentseek dev`, the
-project `.env` is also passed to long-running child processes, with exported
-shell variables taking precedence.
+uses those declarations for readiness checks. For non-dry-run `agentseek dev`,
+it reads `env_file` once, overlays non-empty launch values once, and reuses one
+immutable snapshot for readiness and all long-running child processes.
+Lifecycle defaults remain checks only. A dotenv `KEY=` is present and empty,
+while bare `KEY` assigns nothing. One-shot `agentseek task` commands keep their
+normal launch environment and do not inherit `env_file`.
 
 ## 5. Define The Lifecycle
 
