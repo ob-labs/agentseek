@@ -18,10 +18,16 @@ _AGENTSEEK_GRACEFUL_SHUTDOWN_TIMEOUT_SECONDS = 15.0
 _HELPER_PROCESS_GROUP_GRACE_SECONDS = 1.0
 _FALLBACK_REAP_TIMEOUT_SECONDS = 5.0
 _PROCESS_GROUP_POLL_SECONDS = 0.05
+_POSIX_ONLY_CONTRACT_DIAGNOSTIC = "published agentseek-api lifecycle contract requires POSIX process-group support"
 
 
 def _toml_string(value: str | Path) -> str:
     return json.dumps(str(value), ensure_ascii=False)
+
+
+def _require_posix_contract_platform() -> None:
+    if os.name != "posix":
+        raise RuntimeError(_POSIX_ONLY_CONTRACT_DIAGNOSTIC)
 
 
 def _write_api_capture_helper(root: Path, output: Path, process_marker: Path) -> Path:
@@ -165,6 +171,7 @@ def _run_agentseek(
 
 
 def main() -> int:
+    _require_posix_contract_platform()
     actual_api_version = version("agentseek-api")
     if actual_api_version != MINIMUM_AGENTSEEK_API_VERSION:
         message = f"expected agentseek-api {MINIMUM_AGENTSEEK_API_VERSION}, got {actual_api_version}"

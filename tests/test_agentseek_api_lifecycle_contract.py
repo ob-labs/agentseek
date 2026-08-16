@@ -9,7 +9,7 @@ import signal
 import sys
 import time
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -68,6 +68,16 @@ def _force_stop(pid: int) -> None:
         os.kill(pid, signal.SIGKILL)
     except ProcessLookupError:
         return
+
+
+def test_contract_main_rejects_windows_before_helper_generation(monkeypatch: pytest.MonkeyPatch) -> None:
+    contract = _load_contract_script()
+    monkeypatch.setattr(contract, "os", SimpleNamespace(name="nt"))
+
+    with pytest.raises(RuntimeError) as result:
+        contract.main()
+
+    assert str(result.value) == "published agentseek-api lifecycle contract requires POSIX process-group support"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="the contract timeout fallback requires POSIX process groups")
