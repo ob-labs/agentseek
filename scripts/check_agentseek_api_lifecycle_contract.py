@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from contextlib import suppress
 from importlib.metadata import version
 from pathlib import Path
 
@@ -50,6 +51,38 @@ def _write_api_capture_helper(root: Path, output: Path) -> Path:
         encoding="utf-8",
     )
     return helper
+
+
+def _run_agentseek(
+    command: list[str],
+    *,
+    cwd: Path,
+    env: dict[str, str],
+    timeout_seconds: float = 30,
+    graceful_shutdown_timeout_seconds: float = 5,
+) -> subprocess.CompletedProcess[str]:
+    process = subprocess.Popen(  # noqa: S603 - command is constructed by this contract script
+        command,
+        cwd=cwd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        stdout, stderr = process.communicate(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        with suppress(ProcessLookupError):
+            process.terminate()
+        try:
+            process.communicate(timeout=graceful_shutdown_timeout_seconds)
+        except subprocess.TimeoutExpired:
+            with suppress(ProcessLookupError):
+                process.kill()
+            process.communicate()
+        message = "agentseek dev exceeded the lifecycle-contract timeout"
+        raise TimeoutError(message) from None
+    return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 
 
 def main() -> int:
@@ -103,17 +136,13 @@ def main() -> int:
         launch_environment.pop("CHILD_ONLY", None)
         launch_environment.pop("PYTHONPATH", None)
 
-        completed = subprocess.run(
+        completed = _run_agentseek(
             [sys.executable, "-m", "agentseek", "dev"],
             cwd=root,
             env=launch_environment,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=30,
         )
         if completed.returncode != 0:
-            message = f"agentseek dev failed ({completed.returncode})\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
+            message = "agentseek dev failed"
             raise AssertionError(message)
 
         if not output.is_file():
