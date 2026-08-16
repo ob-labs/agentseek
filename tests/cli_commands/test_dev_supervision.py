@@ -21,6 +21,7 @@ from typer.testing import CliRunner
 
 import agentseek.cli.lifecycle.core as lifecycle_core
 import agentseek.cli.lifecycle.process_group as process_group
+from agentseek.cli.lifecycle.environment import LifecycleEnvironmentSnapshot
 from agentseek.cli.lifecycle.process_group import ManagedProcess, manage, spawn_kwargs, terminate
 from tests.cli_commands.helpers import build_command_app
 
@@ -267,12 +268,13 @@ def test_dev_reaps_started_processes_when_startup_is_interrupted(
             return started
         raise KeyboardInterrupt
 
-    monkeypatch.setattr(lifecycle_core, "_ensure_required_inputs", lambda _project: None)
+    environment = LifecycleEnvironmentSnapshot(values={}, origins={})
+    monkeypatch.setattr(lifecycle_core, "_ensure_required_inputs", lambda _project, *, environment: None)
     monkeypatch.setattr(lifecycle_core, "_operational_path", lambda *_args, **_kwargs: tmp_path)
     monkeypatch.setattr(lifecycle_core, "_spawn_process", spawn_then_interrupt)
     try:
         with pytest.raises(KeyboardInterrupt):
-            lifecycle_core.dev(project, dry_run=False)
+            lifecycle_core.dev(project, dry_run=False, environment=environment)
         _assert_tree_stopped(started, child_pid)
     finally:
         terminate(started, grace_seconds=0.0)
