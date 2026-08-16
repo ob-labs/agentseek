@@ -2,21 +2,29 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from contextlib import suppress
 from importlib.metadata import version
 from pathlib import Path
 
 from agentseek.cli.lifecycle.compatibility import MINIMUM_AGENTSEEK_API_VERSION
 
+_AGENTSEEK_TIMEOUT_SECONDS = 30.0
+_AGENTSEEK_GRACEFUL_SHUTDOWN_TIMEOUT_SECONDS = 15.0
+_HELPER_PROCESS_GROUP_GRACE_SECONDS = 1.0
+_FALLBACK_REAP_TIMEOUT_SECONDS = 5.0
+_PROCESS_GROUP_POLL_SECONDS = 0.05
+
 
 def _toml_string(value: str | Path) -> str:
     return json.dumps(str(value), ensure_ascii=False)
 
 
-def _write_api_capture_helper(root: Path, output: Path) -> Path:
+def _write_api_capture_helper(root: Path, output: Path, process_marker: Path) -> Path:
     helper = root / "capture_api_environment.py"
     changed_dotenv = (
         "DIRECT_SENTINEL=changed-after-snapshot\n"
@@ -28,11 +36,14 @@ def _write_api_capture_helper(root: Path, output: Path) -> Path:
         "\n".join([
             "from __future__ import annotations",
             "import json",
+            "import os",
             "from importlib.metadata import version",
             "from pathlib import Path",
             "from agentseek_api.cli import main",
             f"OUTPUT = Path({_toml_string(output)})",
             f"ENV_FILE = Path({_toml_string(root / '.env')})",
+            f"PROCESS_MARKER = Path({_toml_string(process_marker)})",
+            "PROCESS_MARKER.write_text(json.dumps({'pid': os.getpid(), 'pgid': os.getpgid(0)}), encoding='utf-8')",
             "def capture(command, *, env, cwd=None):",
             "    OUTPUT.write_text(json.dumps({",
             "        'api_version': version('agentseek-api'),",
@@ -53,36 +64,104 @@ def _write_api_capture_helper(root: Path, output: Path) -> Path:
     return helper
 
 
+def _tracked_posix_process_group(process_marker: Path | None) -> int | None:
+    if os.name == "nt" or process_marker is None:
+        return None
+    try:
+        observed = json.loads(process_marker.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    pid = observed.get("pid") if isinstance(observed, dict) else None
+    pgid = observed.get("pgid") if isinstance(observed, dict) else None
+    if type(pid) is not int or type(pgid) is not int or pid <= 0 or pid != pgid:
+        return None
+    try:
+        if os.getpgid(pid) != pgid:
+            return None
+    except (ProcessLookupError, PermissionError):
+        return None
+    return pgid
+
+
+def _process_group_exists(pgid: int) -> bool:
+    try:
+        os.killpg(pgid, 0)
+    except (ProcessLookupError, PermissionError):
+        return False
+    return True
+
+
+def _terminate_tracked_posix_process_group(
+    process_marker: Path | None,
+    *,
+    grace_seconds: float,
+    reap_timeout_seconds: float,
+) -> None:
+    pgid = _tracked_posix_process_group(process_marker)
+    if pgid is None:
+        return
+    with suppress(ProcessLookupError):
+        os.killpg(pgid, signal.SIGTERM)
+    deadline = time.monotonic() + grace_seconds
+    while _process_group_exists(pgid) and time.monotonic() < deadline:
+        time.sleep(_PROCESS_GROUP_POLL_SECONDS)
+    if not _process_group_exists(pgid):
+        return
+    with suppress(ProcessLookupError):
+        os.killpg(pgid, signal.SIGKILL)
+    deadline = time.monotonic() + reap_timeout_seconds
+    while _process_group_exists(pgid) and time.monotonic() < deadline:
+        time.sleep(_PROCESS_GROUP_POLL_SECONDS)
+
+
+def _kill_and_reap_agentseek(process: subprocess.Popen[bytes], *, timeout_seconds: float) -> None:
+    with suppress(ProcessLookupError):
+        process.kill()
+    try:
+        process.wait(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        message = "agentseek dev fallback could not reap its parent"
+        raise TimeoutError(message) from None
+
+
 def _run_agentseek(
     command: list[str],
     *,
     cwd: Path,
     env: dict[str, str],
-    timeout_seconds: float = 30,
-    graceful_shutdown_timeout_seconds: float = 5,
-) -> subprocess.CompletedProcess[str]:
+    timeout_seconds: float = _AGENTSEEK_TIMEOUT_SECONDS,
+    graceful_shutdown_timeout_seconds: float = _AGENTSEEK_GRACEFUL_SHUTDOWN_TIMEOUT_SECONDS,
+    helper_process_marker: Path | None = None,
+    helper_process_group_grace_seconds: float = _HELPER_PROCESS_GROUP_GRACE_SECONDS,
+    fallback_reap_timeout_seconds: float = _FALLBACK_REAP_TIMEOUT_SECONDS,
+) -> int:
     process = subprocess.Popen(  # noqa: S603 - command is constructed by this contract script
         command,
         cwd=cwd,
         env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     try:
-        stdout, stderr = process.communicate(timeout=timeout_seconds)
+        return process.wait(timeout=timeout_seconds)
     except subprocess.TimeoutExpired:
+        if os.name == "nt":
+            _kill_and_reap_agentseek(process, timeout_seconds=fallback_reap_timeout_seconds)
+            message = "agentseek lifecycle timeout fallback requires POSIX process-group support"
+            raise RuntimeError(message) from None
         with suppress(ProcessLookupError):
-            process.terminate()
+            process.send_signal(signal.SIGTERM)
         try:
-            process.communicate(timeout=graceful_shutdown_timeout_seconds)
+            process.wait(timeout=graceful_shutdown_timeout_seconds)
         except subprocess.TimeoutExpired:
-            with suppress(ProcessLookupError):
-                process.kill()
-            process.communicate()
+            _terminate_tracked_posix_process_group(
+                helper_process_marker,
+                grace_seconds=helper_process_group_grace_seconds,
+                reap_timeout_seconds=fallback_reap_timeout_seconds,
+            )
+            _kill_and_reap_agentseek(process, timeout_seconds=fallback_reap_timeout_seconds)
         message = "agentseek dev exceeded the lifecycle-contract timeout"
         raise TimeoutError(message) from None
-    return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 
 
 def main() -> int:
@@ -96,7 +175,8 @@ def main() -> int:
         lifecycle_dir = root / ".agentseek"
         lifecycle_dir.mkdir()
         output = root / "observed.json"
-        helper = _write_api_capture_helper(root, output)
+        helper_process_marker = root / ".agentseek-api-helper-process.json"
+        helper = _write_api_capture_helper(root, output, helper_process_marker)
 
         (root / ".env").write_text(
             "DIRECT_SENTINEL=from-dotenv\nDEPENDENT_SENTINEL=${DIRECT_SENTINEL}:resolved-in-file\nEXPLICIT_EMPTY=\n",
@@ -136,12 +216,13 @@ def main() -> int:
         launch_environment.pop("CHILD_ONLY", None)
         launch_environment.pop("PYTHONPATH", None)
 
-        completed = _run_agentseek(
+        returncode = _run_agentseek(
             [sys.executable, "-m", "agentseek", "dev"],
             cwd=root,
             env=launch_environment,
+            helper_process_marker=helper_process_marker,
         )
-        if completed.returncode != 0:
+        if returncode != 0:
             message = "agentseek dev failed"
             raise AssertionError(message)
 
