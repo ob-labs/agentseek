@@ -35,8 +35,8 @@ AgentSeek is a template-first toolkit for local agent application development.
 It gives editable generated projects one predictable lifecycle: discover,
 create, inspect, configure, check, run, observe, and iterate.
 
-AgentSeek 0.1.2 resolves lifecycle-v2 templates from the immutable
-[`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0).
+AgentSeek 0.1.3 resolves lifecycle-v2 templates from the immutable
+[`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.3).
 The CLI lists templates from its embedded registry snapshot and fetches named
 template content at the exact locked commit.
 

@@ -93,14 +93,14 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
     assert lock == {
         "schema_version": 1,
         "catalog_repository": "https://github.com/agentseek-ai/agentseek-templates.git",
-        "catalog_commit": "494863bc1b9aab19f9885d716c03ce654fb26014",
-        "catalog_release": "v0.1.0",
+        "catalog_commit": "2a5e57faf3f845d4a0ad6172efd937921aac0b12",
+        "catalog_release": "v0.1.3",
         "templates_root": "templates",
         "index_path": "templates/index.json",
         "lifecycle_version": 2,
         "core_repository": "https://github.com/ob-labs/agentseek.git",
-        "core_commit": "883addad1e2993c4be6fc8ba053f87f25fb5057a",
-        "core_release": "core-snapshot-v0.1.0",
+        "core_commit": "900f89518c32f8570d7648897394ed96a86a647a",
+        "core_release": "v0.1.2",
         "templates": {
             "bub/default": "Lightweight Bub agent with AgentSeek lifecycle spec.",
             "deepagents/content-builder": (
@@ -108,6 +108,10 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
                 "streamed UI, and AgentSeek lifecycle spec."
             ),
             "deepagents/default": "Local create_deep_agent runnable with AgentSeek lifecycle spec.",
+            "deepagents/mcp": (
+                "DeepAgents MCP Tools app with validated stdio/HTTP configuration, a local calculator example, "
+                "streamed UI, and AgentSeek lifecycle spec."
+            ),
             "deepagents/research": (
                 "DeepAgents research agent with Tavily search, streamed tool/sub-agent UI, "
                 "and AgentSeek lifecycle spec."
@@ -127,22 +131,33 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
                 "Remote LangGraph CLI agent bridged through LangGraphClientRunnable with AgentSeek lifecycle spec."
             ),
             "langchain/default": ("LangChain create_agent plus CopilotKit middleware with AgentSeek lifecycle spec."),
+            "langchain/relay-observability": (
+                "LangChain Relay observability with bounded Tavily research, Phoenix, OceanBase SeekDB, "
+                "and AgentSeek lifecycle spec."
+            ),
             "langchain/markdown-messages": (
                 "LangChain create_agent and react-markdown frontend with AgentSeek lifecycle spec."
             ),
+            "langchain/rubric": (
+                "LangChain create_agent with evidence-backed rubric revision, Guided Demo and Live Model UI, "
+                "and AgentSeek lifecycle spec."
+            ),
         },
         "template_digests": {
-            "bub/default": "096c35aeff1cfe3b3420bb5d9ba5a8473c959fa535380b3822f1fb9044b50dfa",
-            "deepagents/content-builder": "0239ac0ebb0632369d9b3f86b33b5fb3ab9c153a752f94a5ddcaf8d82c091b34",
-            "deepagents/default": "3d0b41f4af8b18ea236d11f166803c524784fa5605d18d13c5d6b310d1b47118",
-            "deepagents/research": "7a0ae249636015c2e1d91cbc42dffcb278bae757aff2a7f928711ad534ff4ca0",
-            "deepagents/sandbox": "b532af922546232aa7500f774342b957eb644e25faef26a7aca5a5c9d5773fa4",
-            "langchain/agentic-rag": "133635986878f88ebf16964eee05d10d298053420c432c6ef9fa30a1b7e6fdc9",
-            "langchain/agentic-rag-hybrid": ("64c83a6d99cd1c9b916cd39f81eb24cf5424efaf26a266d57d71d61c89c239df"),
-            "langchain/agentic-rag-openvino": ("ae7227904fa2341d0698c64adf5350869867ee4947b1a9ebd08e1a871b94d3e5"),
-            "langchain/cli-remote": "9667e628548f60cd688d6fda6bb4a37fa726712459ed97761ce2442fbf564826",
-            "langchain/default": "befb5541f39993bfde0938c3ec90f47693efe16d72cab505cdf2d4d5757b7d31",
-            "langchain/markdown-messages": ("6a08b10cc113252bea0db5545554ebec41f27e962ed9f1475800ab518485c622"),
+            "bub/default": "5cec8fc8f87ae203d4615d5664c854e30a04c10e065c293e293956cfa4a60b8c",
+            "deepagents/content-builder": "fd3e5bd1d59efba60edc738e5da97ddb6e990df7e83e364ef06f5c3734b3b2f2",
+            "deepagents/default": "d73f071bfb7063039684089af29032ca9105926c326379f9e27a8f1374907480",
+            "deepagents/mcp": "182c445d9fd7dfc9370bd8c37f6b3bb26a0ea9f9f269f635bd7bd8b5edb5c1d1",
+            "deepagents/research": "0dba10d3827f2977b61506e386d7a978cdfdec5208e20b1d68893ecd327f343d",
+            "deepagents/sandbox": "8477d28f63031048f5e0af56f1d90237feaf0f9b3dd83fab8d6dc007a9f3d65f",
+            "langchain/agentic-rag": "8f4bf863f312dbb33b3258115b398b0eeb7ea4cd6433cc5ec3392d6ebc13b9fd",
+            "langchain/agentic-rag-hybrid": ("2027ea793442149bdd78f70c1cd61177265cc06ff4146b72030a8abfe2402434"),
+            "langchain/agentic-rag-openvino": ("1dca769085039b231559fa5de7809a6272f5d690eb4c313a4868bd69ac1ba022"),
+            "langchain/cli-remote": "9ee99658dccf5fc0d9dd6d8b662d01ff5d5f7743c73f7db9edb1a9a20dc26ec0",
+            "langchain/default": "98406311b57fc7394dc0d3945e3886f734d39c1e0a3dfd9150cb3f9e2bb85703",
+            "langchain/markdown-messages": ("a4dd6d0b2a6eae548bbf57ed04d2e9a63a6c35c06eccd2d599d6557ebcb439d6"),
+            "langchain/relay-observability": ("e3ffa595acdb9ec12997dfe6c2107a71a5055bf02692291d733867066a442edd"),
+            "langchain/rubric": "bc29410e030d2792878457211443109234d733eeb9d851a0287ea4060b2250fd",
         },
     }
 
@@ -410,7 +425,7 @@ def test_download_uses_exact_github_commit_and_raw_bytes(monkeypatch: pytest.Mon
     assert destination.read_bytes() == payload
     assert captured["method"] == "GET"
     assert captured["url"] == (
-        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/494863bc1b9aab19f9885d716c03ce654fb26014"
+        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/2a5e57faf3f845d4a0ad6172efd937921aac0b12"
     )
     assert captured["follow_redirects"] is False
 
@@ -1054,7 +1069,7 @@ def test_named_default_create_uses_locked_template_and_core_source_pair(
         "_agentseek_source_path_posix": "",
         "_agentseek_source_path_shell": "",
         "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git",
-        "_agentseek_source_ref": "883addad1e2993c4be6fc8ba053f87f25fb5057a",
+        "_agentseek_source_ref": "900f89518c32f8570d7648897394ed96a86a647a",
     }
 
 
@@ -1316,7 +1331,7 @@ def test_checkout_override_uses_registry_and_files_from_the_resolved_commit(
         "_agentseek_source_path_posix": "",
         "_agentseek_source_path_shell": "",
         "_agentseek_source_url": "https://github.com/ob-labs/agentseek.git",
-        "_agentseek_source_ref": "883addad1e2993c4be6fc8ba053f87f25fb5057a",
+        "_agentseek_source_ref": "900f89518c32f8570d7648897394ed96a86a647a",
     }
 
 
