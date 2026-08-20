@@ -520,6 +520,26 @@ def test_rendered_calculator_mcp_smoke_is_real(rendered_mcp: Path, monkeypatch: 
     assert not _loopback_port_is_open(http_port)
 
 
+def test_http_connection_probe_ignores_peer_reset_while_closing(
+    rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    smoke = import_rendered_package_module(rendered_mcp, "mcp_smoke")
+
+    class ResettingWriter:
+        def close(self) -> None:
+            pass
+
+        async def wait_closed(self) -> None:
+            raise ConnectionResetError(10054, "peer closed")
+
+    async def open_connection(_host: str, _port: int) -> tuple[object, ResettingWriter]:
+        return object(), ResettingWriter()
+
+    monkeypatch.setattr(smoke.asyncio, "open_connection", open_connection)
+
+    assert asyncio.run(smoke._http_server_accepts_connections("127.0.0.1", 2025)) is True
+
+
 def test_http_smoke_child_environment_excludes_application_secrets(
     rendered_mcp: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

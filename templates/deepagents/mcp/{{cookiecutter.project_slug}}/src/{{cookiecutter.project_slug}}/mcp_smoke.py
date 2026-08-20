@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 from collections.abc import AsyncIterator, Mapping
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -125,6 +125,13 @@ def _http_server_environment(environ: Mapping[str, str]) -> dict[str, str]:
     }
 
 
+async def _close_stream_writer(writer: asyncio.StreamWriter) -> None:
+    """Close a short-lived probe without surfacing peer-reset cleanup noise."""
+    writer.close()
+    with suppress(OSError, TimeoutError):
+        await asyncio.wait_for(writer.wait_closed(), timeout=0.25)
+
+
 async def _http_server_is_ready(host: str, port: int) -> bool:
     try:
         reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=0.25)
@@ -142,8 +149,7 @@ async def _http_server_is_ready(host: str, port: int) -> bool:
     except (OSError, TimeoutError):
         return False
     finally:
-        writer.close()
-        await writer.wait_closed()
+        await _close_stream_writer(writer)
 
 
 async def _http_server_accepts_connections(host: str, port: int) -> bool:
@@ -151,8 +157,7 @@ async def _http_server_accepts_connections(host: str, port: int) -> bool:
         _reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=0.25)
     except (OSError, TimeoutError):
         return False
-    writer.close()
-    await writer.wait_closed()
+    await _close_stream_writer(writer)
     return True
 
 
