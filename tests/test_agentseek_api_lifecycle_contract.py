@@ -22,6 +22,7 @@ import signal
 import sys
 import time
 
+time.sleep(float(sys.argv[2]) if len(sys.argv) > 2 else 0.0)
 pathlib.Path(sys.argv[1]).write_text(json.dumps({
     "pid": os.getpid(),
     "pgid": os.getpgid(0),
@@ -162,7 +163,7 @@ def test_timeout_fallback_reaps_actual_agentseek_parent_and_separate_session_hel
             'name = "Timeout fallback contract"',
             "",
             "[processes.api]",
-            f"command = {json.dumps([sys.executable, str(helper), str(marker)])}",
+            f"command = {json.dumps([sys.executable, str(helper), str(marker), '2.5'])}",
             'cwd = "."',
         ])
         + "\n",
@@ -178,7 +179,7 @@ def test_timeout_fallback_reaps_actual_agentseek_parent_and_separate_session_hel
                 [sys.executable, "-m", "agentseek", "dev", "--skip-check"],
                 cwd=tmp_path,
                 env=dict(os.environ),
-                timeout_seconds=2.0,
+                timeout_seconds=5.0,
                 graceful_shutdown_timeout_seconds=0.2,
                 helper_process_marker=marker,
                 helper_process_group_grace_seconds=0.1,
@@ -186,7 +187,7 @@ def test_timeout_fallback_reaps_actual_agentseek_parent_and_separate_session_hel
             )
 
         elapsed = time.monotonic() - started
-        assert elapsed < 5.0, "fallback cleanup exceeded its bounded timeout"
+        assert elapsed < 8.0, "fallback cleanup exceeded its bounded timeout"
         assert marker.is_file(), "helper process did not publish its private marker"
         observed = json.loads(marker.read_text(encoding="utf-8"))
         child_pid = observed["pid"]
