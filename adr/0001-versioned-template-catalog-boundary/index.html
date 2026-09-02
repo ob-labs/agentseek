@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-terminal-4.8.0">
+    
+    <meta name="description" content="Application development lifecycle toolkit for AI ecosystem apps."> 
+     
+    
+    <link rel="canonical" href="https://ob-labs.github.io/agentseek/adr/0001-versioned-template-catalog-boundary/"><link rel="icon" type="image/png" sizes="192x192" href="../../img/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="../../img/android-chrome-512x512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="../../img/apple-touch-icon.png" />
+<link rel="shortcut icon" type="image/png" sizes="48x48" href="../../img/favicon.ico" />
+<link rel="icon" type="image/png" sizes="16x16" href="../../img/favicon-16x16.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="../../img/favicon-32x32.png" />
+
+
+    
+ 
+<title>ADR 0001: Versioned Template Catalog - agentseek</title>
+
+
+<link href="../../css/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+<link href="../../css/fontawesome/css/solid.min.css" rel="stylesheet">
+<link href="../../css/normalize.css" rel="stylesheet">
+<link href="../../css/terminal.css" rel="stylesheet">
+<link href="../../css/theme.css" rel="stylesheet">
+<link href="../../css/theme.tile_grid.css" rel="stylesheet">
+<link href="../../css/theme.footer.css" rel="stylesheet">
+<!-- default color palette -->
+<link href="../../css/palettes/default.css" rel="stylesheet">
+
+<!-- page layout -->
+<style>
+/* initially set page layout to a one column grid */
+.terminal-mkdocs-main-grid {
+    display: grid;
+    grid-column-gap: 1.4em;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+}
+
+/*  
+*   when side navigation is not hidden, use a two column grid.  
+*   if the screen is too narrow, fall back to the initial one column grid layout.
+*   in this case the main content will be placed under the navigation panel. 
+*/
+@media only screen and (min-width: 70em) {
+    .terminal-mkdocs-main-grid {
+        grid-template-columns: 4fr 9fr;
+    }
+}</style>
+
+
+
+     
+    
+    
+
+    
+    <!-- search css support -->
+<link href="../../css/search/bootstrap-modal.css" rel="stylesheet">
+<!-- search scripts -->
+<script>
+    var base_url = "../..",
+    shortcuts = "{}";
+</script>
+<script src="../../js/jquery/jquery-1.10.1.min.js" defer></script>
+<script src="../../js/bootstrap/bootstrap.min.js" defer></script>
+<script src="../../js/mkdocs/base.js" defer></script>
+    
+    
+    
+    
+    <script src="../../search/main.js"></script>
+    
+
+    
+</head>
+
+<body class="terminal"><div class="container">
+    <div class="terminal-nav">
+        <header class="terminal-logo">
+            <div id="mkdocs-terminal-site-name" class="logo terminal-prompt"><a href="https://ob-labs.github.io/agentseek/" class="no-style">agentseek</a></div>
+        </header>
+        
+
+
+
+    
+    
+    
+
+
+        <nav class="terminal-menu">
+            
+            <ul vocab="https://schema.org/" typeof="BreadcrumbList">
+                
+                
+                
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../.." class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Home</span>
+                    </a>
+                    <meta property="position" content="0">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../get-started/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Get Started</span>
+                    </a>
+                    <meta property="position" content="1">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../guides/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Guides</span>
+                    </a>
+                    <meta property="position" content="2">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../reference/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Reference</span>
+                    </a>
+                    <meta property="position" content="3">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../../concepts/" class="menu-item " property="item" typeof="WebPage">
+                        <span property="name">Concepts</span>
+                    </a>
+                    <meta property="position" content="4">
+                </li>
+                
+                
+                
+                    
+                    
+                        
+                    
+                
+                
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="../" class="menu-item active" property="item" typeof="WebPage">
+                        <span property="name">Architecture Decisions</span>
+                    </a>
+                    <meta property="position" content="5">
+                </li>
+                
+                <li>
+                    <a href="../../zh/adr/0001-versioned-template-catalog-boundary/" class="menu-item language-toggle" lang="zh">
+                        <span>中文</span>
+                    </a>
+                </li>
+                <li property="itemListElement" typeof="ListItem">
+                    <a href="#" class="menu-item" data-toggle="modal" data-target="#mkdocs_search_modal" property="item" typeof="SearchAction">
+                        <i aria-hidden="true" class="fa fa-search"></i> <span property="name">Search</span>
+                    </a>
+                    <meta property="position" content="6">
+                </li>
+            </ul>
+            
+        </nav>
+    </div>
+</div>
+        
+    <div class="container">
+        <div class="terminal-mkdocs-main-grid"><aside id="terminal-mkdocs-side-panel"><nav>
+    <ul class="terminal-mkdocs-side-nav-items">
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+    
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../..">Home</a>
+        
+    
+    
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Get Started</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../get-started/">Overview</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Guides</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/choose-template/">Choose a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/create-project/">Create a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/create-template/">Create a Template</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/inspect-project/">Inspect a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/check-project/">Check a Project</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/run-local-development/">Run Local Development</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/local-execution-modes/">Local Execution Modes</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/observability-tracing/">Observability and Tracing</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../guides/run-project-tasks/">Run Project Tasks</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Reference</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/cli/">CLI</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/lifecycle-spec/">Lifecycle Spec</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/lifecycle-v2-service-discovery/">Lifecycle v2 Service Discovery</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/templates/">Templates</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../reference/template-authoring-contract/">Template Authoring Contract</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        
+            
+            
+            <span class="
+        
+    terminal-mkdocs-side-nav-item terminal-mkdocs-side-nav-section-no-index">Concepts</span>
+        
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../../concepts/lifecycle-toolkit/">Lifecycle Toolkit</a>
+        
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+          <li class="terminal-mkdocs-side-nav-li">
+    
+        
+        
+        
+            
+    
+        
+        <span class="
+        
+    terminal-mkdocs-side-nav-item--active terminal-mkdocs-side-nav-section-no-index">Architecture Decisions</span>
+    
+    
+        
+        
+            <ul class="terminal-mkdocs-side-nav-li-ul">
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        
+            <a class="terminal-mkdocs-side-nav-item" href="../">Overview</a>
+        
+    
+    </li>
+            
+        
+            
+            
+             
+                <li class="terminal-mkdocs-side-nav-li-ul-li">
+    
+        
+        <span class="terminal-mkdocs-side-nav-item--active">ADR 0001: Versioned Template Catalog</span>
+    
+    </li>
+            
+            
+    </ul>
+        
+    
+       </li>
+        
+    </ul>
+</nav><hr>
+<nav>
+    <ul>
+        <li><a href="#adr-0001-use-a-versioned-standalone-template-catalog">ADR 0001: Use a Versioned Standalone Template Catalog</a></li>
+        <li><a href="#status">Status</a></li><li><a href="#agentseek-010-implementation-record">AgentSeek 0.1.0 implementation record</a></li><li><a href="#baseline-recorded-at-decision-time">Baseline recorded at decision time</a></li><li><a href="#context">Context</a></li><li><a href="#decision-drivers">Decision drivers</a></li><li><a href="#decision">Decision</a></li><li><a href="#release-sequence">Release sequence</a></li><li><a href="#required-review-boundaries">Required review boundaries</a></li><li><a href="#cross-repository-release-gates">Cross-repository release gates</a></li><li><a href="#failure-and-rollback">Failure and rollback</a></li><li><a href="#alternatives-considered">Alternatives considered</a></li><li><a href="#consequences">Consequences</a></li><li><a href="#follow-up-decisions">Follow-up decisions</a></li><li><a href="#related">Related</a></li>
+    </ul>
+</nav>
+</aside>
+            <main id="terminal-mkdocs-main-content">
+    
+    
+    
+    
+    
+
+<section id="mkdocs-terminal-content">
+    <h1 id="adr-0001-use-a-versioned-standalone-template-catalog">ADR 0001: Use a Versioned Standalone Template Catalog<a class="headerlink" href="#adr-0001-use-a-versioned-standalone-template-catalog" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>In short:</strong> AgentSeek 0.1.0 loads lifecycle-v2 templates from a
+version-pinned standalone repository. The core repository will retain its
+existing lifecycle-v1 templates so released 0.0.x clients remain functional.
+Public skills will move separately; packaged built-in skills remain in core.</p>
+</blockquote>
+<h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<p>Accepted on 2026-07-21 for the AgentSeek 0.1.0 delivery sequence.</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Record</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scope</td>
+<td>Bundled template ownership, resolution, compatibility, and release sequencing.</td>
+</tr>
+<tr>
+<td>Supersedes</td>
+<td>None. This is the first recorded decision for template extraction.</td>
+</tr>
+<tr>
+<td>Review triggers</td>
+<td>A mutable catalog, a non-GitHub source, removal of the legacy v1 paths, or extraction of packaged built-in skills.</td>
+</tr>
+</tbody>
+</table>
+<p>This record governs template distribution and repository ownership. The
+separate lifecycle-v2 service-discovery specification governs lifecycle TOML,
+normalization, and public JSON semantics.</p>
+<h2 id="agentseek-010-implementation-record">AgentSeek 0.1.0 implementation record<a class="headerlink" href="#agentseek-010-implementation-record" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Recorded implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lifecycle and JSON contract</td>
+<td>Core specification and ADR merged through <a href="https://github.com/ob-labs/agentseek/pull/141">PR #141</a>, merge commit <code>778efdfc40def78b3c583d42a63ef41ee640802e</code>.</td>
+</tr>
+<tr>
+<td>Explicit catalog input</td>
+<td><code>--template-repo</code> merged through <a href="https://github.com/ob-labs/agentseek/pull/150">PR #150</a>, establishing the immutable repository-plus-commit override before default cutover.</td>
+</tr>
+<tr>
+<td>Core dependency snapshot</td>
+<td>Protected tag <code>core-snapshot-v0.1.0</code> retains core commit <code>883addad1e2993c4be6fc8ba053f87f25fb5057a</code>.</td>
+</tr>
+<tr>
+<td>Standalone catalog</td>
+<td><a href="https://github.com/agentseek-ai/agentseek-templates"><code>agentseek-ai/agentseek-templates</code></a> release <a href="https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.0"><code>v0.1.0</code></a> retains commit <code>494863bc1b9aab19f9885d716c03ce654fb26014</code>.</td>
+</tr>
+<tr>
+<td>Catalog provenance</td>
+<td>Source registry SHA-256 is <code>d16027882500eb03c1aa8b3157c03dbb17eba6e34c74d6d7f0f285787f799907</code>; eleven registered templates were migrated and <code>bub/contextseek</code> remained quarantined.</td>
+</tr>
+<tr>
+<td>Embedded lock</td>
+<td><code>src/agentseek/data/catalog-lock.json</code> records schema <code>1</code>, lifecycle <code>2</code>, both exact repositories, commits, protected release names, the offline registry snapshot, and a trusted SHA-256 digest for every template subtree.</td>
+</tr>
+<tr>
+<td>Catalog safety</td>
+<td>The client limits the compressed download, complete expanded tar stream, every raw member (including hidden PAX/GNU metadata), raw-member count, and extension nesting; it rejects unsafe paths, links, devices, duplicate paths, multiple roots, registry drift, and template-content drift before atomically publishing a cache entry.</td>
+</tr>
+<tr>
+<td>Legacy proof</td>
+<td><code>scripts/check_legacy_template_compat.py</code> executes the real v0.0.1-v0.0.5 artifacts with isolated Cookiecutter state and phase-specific cold, warm, and v0.0.5 repaired-cache renders. Release-PR CI passes the exact candidate SHA; post-merge CI exercises the default branch without an override.</td>
+</tr>
+<tr>
+<td>Packaged skill provenance</td>
+<td>The build imports <code>friendly-python</code> and <code>piglet</code> from <code>PsiACE/skills</code> at full commit <code>4f09937234d128656fdc8c8658c840ebbf7e28d1</code>; this is an immutable build input, not the future public-skills repository split.</td>
+</tr>
+<tr>
+<td>Publication gate</td>
+<td>Tag CI requires the peeled tag commit to be merged to <code>main</code>, resolves both protected dependency tags to their locked commits, re-runs the candidate-anchored v0.0.1-v0.0.5 matrix, validates the source distribution and wheel, compares the wheel's vendored skills byte-for-byte with the pinned checkout, and installs both distributions before PyPI upload. The wheel smoke also performs offline listing plus a real locked fetch, render, and <code>info --json</code>.</td>
+</tr>
+<tr>
+<td>Deferred boundary</td>
+<td>Public skills remain in core for this release and require a separate repository contract and ADR.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="baseline-recorded-at-decision-time">Baseline recorded at decision time<a class="headerlink" href="#baseline-recorded-at-decision-time" title="Permanent link">&para;</a></h2>
+<p>This decision is based on published AgentSeek v0.0.1 through v0.0.5 behavior;
+v0.0.5 was current when the decision was accepted. The tag links are immutable
+evidence rather than descriptions of the future implementation.</p>
+<ul>
+<li>The released package version is
+  <a href="https://github.com/ob-labs/agentseek/blob/v0.0.5/pyproject.toml#L1-L4"><code>0.0.5</code></a>.</li>
+<li>Bundled template resolution hard-codes the core repository URL and
+  <code>templates/</code> directory in
+  <a href="https://github.com/ob-labs/agentseek/blob/v0.0.5/src/agentseek/cli/commands/create.py#L76-L81"><code>create.py</code></a>.</li>
+<li>Installed clients reuse a complete cache. A cold or incomplete cache clones
+  that repository with an optional checkout; when the caller supplies none, the
+  default branch is used, as recorded in the
+  <a href="https://github.com/ob-labs/agentseek/blob/v0.0.5/src/agentseek/cli/commands/create.py#L223-L248">0.0.5 resolver</a>.</li>
+<li>The core registry contains eleven public template keys in
+  <a href="https://github.com/ob-labs/agentseek/blob/v0.0.5/templates/index.json"><code>templates/index.json</code></a>.</li>
+<li>The additional <code>bub/contextseek</code> directory is deliberately quarantined and
+  absent from that registry, as recorded by the
+  <a href="https://github.com/ob-labs/agentseek/blob/v0.0.5/src/agentseek/cli/commands/create.py#L81-L82">0.0.5 quarantine set</a>.</li>
+<li>The wheel includes <code>src/skills/</code>, while top-level <code>skills/</code> is the public
+  install surface. These are already distinct distribution boundaries in
+  <a href="https://github.com/ob-labs/agentseek/blob/v0.0.5/pyproject.toml#L60-L71"><code>pyproject.toml</code></a>
+  and the <a href="https://github.com/ob-labs/agentseek/blob/v0.0.5/skills/README.md">public skills guide</a>.</li>
+</ul>
+<p>The copied source inventory was finalized at core commit
+<code>883addad1e2993c4be6fc8ba053f87f25fb5057a</code>. The standalone release's
+<code>catalog-origin.json</code> and recorded source-registry digest are authoritative.</p>
+<p>The published backward-compatibility set is exactly v0.0.1 through v0.0.5. It
+contains three resolver generations:</p>
+<table>
+<thead>
+<tr>
+<th>Released clients</th>
+<th>Resolver behavior</th>
+<th>Required compatibility fixture</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v0.0.1, v0.0.2</td>
+<td>Cookiecutter receives the core repository plus a remote template <code>directory</code>; installed remote listing was not available.</td>
+<td>With isolated Cookiecutter and uv state, no source checkout, and an empty Cookiecutter cache, create a representative bundled template for every framework, then verify the rendered lifecycle with the frozen v1 contract. Preserve the historical installed-listing behavior.</td>
+</tr>
+<tr>
+<td>v0.0.3, v0.0.4</td>
+<td>AgentSeek prepares a cached core repository root before listing or creation.</td>
+<td>From an empty cache, list and create a representative template for every framework, then repeat from the warm cache; every generated lifecycle remains v1.</td>
+</tr>
+<tr>
+<td>v0.0.5</td>
+<td>AgentSeek reuses only a complete cache and repairs an incomplete one.</td>
+<td>Run the cold- and warm-cache cases, then corrupt the cache and prove listing and creation recover to valid lifecycle-v1 templates.</td>
+</tr>
+</tbody>
+</table>
+<p>These fixtures execute the released artifacts, not current source with a
+simulated version. They preserve behavior those releases actually provided;
+they do not invent remote listing for v0.0.1 or v0.0.2.</p>
+<p>The immutable resolver evidence is the tagged
+<a href="https://github.com/ob-labs/agentseek/blob/v0.0.1/contrib/agentseek-cli/src/agentseek_cli/commands/create.py#L136-L155">v0.0.1</a>,
+<a href="https://github.com/ob-labs/agentseek/blob/v0.0.2/contrib/agentseek-cli/src/agentseek_cli/commands/create.py#L136-L155">v0.0.2</a>,
+<a href="https://github.com/ob-labs/agentseek/blob/v0.0.3/src/agentseek/cli/commands/create.py#L181-L205">v0.0.3</a>,
+<a href="https://github.com/ob-labs/agentseek/blob/v0.0.4/src/agentseek/cli/commands/create.py#L181-L205">v0.0.4</a>,
+and <a href="https://github.com/ob-labs/agentseek/blob/v0.0.5/src/agentseek/cli/commands/create.py#L223-L248">v0.0.5</a>
+implementations.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>AgentSeek templates currently live in the core repository under <code>templates/</code>.
+An installed CLI that cannot find local templates prepares a cached checkout of
+<code>https://github.com/ob-labs/agentseek</code> and reads <code>templates/index.json</code> from that
+checkout. A complete existing cache is reused; on a cold or incomplete cache,
+and without an explicit <code>--checkout</code>, released AgentSeek 0.0.x clients clone the
+repository's mutable default branch.</p>
+<p>Lifecycle v2 adds authored fields and validation rules that AgentSeek 0.0.x
+does not understand. Replacing the existing lifecycle files on the default
+branch would therefore break fresh or cache-recovering 0.0.x installations:
+they could download a v2 template, generate a project, and then reject that
+project as an unsupported lifecycle version.</p>
+<p>AgentSeek also plans to separate templates and public skills from core. That
+future direction creates an opportunity to solve the compatibility problem
+with a durable repository boundary instead of conditional template files or a
+second temporary template tree inside core.</p>
+<h2 id="decision-drivers">Decision drivers<a class="headerlink" href="#decision-drivers" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Published AgentSeek v0.0.1 through v0.0.5 installations must retain their
+  released listing behavior and cold-cache bundled creation must continue
+  producing valid lifecycle-v1 projects.</li>
+<li>AgentSeek 0.1.0 must accept existing v1 projects and provide complete
+  lifecycle-v2 discovery for newly generated projects.</li>
+<li>A released CLI must resolve a reproducible template catalog, not mutable
+  <code>main</code> content.</li>
+<li>Template download or cache failure must not silently change lifecycle
+  semantics.</li>
+<li>Template development should be independently releasable without coupling all
+  template files to the core package.</li>
+<li>The 0.1.0 release must not also absorb the unrelated public-skills migration
+  or the core organization transfer.</li>
+<li>Public repository content and packaged runtime content need distinct owners
+  and compatibility policies.</li>
+</ul>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<h3 id="repository-responsibilities">Repository responsibilities<a class="headerlink" href="#repository-responsibilities" title="Permanent link">&para;</a></h3>
+<p>The repositories have these responsibilities:</p>
+<table>
+<thead>
+<tr>
+<th>Repository</th>
+<th>Responsibility in 0.1.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ob-labs/agentseek</code></td>
+<td>CLI and lifecycle runtime, specifications, JSON contracts, catalog client, and the frozen legacy v1 template mirror. A later transfer may make <code>agentseek-ai/agentseek</code> canonical.</td>
+</tr>
+<tr>
+<td><code>agentseek-ai/agentseek-templates</code></td>
+<td>Authoritative lifecycle-v2 template catalog, registry, template CI, and immutable catalog releases.</td>
+</tr>
+<tr>
+<td>Future <code>agentseek-ai/agentseek-skills</code></td>
+<td>Public, independently installable skills currently represented by top-level <code>skills/</code>. It is outside the 0.1.0 scope.</td>
+</tr>
+</tbody>
+</table>
+<p>The packaged <code>src/skills/</code> directory remains in core. Those skills ship with
+the AgentSeek distribution and support core lifecycle behavior. They are not
+the same surface as independently installed public skills.</p>
+<p>This CLI-option change records catalog selection behavior only. It does not
+execute the template or skills moves described by this decision.</p>
+<h3 id="legacy-v1-catalog">Legacy v1 catalog<a class="headerlink" href="#legacy-v1-catalog" title="Permanent link">&para;</a></h3>
+<p>The current core <code>templates/</code> tree and <code>templates/index.json</code> remain on the
+core default branch as the lifecycle-v1 compatibility catalog.</p>
+<ul>
+<li>Existing paths and registry keys remain valid for AgentSeek 0.0.x.</li>
+<li>Normal feature development stops in this mirror after 0.1.0 preparation.</li>
+<li>Only security fixes and critical compatibility fixes are backported.</li>
+<li>A backport must preserve lifecycle version 1 and remain renderable by the
+  released 0.0.x CLI.</li>
+<li>There is no scheduled deletion date. Removing or changing these paths
+  requires a superseding ADR that explicitly accepts or avoids the resulting
+  break for already released clients.</li>
+</ul>
+<p>This retained mirror is intentional compatibility infrastructure, not the
+authoritative source for new template development.</p>
+<h3 id="standalone-v2-catalog">Standalone v2 catalog<a class="headerlink" href="#standalone-v2-catalog" title="Permanent link">&para;</a></h3>
+<p>The standalone repository owns the lifecycle-v2 source for every registered
+template. It preserves the familiar layout:</p>
+<div class="highlight"><pre><span></span><code>templates/
+  index.json
+  bub/&lt;name&gt;/cookiecutter.json
+  deepagents/&lt;name&gt;/cookiecutter.json
+  langchain/&lt;name&gt;/cookiecutter.json
+</code></pre></div>
+<p>Its CI renders every registered template, validates the rendered lifecycle
+file, and rejects registry entries whose template content is missing or
+incomplete. Before 0.1.0 is public, that validation installs the reviewed core
+<code>core_commit</code> paired with the candidate catalog. After publication, the catalog
+also tests the lowest supported released AgentSeek version for its release line;
+for the initial lifecycle-v2 catalog, that version is AgentSeek 0.1.0.</p>
+<p>The initial standalone catalog is copied from the core templates and migrated
+to lifecycle v2. It is a copy-then-freeze transition: the v1 core mirror is not
+deleted when the v2 repository becomes authoritative.</p>
+<p>The initial migration set is exactly the registered keys in the source
+<code>templates/index.json</code>, not every directory that happens to exist under
+<code>templates/</code>. The quarantined, unregistered <code>bub/contextseek</code> source remains in
+the core v1 mirror and is excluded from the first standalone registry until it
+passes an independent remediation and registration review.</p>
+<p>The first standalone release includes <code>catalog-origin.json</code> with schema version
+1, the source core repository, full source commit SHA, SHA-256 digest of the
+exact source-registry bytes as lowercase hexadecimal, sorted included keys, and
+excluded template paths with reasons. This provenance record changes only when
+a later catalog release imports material from another source; it is not used as
+a runtime resolver.</p>
+<p>Each registered template subtree is self-contained. Rendering may not require a
+file outside that template's directory, and the catalog rejects escaping
+relative paths or symlinks. Cross-template assets must be copied into each
+subtree unless a later catalog contract defines a separately extracted shared
+asset area.</p>
+<h3 id="catalog-lock-in-core">Catalog lock in core<a class="headerlink" href="#catalog-lock-in-core" title="Permanent link">&para;</a></h3>
+<p>The AgentSeek wheel embeds a catalog lock. The lock contains, at minimum:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schema_version</code></td>
+<td>Integer <code>1</code> for the initial lock format.</td>
+</tr>
+<tr>
+<td><code>catalog_repository</code></td>
+<td>Exact HTTPS repository URL for the standalone catalog.</td>
+</tr>
+<tr>
+<td><code>catalog_commit</code></td>
+<td>Full 40-character lowercase Git commit SHA.</td>
+</tr>
+<tr>
+<td><code>catalog_release</code></td>
+<td>Protected release tag that permanently retains <code>catalog_commit</code>; informational at runtime.</td>
+</tr>
+<tr>
+<td><code>templates_root</code></td>
+<td>Repository-relative <code>templates</code> directory.</td>
+</tr>
+<tr>
+<td><code>index_path</code></td>
+<td>Repository-relative <code>templates/index.json</code> path.</td>
+</tr>
+<tr>
+<td><code>lifecycle_version</code></td>
+<td>Integer <code>2</code>.</td>
+</tr>
+<tr>
+<td><code>core_repository</code></td>
+<td>Exact HTTPS Git URL containing generated-project <code>contrib/</code> dependencies.</td>
+</tr>
+<tr>
+<td><code>core_commit</code></td>
+<td>Full 40-character lowercase Git commit SHA compatible with the catalog release.</td>
+</tr>
+<tr>
+<td><code>core_release</code></td>
+<td>Protected dependency-snapshot tag that permanently retains <code>core_commit</code>; informational at runtime.</td>
+</tr>
+<tr>
+<td><code>templates</code></td>
+<td>Registry snapshot used for offline listing and selection.</td>
+</tr>
+<tr>
+<td><code>template_digests</code></td>
+<td>Map with exactly the registry keys and a lowercase SHA-256 digest of each complete template subtree.</td>
+</tr>
+</tbody>
+</table>
+<p><code>catalog_commit</code> is authoritative for template content. <code>core_commit</code> is
+authoritative for generated-project dependencies. The catalog and core release
+tags provide human-readable names and retain reachability, but the CLI never
+resolves content by tag.</p>
+<p>Release validation compares the embedded registry snapshot with
+<code>templates/index.json</code> at <code>catalog_commit</code> and recomputes every registered
+template subtree digest. A mismatch blocks the core release. The lock must not
+contain credentials or a mutable branch name.</p>
+<h3 id="catalog-source-and-generated-dependency-source">Catalog source and generated dependency source<a class="headerlink" href="#catalog-source-and-generated-dependency-source" title="Permanent link">&para;</a></h3>
+<p>The catalog repository and generated-project dependency repository are separate
+coordinates. The standalone repository supplies Cookiecutter source files. It
+does not supply core <code>contrib/</code> packages referenced by generated projects.</p>
+<p>For bundled templates, AgentSeek injects the locked <code>core_repository</code> and
+<code>core_commit</code> as internal Cookiecutter context. The v2 catalog carries distinct
+<code>_agentseek_source_url</code> and <code>_agentseek_source_ref</code> variables, and generated Git
+dependencies use both the core URL and exact revision. Catalog coordinates are
+never substituted into these fields.</p>
+<p><code>core_commit</code> may identify a reviewed pre-release commit that contains the
+compatible <code>contrib/</code> packages; it need not be the later merge commit that only
+updates the final catalog lock. Before the catalog release, <code>core_release</code> must
+be created as a protected permanent tag at that commit. Cross-repository tests
+must render and install representative generated projects from the recorded
+pair.</p>
+<p>A local core dependency path is an explicit development override. AgentSeek
+0.1.0 does not infer that dependency source from the location of a downloaded
+template or silently replace the locked core coordinate.</p>
+<h3 id="template-resolution">Template resolution<a class="headerlink" href="#template-resolution" title="Permanent link">&para;</a></h3>
+<p>AgentSeek 0.1.0 resolves bundled templates as follows:</p>
+<ol>
+<li>Read the embedded catalog lock.</li>
+<li>Resolve the requested registry key from the embedded snapshot.</li>
+<li>Reuse a complete cache entry only when its catalog repository, catalog
+   commit, template key, catalog-lock digest, and template bytes all match the
+   trusted embedded digest.</li>
+<li>Otherwise download the standalone repository archive at the locked commit.</li>
+<li>Extract only the requested template subtree, verify its trusted digest, and
+   place it in a new cache entry.</li>
+<li>Validate the cached template before invoking Cookiecutter.</li>
+</ol>
+<p>The catalog-lock digest is the lowercase hexadecimal SHA-256 of the exact
+packaged lock-file bytes.</p>
+<p>Each <code>template_digests</code> value is SHA-256 over one unambiguous byte stream. The
+stream begins with <code>agentseek-template-tree-v1</code> followed by one NUL byte
+(<code>0x00</code>), then the number of descendant entries as an unsigned 64-bit
+big-endian integer. Directories and
+regular files are sorted together by their UTF-8 POSIX relative path. Each
+entry contributes a type byte, path byte length, and path bytes. A regular file
+then contributes a normalized executable marker, content byte length, and
+exact content bytes; both lengths are unsigned 64-bit big-endian integers.
+The type byte is <code>0x64</code> (<code>d</code>) for a directory or <code>0x66</code> (<code>f</code>) for a regular
+file. The executable marker is <code>0x78</code> (<code>x</code>) when any Git executable bit is set,
+or <code>0x2d</code> (<code>-</code>) otherwise.
+Regular archive members are normalized to mode <code>0644</code> or <code>0755</code> according to
+their Git executable bit. Directory modes and timestamps are excluded, while
+directory presence and file executable semantics remain protected. Links and
+other entry types are rejected rather than hashed. This encoding is
+reproducible across normal archive extraction umasks without allowing entry or
+file boundaries to be reinterpreted.</p>
+<p>GitHub archive endpoints transfer a repository archive, not a server-side
+subtree. AgentSeek may filter extraction to the selected template, but it must
+not describe the network transfer as downloading only that directory.</p>
+<p>Bundled-name resolution uses the locked standalone catalog even when AgentSeek
+runs from a core source checkout. The local core <code>templates/</code> tree no longer
+takes automatic precedence because it is the frozen v1 compatibility mirror.
+Developers select a local template through the existing explicit absolute-path
+Cookiecutter passthrough.</p>
+<p>The existing external URL and absolute-path Cookiecutter passthrough remains
+separate from bundled-catalog resolution. For an external URL, <code>--checkout</code>
+continues to be passed to Cookiecutter. For a bundled template, <code>--checkout
+&lt;ref&gt;</code> remains an explicit development override but now selects a ref from the
+standalone catalog repository. AgentSeek resolves that ref to a commit, reads
+the registry and template from the same resolved commit, and uses a separate
+cache entry. It never combines the embedded registry snapshot with overridden
+template files, and the override never selects the legacy core mirror.</p>
+<h3 id="explicit-catalog-repository-override">Explicit catalog repository override<a class="headerlink" href="#explicit-catalog-repository-override" title="Permanent link">&para;</a></h3>
+<p><code>--template-repo &lt;https-url&gt;</code> selects an explicit AgentSeek catalog repository.
+The repository must contain <code>templates/index.json</code>; this option is not a
+general Cookiecutter-source override. It requires
+<code>--checkout &lt;40-character-lowercase-commit-sha&gt;</code>, matching <code>[0-9a-f]{40}</code>.
+Branches, tags, abbreviated SHAs, and uppercase SHAs are rejected for this
+form.</p>
+<p>The explicit repository and exact commit are one catalog coordinate. Listing,
+filtering, describing, and generation resolve the registry and template from
+that same coordinate. The explicit coordinate takes precedence over the
+bundled catalog for those operations. A repository, checkout, registry, or
+template failure is an explicit error; it never falls back to the bundled
+catalog, local core templates, or another revision.</p>
+<p>The positional external-URL and absolute-path Cookiecutter passthrough remains
+unchanged. It cannot be combined with <code>--template-repo</code>; AgentSeek rejects the
+conflict instead of choosing a source implicitly. The HTTPS-only restriction
+applies to <code>--template-repo</code>, not to the existing positional passthrough.</p>
+<p>Listing, filtering, and describing inspect catalog content without executing
+Cookiecutter hooks. Generation trusts the selected template content and may
+execute its Cookiecutter hooks.</p>
+<h3 id="cache-and-archive-security">Cache and archive security<a class="headerlink" href="#cache-and-archive-security" title="Permanent link">&para;</a></h3>
+<p>Catalog extraction and reuse follow these rules:</p>
+<ul>
+<li>Cache identity includes the catalog repository and exact catalog commit; a
+  cache created from mutable <code>main</code> cannot satisfy the locked catalog.</li>
+<li>An explicit catalog cache entry is identified by its normalized repository
+  URL and exact commit. Matching catalog metadata is required before reuse;
+  partial, stale, or mismatched entries are never cache hits.</li>
+<li>A complete entry includes <code>cookiecutter.json</code>, a generated-project source
+  tree, and catalog metadata matching the lock. The recomputed subtree digest
+  must equal the trusted digest embedded in the lock; cache metadata cannot
+  redefine that value.</li>
+<li>Downloads use HTTPS, bounded time, a maximum 64 MiB compressed response, no
+  more than 10,000 archive members, no member larger than 32 MiB, and no more
+  than 256 MiB total uncompressed content.</li>
+<li>Archive entries with absolute paths, traversal segments, device types,
+  hardlinks, or escaping symbolic links are rejected.</li>
+<li>Extraction occurs in a temporary directory and becomes visible in the cache
+  only after validation succeeds.</li>
+<li>An interrupted or incomplete cache entry is never treated as reusable.</li>
+<li>Failure to obtain the locked v2 catalog is an explicit error. AgentSeek does
+  not silently fall back to core v1 templates or mutable <code>main</code>.</li>
+</ul>
+<p>These rules extend the existing incomplete-cache recovery guarantee rather
+than replacing it.</p>
+<h3 id="repository-retention-and-availability">Repository retention and availability<a class="headerlink" href="#repository-retention-and-availability" title="Permanent link">&para;</a></h3>
+<p>The standalone catalog and core dependency source are anonymously readable.
+Every catalog or core dependency commit embedded in a released AgentSeek lock
+remains reachable through its protected release tag, which is never moved or
+deleted. Release verification fetches the catalog archive and core dependencies
+by their exact locked URLs and SHAs in a clean environment without repository
+credentials.</p>
+<p>If either repository is renamed, transferred, or archived, the URL in every
+supported released lock must continue resolving or redirect to equivalent
+immutable content. SHA immutability alone is insufficient if a repository or
+commit becomes unavailable.</p>
+<h3 id="compatibility-contract">Compatibility contract<a class="headerlink" href="#compatibility-contract" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Consumer</th>
+<th>Template source</th>
+<th>Generated lifecycle</th>
+<th>Required behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AgentSeek v0.0.1-v0.0.5</td>
+<td>Core default-branch <code>templates/</code> or an existing compatible cache</td>
+<td>v1</td>
+<td>Preserve each release's actual listing/cache behavior; bundled creation continues rendering v1, and lifecycle commands retain their released behavior.</td>
+</tr>
+<tr>
+<td>AgentSeek 0.1.0</td>
+<td>Standalone repository at <code>catalog_commit</code></td>
+<td>v2</td>
+<td>Complete normalized discovery and JSON actions are available.</td>
+</tr>
+<tr>
+<td>AgentSeek 0.1.0 opening an existing project</td>
+<td>Project-local lifecycle file</td>
+<td>v1 or v2</td>
+<td>V1 remains operational with conservative incomplete JSON metadata; v2 is complete.</td>
+</tr>
+<tr>
+<td>Direct use of a legacy core template</td>
+<td>Core <code>templates/</code> path</td>
+<td>v1</td>
+<td>Remains valid but receives no normal feature development.</td>
+</tr>
+<tr>
+<td>Explicit external Cookiecutter source</td>
+<td>User-selected source</td>
+<td>Source-defined</td>
+<td>Existing passthrough behavior remains; the source is outside the bundled catalog guarantee.</td>
+</tr>
+<tr>
+<td>Explicit AgentSeek catalog override</td>
+<td>HTTPS catalog repository at the supplied 40-character lowercase commit SHA</td>
+<td>Catalog-defined</td>
+<td>List, filter, describe, and create use the same repository and commit; failure does not fall back.</td>
+</tr>
+</tbody>
+</table>
+<p>The core repository may later transfer from <code>ob-labs</code> to <code>agentseek-ai</code>, but
+the old GitHub URL and default-branch template paths must continue resolving
+for 0.0.x clients. The organization transfer is not required for 0.1.0.</p>
+<p>The compatibility invariants are therefore:</p>
+<ol>
+<li>The core default-branch catalog remains lifecycle v1 for published v0.0.1
+   through v0.0.5 clients.</li>
+<li>The 0.1.0 bundled catalog resolves by an exact standalone-repository commit.</li>
+<li>A 0.1.0 catalog failure never falls back to the legacy mirror or mutable
+   branch content.</li>
+<li>AgentSeek 0.1.0 continues loading existing project-local lifecycle v1 files.</li>
+<li>Repository transfer or archival must preserve the old core URL and template
+   paths for already released clients, plus every standalone catalog URL and
+   commit embedded in a supported release.</li>
+<li>Every core dependency URL and commit embedded in a supported lock remains
+   anonymously fetchable for generated-project installation.</li>
+<li>An explicit catalog override requires an immutable commit, never changes
+   <code>_agentseek_source_url</code> from the core repository, and never falls back on
+   failure.</li>
+</ol>
+<h3 id="skills-boundary">Skills boundary<a class="headerlink" href="#skills-boundary" title="Permanent link">&para;</a></h3>
+<p>The template extraction does not imply a simultaneous skills extraction.</p>
+<ul>
+<li>Top-level <code>skills/</code> contains public, independently installable material and
+  may move to <code>agentseek-ai/agentseek-skills</code> under a later ADR.</li>
+<li><code>src/skills/</code> is included in the core package and remains versioned with the
+  CLI until a separate package and compatibility contract exists.</li>
+<li>The build also vendors <code>friendly-python</code> and <code>piglet</code> from
+  <code>https://github.com/PsiACE/skills.git</code> at full commit
+  <code>4f09937234d128656fdc8c8658c840ebbf7e28d1</code>. The source distribution retains
+  that exact pin, and tag CI compares the wheel payload with a checkout of that
+  commit before publication. This makes the existing build input reproducible;
+  it does not establish a new AgentSeek skills distribution contract.</li>
+<li>Template references to public skills use stable installation coordinates;
+  they do not import files from the core checkout by relative path.</li>
+</ul>
+<p>This distinction prevents the 0.1.0 release from treating all directories named
+<code>skills</code> as one deployment unit.</p>
+<h2 id="release-sequence">Release sequence<a class="headerlink" href="#release-sequence" title="Permanent link">&para;</a></h2>
+<p>The 0.1.0 work proceeds in this order:</p>
+<ol>
+<li>Merge the lifecycle-v2 contract and this ADR.</li>
+<li>Add v1/v2 authored loading, strict v2 validation, and safe normalization to
+   core while retaining existing human v1 behavior.</li>
+<li>Add typed diagnostics and versioned <code>info --json</code> and
+   <code>doctor [--live] --json</code> output.</li>
+<li>Create <code>agentseek-ai/agentseek-templates</code>, copy the registered source
+   inventory, record its provenance, migrate the copy to lifecycle v2, and
+   establish template-owned CI.</li>
+<li>Add the locked standalone-catalog client to core, select the paired core
+   dependency commit, create its protected dependency-snapshot tag, and verify
+   both candidate coordinates.</li>
+<li>Release the template catalog first and record its immutable commit.</li>
+<li>Update the core catalog lock to that commit, run cross-repository release
+   verification, and merge the core <code>release/0.1.0</code> PR.</li>
+<li>Tag the verified core merge commit as <code>v0.1.0</code>, publish the package, deploy
+   documentation, and run a fresh installation smoke test.</li>
+</ol>
+<p><code>catalog_release</code> and <code>core_release</code> may carry readable independent names, but
+the lock always uses the exact catalog and core SHAs. The later core package tag
+<code>v0.1.0</code> is a separate release surface.</p>
+<h2 id="required-review-boundaries">Required review boundaries<a class="headerlink" href="#required-review-boundaries" title="Permanent link">&para;</a></h2>
+<p>The delivery may use more than one PR per row, but these concerns must remain
+independently reviewable and preserve this dependency order:</p>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Repository</th>
+<th>Must establish</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Contract</td>
+<td>Core</td>
+<td>Lifecycle-v2 specification, public documentation entry point, and this ADR.</td>
+</tr>
+<tr>
+<td>Runtime compatibility</td>
+<td>Core</td>
+<td>Distinct v1/v2 authored models, safe normalization, and unchanged human v1 behavior.</td>
+</tr>
+<tr>
+<td>Machine contract</td>
+<td>Core</td>
+<td>Typed diagnostics plus versioned <code>info --json</code> and <code>doctor --json</code> output.</td>
+</tr>
+<tr>
+<td>Catalog bootstrap</td>
+<td>Templates</td>
+<td>Copied and migrated v2 catalog, registry, rendering tests, and release metadata.</td>
+</tr>
+<tr>
+<td>Catalog client</td>
+<td>Core</td>
+<td>Embedded lock, safe archive/cache handling, and immutable resolution.</td>
+</tr>
+<tr>
+<td>Catalog release</td>
+<td>Templates</td>
+<td>A tested release whose full commit SHA is recorded for core.</td>
+</tr>
+<tr>
+<td>Core release</td>
+<td>Core</td>
+<td><code>release/0.1.0</code> pinning that commit, synchronized version surfaces, and release smoke tests.</td>
+</tr>
+</tbody>
+</table>
+<p>An implementation may reuse archive-download work proposed in
+<a href="https://github.com/ob-labs/agentseek/pull/136">PR #136</a>, but only after adapting
+it to the standalone repository, immutable lock, extraction confinement, and
+no-fallback rules in this record.</p>
+<h2 id="cross-repository-release-gates">Cross-repository release gates<a class="headerlink" href="#cross-repository-release-gates" title="Permanent link">&para;</a></h2>
+<p>The 0.1.0 release is blocked unless all of these are true:</p>
+<ul>
+<li>every standalone registry entry exists and renders;</li>
+<li>every rendered standalone template loads as lifecycle v2;</li>
+<li>every registry-listed core compatibility template still renders and loads as
+  lifecycle v1, and quarantined sources retain their existing quarantine;</li>
+<li>the standalone provenance record matches the reviewed source registry and
+  records every included or excluded source;</li>
+<li>the v0.0.1-v0.0.5 resolver-generation fixture matrix passes from isolated
+  cold, warm, and intentionally incomplete caches as applicable;</li>
+<li>AgentSeek 0.1.0 resolves the locked standalone commit without mutable
+  fallback;</li>
+<li>a clean, unauthenticated environment can fetch the archive from the exact
+  locked catalog URL and SHA, and the protected release tag points to that SHA;</li>
+<li>the same clean environment can fetch and install representative generated
+  <code>contrib/</code> dependencies from the exact core URL and SHA, and <code>core_release</code>
+  points to <code>core_commit</code>;</li>
+<li>the embedded registry snapshot matches the locked catalog commit;</li>
+<li>every embedded template digest matches its complete subtree at the locked
+  catalog commit, and the built wheel contains the exact committed lock bytes;</li>
+<li>the source distribution contains the exact committed catalog lock and the
+  reviewed full-commit build-skill pin; the wheel's <code>friendly-python</code> and
+  <code>piglet</code> payload matches that pinned checkout byte-for-byte; both built
+  distributions install successfully before upload;</li>
+<li>a stale, partial, or wrong-commit cache is rejected and recovered;</li>
+<li>archive extraction confinement tests pass;</li>
+<li>archive response-size, member-count, per-member, and total-uncompressed limits
+  reject oversized inputs without publishing a cache entry;</li>
+<li>bundled-name resolution ignores the local core v1 mirror unless the user
+  supplies its absolute path explicitly;</li>
+<li>default generated Git dependencies use the locked core repository and commit,
+  never the catalog repository;</li>
+<li>an explicit catalog override accepts only an HTTPS repository with a full
+  lowercase commit SHA, uses that one coordinate for list/filter/describe/create,
+  rejects a direct positional Cookiecutter source, and never falls back;</li>
+<li>explicit catalog cache reuse requires metadata matching its normalized URL
+  and exact commit, while list/filter/describe do not execute hooks;</li>
+<li>existing v1 projects retain human command behavior;</li>
+<li>v1 JSON is conservative and v2 JSON is complete;</li>
+<li>core <code>pyproject.toml</code>, <code>uv.lock</code>, package metadata, <code>v0.1.0</code> tag, GitHub
+  Release, PyPI release, and documentation all identify AgentSeek 0.1.0;</li>
+<li>the peeled <code>v0.1.0</code> tag commit is an ancestor of the protected <code>main</code> branch;</li>
+<li>lock <code>schema_version</code> remains <code>1</code> and <code>lifecycle_version</code> remains <code>2</code>; these
+  protocol versions are not required to equal the core SemVer;</li>
+<li><code>catalog_release</code> points to <code>catalog_commit</code>, <code>core_release</code> points to
+  <code>core_commit</code>, and documentation records both dependency snapshots
+  independently of the core package version.</li>
+</ul>
+<h2 id="failure-and-rollback">Failure and rollback<a class="headerlink" href="#failure-and-rollback" title="Permanent link">&para;</a></h2>
+<p>The immutable catalog prevents an in-place template change from altering an
+already released AgentSeek version.</p>
+<p>If the catalog content is defective before core release, publish a corrected
+template commit and update the candidate core lock. Do not move or rewrite the
+recorded commit.</p>
+<p>If a defect is discovered after AgentSeek 0.1.0 is published:</p>
+<ul>
+<li>preserve the original catalog commit for reproducibility;</li>
+<li>preserve the original core dependency commit and release tag;</li>
+<li>for a catalog-only defect, publish a new protected catalog release and reuse
+  the original core dependency snapshot;</li>
+<li>for a core-only <code>contrib/</code> defect, publish a new protected core dependency
+  snapshot and reuse the original catalog release;</li>
+<li>for a paired defect, publish the corrected protected core dependency snapshot
+  first and the corrected protected catalog release second;</li>
+<li>release an AgentSeek patch whose lock pins the resulting catalog and core
+  pair;</li>
+<li>keep existing cached catalog entries addressable by their original commit;</li>
+<li>document whether affected generated projects require regeneration or a
+  project-local fix.</li>
+</ul>
+<p>The legacy v1 mirror remains available throughout this process. It is not an
+automatic fallback for 0.1.0 because doing so would silently change lifecycle
+semantics.</p>
+<h2 id="alternatives-considered">Alternatives considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
+<h3 id="replace-core-templates-with-v2-on-main">Replace core templates with v2 on <code>main</code><a class="headerlink" href="#replace-core-templates-with-v2-on-main" title="Permanent link">&para;</a></h3>
+<p>Rejected because released 0.0.x clients use the unversioned core default branch
+and cannot parse lifecycle v2.</p>
+<h3 id="conditional-v1v2-lifecycle-files">Conditional v1/v2 lifecycle files<a class="headerlink" href="#conditional-v1v2-lifecycle-files" title="Permanent link">&para;</a></h3>
+<p>Rejected because each template would carry two lifecycle contracts inside
+Cookiecutter conditionals. The files would be harder to review, validation
+would need two render modes indefinitely, and the later repository split would
+still be required.</p>
+<h3 id="add-templates-v2-inside-core">Add <code>templates-v2/</code> inside core<a class="headerlink" href="#add-templates-v2-inside-core" title="Permanent link">&para;</a></h3>
+<p>Rejected because it duplicates the catalog inside the repository and creates a
+temporary source layout that the planned standalone repository would soon
+replace.</p>
+<h3 id="perform-the-full-templates-and-skills-split-in-010">Perform the full templates and skills split in 0.1.0<a class="headerlink" href="#perform-the-full-templates-and-skills-split-in-010" title="Permanent link">&para;</a></h3>
+<p>Rejected because public skills, packaged built-in skills, template distribution,
+lifecycle v2, JSON contracts, and repository transfer have different consumers
+and compatibility requirements. Combining them would make rollback and release
+verification unnecessarily broad.</p>
+<h3 id="defer-all-repository-separation-until-after-010">Defer all repository separation until after 0.1.0<a class="headerlink" href="#defer-all-repository-separation-until-after-010" title="Permanent link">&para;</a></h3>
+<p>Rejected because an in-core v2 migration needs conditional or duplicate
+templates to protect 0.0.x. Establishing the standalone template boundary now
+solves the immediate compatibility problem and is retained after the release.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
+<ul>
+<li>AgentSeek 0.0.x remains functional without a retroactive client update.</li>
+<li>AgentSeek 0.1.0 receives complete lifecycle-v2 templates.</li>
+<li>Core releases resolve reproducible template content.</li>
+<li>Template CI and releases gain a clear owner and independent cadence.</li>
+<li>The compatibility mechanism is the intended long-term repository boundary,
+  not throwaway conditional logic.</li>
+<li>The public-skills split can be designed independently.</li>
+</ul>
+<h3 id="negative">Negative<a class="headerlink" href="#negative" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The organization maintains a frozen v1 mirror in core.</li>
+<li>The 0.1.0 release requires coordinated verification across two repositories.</li>
+<li>Template fixes may require separate v1 and v2 judgments.</li>
+<li>Core must package a synchronized registry snapshot and catalog lock.</li>
+<li>A template-only correction needs a core patch before default AgentSeek users
+  receive the new locked commit.</li>
+</ul>
+<h3 id="neutral">Neutral<a class="headerlink" href="#neutral" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The core repository transfer can happen before or after 0.1.0 if GitHub URL
+  compatibility is preserved, but it is not part of this decision.</li>
+<li>Future dynamic catalog updates, signatures, mirrors, and non-GitHub sources
+  require separate decisions.</li>
+</ul>
+<h2 id="follow-up-decisions">Follow-up decisions<a class="headerlink" href="#follow-up-decisions" title="Permanent link">&para;</a></h2>
+<p>Separate ADRs are required before:</p>
+<ul>
+<li>moving public top-level skills to a standalone repository;</li>
+<li>separating packaged <code>src/skills/</code> from the core distribution;</li>
+<li>allowing a released CLI to follow a mutable or remotely updated catalog;</li>
+<li>removing the legacy v1 template paths from the core default branch;</li>
+<li>changing the catalog trust model beyond an HTTPS repository and immutable
+  commit lock.</li>
+</ul>
+<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://github.com/ob-labs/agentseek/blob/main/specs/lifecycle-v2-service-discovery.md">Desktop Service Discovery and Lifecycle v2</a></li>
+<li><a href="../../reference/lifecycle-spec/">Lifecycle Spec</a></li>
+<li><a href="../../reference/template-authoring-contract/">Template Authoring Contract</a></li>
+<li><a href="../../reference/templates/">Templates</a></li>
+<li><a href="https://github.com/ob-labs/agentseek/discussions/133">GitHub Discussion #133</a></li>
+<li><a href="https://github.com/ob-labs/agentseek/pull/136">Template download PR #136</a></li>
+</ul>
+</section>
+
+<section id="mkdocs-terminal-after-content">
+    
+</section>
+
+            </main>
+        </div>
+        <hr><footer>
+    <div class="terminal-mkdocs-footer-grid">
+        <div id="terminal-mkdocs-footer-copyright-info">
+             Site built with <a href="http://www.mkdocs.org">MkDocs</a> and <a href="https://github.com/ntno/mkdocs-terminal">Terminal for MkDocs</a>.
+        </div>
+    </div>
+</footer>
+    </div>
+
+    
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="alertdialog" aria-modal="true" aria-labelledby="searchModalLabel">
+    <div class="modal-dialog modal-lg" role="search">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search</h5>
+                <button type="button" class="close btn btn-default btn-ghost" data-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <p id="searchInputLabel">Type to start searching</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" aria-labelledby="searchInputLabel" placeholder="" id="mkdocs-search-query" title="Please enter search terms here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No document matches found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+</body>
+
+</html>
