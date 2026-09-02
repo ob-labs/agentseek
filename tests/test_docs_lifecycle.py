@@ -148,7 +148,7 @@ README_STAR_HISTORY_TEXT = {
 README_REQUIRED_TEXT = {
     "README.md": (
         "AgentSeek 0.1.4",
-        "releases/tag/v0.1.4",
+        "tree/v0.1.5",
         "native LangGraph backend",
         "React frontend",
         "agentseek info --json",
@@ -162,7 +162,7 @@ README_REQUIRED_TEXT = {
     ),
     "README.zh.md": (
         "AgentSeek 0.1.4",
-        "releases/tag/v0.1.4",
+        "tree/v0.1.5",
         "发现、创建、审视、配置、检查、运行、观测和迭代",
         "原生 LangGraph 后端",
         "React 前端",

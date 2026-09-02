@@ -269,7 +269,7 @@ jobs:
           cp .env.example .env
           docker compose config --images | tee /tmp/agentseek-phoenix-images.txt
           grep -Fx "ghcr.io/agentseek-ai/agentseek-phoenix:main" /tmp/agentseek-phoenix-images.txt
-          grep -Fx "quay.io/oceanbase/seekdb:latest" /tmp/agentseek-phoenix-images.txt
+          grep -Fx "quay.io/oceanbase/seekdb@sha256:e3a46b6520fa6b6fb7949d03b8c6f22cef180e6c84953b839ad56a358d34932d" /tmp/agentseek-phoenix-images.txt
           ! grep -F "ghcr.io/psiace/phoenix:mysql" /tmp/agentseek-phoenix-images.txt
 
       - name: Start Phoenix with OceanBase seekdb

@@ -36,7 +36,7 @@ It gives editable generated projects one predictable lifecycle: discover,
 create, inspect, configure, check, run, observe, and iterate.
 
 AgentSeek 0.1.4 resolves lifecycle-v2 templates from the immutable
-[`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/releases/tag/v0.1.4).
+[`agentseek-ai/agentseek-templates` catalog](https://github.com/agentseek-ai/agentseek-templates/tree/v0.1.5).
 The CLI lists templates from its embedded registry snapshot and fetches named
 template content at the exact locked commit.
 

@@ -46,6 +46,12 @@ def test_phoenix_smoke_verifies_multiple_trace_markers() -> None:
     assert "trace_markers.append(trace_name)" in text
     assert "for marker in $(cat /tmp/agentseek-trace-markers.txt); do" in text
     assert "Verified ${verified_count} Phoenix trace markers persisted in OceanBase seekdb." in text
+    assert (
+        'grep -Fx "quay.io/oceanbase/seekdb@sha256:'
+        'e3a46b6520fa6b6fb7949d03b8c6f22cef180e6c84953b839ad56a358d34932d"'
+        " /tmp/agentseek-phoenix-images.txt"
+    ) in text
+    assert "quay.io/oceanbase/seekdb:latest" not in text
 
 
 def test_hybrid_template_smoke_runs_rendered_project_tests() -> None:

@@ -94,8 +94,8 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
     assert lock == {
         "schema_version": 1,
         "catalog_repository": "https://github.com/agentseek-ai/agentseek-templates.git",
-        "catalog_commit": "31bef3fb6b48b45035895545360594320253235b",
-        "catalog_release": "v0.1.4",
+        "catalog_commit": "fc85d26c8f558a7ec60bc0112eea8a7fb94a612c",
+        "catalog_release": "v0.1.5",
         "templates_root": "templates",
         "index_path": "templates/index.json",
         "lifecycle_version": 2,
@@ -160,13 +160,13 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
             "deepagents/subagents-dynamic": "d4f8181f827237a586911f77324a1d99b8180430d4be801c618c48a7cc830005",
             "deepagents/streaming": "c2920c9a2aeae095f780abdf32d73c14864e3edb00cbc34271dd81e248403caf",
             "deepagents/sandbox": "8477d28f63031048f5e0af56f1d90237feaf0f9b3dd83fab8d6dc007a9f3d65f",
-            "langchain/agentic-rag": "8f4bf863f312dbb33b3258115b398b0eeb7ea4cd6433cc5ec3392d6ebc13b9fd",
-            "langchain/agentic-rag-hybrid": ("2027ea793442149bdd78f70c1cd61177265cc06ff4146b72030a8abfe2402434"),
-            "langchain/agentic-rag-openvino": ("1dca769085039b231559fa5de7809a6272f5d690eb4c313a4868bd69ac1ba022"),
+            "langchain/agentic-rag": "2a85700a8344ab77647958182652a2bb8edd602ef3cd070ad5b71d345c0f968d",
+            "langchain/agentic-rag-hybrid": ("237d9d585262bd04e0a18a02d4e3ec7f3a0b3589961aa9830823896a057893e6"),
+            "langchain/agentic-rag-openvino": ("7bcfb300d772cb9fab209088b2d0ca11be51b4af296b176ea96d98125ba40d07"),
             "langchain/cli-remote": "9ee99658dccf5fc0d9dd6d8b662d01ff5d5f7743c73f7db9edb1a9a20dc26ec0",
-            "langchain/default": "98406311b57fc7394dc0d3945e3886f734d39c1e0a3dfd9150cb3f9e2bb85703",
+            "langchain/default": "88c6ff2205d127d0164339c12221816c62d5b84ac2866b434c1451402d4f399e",
             "langchain/markdown-messages": ("a4dd6d0b2a6eae548bbf57ed04d2e9a63a6c35c06eccd2d599d6557ebcb439d6"),
-            "langchain/relay-observability": ("e3ffa595acdb9ec12997dfe6c2107a71a5055bf02692291d733867066a442edd"),
+            "langchain/relay-observability": ("70055257d89c6a7814a9462d0d9abb5cec9ffca1df0865b73f7d75e8ebda19de"),
             "langchain/rubric": "bc29410e030d2792878457211443109234d733eeb9d851a0287ea4060b2250fd",
         },
     }
@@ -435,7 +435,7 @@ def test_download_uses_exact_github_commit_and_raw_bytes(monkeypatch: pytest.Mon
     assert destination.read_bytes() == payload
     assert captured["method"] == "GET"
     assert captured["url"] == (
-        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/31bef3fb6b48b45035895545360594320253235b"
+        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/fc85d26c8f558a7ec60bc0112eea8a7fb94a612c"
     )
     assert captured["follow_redirects"] is False
 
