@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import subprocess
 import tarfile
 from concurrent.futures import ThreadPoolExecutor
@@ -93,8 +94,8 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
     assert lock == {
         "schema_version": 1,
         "catalog_repository": "https://github.com/agentseek-ai/agentseek-templates.git",
-        "catalog_commit": "2a5e57faf3f845d4a0ad6172efd937921aac0b12",
-        "catalog_release": "v0.1.3",
+        "catalog_commit": "31bef3fb6b48b45035895545360594320253235b",
+        "catalog_release": "v0.1.4",
         "templates_root": "templates",
         "index_path": "templates/index.json",
         "lifecycle_version": 2,
@@ -115,6 +116,13 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
             "deepagents/research": (
                 "DeepAgents research agent with Tavily search, streamed tool/sub-agent UI, "
                 "and AgentSeek lifecycle spec."
+            ),
+            "deepagents/subagents-dynamic": (
+                "Dynamic Subagents Pattern Lab with six independent official-pattern assistants, "
+                "evidence-driven execution UI, and AgentSeek lifecycle spec."
+            ),
+            "deepagents/streaming": (
+                "DeepAgents Event Streaming v3 showcase with subagent, message, tool, state, and output projections."
             ),
             "deepagents/sandbox": ("DeepAgents sandbox coding agent with streamed UI and AgentSeek lifecycle spec."),
             "langchain/agentic-rag": (
@@ -149,6 +157,8 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
             "deepagents/default": "d73f071bfb7063039684089af29032ca9105926c326379f9e27a8f1374907480",
             "deepagents/mcp": "182c445d9fd7dfc9370bd8c37f6b3bb26a0ea9f9f269f635bd7bd8b5edb5c1d1",
             "deepagents/research": "0dba10d3827f2977b61506e386d7a978cdfdec5208e20b1d68893ecd327f343d",
+            "deepagents/subagents-dynamic": "d4f8181f827237a586911f77324a1d99b8180430d4be801c618c48a7cc830005",
+            "deepagents/streaming": "c2920c9a2aeae095f780abdf32d73c14864e3edb00cbc34271dd81e248403caf",
             "deepagents/sandbox": "8477d28f63031048f5e0af56f1d90237feaf0f9b3dd83fab8d6dc007a9f3d65f",
             "langchain/agentic-rag": "8f4bf863f312dbb33b3258115b398b0eeb7ea4cd6433cc5ec3392d6ebc13b9fd",
             "langchain/agentic-rag-hybrid": ("2027ea793442149bdd78f70c1cd61177265cc06ff4146b72030a8abfe2402434"),
@@ -425,7 +435,7 @@ def test_download_uses_exact_github_commit_and_raw_bytes(monkeypatch: pytest.Mon
     assert destination.read_bytes() == payload
     assert captured["method"] == "GET"
     assert captured["url"] == (
-        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/2a5e57faf3f845d4a0ad6172efd937921aac0b12"
+        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/31bef3fb6b48b45035895545360594320253235b"
     )
     assert captured["follow_redirects"] is False
 
@@ -1003,6 +1013,45 @@ def test_default_listing_is_offline_and_ignores_the_core_checkout(
     assert result.exit_code == 0, result.output
     assert "langchain/markdown-messages" in result.output
     assert "bub/default" not in result.output
+
+
+def test_default_listing_exposes_complete_catalog_snapshot(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every locked template must be visible through the installed CLI."""
+    from agentseek.cli import catalog
+
+    monkeypatch.setattr(
+        create_module,
+        "_local_templates_root",
+        lambda: pytest.fail("the frozen core template mirror must be ignored"),
+    )
+    monkeypatch.setattr(
+        catalog,
+        "_download_archive",
+        lambda *args, **kwargs: pytest.fail("listing must not access the network"),
+    )
+
+    result = CliRunner().invoke(build_command_app(), ["create", "--list-templates"])
+
+    assert result.exit_code == 0, result.output
+    listed = set(re.findall(r"^    ([a-z0-9._-]+/[a-z0-9._-]+)$", result.output, flags=re.MULTILINE))
+    assert listed == {
+        "bub/default",
+        "deepagents/content-builder",
+        "deepagents/default",
+        "deepagents/mcp",
+        "deepagents/research",
+        "deepagents/sandbox",
+        "deepagents/streaming",
+        "deepagents/subagents-dynamic",
+        "langchain/agentic-rag",
+        "langchain/agentic-rag-hybrid",
+        "langchain/agentic-rag-openvino",
+        "langchain/cli-remote",
+        "langchain/default",
+        "langchain/markdown-messages",
+        "langchain/relay-observability",
+        "langchain/rubric",
+    }
 
 
 def test_unknown_default_template_fails_before_archive_download(monkeypatch: pytest.MonkeyPatch) -> None:
