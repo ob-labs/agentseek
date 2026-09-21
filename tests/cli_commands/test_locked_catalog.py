@@ -94,8 +94,8 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
     assert lock == {
         "schema_version": 1,
         "catalog_repository": "https://github.com/agentseek-ai/agentseek-templates.git",
-        "catalog_commit": "fc85d26c8f558a7ec60bc0112eea8a7fb94a612c",
-        "catalog_release": "v0.1.5",
+        "catalog_commit": "49e560a4e987bb5bda2e1fc2d153e44644a61f6d",
+        "catalog_release": "v0.1.6",
         "templates_root": "templates",
         "index_path": "templates/index.json",
         "lifecycle_version": 2,
@@ -113,6 +113,10 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
                 "DeepAgents MCP Tools app with validated stdio/HTTP configuration, a local calculator example, "
                 "streamed UI, and AgentSeek lifecycle spec."
             ),
+            "deepagents/powercontext": (
+                "Deep Agents release assistant with PowerContext Memory on embedded seekdb, fresh-conversation "
+                "recall comparisons, and inspectable bounded context."
+            ),
             "deepagents/research": (
                 "DeepAgents research agent with Tavily search, streamed tool/sub-agent UI, "
                 "and AgentSeek lifecycle spec."
@@ -128,6 +132,10 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
             "langchain/agentic-rag": (
                 "LangChain agentic RAG with OceanBase vector search and AgentSeek lifecycle spec."
             ),
+            "langchain/agentbase-rag-agentops": (
+                "LangChain RAG backed by AgentBase knowledge-base search with AppBase AgentOps observability and "
+                "AgentSeek lifecycle spec."
+            ),
             "langchain/agentic-rag-hybrid": (
                 "LangChain agentic hybrid RAG with image ingestion, vector/sparse/full-text/metadata search, "
                 "comparison demos, optional Phoenix observability, and AgentSeek lifecycle spec."
@@ -139,6 +147,10 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
                 "Remote LangGraph CLI agent bridged through LangGraphClientRunnable with AgentSeek lifecycle spec."
             ),
             "langchain/default": ("LangChain create_agent plus CopilotKit middleware with AgentSeek lifecycle spec."),
+            "langchain/jev-harness": (
+                "LangChain harness with Jev model routing, Auto Mode tool-risk gating, inspectable decisions, and "
+                "simulated operations tools."
+            ),
             "langchain/relay-observability": (
                 "LangChain Relay observability with bounded Tavily research, Phoenix, OceanBase SeekDB, "
                 "and AgentSeek lifecycle spec."
@@ -152,22 +164,25 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
             ),
         },
         "template_digests": {
-            "bub/default": "5cec8fc8f87ae203d4615d5664c854e30a04c10e065c293e293956cfa4a60b8c",
-            "deepagents/content-builder": "fd3e5bd1d59efba60edc738e5da97ddb6e990df7e83e364ef06f5c3734b3b2f2",
+            "bub/default": "6ad9952b4bc6118d092442c45c0992beac5eda579ceddbf9b41e13504249aa4f",
+            "deepagents/content-builder": "658982b2d63c05d5a0fd79ecd602ae1e3454f250dba5e3fe0af0df87f0065978",
             "deepagents/default": "d73f071bfb7063039684089af29032ca9105926c326379f9e27a8f1374907480",
-            "deepagents/mcp": "182c445d9fd7dfc9370bd8c37f6b3bb26a0ea9f9f269f635bd7bd8b5edb5c1d1",
-            "deepagents/research": "0dba10d3827f2977b61506e386d7a978cdfdec5208e20b1d68893ecd327f343d",
-            "deepagents/subagents-dynamic": "d4f8181f827237a586911f77324a1d99b8180430d4be801c618c48a7cc830005",
-            "deepagents/streaming": "c2920c9a2aeae095f780abdf32d73c14864e3edb00cbc34271dd81e248403caf",
-            "deepagents/sandbox": "8477d28f63031048f5e0af56f1d90237feaf0f9b3dd83fab8d6dc007a9f3d65f",
-            "langchain/agentic-rag": "2a85700a8344ab77647958182652a2bb8edd602ef3cd070ad5b71d345c0f968d",
-            "langchain/agentic-rag-hybrid": ("237d9d585262bd04e0a18a02d4e3ec7f3a0b3589961aa9830823896a057893e6"),
-            "langchain/agentic-rag-openvino": ("7bcfb300d772cb9fab209088b2d0ca11be51b4af296b176ea96d98125ba40d07"),
+            "deepagents/mcp": "108a57056ff8030fc4e75e9e543e6ab5c1c0d72251ad229fd3dd4edcd7b2ed23",
+            "deepagents/powercontext": "092d7299296aa61f539af94b68812d08a82a21e4f0f9c4c0a8a784b46fa6dd5b",
+            "deepagents/research": "eb9082d00d14091bcc42539dcba1cc201c93efa0532b0bcb038b3d502492d885",
+            "deepagents/subagents-dynamic": "f4763ac530462d4bfef3e180c14fed388044b8d9a6fb8fb0e1f6610b1770362e",
+            "deepagents/streaming": "da8f210df38c7e20049bdf5820a1d7cb37f5e86daba2827bc6943238f0c065be",
+            "deepagents/sandbox": "d477e7299aad364889d7f00fb8b83145cbeabc41cbb3d163c1d9e650caa06eec",
+            "langchain/agentic-rag": "2b947d47a5d437759c028e9e196e2c6521c15e512126ffeac44e794a128f27ff",
+            "langchain/agentbase-rag-agentops": "45d7e554ec02d2e580e67ccf924027c4692bff60fe5111fe39fc39d2f4a29f6c",
+            "langchain/agentic-rag-hybrid": "178cb538c9f1d113dc1a0d2d851b17698f03d1876f8615a3b900fb3a0c5f67d2",
+            "langchain/agentic-rag-openvino": "3c1c9d6b8abf9cd6f79c0cbea94313518236eaeead881a3efb148c312695f0b1",
             "langchain/cli-remote": "9ee99658dccf5fc0d9dd6d8b662d01ff5d5f7743c73f7db9edb1a9a20dc26ec0",
-            "langchain/default": "88c6ff2205d127d0164339c12221816c62d5b84ac2866b434c1451402d4f399e",
-            "langchain/markdown-messages": ("a4dd6d0b2a6eae548bbf57ed04d2e9a63a6c35c06eccd2d599d6557ebcb439d6"),
-            "langchain/relay-observability": ("70055257d89c6a7814a9462d0d9abb5cec9ffca1df0865b73f7d75e8ebda19de"),
-            "langchain/rubric": "bc29410e030d2792878457211443109234d733eeb9d851a0287ea4060b2250fd",
+            "langchain/default": "1421ce525b79bcd087c411b823c9425de4f067ac7b906f30ec6bbb62ba10c350",
+            "langchain/jev-harness": "4e33e306bfbc8f83125399f19ffa8f7ef6ec02af16b797d51218dc83d21d63e0",
+            "langchain/relay-observability": "ed603e92a671090bdd8e544bb45674e13e0182ca34d56a4b7d2e473014b0289c",
+            "langchain/markdown-messages": "c80a165893957cba747a70f8ac9389fa67a1d0bb09580ba2d1def09e7a490b0b",
+            "langchain/rubric": "e2a2dab9c1f1ce25e482e7e6b25b75ec3ed4ea7a4294bac00d9e97fb2999a53b",
         },
     }
 
@@ -435,7 +450,7 @@ def test_download_uses_exact_github_commit_and_raw_bytes(monkeypatch: pytest.Mon
     assert destination.read_bytes() == payload
     assert captured["method"] == "GET"
     assert captured["url"] == (
-        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/fc85d26c8f558a7ec60bc0112eea8a7fb94a612c"
+        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/49e560a4e987bb5bda2e1fc2d153e44644a61f6d"
     )
     assert captured["follow_redirects"] is False
 
@@ -1039,6 +1054,7 @@ def test_default_listing_exposes_complete_catalog_snapshot(monkeypatch: pytest.M
         "deepagents/content-builder",
         "deepagents/default",
         "deepagents/mcp",
+        "deepagents/powercontext",
         "deepagents/research",
         "deepagents/sandbox",
         "deepagents/streaming",
@@ -1046,8 +1062,10 @@ def test_default_listing_exposes_complete_catalog_snapshot(monkeypatch: pytest.M
         "langchain/agentic-rag",
         "langchain/agentic-rag-hybrid",
         "langchain/agentic-rag-openvino",
+        "langchain/agentbase-rag-agentops",
         "langchain/cli-remote",
         "langchain/default",
+        "langchain/jev-harness",
         "langchain/markdown-messages",
         "langchain/relay-observability",
         "langchain/rubric",
@@ -1076,15 +1094,20 @@ def test_unknown_default_template_fails_before_archive_download(monkeypatch: pyt
     assert "bub/default" in result.output
 
 
+@pytest.mark.parametrize(
+    "template_key",
+    ["bub/default", "deepagents/powercontext", "langchain/agentbase-rag-agentops", "langchain/jev-harness"],
+)
 def test_named_default_create_uses_locked_template_and_core_source_pair(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    template_key: str,
 ) -> None:
     """Catalog coordinates must never replace generated-project core dependencies."""
     from agentseek.cli import catalog
 
     lock = _fixture_lock(catalog.load_catalog_lock())
-    archive = _catalog_archive(lock)
+    archive = _catalog_archive(lock, key=template_key)
     cookiecutters_dir = tmp_path / "cookiecutters"
     captured: dict[str, object] = {}
     monkeypatch.setattr(
@@ -1106,7 +1129,7 @@ def test_named_default_create_uses_locked_template_and_core_source_pair(
     monkeypatch.setattr(create_module, "_run_cookiecutter", run)
     result = CliRunner().invoke(
         build_command_app(),
-        ["create", "bub/default", "--no-input", "--output-dir", str(tmp_path)],
+        ["create", template_key, "--no-input", "--output-dir", str(tmp_path)],
     )
 
     assert result.exit_code == 0, result.output
