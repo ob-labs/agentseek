@@ -94,8 +94,8 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
     assert lock == {
         "schema_version": 1,
         "catalog_repository": "https://github.com/agentseek-ai/agentseek-templates.git",
-        "catalog_commit": "49e560a4e987bb5bda2e1fc2d153e44644a61f6d",
-        "catalog_release": "v0.1.6",
+        "catalog_commit": "7a0c44e4dd2e2a1ea91f5d78090426264580dbf3",
+        "catalog_release": "v0.1.7",
         "templates_root": "templates",
         "index_path": "templates/index.json",
         "lifecycle_version": 2,
@@ -148,8 +148,9 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
             ),
             "langchain/default": ("LangChain create_agent plus CopilotKit middleware with AgentSeek lifecycle spec."),
             "langchain/jev-harness": (
-                "LangChain harness with Jev model routing, Auto Mode tool-risk gating, inspectable decisions, and "
-                "simulated operations tools."
+                "LangChain harness with selectable System One decision models (official Jev by default), model "
+                "routing, context-sensitive Auto Mode gating, a two-model Arena, and bilingual decision "
+                "evidence."
             ),
             "langchain/relay-observability": (
                 "LangChain Relay observability with bounded Tavily research, Phoenix, OceanBase SeekDB, "
@@ -165,21 +166,21 @@ def test_packaged_catalog_lock_records_the_published_release_pair() -> None:
         },
         "template_digests": {
             "bub/default": "6ad9952b4bc6118d092442c45c0992beac5eda579ceddbf9b41e13504249aa4f",
-            "deepagents/content-builder": "658982b2d63c05d5a0fd79ecd602ae1e3454f250dba5e3fe0af0df87f0065978",
-            "deepagents/default": "d73f071bfb7063039684089af29032ca9105926c326379f9e27a8f1374907480",
-            "deepagents/mcp": "108a57056ff8030fc4e75e9e543e6ab5c1c0d72251ad229fd3dd4edcd7b2ed23",
-            "deepagents/powercontext": "092d7299296aa61f539af94b68812d08a82a21e4f0f9c4c0a8a784b46fa6dd5b",
-            "deepagents/research": "eb9082d00d14091bcc42539dcba1cc201c93efa0532b0bcb038b3d502492d885",
-            "deepagents/subagents-dynamic": "f4763ac530462d4bfef3e180c14fed388044b8d9a6fb8fb0e1f6610b1770362e",
-            "deepagents/streaming": "da8f210df38c7e20049bdf5820a1d7cb37f5e86daba2827bc6943238f0c065be",
-            "deepagents/sandbox": "d477e7299aad364889d7f00fb8b83145cbeabc41cbb3d163c1d9e650caa06eec",
+            "deepagents/content-builder": "13c4db652ed1bcb930f00c4478b72c953998bccf6a11fac23e2c493af6e2bb07",
+            "deepagents/default": "15c2ebe4b1427f18276237d32dba26fb264582c97611336ba1ebd40d6f0c2e33",
+            "deepagents/mcp": "5012f130b1ec8f42f0df5e0e375af6da10bda519255c4487d4eaf01b200411d5",
+            "deepagents/powercontext": "8739294425d46e58603477d21d526090165ffa676bf49b31436a7eab5e4fece5",
+            "deepagents/research": "94353ccf84aae41f84f8bff140c54516689ccb52b46251ae278c5ac0b150c643",
+            "deepagents/subagents-dynamic": "56f9889dc3130757eb1b101dc53ce2b163baac39c0f86b9a3fbf2fa9bbcde7ec",
+            "deepagents/streaming": "f16eed8288683fe70966b02f94a2555a2ce415637fcd02c2604e839fa78fdc39",
+            "deepagents/sandbox": "a8868e578654503a72ab96b8c92d4164b0b1f65066166c3c20a39b43ddc2e000",
             "langchain/agentic-rag": "2b947d47a5d437759c028e9e196e2c6521c15e512126ffeac44e794a128f27ff",
             "langchain/agentbase-rag-agentops": "45d7e554ec02d2e580e67ccf924027c4692bff60fe5111fe39fc39d2f4a29f6c",
             "langchain/agentic-rag-hybrid": "178cb538c9f1d113dc1a0d2d851b17698f03d1876f8615a3b900fb3a0c5f67d2",
             "langchain/agentic-rag-openvino": "3c1c9d6b8abf9cd6f79c0cbea94313518236eaeead881a3efb148c312695f0b1",
             "langchain/cli-remote": "9ee99658dccf5fc0d9dd6d8b662d01ff5d5f7743c73f7db9edb1a9a20dc26ec0",
             "langchain/default": "1421ce525b79bcd087c411b823c9425de4f067ac7b906f30ec6bbb62ba10c350",
-            "langchain/jev-harness": "4e33e306bfbc8f83125399f19ffa8f7ef6ec02af16b797d51218dc83d21d63e0",
+            "langchain/jev-harness": "0f3637c55f539e06c2515a1e9499ccdda2df65782d07142b46306b7abcc1b28d",
             "langchain/relay-observability": "ed603e92a671090bdd8e544bb45674e13e0182ca34d56a4b7d2e473014b0289c",
             "langchain/markdown-messages": "c80a165893957cba747a70f8ac9389fa67a1d0bb09580ba2d1def09e7a490b0b",
             "langchain/rubric": "e2a2dab9c1f1ce25e482e7e6b25b75ec3ed4ea7a4294bac00d9e97fb2999a53b",
@@ -450,7 +451,7 @@ def test_download_uses_exact_github_commit_and_raw_bytes(monkeypatch: pytest.Mon
     assert destination.read_bytes() == payload
     assert captured["method"] == "GET"
     assert captured["url"] == (
-        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/49e560a4e987bb5bda2e1fc2d153e44644a61f6d"
+        "https://codeload.github.com/agentseek-ai/agentseek-templates/tar.gz/7a0c44e4dd2e2a1ea91f5d78090426264580dbf3"
     )
     assert captured["follow_redirects"] is False
 
